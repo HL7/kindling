@@ -197,7 +197,7 @@ public class TerminologyNotesGenerator extends OutputStreamWriter {
         } else
           write("<td><a href=\""+prefix+"terminologies.html#"+cd.getStrength().toCode()+"\">"+cd.getStrength().getDisplay()+"</a></td>");
         write("<td valign=\"top\">");
-        if (cd.getBinding() == BindingMethod.Special) {
+        if (cd.getBinding() == BindingSpecification.BindingMethod.Special) {
           if (name.equals("MessageEvent"))
             write("<a href=\""+prefix+"valueset-message-events.html\">Message Events</a>");
           else if (name.equals("ResourceType"))
@@ -216,7 +216,7 @@ public class TerminologyNotesGenerator extends OutputStreamWriter {
           if (pp == null)
             throw new Exception("unknown path on "+cd.getReference());
           write("<a href=\""+prefix+pp.replace(File.separatorChar, '/')+"\">"+vs.getName()+"</a><!-- b -->");
-        } else if (cd.getBinding() == BindingMethod.ValueSet) {
+        } else if (cd.getBinding() == BindingSpecification.BindingMethod.ValueSet) {
           if (Utilities.noString(cd.getReference())) 
             write("??");
           else if (cd.getReference().startsWith("valueset-"))
@@ -246,7 +246,7 @@ public class TerminologyNotesGenerator extends OutputStreamWriter {
             write("<a href=\""+cd.getReference()+"\">"+cd.getReference()+"</a><!-- e -->");            
           else
             write("<a href=\""+prefix+"valueset-"+cd.getReference()+".html\">http://hl7.org/fhir/"+cd.getReference()+"</a><!-- e -->");            
-        } else if (cd.getBinding() == BindingMethod.CodeList) {
+        } else if (cd.getBinding() == BindingSpecification.BindingMethod.CodeList) {
           write("<a href=\""+prefix+"valueset-"+cd.getReference().substring(1)+".html\">http://hl7.org/fhir/"+cd.getReference().substring(1)+"</a><!-- f -->");            
         } 
 
@@ -305,9 +305,9 @@ public class TerminologyNotesGenerator extends OutputStreamWriter {
   }
 
   public static String describeBinding(String prefix, BindingSpecification cd, PageProcessor page) throws Exception {
-    if (cd.getBinding() == BindingMethod.Unbound)
+    if (cd.getBinding() == BindingSpecification.BindingMethod.Unbound) 
       return cd.getDefinition();
-    if (cd.getBinding() == BindingMethod.Special) {
+    if (cd.getBinding() == BindingSpecification.BindingMethod.Special) {
       if (cd.getValueSet().getName().equals("MessageEvent"))
         return "the <a href=\""+prefix+"valueset-message-events.html\">Event List in the messaging framework</a>";
       else if (cd.getValueSet().getName().equals("ResourceType"))
@@ -336,14 +336,14 @@ public class TerminologyNotesGenerator extends OutputStreamWriter {
       ValueSet vs = cd.getValueSet();
       String pp = vs.hasUserData("external.url") ? vs.getUserString("external.url") : vs.getUserString("path");
       return "<a href=\""+prefix+pp.replace(File.separatorChar, '/')+"\">"+cd.getValueSet().present()+"</a> ("+bs+mx+")";      
-    } else if (cd.getBinding() == BindingMethod.ValueSet) {
+    } else if (cd.getBinding() == BindingSpecification.BindingMethod.ValueSet) {
       if (Utilities.noString(cd.getReference())) 
         return cd.getDescription();
       else if (cd.getValueSet() == null)
         return bs+": <a href=\""+(cd.getReference().startsWith("http") ? cd.getReference() : prefix+cd.getReference()+".html")+"\">See "+cd.getDescription()+"</a> ("+cd.getDefinition()+mx+")";
       else
         return bs+": <a href=\""+prefix+cd.getReference()+".html\">See "+cd.getValueSet().getUrl()+"</a> ("+cd.getDefinition()+mx+")";
-    } else if (cd.getBinding() == BindingMethod.CodeList) {
+    } else if (cd.getBinding() == BindingSpecification.BindingMethod.CodeList) {
       if (Utilities.noString(cd.getReference())) 
         return bs+": "+cd.getDescription()+" ("+cd.getDefinition()+mx+")";
       else
@@ -355,9 +355,9 @@ public class TerminologyNotesGenerator extends OutputStreamWriter {
   private void genBinding(BindingSpecification cd, String path, boolean isCode) throws Exception {
     if (cd.getName().equals("*unbound*")) {
     	write("  <li>"+path+" (Error!!!)</li>\r\n");
-    } else if (cd.getBinding() == BindingMethod.Unbound) {
+    } else if (cd.getBinding() == BindingSpecification.BindingMethod.Unbound) {
       write("  <li>"+path+" <i>"+Utilities.escapeXml(cd.getName())+"</i>: \""+Utilities.escapeXml(cd.getDefinition())+"\". (not bound to any codes)</li>\r\n");
-    } else if (cd.getBinding() == BindingMethod.CodeList) {
+    } else if (cd.getBinding() == BindingSpecification.BindingMethod.CodeList) {
       String sid = "";
       if (cd.hasMax())
         throw new Error("Max binding not handled yet");
@@ -397,7 +397,7 @@ public class TerminologyNotesGenerator extends OutputStreamWriter {
       }
     	write("  </li>\r\n");
     	
-    } else if (cd.getBinding() == BindingMethod.Special) {
+    } else if (cd.getBinding() == BindingSpecification.BindingMethod.Special) {
       if (cd.getValueSet().getName().equals("MessageEvent"))
         write("<li>"+path+" of the <a href=\"message.html#Events\"> Event List in the messaging framework</a></li>\r\n");
       else if (cd.getValueSet().getName().equals("ResourceType"))

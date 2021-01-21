@@ -79,15 +79,18 @@ public class XSDBaseGenerator {
 
   private boolean forCodeGeneration;
 
-  private BuildWorkerContext workerContext; 
+  private BuildWorkerContext workerContext;
+
+  private String version; 
 
   // private Map<String, PrimitiveType> primitives;
 
-  public XSDBaseGenerator(OutputStreamWriter out, boolean forCodeGeneration, BuildWorkerContext workerContext, Set<String> genEnums) throws UnsupportedEncodingException {
+  public XSDBaseGenerator(OutputStreamWriter out, boolean forCodeGeneration, BuildWorkerContext workerContext, Set<String> genEnums, String version) throws UnsupportedEncodingException {
     writer = out;
     this.forCodeGeneration = forCodeGeneration;
     this.workerContext = workerContext;
     this.genEnums = genEnums;
+    this.version = version;
   }
 
   private void write(String s) throws IOException {
@@ -144,7 +147,7 @@ public class XSDBaseGenerator {
   }
 
   protected boolean isEnum(BindingSpecification cd) {
-    boolean ok = cd.getBinding() == (BindingMethod.CodeList) || (cd.getStrength() == BindingStrength.REQUIRED && cd.getBinding() == BindingMethod.ValueSet);
+    boolean ok = cd.getBinding() == (BindingSpecification.BindingMethod.CodeList) || (cd.getStrength() == BindingStrength.REQUIRED && cd.getBinding() == BindingMethod.ValueSet);
     if (ok) {
       if (cd.getValueSet() != null && cd.getValueSet().hasCompose() && cd.getValueSet().getCompose().getInclude().size() == 1) {
         ConceptSetComponent inc = cd.getValueSet().getCompose().getIncludeFirstRep();
@@ -616,7 +619,7 @@ public class XSDBaseGenerator {
       }
       close = "/>";
     }
-    for (String t : TypesUtilities.wildcardTypes()) {
+    for (String t : TypesUtilities.wildcardTypes(version)) {
       if (!definitions.getInfrastructure().containsKey(t) && !definitions.getConstraints().containsKey(t) && !definitions.getShared().contains(t)) {
         if (t.equals("ReferenceXX")) {
           write("           <xs:element name=\""+prefix+"Resource\" type=\"Reference\""+close+"\r\n");        
@@ -767,7 +770,7 @@ public class XSDBaseGenerator {
       String en = null;
       if (e.hasBinding()) {
         BindingSpecification cd = e.getBinding();
-        if (cd != null && cd.getBinding() == BindingMethod.CodeList) {
+        if (cd != null && cd.getBinding() == BindingSpecification.BindingMethod.CodeList) {
           en = cd.getValueSet().getName();
           enums.add(cd);
           enumDefs.put(en, cd.getDefinition());

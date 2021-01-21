@@ -1,4 +1,4 @@
-package org.hl7.fhir.definitions.parsers;
+package org.hl7.fhir.definitions.parsers.spreadsheets;
 
 /*
  Copyright (c) 2011+, HL7, Inc
@@ -59,6 +59,7 @@ import org.hl7.fhir.definitions.model.Example.ExampleType;
 import org.hl7.fhir.definitions.model.ImplementationGuideDefn;
 import org.hl7.fhir.definitions.model.Invariant;
 import org.hl7.fhir.definitions.model.LogicalModel;
+import org.hl7.fhir.definitions.model.MappingSpace;
 import org.hl7.fhir.definitions.model.Operation;
 import org.hl7.fhir.definitions.model.Operation.OperationExample;
 import org.hl7.fhir.definitions.model.OperationParameter;
@@ -69,14 +70,17 @@ import org.hl7.fhir.definitions.model.SearchParameterDefn;
 import org.hl7.fhir.definitions.model.SearchParameterDefn.CompositeDefinition;
 import org.hl7.fhir.definitions.model.SearchParameterDefn.SearchType;
 import org.hl7.fhir.definitions.model.TypeDefn;
+import org.hl7.fhir.definitions.model.TypeRef;
 import org.hl7.fhir.definitions.model.W5Entry;
 import org.hl7.fhir.definitions.model.WorkGroup;
+import org.hl7.fhir.definitions.parsers.CodeListToValueSetParser;
+import org.hl7.fhir.definitions.parsers.CodeSystemConvertor;
+import org.hl7.fhir.definitions.parsers.OIDRegistry;
+import org.hl7.fhir.definitions.parsers.TypeParser;
+import org.hl7.fhir.definitions.parsers.ValueSetGenerator;
 import org.hl7.fhir.definitions.validation.ExtensionDefinitionValidator;
 import org.hl7.fhir.definitions.validation.FHIRPathUsage;
 import org.hl7.fhir.exceptions.FHIRException;
-import org.hl7.fhir.definitions.model.MappingSpace;
-import org.hl7.fhir.definitions.parsers.TypeParser;
-import org.hl7.fhir.definitions.model.TypeRef;
 import org.hl7.fhir.r5.conformance.ProfileUtilities;
 import org.hl7.fhir.r5.conformance.ProfileUtilities.ProfileKnowledgeProvider;
 import org.hl7.fhir.r5.context.CanonicalResourceManager;
@@ -99,6 +103,7 @@ import org.hl7.fhir.r5.model.DataType;
 import org.hl7.fhir.r5.model.DateTimeType;
 import org.hl7.fhir.r5.model.DateType;
 import org.hl7.fhir.r5.model.DecimalType;
+import org.hl7.fhir.r5.model.Enumerations.BindingStrength;
 import org.hl7.fhir.r5.model.Enumerations.FHIRVersion;
 import org.hl7.fhir.r5.model.Enumerations.PublicationStatus;
 import org.hl7.fhir.r5.model.Enumerations.QuantityComparator;
@@ -147,7 +152,7 @@ import org.hl7.fhir.utilities.xls.XLSXmlParser.Sheet;
 
 import com.trilead.ssh2.crypto.Base64;
 
-public class SpreadsheetParser {
+public class OldSpreadsheetParser {
 
   private String usageContext;
 	private String name;
@@ -186,7 +191,7 @@ public class SpreadsheetParser {
   private PackageVersion packageInfo;
   private RenderingContext rc;
   
-	public SpreadsheetParser(String usageContext, InputStream in, String name, String filename, Definitions definitions, String root, Logger log, OIDRegistry registry, FHIRVersion version, BuildWorkerContext context, Calendar genDate, boolean isAbstract, 
+	public OldSpreadsheetParser(String usageContext, InputStream in, String name, String filename, Definitions definitions, String root, Logger log, OIDRegistry registry, FHIRVersion version, BuildWorkerContext context, Calendar genDate, boolean isAbstract, 
 	     ProfileKnowledgeProvider pkp, boolean isType, IniFile ini, WorkGroup committee, Map<String, ConstraintStructure> profileIds, List<FHIRPathUsage> fpUsages, CanonicalResourceManager<ConceptMap> maps, boolean exceptionIfExcelNotNormalised, PackageVersion packageInfo, RenderingContext rc) throws Exception {
 	  this.usageContext = usageContext;
 		this.name = name;
@@ -221,7 +226,7 @@ public class SpreadsheetParser {
 		this.rc = rc;
 	}
 
-  public SpreadsheetParser(String usageContext, InputStream in, String name, String filename, ImplementationGuideDefn ig, String root, Logger log, OIDRegistry registry, FHIRVersion version, BuildWorkerContext context, Calendar genDate, boolean isAbstract, ProfileKnowledgeProvider pkp, boolean isType, WorkGroup committee, Map<String, MappingSpace> mappings, Map<String, ConstraintStructure> profileIds, CanonicalResourceManager<CodeSystem> codeSystems, CanonicalResourceManager<ConceptMap> maps, Map<String, WorkGroup> workgroups, boolean exceptionIfExcelNotNormalised) throws Exception {
+  public OldSpreadsheetParser(String usageContext, InputStream in, String name, String filename, ImplementationGuideDefn ig, String root, Logger log, OIDRegistry registry, FHIRVersion version, BuildWorkerContext context, Calendar genDate, boolean isAbstract, ProfileKnowledgeProvider pkp, boolean isType, WorkGroup committee, Map<String, MappingSpace> mappings, Map<String, ConstraintStructure> profileIds, CanonicalResourceManager<CodeSystem> codeSystems, CanonicalResourceManager<ConceptMap> maps, Map<String, WorkGroup> workgroups, boolean exceptionIfExcelNotNormalised) throws Exception {
     this.usageContext = usageContext;
     this.name = name;
     this.registry = registry;
@@ -298,6 +303,7 @@ public class SpreadsheetParser {
     if (!Utilities.noString(s))
       ss = StandardsStatus.NORMATIVE;
     resource.setStatus(ss);
+    resource.setRequirements(resource.getRoot().getRequirements());
 		
 		resource.addHints(checkIgnoredColumns(sheet));
 		if (template != null) {
@@ -629,7 +635,7 @@ public class SpreadsheetParser {
 
 
   private List<OperationExample> loadOperationExamples(String req, String resp) throws Exception {
-    List<OperationExample> results = new ArrayList<OperationExample>();
+    List<OperationExample> results = new ArrayList<Operation.OperationExample>();
     if (!Utilities.noString(req))
       for (String s : TextFile.fileToString(Utilities.path(folder, req)).split("\r\n--------------------------------------\r\n"))
         results.add(convertToExample(s, false));
@@ -769,7 +775,6 @@ public class SpreadsheetParser {
 		for (int row = 0; row < sheet.rows.size(); row++) {
 			Invariant inv = new Invariant();
 
-
 			String s = sheet.getColumn(row, "Id");
 			if (!s.startsWith("!")) {
 			  inv.setId(s.contains("-") ? s : getAbbreviationFor(id)+"-"+s);
@@ -812,7 +817,7 @@ public class SpreadsheetParser {
           throw new Exception("Search Param "+pack.getTitle()+"/"+n+" includes relative time "+ getLocation(row));
 //        if (!n.toLowerCase().equals(n))
 //          throw new Exception("Search Param "+pack.getTitle()+"/"+n+" must be all lowercase "+ getLocation(row));
-        sp.setVersion(Constants.VERSION);
+        sp.setVersion(version.toCode());
         sp.setName(n);
         sp.setCode(n);
 
@@ -1162,7 +1167,7 @@ public class SpreadsheetParser {
           throw new Exception("don't start code list references with #valueset-");
         cd.setValueSet(ValueSetUtilities.makeShareable(new ValueSet()));
         valuesets.add(cd.getValueSet());
-        cd.getValueSet().setVersion(Constants.VERSION);
+        cd.getValueSet().setVersion(version.toCode());
         cd.getValueSet().setId(igSuffix(ig)+ref.substring(1));
         cd.getValueSet().setUrl("http://hl7.org/fhir/ValueSet/"+igSuffix(ig)+ref.substring(1));
         cd.getValueSet().setUserData("filename", "valueset-"+cd.getValueSet().getId());
@@ -1197,7 +1202,7 @@ public class SpreadsheetParser {
           new ValueSetGenerator(definitions, version.toCode(), genDate, context.translator(), packageInfo).loadOperationOutcomeValueSet(cd);
         else
           throw new Exception("Special bindings are only allowed in bindings.xml");
-      }
+      } 
       cd.setReference(sheet.getColumn(row, "Reference")); // do this anyway in the short term
 
       if (cd.getValueSet() != null) {
@@ -1240,7 +1245,10 @@ public class SpreadsheetParser {
       if (!Utilities.noString(sheet.getColumn(row, "Extensible")))
         throw new Exception("The 'Extensible' column is no longer supported");
       cd.setStrength(BindingsParser.readBindingStrength(sheet.getColumn(row, "Conformance")));
-
+      if (cd.getBinding() == BindingMethod.Unbound) {
+        cd.setStrength(BindingStrength.EXAMPLE);        
+      }
+      
 			cd.setSource(name);
       cd.setUri(sheet.getColumn(row, "Uri"));
       String oid = sheet.getColumn(row, "Oid");
@@ -1507,7 +1515,6 @@ public class SpreadsheetParser {
   private ConstraintStructure parseProfileSheet(Definitions definitions, Profile ap, String n, List<String> namedSheets, boolean published, String usage, List<ValidationMessage> issues, WorkGroup wg, String fmm) throws Exception {
     Sheet sheet;
     ResourceDefn resource = new ResourceDefn();
-    resource.setPublishedInProfile(published);
 
 		sheet = loadSheet(n+"-Inv");
 	  Map<String,Invariant> invariants = null;
@@ -1832,7 +1839,7 @@ public class SpreadsheetParser {
 		  }
 		}
 
-		TypeParser tp = new TypeParser();
+		TypeParser tp = new TypeParser(version.toCode());
 		e.getTypes().addAll(tp.parse(sheet.getColumn(row, "Type"), isProfile, profileExtensionBase, context, !path.contains("."), this.name));
 		if (isRoot && e.getTypes().size() == 1 && definitions  != null) {
 		  String t = e.getTypes().get(0).getName();
@@ -2150,7 +2157,7 @@ public class SpreadsheetParser {
     ex.setDerivation(TypeDerivationRule.CONSTRAINT);
     ex.setAbstract(false);
     ex.setFhirVersion(version);
-    ex.setVersion(Constants.VERSION);
+    ex.setVersion(version.toCode());
     if (wg != null)
       ToolingExtensions.setCodeExtension(ex, ToolingExtensions.EXT_WORKGROUP, wg.getCode());
     String fmm = sheet.getColumn(row, "FMM");
@@ -2174,6 +2181,7 @@ public class SpreadsheetParser {
 
 	  ex.setUrl(uri+name);
     ex.setId(tail(ex.getUrl()));
+    ex.setUserData("path", "extension-"+ex.getId().toLowerCase()+".html");
 	  ap.getExtensions().add(ex);
 	  if (context == null) {
 	    ExtensionContextType ct = readContextType(sheet.getColumn(row, "Context Type"), row);
@@ -2310,7 +2318,6 @@ public class SpreadsheetParser {
           + sheet.getColumn(row, "Card.") + " in " + getLocation(row));
     exe.setMinCardinality(Integer.parseInt(card[0]));
     exe.setMaxCardinality("*".equals(card[1]) ? Integer.MAX_VALUE : Integer.parseInt(card[1]));
-    exe.setCondition(sheet.getColumn(row, "Condition"));
     exe.setDefinition(Utilities.appendPeriod(processDefinition(sheet.getColumn(row, "Definition"))));
     exe.setRequirements(Utilities.appendPeriod(sheet.getColumn(row, "Requirements")));
     exe.setComments(Utilities.appendPeriod(sheet.getColumn(row, "Comments")));
@@ -2339,7 +2346,7 @@ public class SpreadsheetParser {
     if (!Utilities.noString(sheet.getColumn(row, "Type"))) {
       ElementDefn exv = new ElementDefn();
       exv.setName("value[x]");
-      exv.getTypes().addAll(new TypeParser().parse(sheet.getColumn(row, "Type"), true, profileExtensionBase, context, false, sheet.title));
+      exv.getTypes().addAll(new TypeParser(version.toCode()).parse(sheet.getColumn(row, "Type"), true, profileExtensionBase, context, false, sheet.title));
 
 /*      if (!exv.getName().equals("value[x]")) {
         ElementDefn exd = new ElementDefn();

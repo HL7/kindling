@@ -1,9 +1,17 @@
 plugins {
     java
+    `java-library`
+    `maven-publish`
+    signing
 }
 
 group = "org.hl7.fhir.tools.core"
 version = "1.0-SNAPSHOT"
+
+java {
+    withJavadocJar()
+    withSourcesJar()
+}
 
 repositories {
     google()
@@ -19,18 +27,24 @@ repositories {
     maven {
         url = uri("https://plugins.gradle.org/m2/")
     }
+    maven {
+        url = uri("https://oss.sonatype.org/content/repositories/snapshots")
+    }
+    maven {
+        url = uri("https://oss.sonatype.org/service/local/staging/deploy/maven2/")
+    }
 }
 
 dependencies {
     implementation("ca.uhn.hapi.fhir", "hapi-fhir-base", "4.0.0")
-    implementation("ca.uhn.hapi.fhir", "org.hl7.fhir.utilities", "5.2.13")
-    implementation("ca.uhn.hapi.fhir", "org.hl7.fhir.dstu2", "5.2.13")
-    implementation("ca.uhn.hapi.fhir", "org.hl7.fhir.dstu2016may", "5.2.13")
-    implementation("ca.uhn.hapi.fhir", "org.hl7.fhir.dstu3", "5.2.13")
-    implementation("ca.uhn.hapi.fhir", "org.hl7.fhir.r4", "5.2.13")
-    implementation("ca.uhn.hapi.fhir", "org.hl7.fhir.r5", "5.2.13")
-    implementation("ca.uhn.hapi.fhir", "org.hl7.fhir.convertors", "5.2.13")
-    implementation("ca.uhn.hapi.fhir", "org.hl7.fhir.validation", "5.2.13")
+    implementation("ca.uhn.hapi.fhir", "org.hl7.fhir.utilities", "5.2.18-SNAPSHOT")
+    implementation("ca.uhn.hapi.fhir", "org.hl7.fhir.dstu2", "5.2.18-SNAPSHOT")
+    implementation("ca.uhn.hapi.fhir", "org.hl7.fhir.dstu2016may", "5.2.18-SNAPSHOT")
+    implementation("ca.uhn.hapi.fhir", "org.hl7.fhir.dstu3", "5.2.18-SNAPSHOT")
+    implementation("ca.uhn.hapi.fhir", "org.hl7.fhir.r4", "5.2.18-SNAPSHOT")
+    implementation("ca.uhn.hapi.fhir", "org.hl7.fhir.r5", "5.2.18-SNAPSHOT")
+    implementation("ca.uhn.hapi.fhir", "org.hl7.fhir.convertors", "5.2.18-SNAPSHOT")
+    implementation("ca.uhn.hapi.fhir", "org.hl7.fhir.validation", "5.2.18-SNAPSHOT")
     implementation("ch.qos.logback", "logback-classic", "1.2.3")
     implementation("com.google.code.gson", "gson", "2.8.5")
     implementation("commons-codec", "commons-codec", "1.9")
@@ -156,5 +170,78 @@ java {
 tasks {
     test {
         testLogging.showExceptions = true
+    }
+}
+
+publishing {
+    publications {
+        create<MavenPublication>("mavenJava") {
+            artifactId = "kindling"
+            from(components["java"])
+            versionMapping {
+                usage("java-api") {
+                    fromResolutionOf("runtimeClasspath")
+                }
+                usage("java-runtime") {
+                    fromResolutionResult()
+                }
+            }
+            pom {
+                name.set("kindling")
+                description.set("FHIR Core Publisher")
+                url.set("http://hl7.org/fhir/")
+                licenses {
+                    license {
+                        name.set("The Apache License, Version 2.0")
+                        url.set("http://www.apache.org/licenses/LICENSE-2.0.txt")
+                    }
+                }
+                developers {
+                    developer {
+                        id.set("markiantorno")
+                        name.set("Mark Iantorno")
+                        email.set("markiantorno@gmail.com")
+                    }
+                }
+                scm {
+                    connection.set("scm:git:git://github.com/HL7/kindling.git")
+                    developerConnection.set("scm:git:ssh://github.com/HL7/kindling.git")
+                    url.set("https://github.com/HL7/kindling.git")
+                }
+            }
+        }
+    }
+    repositories {
+        maven {
+            credentials {
+                val nexusUsername: String? by project
+                val nexusPassword: String? by project
+                username = nexusUsername
+                password = nexusPassword
+            }
+            val releasesRepoUrl = uri("https://oss.sonatype.org/service/local/staging/deploy/maven2/")
+            val snapshotsRepoUrl = uri("https://oss.sonatype.org/content/repositories/snapshots")
+            url = if (version.toString().endsWith("SNAPSHOT")) snapshotsRepoUrl else releasesRepoUrl
+        }
+    }
+}
+
+signing {
+    useGpgCmd()
+    sign(configurations.archives.get())
+    sign(publishing.publications["mavenJava"])
+}
+
+tasks.javadoc {
+    if (JavaVersion.current().isJava9Compatible) {
+        (options as StandardJavadocDocletOptions).addBooleanOption("html5", true)
+    }
+}
+
+val testName: String by project
+
+tasks.register("printProps") {
+    doLast {
+        println(testName)
     }
 }

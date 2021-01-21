@@ -141,7 +141,7 @@ public class SpecNPMPackageGenerator {
     NPMPackageGenerator npm = new NPMPackageGenerator(Utilities.path(folder, "hl7.fhir.r5.core.tgz"), "http://hl7.org/fhir", url, PackageType.CORE, ig, genDate, true);
     
     ByteArrayOutputStream bs = new ByteArrayOutputStream();
-    new JsonParser().setOutputStyle(OutputStyle.NORMAL).compose(bs, ig);
+    new org.hl7.fhir.r5.formats.JsonParser().setOutputStyle(OutputStyle.NORMAL).compose(bs, ig);
 //    npm.addFile(Category.RESOURCE, "ig-r4.json", bs.toByteArray());
     addConvertedIg(npm, ig, version.toCode());
     for (ResourceEntry e : reslist) {
@@ -175,7 +175,7 @@ public class SpecNPMPackageGenerator {
 
     npm = new NPMPackageGenerator(Utilities.path(folder, "hl7.fhir.r5.corexml.tgz"), "http://hl7.org/fhir", url, PackageType.CORE, ig, genDate, true);
     bs = new ByteArrayOutputStream();
-    new XmlParser().setOutputStyle(OutputStyle.NORMAL).compose(bs, ig);
+    new org.hl7.fhir.r5.formats.XmlParser().setOutputStyle(OutputStyle.NORMAL).compose(bs, ig);
     npm.addFile(Category.RESOURCE, "ig-r4.json", bs.toByteArray());
     addConvertedIgX(npm, ig, version.toCode());
     for (ResourceEntry e : reslist) {
@@ -309,7 +309,7 @@ public class SpecNPMPackageGenerator {
   }
 
   private List<ResourceEntry> makeResourceList(Map<String, byte[]> files, String version) throws FHIRFormatError, IOException {
-    List<ResourceEntry> res = new ArrayList<ResourceEntry>();
+    List<ResourceEntry> res = new ArrayList<SpecNPMPackageGenerator.ResourceEntry>();
     if (VersionUtilities.isR5Ver(version))
       makeResourceList5(files, version, res);
     else if (VersionUtilities.isR4Ver(version))
@@ -326,14 +326,14 @@ public class SpecNPMPackageGenerator {
   private List<ResourceEntry> makeResourceList4(Map<String, byte[]> files, String version, List<ResourceEntry> res) throws FHIRFormatError, IOException {
     for (String k : files.keySet()) {
       if (k.endsWith(".xml")) {
-        Bundle b = (Bundle) new XmlParser().parse(files.get(k));
-        for (Bundle.BundleEntryComponent be : b.getEntry()) {
+        Bundle b = (Bundle) new org.hl7.fhir.r5.formats.XmlParser().parse(files.get(k));
+        for (org.hl7.fhir.r5.model.Bundle.BundleEntryComponent be : b.getEntry()) {
           if (be.hasResource()) {
             ResourceEntry e = new ResourceEntry();
             e.type = be.getResource().fhirType();
             e.id = be.getResource().getId();
-            e.json = new JsonParser().composeBytes(be.getResource());
-            e.xml = new XmlParser().composeBytes(be.getResource());
+            e.json = new org.hl7.fhir.r5.formats.JsonParser().composeBytes(be.getResource());
+            e.xml = new org.hl7.fhir.r5.formats.XmlParser().composeBytes(be.getResource());
             e.conf = true;
             if (be.getResource() instanceof org.hl7.fhir.r5.model.CanonicalResource)
               e.canonical = ((org.hl7.fhir.r5.model.CanonicalResource) be.getResource()).getUrl();
@@ -348,14 +348,14 @@ public class SpecNPMPackageGenerator {
   private List<ResourceEntry> makeResourceList5(Map<String, byte[]> files, String version, List<ResourceEntry> res) throws FHIRFormatError, IOException {
     for (String k : files.keySet()) {
       if (k.endsWith(".xml")) {
-        Bundle b = (Bundle) new XmlParser().parse(files.get(k));
-        for (Bundle.BundleEntryComponent be : b.getEntry()) {
+        Bundle b = (Bundle) new org.hl7.fhir.r5.formats.XmlParser().parse(files.get(k));
+        for (org.hl7.fhir.r5.model.Bundle.BundleEntryComponent be : b.getEntry()) {
           if (be.hasResource()) {
             ResourceEntry e = new ResourceEntry();
             e.type = be.getResource().fhirType();
             e.id = be.getResource().getId();
-            e.json = new JsonParser().composeBytes(be.getResource());
-            e.xml = new XmlParser().composeBytes(be.getResource());
+            e.json = new org.hl7.fhir.r5.formats.JsonParser().composeBytes(be.getResource());
+            e.xml = new org.hl7.fhir.r5.formats.XmlParser().composeBytes(be.getResource());
             e.conf = true;
             if (be.getResource() instanceof org.hl7.fhir.r5.model.CanonicalResource)
               e.canonical = ((org.hl7.fhir.r5.model.CanonicalResource) be.getResource()).getUrl();
@@ -428,8 +428,8 @@ public class SpecNPMPackageGenerator {
           e.json = new org.hl7.fhir.dstu2.formats.JsonParser().composeBytes(r);
           e.xml = new org.hl7.fhir.dstu2.formats.XmlParser().composeBytes(r);
           e.conf = true;
-          if (r instanceof StructureDefinition)
-            e.canonical = ((StructureDefinition) r).getUrl();
+          if (r instanceof org.hl7.fhir.dstu2.model.StructureDefinition)
+            e.canonical = ((org.hl7.fhir.dstu2.model.StructureDefinition) r).getUrl();
           res.add(e);
         } else {
           org.hl7.fhir.dstu2.model.Bundle b = (org.hl7.fhir.dstu2.model.Bundle) r;
@@ -442,8 +442,8 @@ public class SpecNPMPackageGenerator {
               e.conf = true;
               if (be.getResource() instanceof org.hl7.fhir.dstu2.model.ValueSet)
                 e.canonical = ((org.hl7.fhir.dstu2.model.ValueSet) be.getResource()).getUrl();
-              if (be.getResource() instanceof StructureDefinition)
-                e.canonical = ((StructureDefinition) be.getResource()).getUrl();
+              if (be.getResource() instanceof org.hl7.fhir.dstu2.model.StructureDefinition)
+                e.canonical = ((org.hl7.fhir.dstu2.model.StructureDefinition) be.getResource()).getUrl();
               if (be.getResource() instanceof org.hl7.fhir.dstu2.model.ConceptMap)
                 e.canonical = ((org.hl7.fhir.dstu2.model.ConceptMap) be.getResource()).getUrl();
               res.add(e);

@@ -295,6 +295,8 @@ public class Definitions {
 			root = resources.get(name);
     if (root == null)
       root = baseResources.get(name);
+    if (root == null)
+      root = resourceTemplates.get(name);
 		if (root == null)
 			throw new FHIRException("unable to find resource '" + name+"'");
 		return root;
@@ -386,7 +388,7 @@ public class Definitions {
   private List<String> vsFixups = new ArrayList<String>();
   private List<NamingSystem> namingSystems = new ArrayList<NamingSystem>();
   private Set<String> structuralPages = new HashSet<String>();
-  private Map<String, PageInformation> pageInfo = new HashMap<String, PageInformation>();
+  private Map<String, PageInformation> pageInfo = new HashMap<String, Definitions.PageInformation>();
   private Map<String, ConstraintStructure> profileIds = new HashMap<String, ConstraintStructure>();
   private boolean loaded;
   private int valueSetCount;
@@ -588,6 +590,12 @@ public class Definitions {
   }
 
   public ElementDefn getElementByPath(String[] parts, String purpose, boolean followType) throws Exception {
+    if (!hasType(parts[0]) && !hasResource(parts[0])) {
+      return null;
+    }
+    if (hasPrimitiveType(parts[0])) {
+      return null;
+    }
     ElementDefn e;
     try {
       e = getElementDefn(parts[0]);

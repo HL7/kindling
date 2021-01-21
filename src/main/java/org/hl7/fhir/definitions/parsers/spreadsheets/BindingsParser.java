@@ -1,4 +1,4 @@
-package org.hl7.fhir.definitions.parsers;
+package org.hl7.fhir.definitions.parsers.spreadsheets;
 /*
 Copyright (c) 2011+, HL7, Inc
 All rights reserved.
@@ -38,6 +38,9 @@ import java.util.List;
 import org.apache.commons.io.IOUtils;
 import org.hl7.fhir.definitions.model.BindingSpecification;
 import org.hl7.fhir.definitions.model.BindingSpecification.BindingMethod;
+import org.hl7.fhir.definitions.parsers.CodeListToValueSetParser;
+import org.hl7.fhir.definitions.parsers.CodeSystemConvertor;
+import org.hl7.fhir.definitions.parsers.OIDRegistry;
 import org.hl7.fhir.exceptions.FHIRFormatError;
 import org.hl7.fhir.r5.context.CanonicalResourceManager;
 import org.hl7.fhir.r5.context.IWorkerContext.PackageVersion;
@@ -119,7 +122,7 @@ public class BindingsParser {
         cd.setValueSet(new ValueSet());
         cd.getValueSet().setId(ref.substring(1));
         cd.getValueSet().setUrl("http://hl7.org/fhir/ValueSet/"+ref.substring(1));
-        cd.getValueSet().setVersion(Constants.VERSION);
+        cd.getValueSet().setVersion(version);
         
         if (!Utilities.noString(sheet.getColumn(row, "Committee"))) {
           cd.getValueSet().addExtension().setUrl(ToolingExtensions.EXT_WORKGROUP).setValue(new CodeType(sheet.getColumn(row, "Committee").toLowerCase()));
@@ -154,7 +157,7 @@ public class BindingsParser {
         cd.setValueSet(new ValueSet());
         cd.getValueSet().setId(ref.substring(1));
         cd.getValueSet().setUrl("http://hl7.org/fhir/ValueSet/"+ref.substring(1));
-        cd.getValueSet().setVersion(Constants.VERSION);
+        cd.getValueSet().setVersion(version);
         cd.getValueSet().setName(cd.getName());
         
         // do nothing more: this will get filled out once all the resources are loaded
@@ -183,7 +186,9 @@ public class BindingsParser {
       cd.setEmail(sheet.getColumn(row, "Email"));
       cd.setV2Map(sheet.getColumn(row, "v2"));
       cd.setV3Map(sheet.getColumn(row, "v3"));
-
+      if (cd.getBinding() == BindingMethod.Unbound) {
+        cd.setStrength(BindingStrength.EXAMPLE);
+      }
       results.add(cd);
     }
   }
@@ -244,16 +249,16 @@ public class BindingsParser {
     }
   }
 
-  public static BindingMethod readBinding(String s, String context) throws Exception {
+  public static BindingSpecification.BindingMethod readBinding(String s, String context) throws Exception {
     s = s.toLowerCase();
     if (s == null || "".equals(s) || "unbound".equals(s))
-      return BindingMethod.Unbound;
+      return BindingSpecification.BindingMethod.Unbound;
     if (s.equals("code list"))
-      return BindingMethod.CodeList;
+      return BindingSpecification.BindingMethod.CodeList;
     if (s.equals("special"))
-      return BindingMethod.Special;
+      return BindingSpecification.BindingMethod.Special;
     if (s.equals("value set"))
-      return BindingMethod.ValueSet;
+      return BindingSpecification.BindingMethod.ValueSet;
     throw new Exception("Unknown Binding: "+s+" 2 "+context);
   }
 

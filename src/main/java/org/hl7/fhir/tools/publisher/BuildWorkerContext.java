@@ -339,7 +339,7 @@ public class BuildWorkerContext extends BaseWorkerContext implements IWorkerCont
     if (!triedServer || serverOk) {
       triedServer = true;
       HttpClient httpclient = new DefaultHttpClient();
-      HttpGet httpget = new HttpGet("http://tx.fhir.org/r4/snomed/tool/"+SNOMED_EDITION+"/"+URLEncoder.encode(code, "UTF-8").replace("+", "%20")); 
+      HttpGet httpget = new HttpGet("http://tx.fhir.org/snomed/tool/"+SNOMED_EDITION+"/"+URLEncoder.encode(code, "UTF-8").replace("+", "%20")); 
 //      HttpGet httpget = new HttpGet("http://local.fhir.org:960/r4/snomed/tool/"+SNOMED_EDITION+"/"+URLEncoder.encode(code, "UTF-8").replace("+", "%20")); // don't like the url encoded this way
       HttpResponse response = httpclient.execute(httpget);
       HttpEntity entity = response.getEntity();
@@ -820,10 +820,10 @@ public class BuildWorkerContext extends BaseWorkerContext implements IWorkerCont
       pu.setThrowException(false);
       pu.sortDifferential(sd, p, p.getUrl(), errors, true);
       for (String err : errors)
-        msgs.add(new ValidationMessage(Source.ProfileValidator, IssueType.EXCEPTION, p.getUserString("path"), "Error sorting Differential: "+err, IssueSeverity.ERROR));
+        msgs.add(new ValidationMessage(Source.ProfileValidator, IssueType.EXCEPTION, p.getUserString("path"), "Error sorting Differential: "+err, ValidationMessage.IssueSeverity.ERROR));
       pu.generateSnapshot(sd, p, p.getUrl(), Utilities.extractBaseUrl(sd.getUserString("path")), p.getName());
       for (ValidationMessage msg : msgs) {
-        if ((msg.getLevel() == IssueSeverity.ERROR) || msg.getLevel() == IssueSeverity.FATAL)
+        if ((msg.getLevel() == ValidationMessage.IssueSeverity.ERROR) || msg.getLevel() == ValidationMessage.IssueSeverity.FATAL)
           throw new DefinitionException("Profile "+p.getName()+" ("+p.getUrl()+"). Error generating snapshot: "+msg.getMessage());
       }
       if (!p.hasSnapshot())

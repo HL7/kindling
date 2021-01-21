@@ -51,7 +51,7 @@ public class BreadCrumbManager {
     private String resource;
     private String icon;
     
-    private List<Node> children = new ArrayList<Node>();
+    private List<Node> children = new ArrayList<BreadCrumbManager.Node>();
     
     public String getTitle() {
       return title;
@@ -123,8 +123,8 @@ public class BreadCrumbManager {
  
   private Page home;
   private Map<String, String> map = new HashMap<String, String>();
-  private Map<String, Page> pages = new HashMap<String, Page>();
-  private Map<String, Pages> pagesMap = new HashMap<String, Pages>();
+  private Map<String, Page> pages = new HashMap<String, BreadCrumbManager.Page>();
+  private Map<String, Pages> pagesMap = new HashMap<String, BreadCrumbManager.Pages>();
   
   public void parse(String filename) throws Exception {
     DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();

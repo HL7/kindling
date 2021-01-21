@@ -27,7 +27,6 @@ public class Operation {
     public boolean isResponse() {
       return response;
     }
-   
   }
 
   private String name;
@@ -42,8 +41,8 @@ public class Operation {
   private String footer2;
   private Boolean idempotent;
   private StandardsStatus standardsStatus; // defaults to container value
-  private List<OperationExample> examples = new ArrayList<OperationExample>();
-  private List<OperationExample> examples2 = new ArrayList<OperationExample>();
+  private List<OperationExample> examples = new ArrayList<Operation.OperationExample>();
+  private List<OperationExample> examples2 = new ArrayList<Operation.OperationExample>();
   private OperationDefinition resource;
   private String fmm;
 

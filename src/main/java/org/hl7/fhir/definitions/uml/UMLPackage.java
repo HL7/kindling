@@ -63,7 +63,7 @@ public class UMLPackage extends UMLEntity {
   }
   
   /** 
-   * returns a list of of class for a parent (or null), sorted by name (except that DataType & PrimitiveType come first)
+   * returns a list of of class for a parent (or null), sorted by name (except that DataType and PrimitiveType come first)
    * 
    * @param parent
    * @return

@@ -147,7 +147,7 @@ public class SvgGenerator extends BaseGenerator {
 
   private Map<ElementDefn, ClassItem> classes = new HashMap<ElementDefn, ClassItem>();
   private Map<String, ElementDefn> fakes = new HashMap<String, ElementDefn>();
-  private List<Link> links = new ArrayList<Link>();
+  private List<Link> links = new ArrayList<SvgGenerator.Link>();  
   private double minx = 0;
   private double miny = 0;
   private boolean attributes = true;
@@ -157,14 +157,16 @@ public class SvgGenerator extends BaseGenerator {
   private Map<String, PointSpec> layout;
   private boolean makeTargets;
   private boolean isDatatypes;
+  private String version;
 
-  public SvgGenerator(PageProcessor page, String prefix, Map<String, PointSpec> layout, boolean makeTargets, boolean isDatatypes) {
+  public SvgGenerator(PageProcessor page, String prefix, Map<String, PointSpec> layout, boolean makeTargets, boolean isDatatypes, String version) {
     this.definitions = page.getDefinitions();
     this.page = page;
     this.prefix = prefix;
     this.layout = layout;
     this.makeTargets = makeTargets;
     this.isDatatypes = isDatatypes;
+    this.version = version;
   }
 
   
@@ -747,7 +749,7 @@ public class SvgGenerator extends BaseGenerator {
         if (cd instanceof DefinedStringPattern) {
           links.add(new Link(classes.get(fakes.get(((DefinedStringPattern) cd).getBase())), drawClass(xml, fake, false, null, true, null, cd, StandardsStatus.NORMATIVE), LinkType.SPECIALIZATION, null, null, PointKind.unknown, null, null));        
         } else {
-          ClassItem parent = classes.get(definitions.getElementDefn("PrimitiveType"));
+          ClassItem parent = classes.get(definitions.getElementDefn(version.startsWith("4.0") ? "Element" : "PrimitiveType"));
           if (parent == null) {
             drawClass(xml, fake, false, null, true, null, cd, StandardsStatus.NORMATIVE); 
           } else {
@@ -757,7 +759,7 @@ public class SvgGenerator extends BaseGenerator {
       } else if ("xhtml".equals(cn)) {
         DefinedCode cd = new DefinedCode("xhtml", "XHTML for resource narrative", null);
         ElementDefn fake = fakes.get(cn);
-        ClassItem parent = classes.get(definitions.getElementDefn("DataType"));
+        ClassItem parent = classes.get(definitions.getElementDefn(version.startsWith("4.0") ? "Element" :"DataType"));
         if (parent == null) {
           drawClass(xml, fake, false, null, true, null, cd, StandardsStatus.NORMATIVE);
         } else {
@@ -960,8 +962,11 @@ public class SvgGenerator extends BaseGenerator {
       return "datatypes-definitions.html#";
     if (definitions.getBaseResources().containsKey(root))
       return root.toLowerCase()+"-definitions.html#";
-    else
+    else if (root.equals("Type")) {
+      return "datatypes-definitions.html#";
+    } else {
       throw new Exception(root+" not handled yet");
+    }
   } 
 
   private ClassItem getItemForPath(ResourceDefn resource, String path) throws Exception {
@@ -1148,16 +1153,20 @@ public class SvgGenerator extends BaseGenerator {
           name = name.substring(0, 29)+"...";
         String link = getBindingLink(prefix, e);
         if (b.getStrength() == BindingStrength.EXAMPLE) {
-          xml.attribute("xlink:href", link);
-          xml.attribute("id", "n"+(++nc));
-          xml.enter("a");
-          xml.attribute("id", "n"+(++nc));
+          if (link != null) {
+            xml.attribute("xlink:href", link);
+            xml.attribute("id", "n"+(++nc));
+            xml.enter("a");
+            xml.attribute("id", "n"+(++nc));
+          }
           xml.element("title", b.getDefinition()+" (Strength=Example)");
           for (String p : parts(name)) {
             ls.check(xml, left, top, p.length(), link);
             xml.text(ls.see(p));
           }
-          xml.exit("a");
+          if (link != null) {
+            xml.exit("a");
+          }
           xml.text("??");
         } else if (b.getStrength() == BindingStrength.PREFERRED) {
           xml.attribute("xlink:href", link);

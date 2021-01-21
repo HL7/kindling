@@ -222,7 +222,7 @@ public class ImplementationGuideDefn {
   }
 
   private List<LinkTriple> determinePath(String n, String type, String crumbTitle) throws Exception {
-    List<LinkTriple> res = new ArrayList<LinkTriple>();
+    List<LinkTriple> res = new ArrayList<ImplementationGuideDefn.LinkTriple>();
     res.add(new LinkTriple(ig.getDefinition().getPage().getNameUrlType().getValue(), ig.getId().toUpperCase(), ig.getName()));
 
     if (type.equals("valueSet") && hasVSRegistry()) {
@@ -418,7 +418,7 @@ public class ImplementationGuideDefn {
   }
 
   public List<ImplementationGuideDefinitionPageComponent> getSpecialPages() {
-    List<ImplementationGuideDefinitionPageComponent> res = new ArrayList<ImplementationGuideDefinitionPageComponent>();
+    List<ImplementationGuideDefinitionPageComponent> res = new ArrayList<ImplementationGuide.ImplementationGuideDefinitionPageComponent>();
     if (ig != null)
       listSpecialPages(res, ig.getDefinition().getPage().getPage());
     return res;

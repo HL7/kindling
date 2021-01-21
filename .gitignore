@@ -122,6 +122,7 @@ out/
 
 # mpeltonen/sbt-idea plugin
 .idea_modules/
+.idea/modules/
 
 # JIRA plugin
 atlassian-ide-plugin.xml
@@ -228,4 +229,9 @@ gradle-app.setting
 ### Gradle Patch ###
 **/build/
 
+caches/
+daemon/
+native/
+notifications/
+.idea/
 # End of https://www.toptal.com/developers/gitignore/api/java,intellij,eclipse,gradle,kotlin

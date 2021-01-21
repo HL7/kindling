@@ -218,11 +218,11 @@ public class ExampleAdorner implements XhtmlGeneratorAdorner {
   @Override
   public XhtmlGeneratorAdornerState getAttributeMarkup(XhtmlGenerator xhtmlGenerator, XhtmlGeneratorAdornerState state, Element node, String nodeName, String textContent) throws Exception {
     ExampleAdornerState s = (ExampleAdornerState) state;
-    if (s != null && s.getState() == State.Reference && node.getNodeName().equals("type") && nodeName.equals("value"))
+    if (s != null && s.getState() == ExampleAdorner.State.Reference && node.getNodeName().equals("type") && nodeName.equals("value")) 
       return new ExampleAdornerState(State.Unknown, s.getPath(), null, state.getPrefix(), state.getSuffix());
-    else if (s != null && s.getState() == State.Reference && node.getNodeName().equals("reference") && nodeName.equals("value"))
+    else if (s != null && s.getState() == ExampleAdorner.State.Reference && node.getNodeName().equals("reference") && nodeName.equals("value")) 
       return new ExampleAdornerState(State.Unknown, s.getPath(), null, state.getPrefix(), state.getSuffix());
-    else if (s != null && s.getState() == State.Reference && node.getNodeName().equals("url") && nodeName.equals("value"))
+    else if (s != null && s.getState() == ExampleAdorner.State.Reference && node.getNodeName().equals("url") && nodeName.equals("value")) 
       return new ExampleAdornerState(State.Unknown, s.getPath(), null, state.getPrefix(), state.getSuffix());
     else
       return new ExampleAdornerState(State.Unknown, s.getPath(), null, "", "");

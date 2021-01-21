@@ -90,7 +90,7 @@ public class ResourceValidator extends BaseValidator {
   }
   
   public static class Usage {
-    public Set<SearchType> usage = new HashSet<SearchType>();
+    public Set<SearchParameterDefn.SearchType> usage = new HashSet<SearchParameterDefn.SearchType>();
   }
 
   public static class UsageT {
@@ -357,7 +357,7 @@ public class ResourceValidator extends BaseValidator {
   }
 
   public void checkSearchParams(List<ValidationMessage> errors, ResourceDefn rd) {
-    for (SearchParameterDefn p : rd.getSearchParams().values()) {
+    for (org.hl7.fhir.definitions.model.SearchParameterDefn p : rd.getSearchParams().values()) {
       if (!usages.containsKey(p.getCode()))
         usages.put(p.getCode(), new Usage());
       usages.get(p.getCode()).usage.add(p.getType());
@@ -716,7 +716,7 @@ public class ResourceValidator extends BaseValidator {
     //    hint(errors, IssueType.BUSINESSRULE, path, !e.isModifier() || e.getMinCardinality() > 0 || e.getDefaultValue()!=null, "if an element is modifier = true, minimum cardinality should be > 0 if no default is specified");
     rule(errors, IssueType.STRUCTURE, path, !e.getDefinition().toLowerCase().startsWith("this is"), "Definition should not start with 'this is'");
     rule(errors, IssueType.STRUCTURE, path, e.getDefinition().endsWith(".") || e.getDefinition().endsWith("?") , "Definition should end with '.' or '?', but is '"+e.getDefinition()+"'");
-    if (e.usesType("string") && e.usesType("CodeableConcept"))
+    if ((e.usesType("string") && e.usesType("CodeableConcept")) && !e.usesType("base64Binary")) // if it uses base64binary, then it's a wide set of types, and no comment is needed
       rule(errors, IssueType.STRUCTURE, path, e.hasComments() && e.getComments().contains("string") && e.getComments().contains("CodeableConcept"), "Element type cannot have both string and CodeableConcept unless the difference between their usage is explained in the comments");
     warning(errors, IssueType.BUSINESSRULE, path, Utilities.noString(e.getTodo()), "Element has a todo associated with it ("+e.getTodo()+")");
     
@@ -774,7 +774,7 @@ public class ResourceValidator extends BaseValidator {
 		  rule(errors, IssueType.STRUCTURE, path, e.hasBinding(), "An element of type code must have a binding");
 		}
     if ((e.usesType("Coding") && !parentName.equals("CodeableConcept")) || (e.usesType("CodeableConcept") && !(e.usesType("Reference") || e.usesType("Quantity") || e.usesType("SimpleQuantity")))) {
-      hint(errors, IssueType.STRUCTURE, path, e.hasBinding(), "An element of type CodeableConcept or Coding must have a binding");
+      hint(errors, IssueType.STRUCTURE, path, e.isNoBindingAllowed() || e.hasBinding(), "An element of type CodeableConcept or Coding must have a binding");
     }
     if (e.getTypes().size() > 1) {
       Set<String> types = new HashSet<String>();
@@ -1155,9 +1155,10 @@ public class ResourceValidator extends BaseValidator {
       if (path.toLowerCase().endsWith("status")) {
         if (rule(errors, IssueType.STRUCTURE, path, definitions.getStatusCodes().containsKey(path), "Status element not registered in status-codes.xml")) {
 //          rule(errors, IssueType.STRUCTURE, path, e.isModifier(), "Status elements that map to status-codes should be labelled as a modifier");
+          ArrayList<String> list = definitions.getStatusCodes().get(path);
           for (DefinedCode c : ac) {
             boolean ok = false;
-            for (String s : definitions.getStatusCodes().get(path)) {
+            for (String s : list) {
               String[] parts = s.split("\\,");
               for (String p : parts)
                 if (p.trim().equals(c.getCode()))
@@ -1165,17 +1166,19 @@ public class ResourceValidator extends BaseValidator {
             }
             rule(errors, IssueType.STRUCTURE, path, ok, "Status element code \""+c.getCode()+"\" not found in status-codes.xml");
           }
-          for (String s : definitions.getStatusCodes().get(path)) {
+          for (String s : list) {
             String[] parts = s.split("\\,");
             for (String p : parts) {
+              List<String> cl = new ArrayList<>();
               if (!Utilities.noString(p)) {
                 boolean ok = false;
                 for (DefinedCode c : ac) {
+                  cl.add(c.getCode());
                   if (p.trim().equals(c.getCode()))
                     ok = true;
                 }
                 if (!ok)
-                  rule(errors, IssueType.STRUCTURE, path, ok, "Status element code \""+p+"\" found in status-codes.xml but has no matching code");
+                  rule(errors, IssueType.STRUCTURE, path, ok, "Status element code \""+p+"\" found for "+path+" in status-codes.xml but has no matching code in the resource (codes = "+cl+")");
               }            
             }
           }
@@ -1362,40 +1365,44 @@ public class ResourceValidator extends BaseValidator {
   public List<ValidationMessage> check(Compartment cmp) {
     List<ValidationMessage> errors = new ArrayList<ValidationMessage>();
     for (ResourceDefn rd : cmp.getResources().keySet()) {
-      String[] links = cmp.getResources().get(rd).split("\\|");
-      for (String l : links) {
-        String s = l.trim();
-        if (!Utilities.noString(s) && !s.equals("{def}")) {
-          SearchParameterDefn spd = rd.getSearchParams().get(s);
-          if (rule(errors, IssueType.STRUCTURE, "compartment."+cmp.getName()+"."+rd.getName()+"."+s, spd != null, "Search Parameter '"+s+"' not found")) { 
-            if (rule(errors, IssueType.STRUCTURE, "compartment."+cmp.getName()+"."+rd.getName()+"."+s, spd.getType() == SearchType.reference, "Search Parameter '"+s+"' not a reference")) {
-              boolean ok = false;
-              for (String p : spd.getPaths()) {
-                ElementDefn ed;
-                try {
-                  ed = definitions.getElementByPath(p.split("\\."), "matching compartment", true);
-                } catch (Exception e) {
-                  rule(errors, IssueType.STRUCTURE, "compartment."+cmp.getName()+"."+rd.getName()+"."+s, ok, "Illegal path "+p);
-                  ed = null;
-                }
-                if (ed != null) {
-                  for (TypeRef tr : ed.getTypes()) {
-                    for (String tp : tr.getParams()) {
-                      if (definitions.hasLogicalModel(tp)) {
-                        ok = ok || definitions.getLogicalModel(tp).getImplementations().contains(cmp.getTitle());
-                      } else
-                        ok = ok || tp.equals(cmp.getTitle()) || tp.equals("Any");
-                    }
+      checkResCmp(cmp, errors, rd);
+    }
+    return errors;
+  }
+
+  public void checkResCmp(Compartment cmp, List<ValidationMessage> errors, ResourceDefn rd) {
+    String[] links = cmp.getResources().get(rd).split("\\|");
+    for (String l : links) {
+      String s = l.trim();
+      if (!Utilities.noString(s) && !s.equals("{def}")) {
+        SearchParameterDefn spd = rd.getSearchParams().get(s);
+        if (rule(errors, IssueType.STRUCTURE, "compartment."+cmp.getName()+"."+rd.getName()+"."+s, spd != null, "Search Parameter '"+s+"' not found")) { 
+          if (rule(errors, IssueType.STRUCTURE, "compartment."+cmp.getName()+"."+rd.getName()+"."+s, spd.getType() == SearchType.reference, "Search Parameter '"+s+"' not a reference")) {
+            boolean ok = false;
+            for (String p : spd.getPaths()) {
+              ElementDefn ed;
+              try {
+                ed = definitions.getElementByPath(p.split("\\."), "matching compartment", true);
+              } catch (Exception e) {
+                rule(errors, IssueType.STRUCTURE, "compartment."+cmp.getName()+"."+rd.getName()+"."+s, ok, "Illegal path "+p);
+                ed = null;
+              }
+              if (ed != null) {
+                for (TypeRef tr : ed.getTypes()) {
+                  for (String tp : tr.getParams()) {
+                    if (definitions.hasLogicalModel(tp)) {
+                      ok = ok || definitions.getLogicalModel(tp).getImplementations().contains(cmp.getTitle());
+                    } else
+                      ok = ok || tp.equals(cmp.getTitle()) || tp.equals("Any");
                   }
                 }
               }
-              rule(errors, IssueType.STRUCTURE, "compartment."+cmp.getName()+"."+rd.getName()+"."+s, ok, "No target match for "+cmp.getTitle());
             }
+            rule(errors, IssueType.STRUCTURE, "compartment."+cmp.getName()+"."+rd.getName()+"."+s, ok, "No target match for "+cmp.getTitle());
           }
         }
       }
     }
-    return errors;
   }
 
   public void resolvePatterns() throws FHIRException {

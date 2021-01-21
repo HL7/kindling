@@ -49,12 +49,14 @@ public class ValueSetValidator extends BaseValidator {
             name.add(wp);
         }
       }
-      for (String w : stripPunctuation(splitByCamelCase(vs.getDescription()), true).split(" ")) {
-        String wl = w.toLowerCase();
-        if (!Utilities.noString(w) && !grammarWord(wl) && !nullVSWord(wl)) {
-          String wp = Utilities.pluralizeMe(wl);
-          if (!description.contains(wp))
-            description.add(wp);
+      if (vs.hasDescription()) {
+        for (String w : stripPunctuation(splitByCamelCase(vs.getDescription()), true).split(" ")) {
+          String wl = w.toLowerCase();
+          if (!Utilities.noString(w) && !grammarWord(wl) && !nullVSWord(wl)) {
+            String wp = Utilities.pluralizeMe(wl);
+            if (!description.contains(wp))
+              description.add(wp);
+          }
         }
       }
     }
@@ -63,7 +65,7 @@ public class ValueSetValidator extends BaseValidator {
   private BuildWorkerContext context;
   private List<String> fixups;
   private Set<String> handled = new HashSet<String>();
-  private List<VSDuplicateList> duplicateList = new ArrayList<VSDuplicateList>();
+  private List<VSDuplicateList> duplicateList = new ArrayList<ValueSetValidator.VSDuplicateList>();
   private Map<String, CanonicalResource> oids = new HashMap<String, CanonicalResource>();
   private Set<String> styleExemptions;
   private Set<String> valueSets = new HashSet<String>();
@@ -232,21 +234,7 @@ public class ValueSetValidator extends BaseValidator {
       int i = 0;
       for (ConceptSetComponent inc : vs.getCompose().getInclude()) {
         i++;
-        if (inc.hasSystem() && !context.hasResource(CodeSystem.class, inc.getSystem()) && !isContainedSystem(vs, inc.getSystem()))
-          rule(errors, IssueType.BUSINESSRULE, getWg(vs)+":ValueSet["+vs.getId()+"].compose.include["+Integer.toString(i)+"]", isKnownCodeSystem(inc.getSystem()), "The system '"+inc.getSystem()+"' is not valid");
-        
-        if (inc.hasSystem() && canValidate(inc.getSystem())) {
-          for (ConceptReferenceComponent cc : inc.getConcept()) {
-            if (inc.getSystem().equals("http://dicom.nema.org/resources/ontology/DCM"))
-              warning(errors, IssueType.BUSINESSRULE, getWg(vs)+":ValueSet["+vs.getId()+"].compose.include["+Integer.toString(i)+"]", isValidCode(cc.getCode(), inc.getSystem()), 
-                  "The code '"+cc.getCode()+"' is not valid in the system "+inc.getSystem()+" (1)",
-                  "<a href=\""+vs.getUserString("path")+"\">Value set "+nameForErrors+" ("+vs.getName()+")</a>: The code '"+cc.getCode()+"' is not valid in the system "+inc.getSystem()+" (1a)");             
-            else if (!isValidCode(cc.getCode(), inc.getSystem()))
-              rule(errors, IssueType.BUSINESSRULE, getWg(vs)+":ValueSet["+vs.getId()+"].compose.include["+Integer.toString(i)+"]", false, 
-                "The code '"+cc.getCode()+"' is not valid in the system "+inc.getSystem()+" (2)");
-            
-          }
-        }
+        checkValueSetCode(errors, nameForErrors, vs, i, inc);
       }
     }
     int warnings = 0;
@@ -255,6 +243,24 @@ public class ValueSetValidator extends BaseValidator {
         warnings++;
     }
     vs.setUserData("warnings", o_warnings - warnings);
+  }
+
+  public void checkValueSetCode(List<ValidationMessage> errors, String nameForErrors, ValueSet vs, int i, ConceptSetComponent inc) {
+    if (inc.hasSystem() && !context.hasResource(CodeSystem.class, inc.getSystem()) && !isContainedSystem(vs, inc.getSystem()))
+      rule(errors, IssueType.BUSINESSRULE, getWg(vs)+":ValueSet["+vs.getId()+"].compose.include["+Integer.toString(i)+"]", isKnownCodeSystem(inc.getSystem()), "The system '"+inc.getSystem()+"' is not valid");
+    
+    if (inc.hasSystem() && canValidate(inc.getSystem())) {
+      for (ConceptReferenceComponent cc : inc.getConcept()) {
+        if (inc.getSystem().equals("http://dicom.nema.org/resources/ontology/DCM"))
+          warning(errors, IssueType.BUSINESSRULE, getWg(vs)+":ValueSet["+vs.getId()+"].compose.include["+Integer.toString(i)+"]", isValidCode(cc.getCode(), inc.getSystem()), 
+              "The code '"+cc.getCode()+"' is not valid in the system "+inc.getSystem()+" (1)",
+              "<a href=\""+vs.getUserString("path")+"\">Value set "+nameForErrors+" ("+vs.getName()+")</a>: The code '"+cc.getCode()+"' is not valid in the system "+inc.getSystem()+" (1a)");             
+        else if (!isValidCode(cc.getCode(), inc.getSystem()))
+          rule(errors, IssueType.BUSINESSRULE, getWg(vs)+":ValueSet["+vs.getId()+"].compose.include["+Integer.toString(i)+"]", false, 
+            "The code '"+cc.getCode()+"' is not valid in the system "+inc.getSystem()+" (2)");
+        
+      }
+    }
   }
 
   private boolean isContainedSystem(ValueSet vs, String system) {
@@ -372,7 +378,7 @@ public class ValueSetValidator extends BaseValidator {
        )
       return true;
     
-    return false; // todo: change this back to false
+    return false; 
   }
 
   private boolean isValidCode(String code, String system) {
