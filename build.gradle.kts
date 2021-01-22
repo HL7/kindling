@@ -230,18 +230,13 @@ signing {
     useGpgCmd()
     sign(configurations.archives.get())
     sign(publishing.publications["mavenJava"])
+    setRequired({
+        gradle.taskGraph.hasTask("publish")
+    })
 }
 
 tasks.javadoc {
     if (JavaVersion.current().isJava9Compatible) {
         (options as StandardJavadocDocletOptions).addBooleanOption("html5", true)
-    }
-}
-
-val testName: String by project
-
-tasks.register("printProps") {
-    doLast {
-        println(testName)
     }
 }
