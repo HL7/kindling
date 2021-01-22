@@ -228,8 +228,6 @@ publishing {
 
 signing {
     useGpgCmd()
-    sign(configurations.archives.get())
-    sign(publishing.publications["mavenJava"])
     setRequired({
         gradle.taskGraph.hasTask("publish")
     })
