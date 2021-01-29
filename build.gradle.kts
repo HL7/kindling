@@ -1,12 +1,12 @@
 plugins {
     java
-    `java-library`
     `maven-publish`
     signing
+    id("com.github.johnrengelman.shadow") version "6.1.0"
 }
 
-group = "org.hl7.fhir.tools.core"
-version = "1.0-SNAPSHOT"
+group = "org.hl7.fhir"
+version = "0.0.10-SNAPSHOT"
 
 java {
     withJavadocJar()
@@ -163,14 +163,8 @@ sourceSets {
 }
 
 java {
-    sourceCompatibility = JavaVersion.VERSION_11
-    targetCompatibility = JavaVersion.VERSION_11
-}
-
-tasks {
-    test {
-        testLogging.showExceptions = true
-    }
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
 }
 
 publishing {
@@ -231,6 +225,34 @@ signing {
     setRequired({
         gradle.taskGraph.hasTask("publish")
     })
+}
+
+tasks {
+    test {
+        testLogging.showExceptions = true
+    }
+}
+
+tasks {
+    named<com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar>("shadowJar") {
+        archiveBaseName.set("kindling")
+        archiveFileName.set("kindling-${project.version}.jar")
+        mergeServiceFiles()
+        manifest {
+            attributes(mapOf("Main-Class" to "org.hl7.fhir.tools.publisher.Publisher"))
+        }
+        isZip64 = true
+        doLast {
+            println(" group:: ${project.group}\n version:: ${project.version}")
+        }
+
+    }
+}
+
+tasks {
+    build {
+        dependsOn(shadowJar)
+    }
 }
 
 tasks.javadoc {

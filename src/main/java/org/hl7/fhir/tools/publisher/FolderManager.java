@@ -92,5 +92,25 @@ public class FolderManager {
   public String implDir(String name) {
     return rootDir+"implementations"+sl+name+sl;
   }
-  
+
+  @Override
+  public String toString() {
+    return "FolderManager{" +
+            "\nsl=" + sl +
+            ",\n srcDir='" + srcDir + '\'' +
+            ",\n templateDir='" + templateDir + '\'' +
+            ",\n sndBoxDir='" + sndBoxDir + '\'' +
+            ",\n imgDir='" + imgDir + '\'' +
+            ",\n xsdDir='" + xsdDir + '\'' +
+            ",\n dstDir='" + dstDir + '\'' +
+            ",\n umlDir='" + umlDir + '\'' +
+            ",\n rootDir='" + rootDir + '\'' +
+            ",\n termDir='" + termDir + '\'' +
+            ",\n dtDir='" + dtDir + '\'' +
+            ",\n tmpResDir='" + tmpResDir + '\'' +
+            ",\n tmpDir='" + tmpDir + '\'' +
+            ",\n javaDir='" + javaDir + '\'' +
+            ",\n archiveDir='" + archiveDir + '\'' +
+            '}';
+  }
 }

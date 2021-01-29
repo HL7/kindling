@@ -271,15 +271,6 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 
-/**
- * This is the entry point for the publication method for FHIR The general order
- * of publishing is Check that everything we expect to find is found Load the
- * page.getDefinitions() Produce the specification 1. reference implementations
- * 2. schemas 4. final specification Validate the XML
- *
- * @author Grahame
- *
- */
 public class Publisher implements URIResolver, SectionNumberer {
 
   public static final String CANONICAL_BASE = "http://build.fhir.org/";
@@ -405,7 +396,6 @@ public class Publisher implements URIResolver, SectionNumberer {
 
   private SourceParser prsr;
   private PageProcessor page;
-  // private BookMaker book;
 
   private boolean isGenerate;
   private boolean noArchive;
@@ -447,8 +437,6 @@ public class Publisher implements URIResolver, SectionNumberer {
   private String validateId;
 
   public static void main(String[] args) throws Exception {
-    //
-
     Publisher pub = new Publisher();
     pub.page = new PageProcessor(PageProcessor.DEF_TS_SERVER);
     pub.isGenerate = !(args.length > 1 && hasParam(args, "-nogen"));
@@ -471,10 +459,6 @@ public class Publisher implements URIResolver, SectionNumberer {
       pub.page.setBaseURL(getNamedParam(args, "-url"));
     if (hasParam(args, "-svn"))
       pub.page.setBuildId(getNamedParam(args, "-svn"));
-//    if (hasParam("args", "-noref"))
-//      pub.setNoReferenceImplementations(getNamedParam(args, "-noref"));
-//    if (hasParam(args, "-langfolder"))
-//      pub.setAlternativeLangFolder(getNamedParam(args, "-langfolder"));
     if (pub.web) {
       pub.page.setPublicationType(PageProcessor.WEB_PUB_NAME);
       pub.page.setPublicationNotice(PageProcessor.WEB_PUB_NOTICE);
@@ -485,9 +469,11 @@ public class Publisher implements URIResolver, SectionNumberer {
     pub.validateId = getNamedParam(args, "-validate");
     String dir = hasParam(args, "-folder") ? getNamedParam(args, "-folder") : System.getProperty("user.dir");
     pub.outputdir = hasParam(args, "-output") ? getNamedParam(args, "-output") : null; 
-    pub.isCIBuild = dir.contains("/ubuntu/agents/"); 
+    pub.isCIBuild = dir.contains("/ubuntu/agents/");
     pub.execute(dir);
   }
+
+
 
   private static boolean hasParam(String[] args, String param) {
     for (String a : args)
@@ -617,7 +603,6 @@ public class Publisher implements URIResolver, SectionNumberer {
       page.makeRenderingContext();
       loadValueSets1();
       prsr.getRegistry().commit();
-
 
       generateSCMaps();
       validate();
@@ -6250,5 +6235,46 @@ private String csCounter() {
     }
   }
 
+  @Override
+  public String toString() {
+    return "Publisher{" +
+            "outputdir='" + outputdir + '\'' +
+            ",\n prsr=" + prsr +
+            ",\n page=" + page +
+            ",\n isGenerate=" + isGenerate +
+            ",\n noArchive=" + noArchive +
+            ",\n web=" + web +
+            ",\n diffProgram='" + diffProgram + '\'' +
+            ",\n profileBundle=" + profileBundle +
+            ",\n valueSetsFeed=" + valueSetsFeed +
+            ",\n conceptMapsFeed=" + conceptMapsFeed +
+            ",\n dataElements=" + dataElements +
+            ",\n externals=" + externals +
+            ",\n noPartialBuild=" + noPartialBuild +
+            ",\n fragments=" + fragments +
+            ",\n xmls=" + xmls +
+            ",\n jsons=" + jsons +
+            ",\n ttls=" + ttls +
+            ",\n dates=" + dates +
+            ",\n buildFlags=" + buildFlags +
+            ",\n cache=" + cache +
+            ",\n singleResource='" + singleResource + '\'' +
+            ",\n singlePage='" + singlePage + '\'' +
+            ",\n tester=" + tester +
+            ",\n fpUsages=" + fpUsages +
+            ",\n statusCodeConceptMaps=" + statusCodeConceptMaps +
+            ",\n cscounter=" + cscounter +
+            ",\n vscounter=" + vscounter +
+            ",\n cmcounter=" + cmcounter +
+            ",\n pgen=" + pgen +
+            ",\n noSound=" + noSound +
+            ",\n doValidate=" + doValidate +
+            ",\n isCIBuild=" + isCIBuild +
+            ",\n isPostPR=" + isPostPR +
+            ",\n validateId='" + validateId + '\'' +
+            ",\n ped=" + ped +
+            ",\n examplesProcessed=" + examplesProcessed +
+            ",\n validateBundles=" + validateBundles +
+            '}';
+  }
 }
-

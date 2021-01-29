@@ -1,10 +1,10 @@
 package org.hl7.fhir.rdf;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.vocabulary.XSD;
+
+import java.util.HashMap;
+import java.util.Map;
 
 
 public class RDFTypeMap {
@@ -17,14 +17,14 @@ public class RDFTypeMap {
     static {
         ptMap.put("base64Binary", XSD.base64Binary);
         ptMap.put("boolean", XSD.xboolean);
-	    ptMap.put("code", XSD.xstring);
+        ptMap.put("code", XSD.xstring);
         ptMap.put("date", XSD.date);
         ptMap.put("dateTime", XSD.dateTime);
         ptMap.put("gYear", XSD.gYear);
         ptMap.put("gYearMonth", XSD.gYearMonth);
         ptMap.put("decimal", XSD.decimal);
         ptMap.put("instant", XSD.dateTime);
-	    ptMap.put("id", XSD.xstring);
+        ptMap.put("id", XSD.xstring);
         ptMap.put("int", XSD.integer);
         ptMap.put("integer", XSD.integer);
         ptMap.put("markdown", XSD.xstring);
@@ -51,9 +51,9 @@ public class RDFTypeMap {
 
     public static Resource xsd_type_for(String type, boolean owl_types_required) {
         // TODO: find why namespaces are part of some of these types...
-        String key = type.startsWith("xs:")? type.substring(3) : type;
+        String key = type.startsWith("xs:") ? type.substring(3) : type;
         Resource rval = ptMap.containsKey(key) ? ptMap.get(key) : RDFNamespace.FHIR.resourceRef(key);
-        if(owl_types_required && owlTypeMap.containsKey(rval))
+        if (owl_types_required && owlTypeMap.containsKey(rval))
             rval = owlTypeMap.get(rval);
         return rval;
     }

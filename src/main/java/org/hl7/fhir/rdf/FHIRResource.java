@@ -1,7 +1,5 @@
 package org.hl7.fhir.rdf;
 
-import java.util.List;
-
 import org.apache.jena.datatypes.xsd.XSDDatatype;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Property;
@@ -12,6 +10,8 @@ import org.apache.jena.vocabulary.RDF;
 import org.apache.jena.vocabulary.RDFS;
 import org.hl7.fhir.utilities.Utilities;
 
+import java.util.List;
+
 
 /**
  * FHIR wrapper class for RDF Resource
@@ -21,8 +21,9 @@ public class FHIRResource {
 
     /**
      * Construct a named resource in the FHIR namespace
+     *
      * @param model RDF model that contains the resource
-     * @param name Resource name
+     * @param name  Resource name
      * @param label Resource label
      */
     FHIRResource(Model model, String name, String label) {
@@ -39,6 +40,7 @@ public class FHIRResource {
 
     /**
      * Create a list resource
+     *
      * @param members Members of the list
      */
     FHIRResource(Model model, List<Resource> members) {

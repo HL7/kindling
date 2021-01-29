@@ -1,8 +1,5 @@
 package org.hl7.fhir.rdf;
 
-import java.io.OutputStream;
-import java.util.List;
-
 import org.apache.jena.datatypes.xsd.XSDDatatype;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
@@ -13,9 +10,12 @@ import org.apache.jena.vocabulary.OWL2;
 import org.apache.jena.vocabulary.RDF;
 import org.apache.jena.vocabulary.RDFS;
 
+import java.io.OutputStream;
+import java.util.List;
+
 
 public class FHIRResourceFactory {
-    private Model model;
+    private final Model model;
 
     public FHIRResourceFactory() {
         model = ModelFactory.createDefaultModel();
@@ -24,6 +24,7 @@ public class FHIRResourceFactory {
 
     /**
      * Serialize the namespace instance in RDF Turtle
+     *
      * @param writer
      */
     public void serialize(OutputStream writer) {
@@ -33,6 +34,7 @@ public class FHIRResourceFactory {
 
     /**
      * Add a new datatype to the model
+     *
      * @param d resource to declare as a datatype
      * @return Resource in context of model
      */
@@ -46,15 +48,16 @@ public class FHIRResourceFactory {
     public void merge_rdf(Model m) {
         model.add(m);
     }
-    
-  /* =========================================================
-   * FHIRResource factory methods
-   * ========================================================= */
+
+    /* =========================================================
+     * FHIRResource factory methods
+     * ========================================================= */
 
     /**
      * Create a Resource in the FHIR namespace
-     * @param name resource name
-     * @param type resource type
+     *
+     * @param name  resource name
+     * @param type  resource type
      * @param label resource label
      * @return
      */
@@ -82,6 +85,7 @@ public class FHIRResourceFactory {
 
     /**
      * Create a new Class in the FHIR namespace
+     *
      * @param name class name and label
      * @return
      */
@@ -91,7 +95,8 @@ public class FHIRResourceFactory {
 
     /**
      * Create a new Class in the FHIR namespace
-     * @param name class name and label
+     *
+     * @param name       class name and label
      * @param superClass superclass name
      * @return
      */
@@ -101,7 +106,8 @@ public class FHIRResourceFactory {
 
     /**
      * Create a new Class in the FHIR namespace
-     * @param name class name and label
+     *
+     * @param name       class name and label
      * @param superClass superclass
      * @return
      */
@@ -144,6 +150,7 @@ public class FHIRResourceFactory {
 
     /**
      * Create a new DataProperty in the FHIR namespace
+     *
      * @param name property name and label
      * @return
      */
@@ -153,7 +160,8 @@ public class FHIRResourceFactory {
 
     /**
      * Create a new DataProperty in the FHIR namespace
-     * @param name property name and label
+     *
+     * @param name          property name and label
      * @param superProperty parent property
      * @return
      */
@@ -163,7 +171,8 @@ public class FHIRResourceFactory {
 
     /**
      * Create a new DataProperty in the FHir namespace
-     * @param name property name and label
+     *
+     * @param name          property name and label
      * @param superProperty parent property name
      * @return
      */
@@ -173,6 +182,7 @@ public class FHIRResourceFactory {
 
     /**
      * Create a new OWL Restriction
+     *
      * @param onProperty
      * @return
      */
@@ -184,16 +194,17 @@ public class FHIRResourceFactory {
 
     /**
      * Create a new OWL restriction with the appropriate cardinality
+     *
      * @param onProperty property to apply the restriction to
-     * @param from only/some target
-     * @param min min cardinality
-     * @param max max cardinality
+     * @param from       only/some target
+     * @param min        min cardinality
+     * @param max        max cardinality
      * @return restriction resource
      */
     public Resource fhir_cardinality_restriction(Resource onProperty, Resource from, int min, int max) {
         FHIRResource rval = fhir_restriction(onProperty)
-                .addObjectProperty(min > 0? OWL2.someValuesFrom : OWL2.allValuesFrom, from);
-        if(min == max)
+                .addObjectProperty(min > 0 ? OWL2.someValuesFrom : OWL2.allValuesFrom, from);
+        if (min == max)
             rval.addDataProperty(OWL2.cardinality, Integer.toBinaryString(min), XSDDatatype.XSDinteger);
         else {
             if (min > 1)
@@ -206,6 +217,7 @@ public class FHIRResourceFactory {
 
     /**
      * Return a generic restriction
+     *
      * @param onProperty
      * @param from
      * @return
@@ -217,6 +229,7 @@ public class FHIRResourceFactory {
 
     /**
      * Return a union of the supplied members
+     *
      * @param members
      * @return Resource representing union
      */
@@ -228,6 +241,7 @@ public class FHIRResourceFactory {
 
     /**
      * Return a simple datatype restriction
+     *
      * @param dataType data type to be restricted
      * @return
      */
@@ -239,8 +253,9 @@ public class FHIRResourceFactory {
 
     /**
      * Return a datatype restriction
+     *
      * @param dataType data type to be restricted
-     * @param facets List of facets
+     * @param facets   List of facets
      * @return
      */
     public Resource fhir_datatype_restriction(Resource dataType, List<Resource> facets) {
@@ -251,6 +266,7 @@ public class FHIRResourceFactory {
 
     /**
      * Return a pattern BNode
+     *
      * @param pattern string pattern
      * @return
      */
