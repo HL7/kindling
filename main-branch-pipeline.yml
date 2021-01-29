@@ -1,20 +1,75 @@
+# This is manually run to deploy SNAPSHOT versions of HAPI to oss.sonaypte.org.
+# We only want to publish a new SNAPSHOT version on successful merge to the main branch, so we trigger on that branch.
 pr: none
-
 trigger:
 - main
 
+# We'll run the process on the latest version of unbuntu because they tend to be the fastest
 pool:
   vmImage: 'ubuntu-latest'
 
+# We cannot store things like gpg passwords and sonatype credentials as plain text within the 
+# pipeline's yaml file, so we've created variable groups in our library to store sensitive variables.
+# Pipelines do not load these groups by default, and we need to define which groups to load before
+# running any steps.
+variables:
+- group: GPG_VARIABLE_GROUP
+- group: SONATYPE_VARIABLE_GROUP
+
 steps:
-- task: Gradle@2
-  inputs:
-    workingDirectory: ''
-    gradleWrapperFile: 'gradlew'
-    gradleOptions: '-Xmx3072m'
-    javaHomeOption: 'JDKVersion'
-    jdkVersionOption: '1.11'
-    jdkArchitectureOption: 'x64'
-    publishJUnitResults: true
-    testResultsFiles: '**/TEST-*.xml'
-    tasks: 'build'
+
+  # We need a valid signing key to sign our builds for deployment to sonatype. We have uploaded
+  # both our private and public keys to Azure as 'secure files' that we load into individual pipelines.
+
+  # 1. Load the public key file
+  - task: DownloadSecureFile@1
+    displayName: 'Load public key from secure files.'
+    inputs:
+      secureFile: public.pgp
+
+  # 2. Load the private key file
+  - task: DownloadSecureFile@1
+    displayName: 'Load private key from secure files.'
+    inputs:
+      secureFile: private.pgp
+
+  # Although we have imported the key files into our workspace, GPG has no knowledge that these keys exist.
+  # We use a bash script to import both the private and puablic keys into gpg for future signing.
+
+  # 3. Import keys into gpg
+  - bash: |
+      gpg --import --no-tty --batch --yes $(Agent.TempDirectory)/public.pgp
+      gpg --import --no-tty --batch --yes $(Agent.TempDirectory)/private.pgp
+      gpg --list-keys --keyid-format LONG
+      gpg --list-secret-keys --keyid-format LONG
+    displayName: 'Import signing keys into gpg.'
+
+  # For creating a snapshot release with maven, we need to build a local gradle.properties file where
+  # we can set our credentials for both sonatype and gpg. Then gradle can read the necessary fields from it.
+
+  # 4. Create local gradle.properties file
+  - bash: |
+      cat >$(System.DefaultWorkingDirectory)/gradle.properties <<EOL
+      signing.gnupg.keyName=$(GPG_KEYNAME)
+      signing.gnupg.passphrase=$(GPG_PASSPHRASE)
+      signatory.keyId=$(GPG_KEYNAME)
+      nexusUsername=$(SONATYPE_USERNAME)
+      nexusPassword=$(SONATYPE_PASSWORD)
+      EOL
+    displayName: 'Create gradle.properties'
+
+  # With our gradle.properties created locally, we can now run grtadle (using to our created gradle.properties file) to deploy
+  # the kindling jar to oss sonatype.
+
+  # 5. Deploy SNAPSHOT build to sonatype
+  - task: Gradle@2
+    inputs:
+      workingDirectory: ''
+      gradleWrapperFile: 'gradlew'
+      gradleOptions: '-Xmx3072m'
+      javaHomeOption: 'JDKVersion'
+      jdkVersionOption: '1.11'
+      jdkArchitectureOption: 'x64'
+      publishJUnitResults: true
+      testResultsFiles: '**/TEST-*.xml'
+      tasks: 'clean publish'
