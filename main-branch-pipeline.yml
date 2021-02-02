@@ -1,6 +1,7 @@
-# This is manually run to deploy SNAPSHOT versions of HAPI to oss.sonaypte.org.
-# We only want to publish a new SNAPSHOT version on successful merge to the main branch, so we trigger on that branch.
-pr: 
+# This is manually run to deploy SNAPSHOT versions of kindling to oss.sonaypte.org.
+# We only want to publish a new SNAPSHOT version on successful merge to the main branch, 
+# so we trigger on that branch.
+trigger:
   - main
 
 # Different users have different machine setups, we run the build three times, on ubuntu, osx, and windows
