@@ -1,12 +1,18 @@
 # This is manually run to deploy SNAPSHOT versions of HAPI to oss.sonaypte.org.
 # We only want to publish a new SNAPSHOT version on successful merge to the main branch, so we trigger on that branch.
-pr: none
-trigger:
-- main
+pr: 
+  - main
 
-# We'll run the process on the latest version of unbuntu because they tend to be the fastest
-pool:
-  vmImage: 'ubuntu-latest'
+# Different users have different machine setups, we run the build three times, on ubuntu, osx, and windows
+strategy:
+  matrix:
+    linux:
+      imageName: 'ubuntu-latest'
+    mac:
+      imageName: "macos-10.15"
+    windows:
+      imageName: "windows-2019"
+  maxParallel: 3
 
 # We cannot store things like gpg passwords and sonatype credentials as plain text within the 
 # pipeline's yaml file, so we've created variable groups in our library to store sensitive variables.
