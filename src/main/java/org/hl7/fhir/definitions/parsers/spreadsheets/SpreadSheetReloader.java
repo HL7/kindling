@@ -84,7 +84,7 @@ public class SpreadSheetReloader extends SpreadSheetBase {
     IniFile ini = new IniFile(Utilities.changeFileExt(xlsx, ".datestamp"));
     File t = new File(xlsx);
     File cfg = new File(Utilities.changeFileExt(xlsx, ".datestamp"));
-    if (t.exists() && cfg.exists() && t.lastModified() > ini.getLongProperty("spreadsheet", "date")) {
+    if (t.exists() && cfg.exists() && ini.hasProperty("spreadsheet", "date") && t.lastModified() > ini.getLongProperty("spreadsheet", "date")) {
       date = t.lastModified();
       // ok, we read the spreadsheet
       XSSFWorkbook excel = new XSSFWorkbook(new FileInputStream(xlsx));

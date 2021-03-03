@@ -519,8 +519,10 @@ public class DictHTMLGenerator  extends OutputStreamWriter {
 		  tableRowNE("Type", null, "<a href=\"#"+type.substring(1)+"\">See "+type.substring(1)+"</a>");
 		else
 		  tableRowNE("Type", "datatypes.html", type);
-		if (e.typeCode().contains("Reference("))
-      tableRowNE("Patterns", "patterns.html", patternAnalysis(e));
+		if (isR5()) {
+	  	if (e.typeCode().contains("Reference("))
+        tableRowNE("Patterns", "patterns.html", patternAnalysis(e));
+		}
 		if (e.hasHierarchy())
 	    tableRow("Hierarchy", "references.html#circular", e.getHierarchy() ? "This reference is part of a strict Hierarchy" : "This reference may point back to the same instance (including transitively)");
     if (path.endsWith("[x]"))
@@ -544,7 +546,11 @@ public class DictHTMLGenerator  extends OutputStreamWriter {
 		tableRow("To Do", null, e.getTodo());
 	}
 	
-	private String patternAnalysis(ElementDefn e) {
+	private boolean isR5() {
+    return !page.getVersion().toCode().startsWith("4.0");
+  }
+
+  private String patternAnalysis(ElementDefn e) {
 	  StringBuilder b = new StringBuilder();
 	  boolean first = true;
 	  for (TypeRef tr : e.getTypes()) {
