@@ -2513,17 +2513,17 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     Collections.sort(names);
     Set<StructureDefinition> processed = new HashSet<StructureDefinition>();
     for (ImplementationGuideDefn ig : definitions.getSortedIgs()) {
-      if (ig.isCore()) {
+//      if (ig.isCore()) {
         for (String n : names) {
           StructureDefinition ed = workerContext.fetchResource(StructureDefinition.class, n);
           if (!processed.contains(ed)) {
             processed.add(ed);
-            if (ig.getCode().equals(ToolResourceUtilities.getUsage(ed))) {
+//            if (ig.getCode().equals(ToolResourceUtilities.getUsage(ed))) {
               genExtensionRow(ig, s, ed);
-            }
+//            }
           }
         }
-      }
+//      }
     }
     s.append("</table>\r\n");
     return s.toString();
@@ -10896,9 +10896,15 @@ private int countContains(List<ValueSetExpansionContainsComponent> list) {
   }
 
   public PackageVersion packageInfo() {
-    return new PackageVersion("hl7.fhir.r5.core", version.toCode());
+    return new PackageVersion(pidRoot()+".core", version.toCode());
   }
 
+  private String pidRoot() {
+    return version.toCode().startsWith("4.0") ? "hl7.fhir.r4b" : "hl7.fhir.r5";
+  }
+
+
+  
   public RenderingContext getRc() {
     return rc;
   }
