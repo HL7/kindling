@@ -767,7 +767,7 @@ public class Definitions {
       if (/* dc instanceof PrimitiveType && */ dc.getCode().equals(name))
         return true;
     }
-    return name.equals("xhtml") || types.containsKey(name) || infrastructure.containsKey(name);
+    return name.equals("xhtml") || name.equals("PrimitiveType") || types.containsKey(name) || infrastructure.containsKey(name);
   }
 
   public boolean hasAbstractResource(String name) {

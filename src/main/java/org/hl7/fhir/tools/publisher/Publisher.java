@@ -3184,7 +3184,7 @@ public class Publisher implements URIResolver, SectionNumberer {
       check(page.getDefinitions().hasPrimitiveType(sd.getId()) || !page.getDefinitions().hasBaseType(sd.getId()), sd, "Duplicate type name "+sd.getType());
     } else {
       if (sd.hasBaseDefinition())
-        check(page.getDefinitions().hasBaseType(sd.getBaseDefinition().substring(40)), sd, "Unknown specialised base type "+sd.getType());
+        check(page.getDefinitions().hasBaseType(sd.getBaseDefinition().substring(40)), sd, "Unknown specialized base type "+sd.getType());
       else
         check(page.getDefinitions().hasBaseType(sd.getType()), sd, "Unknown specialised base type "+sd.getType());
     }
@@ -4737,6 +4737,9 @@ public class Publisher implements URIResolver, SectionNumberer {
     deletefromFeed(resource.getResourceType(), resource.getId(), dest);
 
     ResourceUtilities.meta(resource).setLastUpdated(page.getGenDate().getTime());
+    if (!resource.hasText() || !resource.getText().hasDiv()) {
+      RendererFactory.factory(resource, page.getRc().copy()).render(resource);
+    }
     if (resource.getText() == null || resource.getText().getDiv() == null)
       throw new Exception("Example Resource " + resource.getId() + " does not have any narrative");
     dest.getEntry().add(new BundleEntryComponent().setResource(resource).setFullUrl("http://hl7.org/fhir/"+resource.getResourceType().toString()+"/"+resource.getId()));
@@ -4756,6 +4759,9 @@ public class Publisher implements URIResolver, SectionNumberer {
       throw new Exception("Resource has no id: "+vs.getName()+" ("+vs.getUrl()+")");
     if (ResourceUtilities.getById(dest, ResourceType.ValueSet, vs.getId()) != null)
       throw new Exception("Attempt to add duplicate value set " + vs.getId()+" ("+vs.getName()+")");
+    if (!vs.hasText() || !vs.getText().hasDiv()) {
+      RendererFactory.factory(vs, page.getRc().copy()).render(vs);
+    }
     if (!vs.hasText() || vs.getText().getDiv() == null)
       throw new Exception("Example Value Set " + vs.getId() + " does not have any narrative");
 
@@ -4770,6 +4776,9 @@ public class Publisher implements URIResolver, SectionNumberer {
       throw new Exception("Resource has no id");
     if (ResourceUtilities.getById(dest, ResourceType.ValueSet, cm.getId()) != null)
       throw new Exception("Attempt to add duplicate Concept Map " + cm.getId());
+    if (!cm.hasText() || !cm.getText().hasDiv()) {
+      RendererFactory.factory(cm, page.getRc().copy()).render(cm);
+    }
     if (cm.getText() == null || cm.getText().getDiv() == null)
       throw new Exception("Example Concept Map " + cm.getId() + " does not have any narrative");
 
@@ -4784,6 +4793,9 @@ public class Publisher implements URIResolver, SectionNumberer {
       throw new Exception("Resource has no id");
     if (ResourceUtilities.getById(dest, ResourceType.CompartmentDefinition, cd.getId()) != null)
       throw new Exception("Attempt to add duplicate Compartment Definition " + cd.getId());
+    if (!cd.hasText() || !cd.getText().hasDiv()) {
+      RendererFactory.factory(cd, page.getRc().copy()).render(cd);
+    }
     if (cd.getText() == null || cd.getText().getDiv() == null)
       throw new Exception("Example Compartment Definition " + cd.getId() + " does not have any narrative");
 
@@ -4798,6 +4810,9 @@ public class Publisher implements URIResolver, SectionNumberer {
       throw new Exception("Resource has no id");
     if (ResourceUtilities.getById(dest, ResourceType.ValueSet, cs.getId()) != null)
       throw new Exception("Attempt to add duplicate Conformance " + cs.getId());
+    if (!cs.hasText() || !cs.getText().hasDiv()) {
+      RendererFactory.factory(cs, page.getRc().copy()).render(cs);
+    }
     if (!cs.hasText() || cs.getText().getDiv() == null)
       System.out.println("WARNING: Example CapabilityStatement " + cs.getId() + " does not have any narrative");
       // Changed this from an exception to a warning because generateConformanceStatement doesn't produce narrative if
