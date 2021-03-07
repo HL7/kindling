@@ -1114,7 +1114,7 @@ public class SourceParser {
     try {
       profile = new ProfileGenerator(definitions, context, page, genDate, version, null, fpUsages, page.getFolders().rootDir, page.getUml(), page.getRc()).generate(t);
       t.setProfile(profile);
-      DataTypeTableGenerator dtg = new DataTypeTableGenerator(dstDir, page, t.getName(), true);
+      DataTypeTableGenerator dtg = new DataTypeTableGenerator(dstDir, page, t.getName(), true, version);
       t.getProfile().getText().setDiv(new XhtmlNode(NodeType.Element, "div"));
       t.getProfile().getText().getDiv().getChildNodes().add(dtg.generate(t, null, false));
       if (context.hasResource(StructureDefinition.class, t.getProfile().getUrl()))

@@ -2,6 +2,7 @@ package org.hl7.fhir.definitions.generators.specification;
 
 import org.hl7.fhir.definitions.model.ElementDefn;
 import org.hl7.fhir.definitions.model.ResourceDefn;
+import org.hl7.fhir.r5.model.Enumerations.FHIRVersion;
 import org.hl7.fhir.tools.publisher.PageProcessor;
 import org.hl7.fhir.utilities.xhtml.HierarchicalTableGenerator;
 import org.hl7.fhir.utilities.xhtml.HierarchicalTableGenerator.TableModel;
@@ -9,8 +10,8 @@ import org.hl7.fhir.utilities.xhtml.XhtmlNode;
 
 public class ResourceTableGenerator extends TableGenerator {
   
-  public ResourceTableGenerator(String dest, PageProcessor page, String pageName, boolean inlineGraphics) throws Exception {
-    super(dest, page, pageName == null ? null : pageName.toLowerCase(), inlineGraphics);
+  public ResourceTableGenerator(String dest, PageProcessor page, String pageName, boolean inlineGraphics, FHIRVersion version) throws Exception {
+    super(dest, page, pageName == null ? null : pageName.toLowerCase(), inlineGraphics, version);
   }
 
   public XhtmlNode generate(ResourceDefn r, String prefix, boolean isActive) throws Exception {

@@ -92,11 +92,11 @@ public class ResourceDependencyGenerator  extends BaseGenerator {
         row.getCells().add(gen.new Cell(null, null, path.contains(".") ? e.describeCardinality() : "", null, null)); // card.
         row.setIcon("icon_element.gif", HierarchicalTableGenerator.TEXT_ICON_ELEMENT);
         if (mode == RenderMode.RESOURCE)
-          row.getCells().add(gen.new Cell(null, prefix+"types.html#BackboneElement", "BackboneElement", null, null));
+          row.getCells().add(gen.new Cell(null, prefix+definitions.getBackboneLink(), "BackboneElement", null, null));
         else if (e.getName().equals("Element"))
           row.getCells().add(gen.new Cell(null, null, "n/a", null, null)); 
         else
-          row.getCells().add(gen.new Cell(null, prefix+"types.html#BackBoneElement", "Element", null, null));   
+          row.getCells().add(gen.new Cell(null, prefix+definitions.getBackboneLink(), "Element", null, null));   
         row.getCells().add(dc = gen.new Cell()); // analysis 
       } else if (e.getTypes().size() == 1) {
         row.getCells().add(gen.new Cell(null, null, path.contains(".") ? e.describeCardinality() : "", null, null)); // card.

@@ -547,7 +547,7 @@ public class DictHTMLGenerator  extends OutputStreamWriter {
 	}
 	
 	private boolean isR5() {
-    return !page.getVersion().toCode().startsWith("4.0");
+    return !page.getVersion().isR4B();
   }
 
   private String patternAnalysis(ElementDefn e) {

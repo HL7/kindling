@@ -11,6 +11,7 @@ import org.hl7.fhir.definitions.model.ElementDefn;
 import org.hl7.fhir.definitions.model.Invariant;
 import org.hl7.fhir.definitions.model.ProfiledType;
 import org.hl7.fhir.definitions.model.TypeRef;
+import org.hl7.fhir.r5.model.Enumerations.FHIRVersion;
 import org.hl7.fhir.r5.model.ValueSet;
 import org.hl7.fhir.tools.publisher.PageProcessor;
 import org.hl7.fhir.utilities.StandardsStatus;
@@ -31,14 +32,16 @@ public class TableGenerator extends BaseGenerator {
   protected String dest; 
   protected String pageName;
   protected boolean inlineGraphics;
+  protected FHIRVersion version;
   
-  public TableGenerator(String dest, PageProcessor page, String pageName, boolean inlineGraphics) throws Exception {
+  public TableGenerator(String dest, PageProcessor page, String pageName, boolean inlineGraphics, FHIRVersion version) throws Exception {
     super();
     this.dest = dest;
     this.definitions = page.getDefinitions();
     this.page = page;
     this.pageName = pageName;
     this.inlineGraphics = inlineGraphics; 
+    this.version = version;
   }
   
   protected boolean dictLinks() {
@@ -91,15 +94,19 @@ public class TableGenerator extends BaseGenerator {
         row.getCells().add(gen.new Cell(null, null, path.contains(".") ? e.describeCardinality() : "", null, null)); 
         row.setIcon("icon_element.gif", HierarchicalTableGenerator.TEXT_ICON_ELEMENT);
         if (mode == RenderMode.RESOURCE)
-          row.getCells().add(gen.new Cell(null, prefix+"types.html#BackBoneElement", "BackboneElement", null, null));
+          row.getCells().add(gen.new Cell(null, prefix+definitions.getBackboneLink(), "BackboneElement", null, null));
         else if (e.getName().equals("Type"))
           row.getCells().add(gen.new Cell(null, null, "", null, null)); 
-        else if (e.getName().equals("Element"))
-          row.getCells().add(gen.new Cell(null, prefix+"types.html#Base", "Base", null, null)); 
-        else if (e.typeCode().equals("BackboneElement"))
-          row.getCells().add(gen.new Cell(null, prefix+"types.html#BackBoneElement", "BackBoneElement", null, null));   
+        else if (e.getName().equals("Element")) {
+          if (version.isR4B()) {
+            row.getCells().add(gen.new Cell(null, prefix+definitions.getElementLink(), "Element", null, null));
+          } else {
+            row.getCells().add(gen.new Cell(null, prefix+definitions.getBaseLink(), "Base", null, null));            
+          }
+        } else if (e.typeCode().equals("BackboneElement"))
+          row.getCells().add(gen.new Cell(null, prefix+definitions.getBackboneLink(), "BackBoneElement", null, null));   
         else
-          row.getCells().add(gen.new Cell(null, prefix+"types.html#Element", "Element", null, null));   
+          row.getCells().add(gen.new Cell(null, prefix+definitions.getElementLink(), "Element", null, null));   
       } else if (e.getTypes().size() == 1) {
         row.getCells().add(gen.new Cell(null, null, path.contains(".") ? e.describeCardinality() : "", null, null)); 
         String t = e.getTypes().get(0).getName();

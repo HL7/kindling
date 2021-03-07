@@ -520,7 +520,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
   }
 
   private String treeForDt(String dt) throws Exception {
-    DataTypeTableGenerator gen = new DataTypeTableGenerator(folders.dstDir, this, dt, false);
+    DataTypeTableGenerator gen = new DataTypeTableGenerator(folders.dstDir, this, dt, false, version);
     return new XhtmlComposer(XhtmlComposer.HTML).compose(gen.generate(definitions.getElementDefn(dt), null, true));
   }
 
@@ -813,7 +813,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
       } else if (com[0].equals("svg"))
         src = s1+svgs.get(com[1])+s3;
       else if (com[0].equals("diagram"))
-        src = s1+new SvgGenerator(this, genlevel(level), null, false, file.contains("datatypes"), version.toCode()).generate(folders.srcDir+ com[1], com[2])+s3;
+        src = s1+new SvgGenerator(this, genlevel(level), null, false, file.contains("datatypes"), version).generate(folders.srcDir+ com[1], com[2])+s3;
       else if (com[0].equals("file")) {
         if (new File(folders.templateDir + com[1]+".html").exists()) {
           src = s1+TextFile.fileToString(folders.templateDir + com[1]+".html")+s3;          
@@ -2489,7 +2489,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
           "classes="+dt+"\r\n"+
           "element-attributes=true\r\n";
       TextFile.stringToFileNoPrefix(s, tmp.getAbsolutePath());
-      return new SvgGenerator(this, "", null, false, true, version.toCode()).generate(tmp.getAbsolutePath(), id);
+      return new SvgGenerator(this, "", null, false, true, version).generate(tmp.getAbsolutePath(), id);
     } finally {
       tmp.delete();
     }
@@ -3858,7 +3858,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
   }
 
   private String genResourceTable(ResourceDefn res, String prefix) throws Exception {
-    ResourceTableGenerator gen = new ResourceTableGenerator(folders.dstDir, this, res.getName()+"-definitions.html", false);
+    ResourceTableGenerator gen = new ResourceTableGenerator(folders.dstDir, this, res.getName()+"-definitions.html", false, version);
     return new XhtmlComposer(XhtmlComposer.HTML).compose(gen.generate(res, prefix, true));
   }
 
@@ -5373,7 +5373,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
       else if (com[0].equals("svg"))
         src = s1+svgs.get(com[1])+s3;
       else if (com[0].equals("diagram"))
-        src = s1+new SvgGenerator(this, genlevel(level), null, false, file.contains("datatypes"), version.toCode()).generate(folders.srcDir+ com[1], com[2])+s3;
+        src = s1+new SvgGenerator(this, genlevel(level), null, false, file.contains("datatypes"), version).generate(folders.srcDir+ com[1], com[2])+s3;
       else if (com[0].equals("file"))
         src = s1+/*TextFile.fileToString(folders.srcDir + com[1]+".html")+*/s3;
       else if (com[0].equals("settitle")) {
@@ -6057,7 +6057,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
       else if (com[0].equals("othertabs"))
         src = s1 + genOtherTabs(com[1], tabs) + s3;
       else if (com[0].equals("svg"))
-        src = s1+new SvgGenerator(this, genlevel(level), resource.getLayout(), true, false, version.toCode()).generate(resource, com[1])+s3;
+        src = s1+new SvgGenerator(this, genlevel(level), resource.getLayout(), true, false, version).generate(resource, com[1])+s3;
       else if (com[0].equals("normative")) {
         String np = null;
         if (com[2].equals("%check") || com[2].equals("%check-op")) {
@@ -7648,7 +7648,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     }
 
     StringBuilder b = new StringBuilder();
-    b.append("  <tr><td colspan=\"3\"><b>Extensions</b> (+ see <a href=\"types-extras.html#Element\">extensions on all Elements</a>)</td></tr>\r\n");
+    b.append("  <tr><td colspan=\"3\"><b>Extensions</b> (+ see <a href=\""+definitions.getElementExtrasLink()+"\">extensions on all Elements</a>)</td></tr>\r\n");
     for (String s : sorted(map.keySet())) {
       StructureDefinition cs = map.get(s);
       count++;
@@ -7852,8 +7852,8 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     // base types
     s.append("<table class=\"list\">\r\n");
     genStructureExampleCategory(s, "Abstract Types", "3");
-    genStructureExample(s, "types.html#Element", "element.profile", "element", "Element");
-    genStructureExample(s, "types.html#BackBoneElement", "backboneelement.profile", "backboneelement", "BackBoneElement");
+    genStructureExample(s, definitions.getElementLink(), "element.profile", "element", "Element");
+    genStructureExample(s, definitions.getBackboneLink(), "backboneelement.profile", "backboneelement", "BackBoneElement");
     genStructureExample(s, "resource.html", "resource.profile", "resource", "Resource");
     genStructureExample(s, "domainresource.html", "domainresource.profile", "domainresource", "DomainResource");
 
@@ -9195,8 +9195,9 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
 
   public void setVersion(FHIRVersion version) {
     this.version = version;
+    definitions.setVersion(version);
     workerContext.setVersion(version.toCode());
-    htmlchecker.setVersion(version.toCode());
+    htmlchecker.setVersion(version);
   }
 
   public void setFolders(FolderManager folders) throws Exception {
@@ -10900,7 +10901,7 @@ private int countContains(List<ValueSetExpansionContainsComponent> list) {
   }
 
   private String pidRoot() {
-    return version.toCode().startsWith("4.0") ? "hl7.fhir.r4b" : "hl7.fhir.r5";
+    return version.isR4B() ? "hl7.fhir.r4b" : "hl7.fhir.r5";
   }
 
 

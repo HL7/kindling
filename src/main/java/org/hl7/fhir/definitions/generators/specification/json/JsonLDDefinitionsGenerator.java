@@ -8,6 +8,7 @@ import org.hl7.fhir.definitions.model.Definitions;
 import org.hl7.fhir.definitions.model.ResourceDefn;
 import org.hl7.fhir.definitions.model.TypeDefn;
 import org.hl7.fhir.definitions.model.TypeRef;
+import org.hl7.fhir.r5.model.Enumerations.FHIRVersion;
 import org.hl7.fhir.tools.publisher.BuildWorkerContext;
 import org.hl7.fhir.utilities.IniFile;
 import org.hl7.fhir.utilities.TextFile;
@@ -18,14 +19,14 @@ import com.google.gson.JsonObject;
 
 public class JsonLDDefinitionsGenerator {
 
-  private String genDate;
-  private String version;
-  private BuildWorkerContext workerContext;
+//  private String genDate;
+//  private String version;
+//  private BuildWorkerContext workerContext;
 
-  public void generate(Definitions definitions, IniFile ini, String tmpResDir, String dstDir, String srcDir, String version, String genDate, BuildWorkerContext workerContext) throws Exception {
-	  this.genDate = genDate;
-	  this.version = version;
-	  this.workerContext = workerContext;
+  public void generate(Definitions definitions, IniFile ini, String tmpResDir, String dstDir, String srcDir, FHIRVersion version, String genDate, BuildWorkerContext workerContext) throws Exception {
+//	  this.genDate = genDate;
+//	  this.version = version;
+//	  this.workerContext = workerContext;
 
 	  JsonObject defn = new JsonObject();
 	  JsonObject context = new JsonObject();
@@ -38,7 +39,7 @@ public class JsonLDDefinitionsGenerator {
 	  addProperty(context, "value", "fhir:value", "xsd:string");
     addProperty(context, "decimal", "fhir:value", "xsd:decimal");
     addProperty(context, "integer", "fhir:value", "xsd:integer");
-    if (!version.startsWith("4.0")) {
+    if (!version.isR4B()) {
       addProperty(context, "integer64", "fhir:value", "xsd:string");
     }
     addProperty(context, "boolean", "fhir:value", "xsd:boolean");

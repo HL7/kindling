@@ -7,6 +7,7 @@ import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.hl7.fhir.r5.model.Enumerations.FHIRVersion;
 import org.hl7.fhir.utilities.FileNotifier;
 import org.hl7.fhir.utilities.TextFile;
 import org.hl7.fhir.utilities.Utilities;
@@ -63,7 +64,7 @@ public class HTMLLinkChecker implements FileNotifier {
   private List<String> externals = new ArrayList<String>();
   private List<ValidationMessage> issues;
   private String webPath;
-  private String version;
+  private FHIRVersion version;
 
   
   public HTMLLinkChecker(PageProcessor page, List<ValidationMessage> issues, String webPath) {
@@ -73,11 +74,11 @@ public class HTMLLinkChecker implements FileNotifier {
     this.webPath = webPath;
   }
 
-  public String getVersion() {
+  public FHIRVersion getVersion() {
     return version;
   }
 
-  public void setVersion(String version) {
+  public void setVersion(FHIRVersion version) {
     this.version = version;
   }
 
@@ -215,8 +216,8 @@ public class HTMLLinkChecker implements FileNotifier {
 
   private void reportError(String path, String msg) {
     if (!ok(msg)) {
-      if (version.equals("4.0.1")) {
-        issues.add(new ValidationMessage(Source.Publisher, IssueType.INFORMATIONAL, -1, -1, path, msg, IssueSeverity.WARNING));        
+      if (version.isR4B()) {
+        issues.add(new ValidationMessage(Source.Publisher, IssueType.INFORMATIONAL, -1, -1, path, msg, IssueSeverity.ERROR));        
       } else {
         issues.add(new ValidationMessage(Source.Publisher, IssueType.INFORMATIONAL, -1, -1, path, msg, IssueSeverity.ERROR));
       }
