@@ -39,6 +39,7 @@ import java.util.Set;
 import org.hl7.fhir.definitions.model.Definitions;
 import org.hl7.fhir.definitions.model.ElementDefn;
 import org.hl7.fhir.definitions.model.TypeRef;
+import org.hl7.fhir.r5.model.Enumerations.FHIRVersion;
 import org.hl7.fhir.r5.model.ValueSet;
 import org.hl7.fhir.tools.publisher.BuildWorkerContext;
 import org.hl7.fhir.utilities.Utilities;
@@ -62,7 +63,7 @@ public class JsonLDGenerator  {
 		datatypes.addAll(types);
 	}
   
-	public void generate(JsonObject context, ElementDefn root, String version, String genDate) throws Exception {
+	public void generate(JsonObject context, ElementDefn root, FHIRVersion version, String genDate) throws Exception {
 		enums.clear();
 		enumDefs.clear();
 		scanTypes(root, root);		

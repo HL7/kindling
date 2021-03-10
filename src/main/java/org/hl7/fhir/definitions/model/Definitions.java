@@ -51,6 +51,7 @@ import org.hl7.fhir.r5.model.StructureDefinition.ExtensionContextType;
 import org.hl7.fhir.r5.model.StructureDefinition.StructureDefinitionContextComponent;
 import org.hl7.fhir.r5.model.TypeDetails;
 import org.hl7.fhir.r5.model.ValueSet;
+import org.hl7.fhir.r5.model.Enumerations.FHIRVersion;
 import org.hl7.fhir.r5.utils.FHIRPathEngine;
 import org.hl7.fhir.utilities.Utilities;
 
@@ -392,6 +393,7 @@ public class Definitions {
   private Map<String, ConstraintStructure> profileIds = new HashMap<String, ConstraintStructure>();
   private boolean loaded;
   private int valueSetCount;
+  private FHIRVersion version;
   
   public List<String> sortedResourceNames() {
     if (sortedNames == null) {
@@ -767,7 +769,7 @@ public class Definitions {
       if (/* dc instanceof PrimitiveType && */ dc.getCode().equals(name))
         return true;
     }
-    return name.equals("xhtml") || types.containsKey(name) || infrastructure.containsKey(name);
+    return name.equals("xhtml") || name.equals("PrimitiveType") || types.containsKey(name) || infrastructure.containsKey(name);
   }
 
   public boolean hasAbstractResource(String name) {
@@ -853,6 +855,46 @@ public class Definitions {
       }
     }
     return names;
+  }
+
+  public FHIRVersion getVersion() {
+    return version;
+  }
+
+  public void setVersion(FHIRVersion version) {
+    this.version = version;
+  }
+
+  public String getElementLink() {
+    if (version.isR4B()) {
+      return "element.html";
+    } else {
+      return "types.html#Element";
+    }
+  }
+
+  public String getBackboneLink() {
+    if (version.isR4B()) {
+      return "backboneelement.html";
+    } else {
+      return "types.html#BackBoneElement";
+    }
+  }
+
+  public String getBaseLink() {
+    if (version.isR4B()) {
+      return "element.html";
+    } else {
+      return "types.html#Base";
+    }
+  }
+
+  public String getElementExtrasLink() {
+    if (version.isR4B()) {
+      return "element-extras.html";
+    } else {
+      return "types-extras.html#Element";
+    }
   }
 
 }

@@ -12,6 +12,7 @@ import org.hl7.fhir.exceptions.FHIRException;
 import org.hl7.fhir.r5.conformance.ProfileUtilities;
 import org.hl7.fhir.r5.conformance.ProfileUtilities.ProfileKnowledgeProvider;
 import org.hl7.fhir.r5.model.ElementDefinition.ElementDefinitionBindingComponent;
+import org.hl7.fhir.r5.model.Enumerations.FHIRVersion;
 import org.hl7.fhir.r5.model.StructureDefinition;
 import org.hl7.fhir.r5.utils.ToolingExtensions;
 import org.hl7.fhir.utilities.StandardsStatus;
@@ -28,9 +29,9 @@ public class LogicalModelProcessor extends BuildToolScriptedPageProcessor implem
   private List<LogicalModel> logicalModelSet;
   private ImplementationGuideDefn guide;
   private Definitions definitions;
-  private String version;
+  private FHIRVersion version;
   
-  public LogicalModelProcessor(String title, PageProcessor page, ImplementationGuideDefn ig, String name, String type, String pagePath, StructureDefinition definition, String tx, String dict, Map<String, String> examples, List<LogicalModel> logicalModelSet, Definitions definitions, String version) {
+  public LogicalModelProcessor(String title, PageProcessor page, ImplementationGuideDefn ig, String name, String type, String pagePath, StructureDefinition definition, String tx, String dict, Map<String, String> examples, List<LogicalModel> logicalModelSet, Definitions definitions, FHIRVersion version) {
     super(title, ig.getLevel(), page, ig, name, type, pagePath);
     this.guide = ig;
     this.definition = definition;

@@ -19,6 +19,7 @@ import org.hl7.fhir.definitions.model.ResourceDefn;
 import org.hl7.fhir.definitions.model.ResourceDefn.PointSpec;
 import org.hl7.fhir.definitions.model.TypeRef;
 import org.hl7.fhir.r5.model.Enumerations.BindingStrength;
+import org.hl7.fhir.r5.model.Enumerations.FHIRVersion;
 import org.hl7.fhir.r5.model.StructureDefinition;
 import org.hl7.fhir.tools.publisher.PageProcessor;
 import org.hl7.fhir.utilities.IniFile;
@@ -157,9 +158,9 @@ public class SvgGenerator extends BaseGenerator {
   private Map<String, PointSpec> layout;
   private boolean makeTargets;
   private boolean isDatatypes;
-  private String version;
+  private FHIRVersion version;
 
-  public SvgGenerator(PageProcessor page, String prefix, Map<String, PointSpec> layout, boolean makeTargets, boolean isDatatypes, String version) {
+  public SvgGenerator(PageProcessor page, String prefix, Map<String, PointSpec> layout, boolean makeTargets, boolean isDatatypes, FHIRVersion version) {
     this.definitions = page.getDefinitions();
     this.page = page;
     this.prefix = prefix;
@@ -168,12 +169,11 @@ public class SvgGenerator extends BaseGenerator {
     this.isDatatypes = isDatatypes;
     this.version = version;
   }
-
   
   public String generate(String filename, String id) throws Exception {
     this.id = id;
     ini = new IniFile(filename);
-    String[] classNames = ini.getStringProperty("diagram", "classes").split("\\,");
+    String[] classNames = ini.getStringProperty("diagram", "classes") == null ? null : ini.getStringProperty("diagram", "classes").split("\\,");
     if ("false".equals(ini.getStringProperty("diagram", "attributes")))
       attributes = false;
     ByteArrayOutputStream bytes = new ByteArrayOutputStream();
@@ -264,47 +264,48 @@ public class SvgGenerator extends BaseGenerator {
   private Point determineMetrics(String[] classNames) throws Exception {
     double width = textWidth("Element") * 1.8;
     double height = HEADER_HEIGHT + GAP_HEIGHT*2;
-//    if ("true".equals(ini.getStringProperty("diagram", "element-attributes"))) {
-//      height = height + LINE_HEIGHT + GAP_HEIGHT;
-//      width = textWidth("extension : Extension 0..*");
-//    }
+    //    if ("true".equals(ini.getStringProperty("diagram", "element-attributes"))) {
+    //      height = height + LINE_HEIGHT + GAP_HEIGHT;
+    //      width = textWidth("extension : Extension 0..*");
+    //    }
 
     Point p = new Point(0, 0, PointKind.unknown);
     ClassItem item = new ClassItem(p.x, p.y, width, height, id);
     classes.put(null, item);
     double x = item.right()+MARGIN_X;
     double y = item.bottom()+MARGIN_Y;
-    
-    for (String cn : classNames) {
-      if (definitions.getPrimitives().containsKey(cn)) {
-        DefinedCode cd = definitions.getPrimitives().get(cn);
-        ElementDefn fake = new ElementDefn();
-        fake.setName(cn);
-        fakes.put(cn, fake);
-        if (cd instanceof DefinedStringPattern)
-          p = determineMetrics(fake, classes.get(fakes.get(((DefinedStringPattern) cd).getBase())), cn, false, cd);
-        else
+    if (classNames != null) {
+      for (String cn : classNames) {
+        if (definitions.getPrimitives().containsKey(cn)) {
+          DefinedCode cd = definitions.getPrimitives().get(cn);
+          ElementDefn fake = new ElementDefn();
+          fake.setName(cn);
+          fakes.put(cn, fake);
+          if (cd instanceof DefinedStringPattern)
+            p = determineMetrics(fake, classes.get(fakes.get(((DefinedStringPattern) cd).getBase())), cn, false, cd);
+          else
+            p = determineMetrics(fake, item, cn, false, cd);        
+        } else if ("xhtml".equals(cn)) {
+          ElementDefn fake = new ElementDefn();
+          fake.setName("xhtml");
+          fakes.put("xhtml", fake);
+          DefinedCode cd = new DefinedCode("xhtml", "XHTML for resource narrative", null);
           p = determineMetrics(fake, item, cn, false, cd);        
-      } else if ("xhtml".equals(cn)) {
-        ElementDefn fake = new ElementDefn();
-        fake.setName("xhtml");
-        fakes.put("xhtml", fake);
-        DefinedCode cd = new DefinedCode("xhtml", "XHTML for resource narrative", null);
-        p = determineMetrics(fake, item, cn, false, cd);        
-      } else if (definitions.getConstraints().containsKey(cn)) {
-        ProfiledType cd = definitions.getConstraints().get(cn);
-        ElementDefn ed = definitions.getElementDefn(cd.getBaseType());
-        ClassItem parentClss = classes.get(ed);
-        ElementDefn fake = new ElementDefn();
-        fake.setName(cn);
-        fakes.put(cn, fake);
-        p = determineMetrics(fake, parentClss, cn, false, null);
-      } else {
-        ElementDefn c = definitions.getElementDefn(cn);
-        p = determineMetrics(c, item, c.getName(), false, null);
+        } else if (definitions.getConstraints().containsKey(cn)) {
+          ProfiledType cd = definitions.getConstraints().get(cn);
+          ElementDefn ed = definitions.getElementDefn(cd.getBaseType());
+          ClassItem parentClss = classes.get(ed);
+          ElementDefn fake = new ElementDefn();
+          fake.setName(cn);
+          fakes.put(cn, fake);
+          p = determineMetrics(fake, parentClss, cn, false, null);
+        } else {
+          ElementDefn c = definitions.getElementDefn(cn);
+          p = determineMetrics(c, item, c.getName(), false, null);
+        }
+        x = Math.max(x, p.x+MARGIN_X);
+        y = Math.max(y, p.y+MARGIN_Y);
       }
-      x = Math.max(x, p.x+MARGIN_X);
-      y = Math.max(y, p.y+MARGIN_Y);
     }
     return new Point(x, y, PointKind.unknown);
   }
@@ -736,52 +737,54 @@ public class SvgGenerator extends BaseGenerator {
 ////        addExtension(xml, item.left, item.top+HEADER_HEIGHT + GAP_HEIGHT*2 + LINE_HEIGHT);
 ////        if (be)
 ////          addModifierExtension(xml, item.left, item.top+HEADER_HEIGHT + GAP_HEIGHT*2 + LINE_HEIGHT);
-////      }
-//      xml.exit("g");
-//    } else {
-//       System.out.print("?");
-//    }
+    ////      }
+    //      xml.exit("g");
+    //    } else {
+    //       System.out.print("?");
+    //    }
 
-    for (String cn : classNames) {
-      if (definitions.getPrimitives().containsKey(cn)) {
-        DefinedCode cd = definitions.getPrimitives().get(cn);
-        ElementDefn fake = fakes.get(cn);
-        if (cd instanceof DefinedStringPattern) {
-          links.add(new Link(classes.get(fakes.get(((DefinedStringPattern) cd).getBase())), drawClass(xml, fake, false, null, true, null, cd, StandardsStatus.NORMATIVE), LinkType.SPECIALIZATION, null, null, PointKind.unknown, null, null));        
-        } else {
-          ClassItem parent = classes.get(definitions.getElementDefn(version.startsWith("4.0") ? "Element" : "PrimitiveType"));
+    if (classNames != null) {
+      for (String cn : classNames) {
+        if (definitions.getPrimitives().containsKey(cn)) {
+          DefinedCode cd = definitions.getPrimitives().get(cn);
+          ElementDefn fake = fakes.get(cn);
+          if (cd instanceof DefinedStringPattern) {
+            links.add(new Link(classes.get(fakes.get(((DefinedStringPattern) cd).getBase())), drawClass(xml, fake, false, null, true, null, cd, StandardsStatus.NORMATIVE), LinkType.SPECIALIZATION, null, null, PointKind.unknown, null, null));        
+          } else {
+            ClassItem parent = classes.get(definitions.getElementDefn(version.isR4B() ? "Element" : "PrimitiveType"));
+            if (parent == null) {
+              drawClass(xml, fake, false, null, true, null, cd, StandardsStatus.NORMATIVE); 
+            } else {
+              links.add(new Link(parent, drawClass(xml, fake, false, null, true, null, cd, StandardsStatus.NORMATIVE), LinkType.SPECIALIZATION, null, null, PointKind.unknown, null, null));
+            }
+          }
+        } else if ("xhtml".equals(cn)) {
+          DefinedCode cd = new DefinedCode("xhtml", "XHTML for resource narrative", null);
+          ElementDefn fake = fakes.get(cn);
+          ClassItem parent = classes.get(definitions.getElementDefn(version.isR4B() ? "Element" :"DataType"));
           if (parent == null) {
-            drawClass(xml, fake, false, null, true, null, cd, StandardsStatus.NORMATIVE); 
+            drawClass(xml, fake, false, null, true, null, cd, StandardsStatus.NORMATIVE);
           } else {
             links.add(new Link(parent, drawClass(xml, fake, false, null, true, null, cd, StandardsStatus.NORMATIVE), LinkType.SPECIALIZATION, null, null, PointKind.unknown, null, null));
           }
-        }
-      } else if ("xhtml".equals(cn)) {
-        DefinedCode cd = new DefinedCode("xhtml", "XHTML for resource narrative", null);
-        ElementDefn fake = fakes.get(cn);
-        ClassItem parent = classes.get(definitions.getElementDefn(version.startsWith("4.0") ? "Element" :"DataType"));
-        if (parent == null) {
-          drawClass(xml, fake, false, null, true, null, cd, StandardsStatus.NORMATIVE);
-        } else {
-          links.add(new Link(parent, drawClass(xml, fake, false, null, true, null, cd, StandardsStatus.NORMATIVE), LinkType.SPECIALIZATION, null, null, PointKind.unknown, null, null));
-        }
-      } else if (definitions.getConstraints().containsKey(cn)) {
-        ProfiledType cd = definitions.getConstraints().get(cn);
-        ElementDefn fake = fakes.get(cn);
-        ClassItem parent = classes.get(definitions.getElementDefn(cd.getBaseType()));
-        links.add(new Link(parent, drawClass(xml, fake, false, null, true, null, null, StandardsStatus.NORMATIVE), LinkType.CONSTRAINT, null, null, PointKind.unknown, null, null));        
-      } else if (definitions.getPrimitives().containsKey(cn)) {
-        DefinedCode cd = new DefinedCode("xhtml", "XHTML for resource narrative", null);
-        ElementDefn fake = fakes.get(cn);
-        //links.add(new Link(item, 
-        drawClass(xml, fake, false, null, true, null, cd, StandardsStatus.NORMATIVE);//, LinkType.SPECIALIZATION, null, null, PointKind.unknown, null, null));        
-      } else if (!onlyElement) {
-        ElementDefn e = definitions.getElementDefn(cn);
-        ClassItem parent = Utilities.noString(e.typeCode()) ? null : classes.get(definitions.getElementDefn(e.typeCode()));
-        if (parent == null) {
-          drawClass(xml, e, false, null, true, cn, null, e.getStandardsStatus());
-        } else {
-          links.add(new Link(parent, drawClass(xml, e, false, null, true, cn, null, e.getStandardsStatus()), LinkType.SPECIALIZATION, null, null, PointKind.unknown, null, null));
+        } else if (definitions.getConstraints().containsKey(cn)) {
+          ProfiledType cd = definitions.getConstraints().get(cn);
+          ElementDefn fake = fakes.get(cn);
+          ClassItem parent = classes.get(definitions.getElementDefn(cd.getBaseType()));
+          links.add(new Link(parent, drawClass(xml, fake, false, null, true, null, null, StandardsStatus.NORMATIVE), LinkType.CONSTRAINT, null, null, PointKind.unknown, null, null));        
+        } else if (definitions.getPrimitives().containsKey(cn)) {
+          DefinedCode cd = new DefinedCode("xhtml", "XHTML for resource narrative", null);
+          ElementDefn fake = fakes.get(cn);
+          //links.add(new Link(item, 
+          drawClass(xml, fake, false, null, true, null, cd, StandardsStatus.NORMATIVE);//, LinkType.SPECIALIZATION, null, null, PointKind.unknown, null, null));        
+        } else if (!onlyElement) {
+          ElementDefn e = definitions.getElementDefn(cn);
+          ClassItem parent = Utilities.noString(e.typeCode()) ? null : classes.get(definitions.getElementDefn(e.typeCode()));
+          if (parent == null) {
+            drawClass(xml, e, false, null, true, cn, null, e.getStandardsStatus());
+          } else {
+            links.add(new Link(parent, drawClass(xml, e, false, null, true, cn, null, e.getStandardsStatus()), LinkType.SPECIALIZATION, null, null, PointKind.unknown, null, null));
+          }
         }
       }
     }
@@ -871,7 +874,7 @@ public class SvgGenerator extends BaseGenerator {
         xml.enter("tspan");
         xml.text(" (");
         if ("Logical".equals(e.typeCode()))
-          xml.attribute("xlink:href", prefix+"types.html#Base");
+          xml.attribute("xlink:href", prefix+definitions.getBaseLink());
         else
           xml.attribute("xlink:href", prefix+definitions.getSrcFile(e.typeCode())+".html#"+e.typeCode());
         xml.attribute("class", "diagram-class-reference");
@@ -1008,7 +1011,9 @@ public class SvgGenerator extends BaseGenerator {
           allPrimitive = false;
         }
       }
-      if (allPrimitive) {
+      if (version.isR4B()) {
+        return "Element";
+      } if (allPrimitive) {
         return "PrimitiveType";
       } else {
         return "DataType";

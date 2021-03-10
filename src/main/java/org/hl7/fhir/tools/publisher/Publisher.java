@@ -864,7 +864,7 @@ public class Publisher implements URIResolver, SectionNumberer {
         if (page.getProfiles().has(r.getProfile().getUrl()))
           throw new Exception("Duplicate Profile URL "+r.getProfile().getUrl());
         page.getProfiles().see(r.getProfile(), page.packageInfo());
-        ResourceTableGenerator rtg = new ResourceTableGenerator(page.getFolders().dstDir, page, null, true);
+        ResourceTableGenerator rtg = new ResourceTableGenerator(page.getFolders().dstDir, page, null, true, page.getVersion());
         r.getProfile().getText().setDiv(new XhtmlNode(NodeType.Element, "div"));
         r.getProfile().getText().getDiv().getChildNodes().add(rtg.generate(r, "", false));
     }
@@ -876,7 +876,7 @@ public class Publisher implements URIResolver, SectionNumberer {
       if (page.getProfiles().has(r.getProfile().getUrl()))
         throw new Exception("Duplicate Profile URL "+r.getProfile().getUrl());
       page.getProfiles().see(r.getProfile(), page.packageInfo());
-      ResourceTableGenerator rtg = new ResourceTableGenerator(page.getFolders().dstDir, page, null, true);
+      ResourceTableGenerator rtg = new ResourceTableGenerator(page.getFolders().dstDir, page, null, true, page.getVersion());
       r.getProfile().getText().setDiv(new XhtmlNode(NodeType.Element, "div"));
       r.getProfile().getText().getDiv().getChildNodes().add(rtg.generate(r, "", false));
     }
@@ -884,7 +884,7 @@ public class Publisher implements URIResolver, SectionNumberer {
     for (ResourceDefn r : page.getDefinitions().getResourceTemplates().values()) {
       r.setConformancePack(makeConformancePack(r));
       r.setProfile(new ProfileGenerator(page.getDefinitions(), page.getWorkerContext(), page, page.getGenDate(), page.getVersion(), dataElements, fpUsages, page.getFolders().rootDir, page.getUml(), page.getRc()).generate(r.getConformancePack(), r, "core", true));
-      ResourceTableGenerator rtg = new ResourceTableGenerator(page.getFolders().dstDir, page, null, true);
+      ResourceTableGenerator rtg = new ResourceTableGenerator(page.getFolders().dstDir, page, null, true, page.getVersion());
       r.getProfile().getText().setDiv(new XhtmlNode(NodeType.Element, "div"));
       r.getProfile().getText().getDiv().getChildNodes().add(rtg.generate(r, "", true));
       if (page.getProfiles().has(r.getProfile().getUrl()))
@@ -1032,7 +1032,7 @@ public class Publisher implements URIResolver, SectionNumberer {
       profile = new ProfileGenerator(page.getDefinitions(), page.getWorkerContext(), page, page.getGenDate(), page.getVersion(), dataElements, fpUsages, page.getFolders().rootDir, page.getUml(), page.getRc()).generate(t);
       page.getProfiles().see(profile, page.packageInfo());
       t.setProfile(profile);
-      DataTypeTableGenerator dtg = new DataTypeTableGenerator(page.getFolders().dstDir, page, t.getName(), true);
+      DataTypeTableGenerator dtg = new DataTypeTableGenerator(page.getFolders().dstDir, page, t.getName(), true, page.getVersion());
       t.getProfile().getText().setDiv(new XhtmlNode(NodeType.Element, "div"));
       t.getProfile().getText().getDiv().getChildNodes().add(dtg.generate(t, null, false));
     } catch (Exception e) {
@@ -2116,7 +2116,7 @@ public class Publisher implements URIResolver, SectionNumberer {
     new org.hl7.fhir.definitions.generators.specification.json.SchemaGenerator().generate(page.getDefinitions(), page.getIni(), page.getFolders().tmpResDir, page.getFolders().xsdDir, page.getFolders().dstDir,
         page.getFolders().srcDir, page.getVersion().toCode(), Config.DATE_FORMAT().format(page.getGenDate().getTime()), page.getWorkerContext());
     new org.hl7.fhir.definitions.generators.specification.json.JsonLDDefinitionsGenerator().generate(page.getDefinitions(), page.getIni(), page.getFolders().tmpResDir, page.getFolders().dstDir,
-        page.getFolders().srcDir, page.getVersion().toCode(), Config.DATE_FORMAT().format(page.getGenDate().getTime()), page.getWorkerContext());
+        page.getFolders().srcDir, page.getVersion(), Config.DATE_FORMAT().format(page.getGenDate().getTime()), page.getWorkerContext());
 
     List<StructureDefinition> list = new ArrayList<StructureDefinition>();
     for (StructureDefinition sd : page.getWorkerContext().allStructures()) {
@@ -2129,7 +2129,7 @@ public class Publisher implements URIResolver, SectionNumberer {
     TextFile.stringToFile(shgen.generate(HTMLLinkPolicy.NONE, list), page.getFolders().dstDir+"fhir.shex", false);
 
     new XVerPathsGenerator(page.getDefinitions(), Utilities.path(page.getFolders().dstDir, "xver-paths-"+Constants.VERSION_MM+".json"), Utilities.path(page.getFolders().rootDir, "tools", "history", "release4", "xver-paths-4.0.json")).execute();
-    GraphQLSchemaGenerator gql = new GraphQLSchemaGenerator(page.getWorkerContext());
+    GraphQLSchemaGenerator gql = new GraphQLSchemaGenerator(page.getWorkerContext(), page.getVersion().toCode());
     gql.generateTypes(new FileOutputStream(Utilities.path(page.getFolders().dstDir, "types.graphql")));
     Set<String> names = new HashSet<String>();
     for (StructureDefinition sd : page.getWorkerContext().allStructures()) {
@@ -2850,7 +2850,7 @@ public class Publisher implements URIResolver, SectionNumberer {
   }
 
   private String pidRoot() {
-    return page.getVersion().toCode().startsWith("4.0") ? "hl7.fhir.r4b" : "hl7.fhir.r5";
+    return page.getVersion().isR4B() ? "hl7.fhir.r4b" : "hl7.fhir.r5";
   }
 
 
@@ -3184,7 +3184,7 @@ public class Publisher implements URIResolver, SectionNumberer {
       check(page.getDefinitions().hasPrimitiveType(sd.getId()) || !page.getDefinitions().hasBaseType(sd.getId()), sd, "Duplicate type name "+sd.getType());
     } else {
       if (sd.hasBaseDefinition())
-        check(page.getDefinitions().hasBaseType(sd.getBaseDefinition().substring(40)), sd, "Unknown specialised base type "+sd.getType());
+        check(page.getDefinitions().hasBaseType(sd.getBaseDefinition().substring(40)), sd, "Unknown specialized base type "+sd.getType());
       else
         check(page.getDefinitions().hasBaseType(sd.getType()), sd, "Unknown specialised base type "+sd.getType());
     }
@@ -3932,7 +3932,7 @@ public class Publisher implements URIResolver, SectionNumberer {
     String mappingsList = mgen.getMappingsList();
 
     if (!logicalOnly) {
-      SvgGenerator svg = new SvgGenerator(page, "", resource.getLayout(), true, false, page.getVersion().toCode());
+      SvgGenerator svg = new SvgGenerator(page, "", resource.getLayout(), true, false, page.getVersion());
       svg.generate(resource, page.getFolders().dstDir + n + ".svg", "1");
       svg.generate(resource, Utilities.path(page.getFolders().srcDir, n, n + ".gen.svg"), "1");
   
@@ -4319,7 +4319,7 @@ public class Publisher implements URIResolver, SectionNumberer {
           wantSave = true;
         }
         if (wantSave) {
-          if (page.getVersion().toCode().startsWith("4.0")) {
+          if (page.getVersion().isR4B()) {
             org.hl7.fhir.r4.model.Resource r4 = new org.hl7.fhir.r4.formats.XmlParser().parse(new FileInputStream(file));
             new org.hl7.fhir.r4.formats.XmlParser().setOutputStyle(org.hl7.fhir.r4.formats.IParser.OutputStyle.PRETTY).compose(new FileOutputStream(file), r4);
           } else {
@@ -4407,7 +4407,7 @@ public class Publisher implements URIResolver, SectionNumberer {
         addToResourceFeed(vs, valueSetsFeed, file.getName());
         page.getDefinitions().getValuesets().see(vs, page.packageInfo());
       } catch (Exception ex) {
-        if (page.getVersion().toCode().startsWith("4.0")) {
+        if (page.getVersion().isR4B()) {
           System.out.println("Value set "+file.getAbsolutePath()+" couldn't be parsed - ignoring! msg = "+ex.getMessage());
         } else {
           throw new FHIRException("Unable to parse "+file.getAbsolutePath()+": "+ex.getMessage(), ex);             
@@ -4423,7 +4423,7 @@ public class Publisher implements URIResolver, SectionNumberer {
       cs.setUserData("path", prefix +n + ".html");
       addToResourceFeed(cs, valueSetsFeed, file.getName());
       page.getCodeSystems().see(cs, page.packageInfo());
-    } else if (rt.equals("ConceptMap") && !page.getVersion().toCode().startsWith("4.0")) {
+    } else if (rt.equals("ConceptMap") && !page.getVersion().isR4B()) {
       ConceptMap cm = (ConceptMap) loadExample(file);
       new ConceptMapValidator(page.getDefinitions(), e.getTitle()).validate(cm, false);
       if (cm.getUrl() == null)
@@ -4538,7 +4538,7 @@ public class Publisher implements URIResolver, SectionNumberer {
   }
 
   public Resource loadExample(CSFile file) throws IOException, FileNotFoundException {
-    if (page.getVersion().toCode().startsWith("4.0")) {
+    if (page.getVersion().isR4B()) {
       org.hl7.fhir.r4.model.Resource res = new org.hl7.fhir.r4.formats.XmlParser().parse(new FileInputStream(file));
       return VersionConvertor_40_50.convertResource(res);
     } else {
@@ -4737,6 +4737,9 @@ public class Publisher implements URIResolver, SectionNumberer {
     deletefromFeed(resource.getResourceType(), resource.getId(), dest);
 
     ResourceUtilities.meta(resource).setLastUpdated(page.getGenDate().getTime());
+    if (!resource.hasText() || !resource.getText().hasDiv()) {
+      RendererFactory.factory(resource, page.getRc().copy()).render(resource);
+    }
     if (resource.getText() == null || resource.getText().getDiv() == null)
       throw new Exception("Example Resource " + resource.getId() + " does not have any narrative");
     dest.getEntry().add(new BundleEntryComponent().setResource(resource).setFullUrl("http://hl7.org/fhir/"+resource.getResourceType().toString()+"/"+resource.getId()));
@@ -4756,6 +4759,9 @@ public class Publisher implements URIResolver, SectionNumberer {
       throw new Exception("Resource has no id: "+vs.getName()+" ("+vs.getUrl()+")");
     if (ResourceUtilities.getById(dest, ResourceType.ValueSet, vs.getId()) != null)
       throw new Exception("Attempt to add duplicate value set " + vs.getId()+" ("+vs.getName()+")");
+    if (!vs.hasText() || !vs.getText().hasDiv()) {
+      RendererFactory.factory(vs, page.getRc().copy()).render(vs);
+    }
     if (!vs.hasText() || vs.getText().getDiv() == null)
       throw new Exception("Example Value Set " + vs.getId() + " does not have any narrative");
 
@@ -4770,6 +4776,9 @@ public class Publisher implements URIResolver, SectionNumberer {
       throw new Exception("Resource has no id");
     if (ResourceUtilities.getById(dest, ResourceType.ValueSet, cm.getId()) != null)
       throw new Exception("Attempt to add duplicate Concept Map " + cm.getId());
+    if (!cm.hasText() || !cm.getText().hasDiv()) {
+      RendererFactory.factory(cm, page.getRc().copy()).render(cm);
+    }
     if (cm.getText() == null || cm.getText().getDiv() == null)
       throw new Exception("Example Concept Map " + cm.getId() + " does not have any narrative");
 
@@ -4784,6 +4793,9 @@ public class Publisher implements URIResolver, SectionNumberer {
       throw new Exception("Resource has no id");
     if (ResourceUtilities.getById(dest, ResourceType.CompartmentDefinition, cd.getId()) != null)
       throw new Exception("Attempt to add duplicate Compartment Definition " + cd.getId());
+    if (!cd.hasText() || !cd.getText().hasDiv()) {
+      RendererFactory.factory(cd, page.getRc().copy()).render(cd);
+    }
     if (cd.getText() == null || cd.getText().getDiv() == null)
       throw new Exception("Example Compartment Definition " + cd.getId() + " does not have any narrative");
 
@@ -4798,6 +4810,9 @@ public class Publisher implements URIResolver, SectionNumberer {
       throw new Exception("Resource has no id");
     if (ResourceUtilities.getById(dest, ResourceType.ValueSet, cs.getId()) != null)
       throw new Exception("Attempt to add duplicate Conformance " + cs.getId());
+    if (!cs.hasText() || !cs.getText().hasDiv()) {
+      RendererFactory.factory(cs, page.getRc().copy()).render(cs);
+    }
     if (!cs.hasText() || cs.getText().getDiv() == null)
       System.out.println("WARNING: Example CapabilityStatement " + cs.getId() + " does not have any narrative");
       // Changed this from an exception to a warning because generateConformanceStatement doesn't produce narrative if
@@ -5219,7 +5234,7 @@ public class Publisher implements URIResolver, SectionNumberer {
     String mappings = mgen.getMappings();
     String mappingsList = mgen.getMappingsList();
 
-    SvgGenerator svg = new SvgGenerator(page, "", lm.getLayout(), true, false, page.getVersion().toCode());
+    SvgGenerator svg = new SvgGenerator(page, "", lm.getLayout(), true, false, page.getVersion());
     String fn = ig.getPrefix()+n;
     if (lm.hasResource())
       svg.generate(lm.getResource(), page.getFolders().dstDir + fn+".svg", "2");
@@ -5246,7 +5261,7 @@ public class Publisher implements URIResolver, SectionNumberer {
     if (lm.hasResource())
       src = insertSectionNumbers(page.processResourceIncludes(n, lm.getResource(), "", "", "", tx, dict, src, mappings, mappingsList, "resource", n + ".html", ig, values, lm.getWg(), examples), st, n + ".html", ig.getLevel(), null);
     else
-      src = insertSectionNumbers(new LogicalModelProcessor(n, page, ig, lm.getDefinition().getId(), "logical-model", n+".html", lm.getDefinition(), tx, dict, examples, ig.getLogicalModels(), page.getDefinitions(), page.getVersion().toCode()).process(src), st, n + ".html", ig.getLevel(), null);
+      src = insertSectionNumbers(new LogicalModelProcessor(n, page, ig, lm.getDefinition().getId(), "logical-model", n+".html", lm.getDefinition(), tx, dict, examples, ig.getLogicalModels(), page.getDefinitions(), page.getVersion()).process(src), st, n + ".html", ig.getLevel(), null);
     TextFile.stringToFile(src, page.getFolders().dstDir + fn+".html");
     page.getHTMLChecker().registerFile(fn+".html", "Base Page for " + n, HTMLLinkChecker.XHTML_TYPE, true);
 
@@ -5255,7 +5270,7 @@ public class Publisher implements URIResolver, SectionNumberer {
       TextFile.stringToFile(insertSectionNumbers(page.processResourceIncludes(n, lm.getResource(), "", "", "", tx, dict, src, mappings, mappingsList, "res-Detailed Descriptions", n + "-definitions.html", ig, values, lm.getWg(), examples), st, n
             + "-definitions.html", ig.getLevel(), null), page.getFolders().dstDir + fn+"-definitions.html");
     else
-      TextFile.stringToFile(insertSectionNumbers(new LogicalModelProcessor(n, page, ig, lm.getDefinition().getId(), "logical-model", n+".html", lm.getDefinition(), tx, dict, examples, ig.getLogicalModels(), page.getDefinitions(), page.getVersion().toCode()).process(src), st, n
+      TextFile.stringToFile(insertSectionNumbers(new LogicalModelProcessor(n, page, ig, lm.getDefinition().getId(), "logical-model", n+".html", lm.getDefinition(), tx, dict, examples, ig.getLogicalModels(), page.getDefinitions(), page.getVersion()).process(src), st, n
           + "-definitions.html", ig.getLevel(), null), page.getFolders().dstDir + fn+"-definitions.html");
     page.getHTMLChecker().registerFile(fn+"-definitions.html", "Detailed Descriptions for " + (lm.hasResource() ? lm.getResource().getName() : lm.getDefinition().getName()), HTMLLinkChecker.XHTML_TYPE, true);
 
@@ -5263,7 +5278,7 @@ public class Publisher implements URIResolver, SectionNumberer {
     if (lm.hasResource())
       TextFile.stringToFile(insertSectionNumbers(page.processResourceIncludes(n, lm.getResource(), "", "", "", tx, dict, src, mappings, mappingsList, "resource", n + ".html", ig, values, lm.getWg(), examples), st, n + ".html", ig.getLevel(), null), page.getFolders().dstDir + fn+"-implementations.html");
     else
-      TextFile.stringToFile(insertSectionNumbers(new LogicalModelProcessor(n, page, ig, lm.getDefinition().getId(), "logical-model", n+".html", lm.getDefinition(), tx, dict, examples, ig.getLogicalModels(), page.getDefinitions(), page.getVersion().toCode()).process(src), st, n
+      TextFile.stringToFile(insertSectionNumbers(new LogicalModelProcessor(n, page, ig, lm.getDefinition().getId(), "logical-model", n+".html", lm.getDefinition(), tx, dict, examples, ig.getLogicalModels(), page.getDefinitions(), page.getVersion()).process(src), st, n
           + "-implementations.html", ig.getLevel(), null), page.getFolders().dstDir + fn+"-implementations.html");
     page.getHTMLChecker().registerFile(fn+"-implementations.html", "Implementations for " + (lm.hasResource() ? lm.getResource().getName() : lm.getDefinition().getName()), HTMLLinkChecker.XHTML_TYPE, true);
 
@@ -5273,7 +5288,7 @@ public class Publisher implements URIResolver, SectionNumberer {
           insertSectionNumbers(page.processResourceIncludes(n, lm.getResource(), "", "", "", tx, dict, src, mappings, mappingsList, "res-Mappings", n + "-mappings.html", ig, values, lm.getWg(), examples), st, n + "-mappings.html", ig.getLevel(), null),
           page.getFolders().dstDir + fn + "-mappings.html");
     else
-      TextFile.stringToFile(insertSectionNumbers(new LogicalModelProcessor(n, page, ig, lm.getDefinition().getId(), "logical-model", n+".html", lm.getDefinition(), tx, dict, examples, ig.getLogicalModels(), page.getDefinitions(), page.getVersion().toCode()).process(src), st, n + "-mappings.html", ig.getLevel(), null),
+      TextFile.stringToFile(insertSectionNumbers(new LogicalModelProcessor(n, page, ig, lm.getDefinition().getId(), "logical-model", n+".html", lm.getDefinition(), tx, dict, examples, ig.getLogicalModels(), page.getDefinitions(), page.getVersion()).process(src), st, n + "-mappings.html", ig.getLevel(), null),
         page.getFolders().dstDir + fn + "-mappings.html");
     page.getHTMLChecker().registerFile(fn+"-mappings.html", "Formal Mappings for " + n, HTMLLinkChecker.XHTML_TYPE, true);
 
@@ -5283,7 +5298,7 @@ public class Publisher implements URIResolver, SectionNumberer {
           insertSectionNumbers(page.processResourceIncludes(n, lm.getResource(), "", "", "", tx, dict, src, mappings, mappingsList, "res-Analysis", n + "-analysis.html", ig, values, lm.getWg(), examples), st, n + "-analysis.html", ig.getLevel(), null),
           page.getFolders().dstDir + fn + "-analysis.html");
     else
-      TextFile.stringToFile(insertSectionNumbers(new LogicalModelProcessor(n, page, ig, lm.getDefinition().getId(), "logical-model", n+".html", lm.getDefinition(), tx, dict, examples, ig.getLogicalModels(), page.getDefinitions(), page.getVersion().toCode()).process(src), st, n + "-analysis.html", ig.getLevel(), null),
+      TextFile.stringToFile(insertSectionNumbers(new LogicalModelProcessor(n, page, ig, lm.getDefinition().getId(), "logical-model", n+".html", lm.getDefinition(), tx, dict, examples, ig.getLogicalModels(), page.getDefinitions(), page.getVersion()).process(src), st, n + "-analysis.html", ig.getLevel(), null),
         page.getFolders().dstDir + fn + "-analysis.html");
     page.getHTMLChecker().registerFile(fn+"-analysis.html", "Analysis for " + n, HTMLLinkChecker.XHTML_TYPE, true);
 
@@ -5655,7 +5670,7 @@ public class Publisher implements URIResolver, SectionNumberer {
       if (buildFlags.get("all"))
         runJUnitTestsInProcess();
       page.log("Validating Examples", LogMessageType.Process);
-      ExampleInspector ei = new ExampleInspector(page.getWorkerContext(), page, page.getFolders().dstDir, Utilities.path(page.getFolders().rootDir, "tools", "schematron"), page.getValidationErrors(), page.getDefinitions(), page.getVersion().toCode());
+      ExampleInspector ei = new ExampleInspector(page.getWorkerContext(), page, page.getFolders().dstDir, Utilities.path(page.getFolders().rootDir, "tools", "schematron"), page.getValidationErrors(), page.getDefinitions(), page.getVersion());
       page.log(".. Loading", LogMessageType.Process);
       ei.prepare();
 
