@@ -3,14 +3,15 @@ package org.hl7.fhir.definitions.generators.specification;
 import java.util.Set;
 
 import org.hl7.fhir.definitions.model.ElementDefn;
+import org.hl7.fhir.r5.model.Enumerations.FHIRVersion;
 import org.hl7.fhir.tools.publisher.PageProcessor;
 import org.hl7.fhir.utilities.xhtml.HierarchicalTableGenerator;
 import org.hl7.fhir.utilities.xhtml.HierarchicalTableGenerator.TableModel;
 import org.hl7.fhir.utilities.xhtml.XhtmlNode;
 
 public class DataTypeTableGenerator extends TableGenerator {
-  public DataTypeTableGenerator(String dest, PageProcessor page, String pageName, boolean inlineGraphics) throws Exception {    
-    super(dest, page, page.getDefinitions().getSrcFile(pageName)+"-definitions.html", inlineGraphics);
+  public DataTypeTableGenerator(String dest, PageProcessor page, String pageName, boolean inlineGraphics, FHIRVersion version) throws Exception {    
+    super(dest, page, page.getDefinitions().getSrcFile(pageName)+"-definitions.html", inlineGraphics, version);
   }
 
   public XhtmlNode generate(ElementDefn e, Set<String> outputTracker, boolean isActive) throws Exception {
