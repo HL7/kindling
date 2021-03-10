@@ -621,8 +621,9 @@ public class ExampleInspector implements IValidatorResourceFetcher {
 
 
   @Override
-  public void setLocale(Locale locale) {
+  public IValidatorResourceFetcher setLocale(Locale locale) {
     // don't ned to do anything here 
+    return null;
   }
 
 

@@ -72,7 +72,7 @@ public class SpecNPMPackageGenerator {
 //  }
 //  
   
-  public void generate(String folder, String url, boolean forWeb, Date genDate) throws Exception {
+  public void generate(String folder, String url, boolean forWeb, Date genDate, String pidRoot) throws Exception {
     System.out.println("Generate Package for "+folder);
     
     Map<String, byte[]> files = loadZip(new FileInputStream(Utilities.path(folder, "igpack.zip")));
@@ -96,7 +96,7 @@ public class SpecNPMPackageGenerator {
     ig.setDescription("FHIR Core package - the NPM package that contains all the definitions for the base FHIR specification");
     ig.setPublisher("HL7 Inc");
     ig.getContactFirstRep().getTelecomFirstRep().setSystem(ContactPointSystem.URL).setValue("http://hl7.org/fhir");
-    ig.setPackageId("hl7.fhir.r5.core");
+    ig.setPackageId(pidRoot+".core");
     ig.getManifest().setRendering(url);
     for (ResourceEntry e : reslist) {
       ManifestResourceComponent r = ig.getManifest().addResource();
@@ -138,7 +138,7 @@ public class SpecNPMPackageGenerator {
     
     System.out.println(" .. Building NPM Package");
 
-    NPMPackageGenerator npm = new NPMPackageGenerator(Utilities.path(folder, "hl7.fhir.r5.core.tgz"), "http://hl7.org/fhir", url, PackageType.CORE, ig, genDate, true);
+    NPMPackageGenerator npm = new NPMPackageGenerator(Utilities.path(folder, pidRoot+".core.tgz"), "http://hl7.org/fhir", url, PackageType.CORE, ig, genDate, true);
     
     ByteArrayOutputStream bs = new ByteArrayOutputStream();
     new org.hl7.fhir.r5.formats.JsonParser().setOutputStyle(OutputStyle.NORMAL).compose(bs, ig);
@@ -171,9 +171,9 @@ public class SpecNPMPackageGenerator {
     ig.setUrl("http://hl7.org/fhir/ImplementationGuide/fhir-xml");
     ig.setTitle("FHIR Core package (XML Conformance files)");
     ig.setDescription("FHIR Core package - the NPM package that contains all the definitions for the base FHIR specification (XML)");
-    ig.setPackageId("hl7.fhir.r5.corexml");
-
-    npm = new NPMPackageGenerator(Utilities.path(folder, "hl7.fhir.r5.corexml.tgz"), "http://hl7.org/fhir", url, PackageType.CORE, ig, genDate, true);
+    ig.setPackageId(pidRoot+".corexml");
+    
+    npm = new NPMPackageGenerator(Utilities.path(folder, pidRoot+".corexml.tgz"), "http://hl7.org/fhir", url, PackageType.CORE, ig, genDate, true);
     bs = new ByteArrayOutputStream();
     new org.hl7.fhir.r5.formats.XmlParser().setOutputStyle(OutputStyle.NORMAL).compose(bs, ig);
     npm.addFile(Category.RESOURCE, "ig-r4.json", bs.toByteArray());

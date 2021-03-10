@@ -2596,12 +2596,12 @@ public class Publisher implements URIResolver, SectionNumberer {
 
       ImplementationGuide expIg = new ImplementationGuide();
       expIg.addFhirVersion(page.getVersion());
-      expIg.setPackageId("hl7.fhir.r5.expansions");
+      expIg.setPackageId(pidRoot()+".expansions");
       expIg.setVersion(page.getVersion().toCode());
       expIg.setLicense(ImplementationGuide.SPDXLicense.CC01_0);
       expIg.setTitle("FHIR "+page.getVersion().getDisplay()+" package : Expansions");
       expIg.setDescription("Expansions for the "+page.getVersion().getDisplay()+" version of the FHIR standard");
-      NPMPackageGenerator npm = new NPMPackageGenerator(Utilities.path(page.getFolders().dstDir, "hl7.fhir.r5.expansions.tgz"), "http://hl7.org/fhir", "http://hl7.org/fhir", PackageType.CORE, expIg, page.getGenDate().getTime(), true);
+      NPMPackageGenerator npm = new NPMPackageGenerator(Utilities.path(page.getFolders().dstDir, pidRoot()+".expansions.tgz"), "http://hl7.org/fhir", "http://hl7.org/fhir", PackageType.CORE, expIg, page.getGenDate().getTime(), true);
       Bundle expansionFeed = new Bundle();
       Set<String> urlset = new HashSet<>();
       expansionFeed.setId("valueset-expansions");
@@ -2637,7 +2637,8 @@ public class Publisher implements URIResolver, SectionNumberer {
       }
       npm.finish();
       if (!isCIBuild) {
-        new FilesystemPackageCacheManager(true, ToolsVersion.TOOLS_VERSION).addPackageToCache("hl7.fhir.r5.expansions", "current", new FileInputStream(Utilities.path(page.getFolders().dstDir, "hl7.fhir.r5.expansions.tgz")), Utilities.path(page.getFolders().dstDir, "hl7.fhir.r5.expansions.tgz"));
+        String id = pidRoot()+".expansions";
+        new FilesystemPackageCacheManager(true, ToolsVersion.TOOLS_VERSION).addPackageToCache(id, "current", new FileInputStream(Utilities.path(page.getFolders().dstDir, id+".tgz")), Utilities.path(page.getFolders().dstDir, id+".tgz"));
       }
       
       s = new FileOutputStream(page.getFolders().dstDir + "expansions.xml");
@@ -2793,9 +2794,9 @@ public class Publisher implements URIResolver, SectionNumberer {
       page.log("....IG Builder (2)", LogMessageType.Process);
 
       SpecNPMPackageGenerator self = new SpecNPMPackageGenerator();
-      self.generate(page.getFolders().dstDir, page.getBaseURL(), false, page.getGenDate().getTime());
+      self.generate(page.getFolders().dstDir, page.getBaseURL(), false, page.getGenDate().getTime(), pidRoot());
       if (!isCIBuild) {
-        new FilesystemPackageCacheManager(true, ToolsVersion.TOOLS_VERSION).addPackageToCache("hl7.fhir.r5.core", "current", new FileInputStream(Utilities.path(page.getFolders().dstDir, "hl7.fhir.r5.core.tgz")), Utilities.path(page.getFolders().dstDir, "hl7.fhir.r5.core.tgz"));
+        new FilesystemPackageCacheManager(true, ToolsVersion.TOOLS_VERSION).addPackageToCache(pidRoot()+".core", "current", new FileInputStream(Utilities.path(page.getFolders().dstDir, pidRoot()+".core.tgz")), Utilities.path(page.getFolders().dstDir, pidRoot()+".core.tgz"));
       }
 
       page.log(" ...zips", LogMessageType.Process);
@@ -2847,6 +2848,12 @@ public class Publisher implements URIResolver, SectionNumberer {
     } else
       page.log("Partial Build - terminating now", LogMessageType.Error);
   }
+
+  private String pidRoot() {
+    return page.getVersion().toCode().startsWith("4.0") ? "hl7.fhir.r4b" : "hl7.fhir.r5";
+  }
+
+
 
   private void produceUml() throws IOException {
     TextFile.stringToFile(UMLWriter.toJson(page.getUml()), page.getFolders().dstDir+"uml.json");
@@ -4311,8 +4318,14 @@ public class Publisher implements URIResolver, SectionNumberer {
           RendererFactory.factory(res, lrc).render(res);
           wantSave = true;
         }
-        if (wantSave)
-          new XmlParser().setOutputStyle(OutputStyle.PRETTY).compose(new FileOutputStream(file), res);
+        if (wantSave) {
+          if (page.getVersion().toCode().startsWith("4.0")) {
+            org.hl7.fhir.r4.model.Resource r4 = new org.hl7.fhir.r4.formats.XmlParser().parse(new FileInputStream(file));
+            new org.hl7.fhir.r4.formats.XmlParser().setOutputStyle(org.hl7.fhir.r4.formats.IParser.OutputStyle.PRETTY).compose(new FileOutputStream(file), r4);
+          } else {
+            new XmlParser().setOutputStyle(OutputStyle.PRETTY).compose(new FileOutputStream(file), res);
+          }
+        }
         narrative = new XhtmlComposer(XhtmlComposer.HTML).compose(res.getText().getDiv());
       } else {
         if (rt.equals("Bundle")) {
