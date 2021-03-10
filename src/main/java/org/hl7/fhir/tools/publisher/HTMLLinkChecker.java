@@ -217,7 +217,7 @@ public class HTMLLinkChecker implements FileNotifier {
   private void reportError(String path, String msg) {
     if (!ok(msg)) {
       if (version.isR4B()) {
-        issues.add(new ValidationMessage(Source.Publisher, IssueType.INFORMATIONAL, -1, -1, path, msg, IssueSeverity.ERROR));        
+        issues.add(new ValidationMessage(Source.Publisher, IssueType.INFORMATIONAL, -1, -1, path, msg, IssueSeverity.WARNING));        
       } else {
         issues.add(new ValidationMessage(Source.Publisher, IssueType.INFORMATIONAL, -1, -1, path, msg, IssueSeverity.ERROR));
       }

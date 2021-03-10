@@ -2129,7 +2129,7 @@ public class Publisher implements URIResolver, SectionNumberer {
     TextFile.stringToFile(shgen.generate(HTMLLinkPolicy.NONE, list), page.getFolders().dstDir+"fhir.shex", false);
 
     new XVerPathsGenerator(page.getDefinitions(), Utilities.path(page.getFolders().dstDir, "xver-paths-"+Constants.VERSION_MM+".json"), Utilities.path(page.getFolders().rootDir, "tools", "history", "release4", "xver-paths-4.0.json")).execute();
-    GraphQLSchemaGenerator gql = new GraphQLSchemaGenerator(page.getWorkerContext());
+    GraphQLSchemaGenerator gql = new GraphQLSchemaGenerator(page.getWorkerContext(), page.getVersion().toCode());
     gql.generateTypes(new FileOutputStream(Utilities.path(page.getFolders().dstDir, "types.graphql")));
     Set<String> names = new HashSet<String>();
     for (StructureDefinition sd : page.getWorkerContext().allStructures()) {

@@ -1232,14 +1232,16 @@ public class SourceParser {
       errors.addAll(sparser.getErrors());
       setResourceProps(n, wg, root);
       String sc = ini.getStringProperty("security-categorization", root.getName().toLowerCase());
-      if (sc != null)
+      if (sc != null) {
         root.setSecurityCategorization(SecurityCategorization.fromCode(sc));
+      }
       else if (!Utilities.existsInList(root.getName(), "Resource", "DomainResource", "CanonicalResource", "MetadataResource", "MetadataPattern"))
         throw new Exception("Must have an entry in the security-categorization section of fhir.ini for the resource "+root.getName());
 
-      for (EventDefn e : sparser.getEvents())
+      for (EventDefn e : sparser.getEvents()) {
         processEvent(e, root.getRoot());
-
+      }
+      
       if (map != null) {
         map.put(root.getName(), root);
       }
@@ -1247,16 +1249,22 @@ public class SourceParser {
         definitions.getKnownResources().put(root.getName(), new DefinedCode(root.getName(), root.getRoot().getDefinition(), n));
         context.getResourceNames().add(root.getName());
       }
-      if (root.getNormativeVersion() != null || root.getNormativePackage() != null)
+      if (root.getNormativeVersion() != null || root.getNormativePackage() != null) {
         root.setStatus(StandardsStatus.NORMATIVE);
-      if (f.exists()) 
+      }
+      if (f.exists()) { 
         parseSvgFile(f, root.getLayout(), f.getName());
+      }
       if (map != null) {
         map.put(root.getName(), root);
       }
       return root;
     } else {
-      new SpreadSheetReloader(context, srcDir, t, version.toCode()).process();
+      try {
+        new SpreadSheetReloader(context, srcDir, t, version.toCode()).process();
+      } catch (Exception e) {
+        System.out.println("Error loading spreadsheet for resource "+t+": "+e.getMessage());
+      }
       new SpreadSheetCreator(context, srcDir, t).generateSpreadsheet();
       ResourceDefn rootNew = new ResourceParser(srcDir, definitions, context, wg, registry, version.toCode(), page.getConceptMaps()).parse(n, t);
       if (f.exists()) { 
