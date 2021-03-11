@@ -25,7 +25,8 @@ import org.hl7.fhir.utilities.xhtml.XhtmlParser;
  * we could never get a valid epub. Zip issues? 
  * 
  * Anyway it lives on as the html link checker. 
- * 
+ *       if (code == FHIRVersion._4_0_1)
+        return "4.0.1";
  * @author Grahame Grieve
  *
  */

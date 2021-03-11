@@ -363,6 +363,9 @@ public class BindingSpecification {
       ToolResourceUtilities.updateUsage(valueSet, usageContext);
       if (!Utilities.noString(vsOid)) 
         ValueSetUtilities.setOID(valueSet, vsOid);
+      if (shared) {
+        valueSet.setUserData("build.shared", "true");
+      }
     }
   }
 
@@ -428,7 +431,7 @@ public class BindingSpecification {
   }
 
   public boolean isShared() {
-    return shared;
+    return valueSet == null ? shared : valueSet.getUserData("build.shared") != null;
   }
 
   public String getMaxReference() {
