@@ -1,5 +1,7 @@
 package org.hl7.fhir.definitions.model;
 
+import org.hl7.fhir.utilities.Utilities;
+
 /*
 Copyright (c) 2011+, HL7, Inc
 All rights reserved.
@@ -73,6 +75,9 @@ public class DefinedStringPattern extends DefinedCode {
   }
 
   public String getFHIRPathType() {
+    if (Utilities.existsInList(getCode(), "positiveInt", "unsignedInt"))
+      return "Integer";
+    
     return "String";
   }
 
