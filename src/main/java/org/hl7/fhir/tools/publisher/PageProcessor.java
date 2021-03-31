@@ -7446,6 +7446,9 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     for (String s : sorted(map.keySet())) {
       CSPair cs = map.get(s);
       ImplementationGuideDefn ig = definitions.getIgs().get(cs.p.getCategory());
+      if (ig == null) {
+        throw new FHIRException("The profile "+cs.cs.getId()+" is not registered in an IG");
+      }
       count++;
       b.append("  <tr>\r\n");
       String ref = (ig.isCore() ? "" : ig.getCode()+File.separator)+cs.cs.getId()+".html";
