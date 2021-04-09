@@ -747,8 +747,8 @@ public class Publisher implements URIResolver, SectionNumberer {
     cm.setPublisher(vs.getPublisher());
     cm.addContact(vs.getContactFirstRep());
     cm.setDescription("Canonical Mapping for \""+vs.getDescription()+"\"");
-    cm.setSource(new CanonicalType(vs.getUrl()));
-    cm.setTarget(new CanonicalType("http://hl7.org/fhir/ValueSet/resource-status"));
+    cm.setSourceScope(new CanonicalType(vs.getUrl()));
+    cm.setTargetScope(new CanonicalType("http://hl7.org/fhir/ValueSet/resource-status"));
     List<String> canonical = page.getDefinitions().getStatusCodes().get("@code");
     List<String> self = page.getDefinitions().getStatusCodes().get(path);
     ConceptMapGroupComponent grp = cm.addGroup();

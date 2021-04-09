@@ -170,8 +170,8 @@ public class CodeListToValueSetParser {
     cm.setCopyright(vs.getCopyright());
     cm.setStatus(vs.getStatus()); // until we publish DSTU, then .review
     cm.setDate(vs.getDate());
-    cm.setSource(Factory.newCanonical(vs.getUrl()));
-    cm.setTarget(Factory.newCanonical(v2map));
+    cm.setSourceScope(Factory.newCanonical(vs.getUrl()));
+    cm.setTargetScope(Factory.newCanonical(v2map));
     if (cs != null) 
       processV2ConceptDefs(cm, cs.getUrl(), cs.getConcept());
     for (ConceptSetComponent cc : vs.getCompose().getInclude())
@@ -264,8 +264,8 @@ public class CodeListToValueSetParser {
     cm.setCopyright(vs.getCopyright());
     cm.setStatus(vs.getStatus()); // until we publish DSTU, then .review
     cm.setDate(vs.getDate());
-    cm.setSource(Factory.newCanonical(vs.getUrl()));
-    cm.setTarget(Factory.newCanonical(v3map));
+    cm.setSourceScope(Factory.newCanonical(vs.getUrl()));
+    cm.setTargetScope(Factory.newCanonical(v3map));
     if (cs != null) 
       processV3ConceptDefs(cm, cs.getUrl(), cs.getConcept());
     for (ConceptSetComponent cc : vs.getCompose().getInclude())
