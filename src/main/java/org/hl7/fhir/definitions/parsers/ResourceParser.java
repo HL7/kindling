@@ -445,6 +445,7 @@ public class ResourceParser {
     r.setProposedOrder(ToolingExtensions.readStringExtension(sd, BuildExtensions.EXT_PROPOSED_ORDER));
     r.setSecurityCategorization(SecurityCategorization.fromCode(ToolingExtensions.readStringExtension(sd, "http://hl7.org/fhir/StructureDefinition/structuredefinition-security-category")));
     r.setRequirements(sd.getPurpose());
+    r.setDefinition(sd.getDescription());
     if (sd.hasExtension(BuildExtensions.EXT_TEMPLATE)) {
       String tname = BuildExtensions.readStringExtension(sd, BuildExtensions.EXT_TEMPLATE);  
       ResourceDefn template = definitions.getResourceByName(tname);
