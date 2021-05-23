@@ -3,17 +3,14 @@ package org.hl7.fhir.tools.converters;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 
-import org.hl7.fhir.convertors.VersionConvertorAdvisor50;
 import org.hl7.fhir.convertors.VersionConvertor_10_50;
+import org.hl7.fhir.convertors.advisors.VersionConvertorAdvisor50;
 import org.hl7.fhir.dstu2.formats.IParser.OutputStyle;
-import org.hl7.fhir.dstu2.model.Resource;
-import org.hl7.fhir.exceptions.FHIRException;
 import org.hl7.fhir.r5.formats.XmlParser;
-import org.hl7.fhir.r5.model.Bundle;
+import org.hl7.fhir.r5.model.*;
 import org.hl7.fhir.r5.model.Bundle.BundleEntryComponent;
-import org.hl7.fhir.r5.model.CodeSystem;
-import org.hl7.fhir.r5.model.CompartmentDefinition;
-import org.hl7.fhir.r5.model.ValueSet;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class DSTU2ValidationConvertor implements VersionConvertorAdvisor50 {
 
@@ -31,9 +28,9 @@ public class DSTU2ValidationConvertor implements VersionConvertorAdvisor50 {
       throw new Exception(e);
     } 
   }
-  
+
   @Override
-  public boolean ignoreEntry(BundleEntryComponent src) {
+  public boolean ignoreEntry(@Nullable BundleEntryComponent src, @NotNull FhirPublication fhirPublication) {
     return src.getResource() instanceof CompartmentDefinition || src.getResource() instanceof CodeSystem;
   }
 
@@ -53,34 +50,23 @@ public class DSTU2ValidationConvertor implements VersionConvertorAdvisor50 {
     dstu2.convert(src + "dataelements.xml", dst + "dataelements-r2.xml");
   }
 
-  @Override
-  public Resource convertR2(org.hl7.fhir.r5.model.Resource resource) throws FHIRException {
-    if (resource instanceof ValueSet) {
-      ValueSet vs = (ValueSet) resource;
-      if (vs.hasCompose() && vs.getCompose().getExclude().isEmpty() && vs.getCompose().getInclude().size() == 1 && !vs.getCompose().getInclude().get(0).hasValueSet()) {
-        String url = vs.getCompose().getInclude().get(0).getSystem();
-        CodeSystem cs = findCodeSystem(url);
-        if (cs != null) {
-          org.hl7.fhir.dstu2.model.ValueSet vst = (org.hl7.fhir.dstu2.model.ValueSet) VersionConvertor_10_50.convertResource(vs);
-          vst.setCompose(null);
-          vst.setCodeSystem(vc.convertCodeSystem(cs));
-          return vst;
-        }
-      }
-    }   
-    return null;
-  }
-
-  @Override
-  public org.hl7.fhir.dstu2016may.model.Resource convertR2016May(org.hl7.fhir.r5.model.Resource resource) throws FHIRException {
-    return null;
-  }
-
-  @Override
-  public org.hl7.fhir.dstu3.model.Resource convertR3(org.hl7.fhir.r5.model.Resource resource) throws FHIRException {
-    return null;
-  }
-
+// I am unsure if this is ever called...
+//  public Resource convertR2(org.hl7.fhir.r5.model.Resource resource) throws FHIRException {
+//    if (resource instanceof ValueSet) {
+//      ValueSet vs = (ValueSet) resource;
+//      if (vs.hasCompose() && vs.getCompose().getExclude().isEmpty() && vs.getCompose().getInclude().size() == 1 && !vs.getCompose().getInclude().get(0).hasValueSet()) {
+//        String url = vs.getCompose().getInclude().get(0).getSystem();
+//        CodeSystem cs = findCodeSystem(url);
+//        if (cs != null) {
+//          org.hl7.fhir.dstu2.model.ValueSet vst = (org.hl7.fhir.dstu2.model.ValueSet) VersionConvertor_10_50.convertResource(vs);
+//          vst.setCompose(null);
+//          vst.setCodeSystem(vc.convertCodeSystem(cs));
+//          return vst;
+//        }
+//      }
+//    }
+//    return null;
+//  }
 
   private CodeSystem findCodeSystem(String url) {
     for (BundleEntryComponent b : source.getEntry()) {
@@ -103,11 +89,4 @@ public class DSTU2ValidationConvertor implements VersionConvertorAdvisor50 {
   public CodeSystem getCodeSystem(ValueSet src) {
     return null;
   }
-
-  @Override
-  public org.hl7.fhir.r4.model.Resource convertR4(org.hl7.fhir.r5.model.Resource resource) throws FHIRException {
-    // TODO Auto-generated method stub
-    return null;
-  }
-
 }
