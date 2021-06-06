@@ -62,6 +62,7 @@ import org.hl7.fhir.rdf.ShExValidator;
 import org.hl7.fhir.utilities.CSFileInputStream;
 import org.hl7.fhir.utilities.Logger;
 import org.hl7.fhir.utilities.Logger.LogMessageType;
+import org.hl7.fhir.utilities.SIDUtilities;
 import org.hl7.fhir.utilities.TextFile;
 import org.hl7.fhir.utilities.Utilities;
 import org.hl7.fhir.utilities.validation.ValidationMessage;
@@ -528,7 +529,7 @@ public class ExampleInspector implements IValidatorResourceFetcher {
 
 
   @Override
-  public Element fetch(Object appContext, String url) throws IOException, FHIRException {
+  public Element fetch(IResourceValidator validator, Object appContext, String url) throws IOException, FHIRException {
     String[] parts = url.split("\\/");
     if (parts.length == 2 && definitions.hasResource(parts[0])) {
       ResourceDefn r = definitions.getResourceByName(parts[0]);
@@ -580,7 +581,7 @@ public class ExampleInspector implements IValidatorResourceFetcher {
 
 
   @Override
-  public ReferenceValidationPolicy validationPolicy(Object appContext, String path, String url) {
+  public ReferenceValidationPolicy validationPolicy(IResourceValidator validator, Object appContext, String path, String url) {
     String[] parts = url.split("\\/");
     if (VALIDATE_CONFORMANCE_REFERENCES) {
       if (Utilities.existsInList(url, "ValueSet/LOINCDepressionAnswersList", "ValueSet/LOINCDifficultyAnswersList", "CodeSystem/npi-taxonomy", "ValueSet/1.2.3.4.5", "StructureDefinition/daf-patient", "ValueSet/zika-affected-area"))
@@ -595,7 +596,7 @@ public class ExampleInspector implements IValidatorResourceFetcher {
 
 
   @Override
-  public boolean resolveURL(Object appContext, String path, String url, String type) throws IOException, FHIRException {
+  public boolean resolveURL(IResourceValidator validator, Object appContext, String path, String url, String type) throws IOException, FHIRException {
     if (path.endsWith(".fullUrl"))
       return true;
     if (url.startsWith("http://hl7.org/fhir")) {
@@ -605,13 +606,13 @@ public class ExampleInspector implements IValidatorResourceFetcher {
       if (parts.length >= 5 &&  definitions.hasResource(parts[4])) {
         if ("DataElement".equals(parts[4]))
           return true;
-        Element res = fetch(appContext, url.substring(20));
+        Element res = fetch(validator, appContext, url.substring(20));
         return true; // disable this test. Try again for R4. res != null || Utilities.existsInList(parts[4], "NamingSystem", "CapabilityStatement", "CompartmentDefinition", "ConceptMap");
       } else if (context.fetchCodeSystem(url) != null)
         return true;
       else if (definitions.getMapTypes().containsKey(url))
         return true;
-      else if (url.startsWith("http://hl7.org/fhir/sid") || Utilities.existsInList(url, "http://hl7.org/fhir/ConsentPolicy/opt-in", "http://hl7.org/fhir/ConsentPolicy/opt-out", "http://hl7.org/fhir/api", 
+      else if (SIDUtilities.isKnownSID(url) || Utilities.existsInList(url, "http://hl7.org/fhir/ConsentPolicy/opt-in", "http://hl7.org/fhir/ConsentPolicy/opt-out", "http://hl7.org/fhir/api", 
           "http://hl7.org/fhir/terminology-server", "http://hl7.org/fhir/knowledge-repository", "http://hl7.org/fhir/measure-processor"))
         return true;
       else
@@ -629,7 +630,7 @@ public class ExampleInspector implements IValidatorResourceFetcher {
 
 
   @Override
-  public byte[] fetchRaw(String source) throws MalformedURLException, IOException {
+  public byte[] fetchRaw(IResourceValidator validator, String source) throws MalformedURLException, IOException {
     URL url = new URL(source);
     URLConnection c = url.openConnection();
     return TextFile.streamToBytes(c.getInputStream());
@@ -637,13 +638,13 @@ public class ExampleInspector implements IValidatorResourceFetcher {
 
 
   @Override
-  public CanonicalResource fetchCanonicalResource(String url) {
+  public CanonicalResource fetchCanonicalResource(IResourceValidator validator, String url) {
     return null;
   }
 
 
   @Override
-  public boolean fetchesCanonicalResource(String url) {
+  public boolean fetchesCanonicalResource(IResourceValidator validator, String url) {
     return false;
   }
   
