@@ -4,7 +4,7 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 
 import org.hl7.fhir.convertors.VersionConvertor_10_50;
-import org.hl7.fhir.convertors.advisors.VersionConvertorAdvisor50;
+import org.hl7.fhir.convertors.advisors.impl.BaseAdvisor_10_50;
 import org.hl7.fhir.dstu2.formats.IParser.OutputStyle;
 import org.hl7.fhir.r5.formats.XmlParser;
 import org.hl7.fhir.r5.model.*;
@@ -12,7 +12,7 @@ import org.hl7.fhir.r5.model.Bundle.BundleEntryComponent;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class DSTU2ValidationConvertor implements VersionConvertorAdvisor50 {
+public class DSTU2ValidationConvertor extends BaseAdvisor_10_50 {
 
   private Bundle source;
   private VersionConvertor_10_50 vc;
@@ -49,24 +49,6 @@ public class DSTU2ValidationConvertor implements VersionConvertorAdvisor50 {
     dstu2.convert(src + "conceptmaps.xml", dst + "conceptmaps-r2.xml");
     dstu2.convert(src + "dataelements.xml", dst + "dataelements-r2.xml");
   }
-
-// I am unsure if this is ever called...
-//  public Resource convertR2(org.hl7.fhir.r5.model.Resource resource) throws FHIRException {
-//    if (resource instanceof ValueSet) {
-//      ValueSet vs = (ValueSet) resource;
-//      if (vs.hasCompose() && vs.getCompose().getExclude().isEmpty() && vs.getCompose().getInclude().size() == 1 && !vs.getCompose().getInclude().get(0).hasValueSet()) {
-//        String url = vs.getCompose().getInclude().get(0).getSystem();
-//        CodeSystem cs = findCodeSystem(url);
-//        if (cs != null) {
-//          org.hl7.fhir.dstu2.model.ValueSet vst = (org.hl7.fhir.dstu2.model.ValueSet) VersionConvertor_10_50.convertResource(vs);
-//          vst.setCompose(null);
-//          vst.setCodeSystem(vc.convertCodeSystem(cs));
-//          return vst;
-//        }
-//      }
-//    }
-//    return null;
-//  }
 
   private CodeSystem findCodeSystem(String url) {
     for (BundleEntryComponent b : source.getEntry()) {
