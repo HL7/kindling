@@ -69,9 +69,9 @@ import javax.xml.transform.stream.StreamResult;
 import org.apache.commons.lang3.NotImplementedException;
 import org.fhir.ucum.UcumException;
 import org.hl7.fhir.convertors.SpecDifferenceEvaluator;
+import org.hl7.fhir.convertors.TypeLinkProvider;
 import org.hl7.fhir.convertors.VersionConvertor_40_50;
 import org.hl7.fhir.convertors.loaders.R4ToR5Loader;
-import org.hl7.fhir.convertors.SpecDifferenceEvaluator.TypeLinkProvider;
 import org.hl7.fhir.convertors.txClient.TerminologyClientR5;
 import org.hl7.fhir.definitions.Config;
 import org.hl7.fhir.definitions.generators.specification.BaseGenerator;
@@ -461,8 +461,8 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
       "</p>\r\n"; 
 
   public final static String CI_PUB_NOTICE =
-        "<p style=\"background-color: #ffefef; border:1px solid maroon; padding: 5px; max-width: 790px;\">\r\n"+
-          "This is the Continuous Integration Build of FHIR (will be incorrect/inconsistent at times). <br/>See the <a href=\"http://hl7.org/fhir/directory.html\">Directory of published versions</a>\r\n"+
+        "<p style=\"background-color: #ffefef; border:1px solid maroon; padding: 5px; max-width: 790px;\">"+
+          "This is the Continuous Integration Build of FHIR (will be incorrect/inconsistent at times). <br/>See the <a href=\"http://hl7.org/fhir/directory.html\">Directory of published versions</a>"+
           "</p>\r\n";
 
   public static final String CODE_LIMIT_EXPANSION = "1000";
@@ -3389,8 +3389,9 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
         }
       }
       return Utilities.escapeXml(r.getDefinition());
-    } else
+    } else {
       return " ";
+    }
   }
 
   private String aliases(List<String> aliases) {

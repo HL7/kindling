@@ -21,6 +21,7 @@ import org.hl7.fhir.r5.terminologies.CodeSystemUtilities;
 import org.hl7.fhir.r5.utils.ToolingExtensions;
 import org.hl7.fhir.validation.BaseValidator;
 import org.hl7.fhir.tools.publisher.BuildWorkerContext;
+import org.hl7.fhir.utilities.SIDUtilities;
 import org.hl7.fhir.utilities.Utilities;
 import org.hl7.fhir.utilities.validation.ValidationMessage;
 import org.hl7.fhir.utilities.validation.ValidationMessage.IssueSeverity;
@@ -84,16 +85,14 @@ public class ValueSetValidator extends BaseValidator {
     codeSystems.put("http://www.ama-assn.org/go/cpt", null);
     codeSystems.put("http://hl7.org/fhir/ndfrt", null);
     codeSystems.put("http://fdasis.nlm.nih.gov", null);
-    codeSystems.put("http://hl7.org/fhir/sid/ndc", null);
+    for (String s : SIDUtilities.codeSystemList())
+      codeSystems.put(s, null);
     codeSystems.put("http://www2a.cdc.gov/vaccines/", null);
     codeSystems.put("iis/iisstandards/vaccines.asp?rpt=cvx", null);
     codeSystems.put("urn:iso:std:iso:3166", null);
     codeSystems.put("http://www.nubc.org/patient-discharge", null);
     codeSystems.put("http://www.radlex.org", null);
-    codeSystems.put("http://hl7.org/fhir/sid/icd-10", null);
-    codeSystems.put("http://hl7.org/fhir/sid/icpc2", null);
     codeSystems.put("http://www.icd10data.com/icd10pcs", null);
-    codeSystems.put("http://hl7.org/fhir/sid/icd-9", null);
     codeSystems.put("http://terminology.hl7.org/CodeSystem/v2-[X](/v)", null);
     codeSystems.put("http://terminology.hl7.org/CodeSystem/v3-[X]", null);
     codeSystems.put("http://www.whocc.no/atc", null);
@@ -344,21 +343,24 @@ public class ValueSetValidator extends BaseValidator {
   private boolean isKnownCodeSystem(String system) {
     if (Utilities.existsInList(system, "http://cancer.sanger.ac.uk/cancergenome/projects/cosmic",
         "http://clinicaltrials.gov",  "http://fdasis.nlm.nih.gov",  "http://hl7.org/fhir/ndfrt", 
-        "http://hl7.org/fhir/sid/icd-9",  "http://hl7.org/fhir/sid/icd-10",  "http://hl7.org/fhir/sid/icpc2", 
-        "http://hl7.org/fhir/sid/ndc",  "http://loinc.org",  "https://precision.fda.gov/apps/", 
+        "http://loinc.org",  "https://precision.fda.gov/apps/", 
         "http://www.lrg-sequence.org",  "http://ncimeta.nci.nih.gov",  "http://www.sequenceontology.org", 
         "http://snomed.info/sct",  "http://unitsofmeasure.org",  "http://www.ama-assn.org/go/cpt", 
         "http://www.ensembl.org",  "http://www.genenames.org",  "http://varnomen.hgvs.org/", 
         "http://www.icd10data.com/icd10pcs",  "http://www.ncbi.nlm.nih.gov/nuccore",  "http://www.ncbi.nlm.nih.gov/projects/SNP", 
         "http://www.ncbi.nlm.nih.gov/pubmed",  "http://www.ncbi.nlm.nih.gov/clinvar",  "http://www.nlm.nih.gov/research/umls/rxnorm", 
         "http://www.nubc.org/patient-discharge",  "http://www.omim.org",  "http://www.pharmgkb.org", 
-        "http://www.radlex.org",  "http://www.whocc.no/atc",  "http://hl7.org/fhir/sid/cvx", 
+        "http://www.radlex.org",  "http://www.whocc.no/atc",   
         "urn:ietf:bcp:47",  "urn:ietf:bcp:13",  "urn:ietf:rfc:3986", 
         "urn:iso:std:iso:4217",  "urn:iso:std:iso:11073:10101",  "urn:iso-astm:E1762-95:2013", 
         "urn:iso:std:iso:3166",  "urn:iso:std:iso:3166:-2",  "urn:iso:std:iso:3166:-3",  "http://nucc.org/provider-taxonomy", 
         "http://example.com",  "http://example.org", "https://precision.fda.gov/files/", "http://www.ebi.ac.uk/ipd/imgt/hla", 
         "https://www.iana.org/time-zones", "https://precision.fda.gov/jobs/"))
       return true;
+    
+    if (SIDUtilities.isknownCodeSystem(system)) {
+      return true;
+    } 
     
     // todo: why do these need to be listed here?
     if (system.equals("http://hl7.org/fhir/data-types") ||
