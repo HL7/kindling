@@ -65,6 +65,7 @@ import org.hl7.fhir.rdf.ShExValidator;
 import org.hl7.fhir.utilities.CSFileInputStream;
 import org.hl7.fhir.utilities.Logger;
 import org.hl7.fhir.utilities.Logger.LogMessageType;
+import org.hl7.fhir.utilities.SIDUtilities;
 import org.hl7.fhir.utilities.TextFile;
 import org.hl7.fhir.utilities.Utilities;
 import org.hl7.fhir.utilities.validation.ValidationMessage;
@@ -614,7 +615,7 @@ public class ExampleInspector implements IValidatorResourceFetcher {
         return true;
       else if (definitions.getMapTypes().containsKey(url))
         return true;
-      else if (url.startsWith("http://hl7.org/fhir/sid") || Utilities.existsInList(url, "http://hl7.org/fhir/ConsentPolicy/opt-in", "http://hl7.org/fhir/ConsentPolicy/opt-out", "http://hl7.org/fhir/api", 
+      else if (SIDUtilities.isKnownSID(url) || Utilities.existsInList(url, "http://hl7.org/fhir/ConsentPolicy/opt-in", "http://hl7.org/fhir/ConsentPolicy/opt-out", "http://hl7.org/fhir/api", 
           "http://hl7.org/fhir/terminology-server", "http://hl7.org/fhir/knowledge-repository", "http://hl7.org/fhir/measure-processor"))
         return true;
       else
@@ -632,8 +633,10 @@ public class ExampleInspector implements IValidatorResourceFetcher {
 
 
   @Override
-  public byte[] fetchRaw(IResourceValidator validator, String url) throws MalformedURLException, IOException {
-    throw new NotImplementedException("Not implemented - not needed?");
+  public byte[] fetchRaw(IResourceValidator validator, String source) throws MalformedURLException, IOException {
+    URL url = new URL(source);
+    URLConnection c = url.openConnection();
+    return TextFile.streamToBytes(c.getInputStream());
   }
 
 
