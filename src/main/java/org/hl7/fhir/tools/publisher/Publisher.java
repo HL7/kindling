@@ -232,6 +232,7 @@ import org.hl7.fhir.utilities.CommaSeparatedStringBuilder;
 import org.hl7.fhir.utilities.IniFile;
 import org.hl7.fhir.utilities.Logger.LogMessageType;
 import org.hl7.fhir.utilities.NDJsonWriter;
+import org.hl7.fhir.utilities.SIDUtilities;
 import org.hl7.fhir.utilities.TextFile;
 import org.hl7.fhir.utilities.Utilities;
 import org.hl7.fhir.utilities.XsltUtilities;
@@ -2975,7 +2976,7 @@ public class Publisher implements URIResolver, SectionNumberer {
     }
     for (String s : page.getCodeSystems().keys()) {
       CodeSystem cs = page.getCodeSystems().get(s);
-      if (cs == null && !Utilities.existsInList(s, "http://unitsofmeasure.org", "http://hl7.org/fhir/sid/cvx", "http://loinc.org", "http://fdasis.nlm.nih.gov", "http://www.nlm.nih.gov/research/umls/rxnorm", "urn:oid:1.2.36.1.2001.1005.17"))
+      if (cs == null && !Utilities.existsInList(s, "http://unitsofmeasure.org", "http://loinc.org", "http://fdasis.nlm.nih.gov", "http://www.nlm.nih.gov/research/umls/rxnorm", "urn:oid:1.2.36.1.2001.1005.17") && !SIDUtilities.isknownCodeSystem(s))
         System.out.println("No code system resource found for "+s);
     }
     for (CodeSystem cs : page.getCodeSystems().getList()) {
@@ -3236,7 +3237,7 @@ public class Publisher implements URIResolver, SectionNumberer {
         if (e.getResource() instanceof CanonicalResource) {
           CanonicalResource m = (CanonicalResource) e.getResource();
           String url = m.getUrl();
-          if (url != null && url.startsWith("http://hl7.org/fhir") && !url.startsWith("http://hl7.org/fhir/sid")) {
+          if (url != null && url.startsWith("http://hl7.org/fhir") && !SIDUtilities.isKnownSID(url)) {
             if (!page.getVersion().toCode().equals(m.getVersion())) 
               page.getValidationErrors().add(new ValidationMessage(Source.Publisher, IssueType.INVALID, -1, -1, "Bundle "+bnd.getId(), "definitions in FHIR space should have the correct version (url = "+url+", version = "+m.getVersion()+")", IssueSeverity.ERROR));              
           }

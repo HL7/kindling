@@ -6,6 +6,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.StringReader;
 import java.net.MalformedURLException;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.ArrayList;
@@ -32,7 +33,9 @@ import org.hl7.fhir.definitions.model.Example;
 import org.hl7.fhir.definitions.model.ResourceDefn;
 import org.hl7.fhir.definitions.model.SearchParameterDefn;
 import org.hl7.fhir.definitions.validation.XmlValidator;
+import org.hl7.fhir.exceptions.DefinitionException;
 import org.hl7.fhir.exceptions.FHIRException;
+import org.hl7.fhir.exceptions.FHIRFormatError;
 import org.hl7.fhir.exceptions.PathEngineException;
 import org.hl7.fhir.r5.context.IWorkerContext;
 import org.hl7.fhir.r5.elementmodel.Element;
@@ -529,7 +532,7 @@ public class ExampleInspector implements IValidatorResourceFetcher {
 
 
   @Override
-  public Element fetch(IResourceValidator validator, Object appContext, String url) throws IOException, FHIRException {
+  public Element fetch(IResourceValidator validator,Object appContext, String url) throws IOException, FHIRException {
     String[] parts = url.split("\\/");
     if (parts.length == 2 && definitions.hasResource(parts[0])) {
       ResourceDefn r = definitions.getResourceByName(parts[0]);
@@ -596,7 +599,7 @@ public class ExampleInspector implements IValidatorResourceFetcher {
 
 
   @Override
-  public boolean resolveURL(IResourceValidator validator, Object appContext, String path, String url, String type) throws IOException, FHIRException {
+  public boolean resolveURL(IResourceValidator validator,Object appContext, String path, String url, String type) throws IOException, FHIRException {
     if (path.endsWith(".fullUrl"))
       return true;
     if (url.startsWith("http://hl7.org/fhir")) {
@@ -624,7 +627,7 @@ public class ExampleInspector implements IValidatorResourceFetcher {
 
   @Override
   public IValidatorResourceFetcher setLocale(Locale locale) {
-    // don't ned to do anything here 
+    // don't need to do anything here 
     return null;
   }
 
@@ -638,14 +641,17 @@ public class ExampleInspector implements IValidatorResourceFetcher {
 
 
   @Override
-  public CanonicalResource fetchCanonicalResource(IResourceValidator validator, String url) {
-    return null;
+  public CanonicalResource fetchCanonicalResource(IResourceValidator validator, String url) throws URISyntaxException {
+    throw new NotImplementedException("Not implemented - not needed?");
   }
 
 
   @Override
   public boolean fetchesCanonicalResource(IResourceValidator validator, String url) {
-    return false;
+    throw new NotImplementedException("Not implemented - not needed?");
   }
+
+
+
   
  }
