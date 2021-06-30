@@ -927,4 +927,19 @@ public class BuildWorkerContext extends BaseWorkerContext implements IWorkerCont
     }
     return t;
   }
+
+  @Override
+  public void cachePackage(PackageDetails packageDetails, List<PackageVersion> dependencies) {
+
+  }
+
+  @Override
+  public boolean hasPackage(PackageVersion pack) {
+    return false;
+  }
+
+  @Override
+  public PackageDetails getPackage(PackageVersion pack) {
+    return null;
+  }
 }

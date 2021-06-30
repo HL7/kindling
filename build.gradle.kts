@@ -6,7 +6,7 @@ plugins {
 }
 
 group = "org.hl7.fhir"
-version = "1.0.0-SNAPSHOT"
+version = "1.0.1-SNAPSHOT"
 
 java {
     withJavadocJar()
@@ -37,14 +37,14 @@ repositories {
 
 dependencies {
     implementation("ca.uhn.hapi.fhir", "hapi-fhir-base", "4.0.0")
-    implementation("ca.uhn.hapi.fhir", "org.hl7.fhir.utilities", "5.4.4-SNAPSHOT")
-    implementation("ca.uhn.hapi.fhir", "org.hl7.fhir.dstu2", "5.4.4-SNAPSHOT")
-    implementation("ca.uhn.hapi.fhir", "org.hl7.fhir.dstu2016may", "5.4.4-SNAPSHOT")
-    implementation("ca.uhn.hapi.fhir", "org.hl7.fhir.dstu3", "5.4.4-SNAPSHOT")
-    implementation("ca.uhn.hapi.fhir", "org.hl7.fhir.r4", "5.4.4-SNAPSHOT")
-    implementation("ca.uhn.hapi.fhir", "org.hl7.fhir.r5", "5.4.4-SNAPSHOT")
-    implementation("ca.uhn.hapi.fhir", "org.hl7.fhir.convertors", "5.4.4-SNAPSHOT")
-    implementation("ca.uhn.hapi.fhir", "org.hl7.fhir.validation", "5.4.4-SNAPSHOT")
+    implementation("ca.uhn.hapi.fhir", "org.hl7.fhir.utilities", "5.4.6")
+    implementation("ca.uhn.hapi.fhir", "org.hl7.fhir.dstu2", "5.4.6")
+    implementation("ca.uhn.hapi.fhir", "org.hl7.fhir.dstu2016may", "5.4.6")
+    implementation("ca.uhn.hapi.fhir", "org.hl7.fhir.dstu3", "5.4.6")
+    implementation("ca.uhn.hapi.fhir", "org.hl7.fhir.r4", "5.4.6")
+    implementation("ca.uhn.hapi.fhir", "org.hl7.fhir.r5", "5.4.6")
+    implementation("ca.uhn.hapi.fhir", "org.hl7.fhir.convertors", "5.4.6")
+    implementation("ca.uhn.hapi.fhir", "org.hl7.fhir.validation", "5.4.6")
     implementation("ch.qos.logback", "logback-classic", "1.2.3")
     implementation("com.google.code.gson", "gson", "2.8.5")
     implementation("commons-codec", "commons-codec", "1.9")
