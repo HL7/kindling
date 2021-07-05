@@ -642,13 +642,13 @@ public class ExampleInspector implements IValidatorResourceFetcher {
 
   @Override
   public CanonicalResource fetchCanonicalResource(IResourceValidator validator, String url) throws URISyntaxException {
-    throw new NotImplementedException("Not implemented - not needed?");
+    return null;//throw new NotImplementedException("Not implemented - not needed?");
   }
 
 
   @Override
   public boolean fetchesCanonicalResource(IResourceValidator validator, String url) {
-    throw new NotImplementedException("Not implemented - not needed?");
+    return false;//throw new NotImplementedException("Not implemented - not needed?");
   }
 
 
