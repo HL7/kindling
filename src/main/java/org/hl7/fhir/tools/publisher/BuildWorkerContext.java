@@ -234,10 +234,10 @@ public class BuildWorkerContext extends BaseWorkerContext implements IWorkerCont
   }
 
   @Override
-  public List<ConceptMap> findMapsForSource(String url) throws FHIRException {
+  public List<ConceptMap> findMapsForSourceScope(String url) throws FHIRException {
     List<ConceptMap> res = new ArrayList<ConceptMap>();
     for (ConceptMap map : listMaps())
-      if (map.getSourceCanonicalType().getValue().equals(url)) 
+      if (map.getSourceScopeCanonicalType().getValue().equals(url)) 
         res.add(map);
     return res;
   }
