@@ -74,7 +74,7 @@ import javax.xml.transform.stream.StreamSource;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.hl7.fhir.convertors.VersionConvertor_40_50;
+import org.hl7.fhir.convertors.factory.VersionConvertorFactory_40_50;
 import org.hl7.fhir.definitions.Config;
 import org.hl7.fhir.definitions.generators.specification.DataTypeTableGenerator;
 import org.hl7.fhir.definitions.generators.specification.DictHTMLGenerator;
@@ -4541,7 +4541,7 @@ public class Publisher implements URIResolver, SectionNumberer {
   public Resource loadExample(CSFile file) throws IOException, FileNotFoundException {
     if (page.getVersion().isR4B()) {
       org.hl7.fhir.r4.model.Resource res = new org.hl7.fhir.r4.formats.XmlParser().parse(new FileInputStream(file));
-      return VersionConvertor_40_50.convertResource(res);
+      return VersionConvertorFactory_40_50.convertResource(res);
     } else {
       return new XmlParser().parse(new FileInputStream(file));
     }

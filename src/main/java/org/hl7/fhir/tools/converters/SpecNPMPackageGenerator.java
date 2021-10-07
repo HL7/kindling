@@ -16,10 +16,10 @@ import java.util.Map;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
-import org.hl7.fhir.convertors.VersionConvertor_10_50;
-import org.hl7.fhir.convertors.VersionConvertor_14_50;
-import org.hl7.fhir.convertors.VersionConvertor_30_50;
-import org.hl7.fhir.convertors.VersionConvertor_40_50;
+import org.hl7.fhir.convertors.factory.VersionConvertorFactory_10_50;
+import org.hl7.fhir.convertors.factory.VersionConvertorFactory_14_50;
+import org.hl7.fhir.convertors.factory.VersionConvertorFactory_30_50;
+import org.hl7.fhir.convertors.factory.VersionConvertorFactory_40_50;
 import org.hl7.fhir.dstu2.model.StructureDefinition;
 import org.hl7.fhir.exceptions.FHIRException;
 import org.hl7.fhir.exceptions.FHIRFormatError;
@@ -205,22 +205,22 @@ public class SpecNPMPackageGenerator {
   }
 
   private void addConvertedIg4(NPMPackageGenerator npm, ImplementationGuide ig) throws IOException, FHIRException {
-    org.hl7.fhir.r4.model.Resource res = VersionConvertor_40_50.convertResource(ig);
+    org.hl7.fhir.r4.model.Resource res = VersionConvertorFactory_40_50.convertResource(ig);
     npm.addFile(Category.RESOURCE, "ImplementationGuide-"+ig.getId()+".json", new org.hl7.fhir.r4.formats.JsonParser().composeBytes(res));
   }
 
   private void addConvertedIg3(NPMPackageGenerator npm, ImplementationGuide ig) throws IOException, FHIRException {
-    org.hl7.fhir.dstu3.model.Resource res = VersionConvertor_30_50.convertResource(ig);
+    org.hl7.fhir.dstu3.model.Resource res = VersionConvertorFactory_30_50.convertResource(ig);
     npm.addFile(Category.RESOURCE, "ImplementationGuide-"+ig.getId()+".json", new org.hl7.fhir.dstu3.formats.JsonParser().composeBytes(res));
   }
 
   private void addConvertedIg14(NPMPackageGenerator npm, ImplementationGuide ig) throws IOException, FHIRException {
-    org.hl7.fhir.dstu2016may.model.Resource res = VersionConvertor_14_50.convertResource(ig);
+    org.hl7.fhir.dstu2016may.model.Resource res = VersionConvertorFactory_14_50.convertResource(ig);
     npm.addFile(Category.RESOURCE, "ImplementationGuide-"+ig.getId()+".json", new org.hl7.fhir.dstu2016may.formats.JsonParser().composeBytes(res));
   }
 
   private void addConvertedIg10(NPMPackageGenerator npm, ImplementationGuide ig) throws IOException, FHIRException {
-    org.hl7.fhir.dstu2.model.Resource res = VersionConvertor_10_50.convertResource(ig);
+    org.hl7.fhir.dstu2.model.Resource res = VersionConvertorFactory_10_50.convertResource(ig);
     npm.addFile(Category.RESOURCE, "ImplementationGuide-"+ig.getId()+".json", new org.hl7.fhir.dstu2.formats.JsonParser().composeBytes(res));
   }
 
@@ -242,22 +242,22 @@ public class SpecNPMPackageGenerator {
   }
 
   private void addConvertedIg4X(NPMPackageGenerator npm, ImplementationGuide ig) throws IOException, FHIRException {
-    org.hl7.fhir.r4.model.Resource res = VersionConvertor_40_50.convertResource(ig);
+    org.hl7.fhir.r4.model.Resource res = VersionConvertorFactory_40_50.convertResource(ig);
     npm.addFile(Category.RESOURCE, "ImplementationGuide-"+ig.getId()+".xml", new org.hl7.fhir.r4.formats.XmlParser().composeBytes(res));
   }
 
   private void addConvertedIg3X(NPMPackageGenerator npm, ImplementationGuide ig) throws IOException, FHIRException {
-    org.hl7.fhir.dstu3.model.Resource res = VersionConvertor_30_50.convertResource(ig);
+    org.hl7.fhir.dstu3.model.Resource res = VersionConvertorFactory_30_50.convertResource(ig);
     npm.addFile(Category.RESOURCE, "ImplementationGuide-"+ig.getId()+".xml", new org.hl7.fhir.dstu3.formats.XmlParser().composeBytes(res));
   }
 
   private void addConvertedIg14X(NPMPackageGenerator npm, ImplementationGuide ig) throws IOException, FHIRException {
-    org.hl7.fhir.dstu2016may.model.Resource res = VersionConvertor_14_50.convertResource(ig);
+    org.hl7.fhir.dstu2016may.model.Resource res = VersionConvertorFactory_14_50.convertResource(ig);
     npm.addFile(Category.RESOURCE, "ImplementationGuide-"+ig.getId()+".xml", new org.hl7.fhir.dstu2016may.formats.XmlParser().composeBytes(res));
   }
 
   private void addConvertedIg10X(NPMPackageGenerator npm, ImplementationGuide ig) throws IOException, FHIRException {
-    org.hl7.fhir.dstu2.model.Resource res = VersionConvertor_10_50.convertResource(ig);
+    org.hl7.fhir.dstu2.model.Resource res = VersionConvertorFactory_10_50.convertResource(ig);
     npm.addFile(Category.RESOURCE, "ImplementationGuide-"+ig.getId()+".xml", new org.hl7.fhir.dstu2.formats.XmlParser().composeBytes(res));
   }
 
