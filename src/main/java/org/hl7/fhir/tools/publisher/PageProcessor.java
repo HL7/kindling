@@ -70,7 +70,6 @@ import org.apache.commons.lang3.NotImplementedException;
 import org.fhir.ucum.UcumException;
 import org.hl7.fhir.convertors.SpecDifferenceEvaluator;
 import org.hl7.fhir.convertors.TypeLinkProvider;
-import org.hl7.fhir.convertors.VersionConvertor_40_50;
 import org.hl7.fhir.convertors.loaders.R4ToR5Loader;
 import org.hl7.fhir.convertors.txClient.TerminologyClientR5;
 import org.hl7.fhir.definitions.Config;
@@ -306,7 +305,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
   public class PageEvaluationContext implements IEvaluationContext {
 
     @Override
-    public Base resolveConstant(Object appContext, String name, boolean beforeContext) throws PathEngineException {
+    public List<Base> resolveConstant(Object appContext, String name, boolean beforeContext) throws PathEngineException {
       return null;
     }
 
@@ -2552,7 +2551,9 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
         else
           s.append(ec.getExpression());
       } else if (ec.getType() == ExtensionContextType.FHIRPATH) {
-          s.append(Utilities.escapeXml(ec.getExpression()));
+        s.append(Utilities.escapeXml(ec.getExpression()));
+      } else if (ec.getType() == ExtensionContextType.EXTENSION) {
+        s.append(Utilities.escapeXml(ec.getExpression()));
       } else
         throw new Error("Not done yet");
     }

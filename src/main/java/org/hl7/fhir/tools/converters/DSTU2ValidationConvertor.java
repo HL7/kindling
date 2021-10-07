@@ -3,8 +3,8 @@ package org.hl7.fhir.tools.converters;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 
-import org.hl7.fhir.convertors.VersionConvertor_10_50;
 import org.hl7.fhir.convertors.advisors.impl.BaseAdvisor_10_50;
+import org.hl7.fhir.convertors.conv10_50.VersionConvertor_10_50;
 import org.hl7.fhir.dstu2.formats.IParser.OutputStyle;
 import org.hl7.fhir.r5.formats.XmlParser;
 import org.hl7.fhir.r5.model.*;
@@ -22,7 +22,8 @@ public class DSTU2ValidationConvertor extends BaseAdvisor_10_50 {
     
     try {
       source = (Bundle) new XmlParser().parse(new FileInputStream(bundleSource));
-      org.hl7.fhir.dstu2.model.Bundle target = (org.hl7.fhir.dstu2.model.Bundle) VersionConvertor_10_50.convertResource(source, this);
+      VersionConvertor_10_50 vc = new VersionConvertor_10_50(this);
+      org.hl7.fhir.dstu2.model.Bundle target = (org.hl7.fhir.dstu2.model.Bundle) vc.convertResource(source);
       new org.hl7.fhir.dstu2.formats.XmlParser().setOutputStyle(OutputStyle.PRETTY).compose(new FileOutputStream(bundleTarget), target);     
     } catch (Exception e) {
       throw new Exception(e);

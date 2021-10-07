@@ -96,8 +96,8 @@ public class ExampleInspector implements IValidatorResourceFetcher {
   private class ExampleHostServices implements IEvaluationContext {
 
     @Override
-    public Base resolveConstant(Object appContext, String name, boolean beforeContext) throws PathEngineException {
-      return null;
+    public List<Base> resolveConstant(Object appContext, String name, boolean beforeContext) throws PathEngineException {
+      return new ArrayList<>();
     }
 
     @Override
@@ -342,13 +342,13 @@ public class ExampleInspector implements IValidatorResourceFetcher {
   }
  
   private Element validateLogical(String f, StructureDefinition profile, FhirFormat fmt) throws Exception {
-    Element e = Manager.parse(context, new CSFileInputStream(f), fmt);
+    Element e = Manager.parseSingle(context, new CSFileInputStream(f), fmt);
     new DefinitionsUsageTracker(definitions).updateUsage(e);
-    validator.validate(null, errorsInt, e);
+    validator.validate(null, errorsInt, null, e);
     if (profile != null) {
       List<StructureDefinition> list = new ArrayList<StructureDefinition>();
       list.add(profile);
-      validator.validate(null, errorsInt, e, list);
+      validator.validate(null, errorsInt, null, e, list);
     }
     return e;
   }
@@ -642,13 +642,18 @@ public class ExampleInspector implements IValidatorResourceFetcher {
 
   @Override
   public CanonicalResource fetchCanonicalResource(IResourceValidator validator, String url) throws URISyntaxException {
-    throw new NotImplementedException("Not implemented - not needed?");
+    for (CanonicalResource t : context.allConformanceResources()) {
+      if (t.getUrl().equals(url)) {
+        return t;
+      }
+    }
+    return null;
   }
 
 
   @Override
   public boolean fetchesCanonicalResource(IResourceValidator validator, String url) {
-    throw new NotImplementedException("Not implemented - not needed?");
+    return true;
   }
 
 
