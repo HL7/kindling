@@ -2551,9 +2551,14 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
         else
           s.append(ec.getExpression());
       } else if (ec.getType() == ExtensionContextType.FHIRPATH) {
-        s.append(Utilities.escapeXml(ec.getExpression()));
+          s.append(Utilities.escapeXml(ec.getExpression()));
       } else if (ec.getType() == ExtensionContextType.EXTENSION) {
-        s.append(Utilities.escapeXml(ec.getExpression()));
+        StructureDefinition extension = workerContext.fetchResource(StructureDefinition.class, ec.getExpression());
+        if (extension==null)
+          s.append(Utilities.escapeXml(ec.getExpression()));
+        else {
+          s.append("<a href=\""+extension.getUserData("filename")+".html\">"+ec.getExpression()+"</a>");
+        }
       } else
         throw new Error("Not done yet");
     }

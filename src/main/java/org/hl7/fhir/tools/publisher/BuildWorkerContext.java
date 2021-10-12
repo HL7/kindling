@@ -930,7 +930,7 @@ public class BuildWorkerContext extends BaseWorkerContext implements IWorkerCont
 
   @Override
   public void cachePackage(PackageDetails packageDetails, List<PackageVersion> dependencies) {
-   
+
   }
 
   @Override
@@ -942,5 +942,4 @@ public class BuildWorkerContext extends BaseWorkerContext implements IWorkerCont
   public PackageDetails getPackage(PackageVersion pack) {
     return null;
   }
-
 }
