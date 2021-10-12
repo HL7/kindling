@@ -316,9 +316,9 @@ public class BuildWorkerContext extends BaseWorkerContext implements IWorkerCont
       response = queryForTerm(code);
     if (snomedCodes.containsKey(code))
       if (display == null)
-        return new ValidationResult(new ConceptDefinitionComponent().setCode(code).setDisplay(snomedCodes.get(code).display));
+        return new ValidationResult("http://snomed.info/sct", new ConceptDefinitionComponent().setCode(code).setDisplay(snomedCodes.get(code).display));
       else if (snomedCodes.get(code).has(display))
-        return new ValidationResult(new ConceptDefinitionComponent().setCode(code).setDisplay(display));
+        return new ValidationResult("http://snomed.info/sct", new ConceptDefinitionComponent().setCode(code).setDisplay(display));
       else 
         return new ValidationResult(IssueSeverity.WARNING, "Snomed Display Name for "+code+" must be one of '"+snomedCodes.get(code).summary()+"'");
     
@@ -405,10 +405,10 @@ public class BuildWorkerContext extends BaseWorkerContext implements IWorkerCont
     }
     Concept lc = loincCodes.get(code);
     if (display == null)
-      return new ValidationResult(new ConceptDefinitionComponent().setCode(code).setDisplay(lc.display));
+      return new ValidationResult("http://loinc.org", new ConceptDefinitionComponent().setCode(code).setDisplay(lc.display));
     if (!lc.has(display))
       return new ValidationResult(IssueSeverity.WARNING, "Loinc Display Name for "+code+" must be one of '"+lc.summary()+"'");
-    return new ValidationResult(new ConceptDefinitionComponent().setCode(code).setDisplay(lc.display));
+    return new ValidationResult("http://loinc.org", new ConceptDefinitionComponent().setCode(code).setDisplay(lc.display));
   }
 
   private ValidationResult verifyCode(CodeSystem cs, String code, String display) throws Exception {
@@ -416,17 +416,17 @@ public class BuildWorkerContext extends BaseWorkerContext implements IWorkerCont
     if (cc == null)
       return new ValidationResult(IssueSeverity.ERROR, "Unknown Code "+code+" in "+cs.getUrl());
     if (display == null)
-      return new ValidationResult(cc);
+      return new ValidationResult(cs.getUrl(), cc);
     CommaSeparatedStringBuilder b = new CommaSeparatedStringBuilder();
     if (cc.hasDisplay()) {
       b.append(cc.getDisplay());
       if (display.equalsIgnoreCase(cc.getDisplay()))
-        return new ValidationResult(cc);
+        return new ValidationResult(cs.getUrl(), cc);
     }
     for (ConceptDefinitionDesignationComponent ds : cc.getDesignation()) {
       b.append(ds.getValue());
       if (display.equalsIgnoreCase(ds.getValue()))
-        return new ValidationResult(cc);
+        return new ValidationResult(cs.getUrl(), cc);
     }
     return new ValidationResult(IssueSeverity.ERROR, "Display Name for "+code+" must be one of '"+b.toString()+"'");
   }
@@ -471,9 +471,9 @@ public class BuildWorkerContext extends BaseWorkerContext implements IWorkerCont
         return verifyCode(cs, code, display);
       }
       if (system.startsWith("http://example.org"))
-        return new ValidationResult(new ConceptDefinitionComponent());
+        return new ValidationResult(system, new ConceptDefinitionComponent());
       if (system.equals("urn:iso:std:iso:11073:10101") && Utilities.isInteger(code)) {
-        return new ValidationResult(new ConceptDefinitionComponent());
+        return new ValidationResult(system, new ConceptDefinitionComponent());
       }
     } catch (Exception e) {
       return new ValidationResult(IssueSeverity.ERROR, "Error validating code \""+code+"\" in system \""+system+"\": "+e.getMessage());
@@ -491,7 +491,7 @@ public class BuildWorkerContext extends BaseWorkerContext implements IWorkerCont
       ConceptDefinitionComponent def = new ConceptDefinitionComponent();
       def.setCode(code);
       def.setDisplay(ucum.getCommonDisplay(code));
-      return new ValidationResult(def);
+      return new ValidationResult("http://unitsofmeasure.org", def);
     }
   }
 

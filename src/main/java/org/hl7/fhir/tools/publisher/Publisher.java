@@ -74,7 +74,10 @@ import javax.xml.transform.stream.StreamSource;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.hl7.fhir.convertors.VersionConvertor_40_50;
+import org.hl7.fhir.convertors.conv40_50.VersionConvertor_40_50;
+import org.hl7.fhir.convertors.conv40_50.resources40_50.StructureDefinition40_50;
+import org.hl7.fhir.convertors.conv40_50.resources40_50.ValueSet40_50;
+import org.hl7.fhir.convertors.factory.VersionConvertorFactory_40_50;
 import org.hl7.fhir.definitions.Config;
 import org.hl7.fhir.definitions.generators.specification.DataTypeTableGenerator;
 import org.hl7.fhir.definitions.generators.specification.DictHTMLGenerator;
@@ -201,6 +204,7 @@ import org.hl7.fhir.r5.model.StructureDefinition.StructureDefinitionKind;
 import org.hl7.fhir.r5.model.StructureDefinition.TypeDerivationRule;
 import org.hl7.fhir.r5.renderers.RendererFactory;
 import org.hl7.fhir.r5.renderers.ResourceRenderer;
+import org.hl7.fhir.r5.renderers.spreadsheets.StructureDefinitionSpreadsheetGenerator;
 import org.hl7.fhir.r5.renderers.utils.BaseWrappers.ResourceWrapper;
 import org.hl7.fhir.r5.renderers.utils.DOMWrappers;
 import org.hl7.fhir.r5.renderers.utils.RenderingContext;
@@ -2210,7 +2214,7 @@ public class Publisher implements URIResolver, SectionNumberer {
     for (org.hl7.fhir.r4.model.Bundle.BundleEntryComponent be : bundle.getEntry()) {
       if (be.getResource() instanceof org.hl7.fhir.r4.model.StructureDefinition) {
         org.hl7.fhir.r4.model.StructureDefinition sd = (org.hl7.fhir.r4.model.StructureDefinition) be.getResource();
-        map.put(sd.getName(), org.hl7.fhir.convertors.conv40_50.resources40_50.StructureDefinition40_50.convertStructureDefinition(sd));
+        map.put(sd.getName(), (StructureDefinition) VersionConvertorFactory_40_50.convertResource(sd));
       }
     }
   }
@@ -2221,7 +2225,7 @@ public class Publisher implements URIResolver, SectionNumberer {
       if (be.getResource() instanceof org.hl7.fhir.r4.model.ValueSet) {
         org.hl7.fhir.r4.model.ValueSet sd = (org.hl7.fhir.r4.model.ValueSet) be.getResource();
         sd.setUserData("old", "r4");
-        map.put(sd.getName(), org.hl7.fhir.convertors.conv40_50.resources40_50.ValueSet40_50.convertValueSet(sd));
+        map.put(sd.getName(), (ValueSet) VersionConvertorFactory_40_50.convertResource(sd));
       }
     }    
   }
@@ -2817,18 +2821,22 @@ public class Publisher implements URIResolver, SectionNumberer {
             ok = ok && !files[fi].getName().endsWith(n);
           }
           if (ok) {
-            JsonObject jr = JSONUtil.parse(TextFile.fileToString(files[fi]));
-            if (!jr.has("url")) {
-              JsonObject meta = JSONUtil.forceObject(jr, "meta");
-              JsonArray labels = JSONUtil.forceArray(meta, "tag");
-              JsonObject label = JSONUtil.addObj(labels);
-              label.addProperty("system", "http://terminology.hl7.org/CodeSystem/v3-ActReason");
-              label.addProperty("code", "HTEST");
-              label.addProperty("display", "test health data");
-                
+            try {
+              JsonObject jr = JSONUtil.parse(TextFile.fileToString(files[fi]));
+              if (!jr.has("url")) {
+                JsonObject meta = JSONUtil.forceObject(jr, "meta");
+                JsonArray labels = JSONUtil.forceArray(meta, "tag");
+                JsonObject label = JSONUtil.addObj(labels);
+                label.addProperty("system", "http://terminology.hl7.org/CodeSystem/v3-ActReason");
+                label.addProperty("code", "HTEST");
+                label.addProperty("display", "test health data");
+
+              }
+              String jrs = gson.toJson(jr);
+              zip.addBytes(files[fi].getName(), jrs.getBytes(Charsets.UTF_8), true);
+            } catch (Exception e) {
+              throw new Exception("Error pasing "+files[fi].getAbsolutePath()+": "+e.getMessage(), e);
             }
-            String jrs = gson.toJson(jr);
-            zip.addBytes(files[fi].getName(), jrs.getBytes(Charsets.UTF_8), true);
           }
         }
       }
@@ -4035,8 +4043,10 @@ public class Publisher implements URIResolver, SectionNumberer {
     }
     tmp.delete();
 
-    new ProfileUtilities(page.getWorkerContext(), page.getValidationErrors(), page).generateXlsx(new FileOutputStream(Utilities.path(page.getFolders().dstDir, n + ".xlsx")), resource.getProfile(), false, false);
-    
+    StructureDefinitionSpreadsheetGenerator sdr = new StructureDefinitionSpreadsheetGenerator(page.getWorkerContext(), false, false);
+    sdr.renderStructureDefinition(resource.getProfile());
+    sdr.finish(new FileOutputStream(Utilities.path(page.getFolders().dstDir, n + ".xlsx")));
+
     // because we'll pick up a little more information as we process the
     // resource
     StructureDefinition p = generateProfile(resource, n, xml, json, ttl, !logicalOnly);
@@ -4454,7 +4464,7 @@ public class Publisher implements URIResolver, SectionNumberer {
     e.setResourceName(resn.getName());
     String canonical = "http://hl7.org/fhir/";
     
-    org.hl7.fhir.r5.elementmodel.Element ex = Manager.parse(page.getWorkerContext(), new CSFileInputStream(page.getFolders().dstDir + prefix+n + ".xml"), FhirFormat.XML);
+    org.hl7.fhir.r5.elementmodel.Element ex = Manager.parseSingle(page.getWorkerContext(), new CSFileInputStream(page.getFolders().dstDir + prefix+n + ".xml"), FhirFormat.XML);
     new DefinitionsUsageTracker(page.getDefinitions()).updateUsage(ex);
     Manager.compose(page.getWorkerContext(), ex, new FileOutputStream(page.getFolders().dstDir + prefix+n + ".json"), FhirFormat.JSON, OutputStyle.PRETTY, canonical); 
 //    Manager.compose(page.getWorkerContext(), ex, new FileOutputStream(Utilities.changeFileExt(destName, ".canonical.json")), FhirFormat.JSON, OutputStyle.CANONICAL); 
@@ -4541,7 +4551,7 @@ public class Publisher implements URIResolver, SectionNumberer {
   public Resource loadExample(CSFile file) throws IOException, FileNotFoundException {
     if (page.getVersion().isR4B()) {
       org.hl7.fhir.r4.model.Resource res = new org.hl7.fhir.r4.formats.XmlParser().parse(new FileInputStream(file));
-      return VersionConvertor_40_50.convertResource(res);
+      return new VersionConvertor_40_50(null).convertResource(res);
     } else {
       return new XmlParser().parse(new FileInputStream(file));
     }

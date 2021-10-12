@@ -52,8 +52,9 @@ public class ShExValidator {
         PrefixMap pm = PrefixMap.empty();
         IO<PrefixMap> ioPm = IO.pure(pm);
         RDFAsJenaModel rdf = RDFAsJenaModel.fromModel(dataModel, noneIri, noneIri, nodesLocations, tripleLocations).unsafeRunSync(global());
-        IO<Result> ioResult = schema.validate(rdf, "TARGETDECLS", "", noneStr, noneStr, pm, schema.pm(), noneBuilder);
-        Result result = ioResult.unsafeRunSync(global());
-        if (!result.isValid()) System.out.println("Not valid");
+//        disabled - GDG 6-Oct 2021 - no longer compiles and no obvious solution 
+//        IO<Result> ioResult schema.validate(rdf, "TARGETDECLS", "", noneStr, noneStr, pm, schema.pm(), noneBuilder);
+//        Result result = ioResult.unsafeRunSync(global());
+//        if (!result.isValid()) System.out.println("Not valid");
     }
 }
