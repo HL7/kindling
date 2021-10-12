@@ -2821,18 +2821,22 @@ public class Publisher implements URIResolver, SectionNumberer {
             ok = ok && !files[fi].getName().endsWith(n);
           }
           if (ok) {
-            JsonObject jr = JSONUtil.parse(TextFile.fileToString(files[fi]));
-            if (!jr.has("url")) {
-              JsonObject meta = JSONUtil.forceObject(jr, "meta");
-              JsonArray labels = JSONUtil.forceArray(meta, "tag");
-              JsonObject label = JSONUtil.addObj(labels);
-              label.addProperty("system", "http://terminology.hl7.org/CodeSystem/v3-ActReason");
-              label.addProperty("code", "HTEST");
-              label.addProperty("display", "test health data");
-                
+            try {
+              JsonObject jr = JSONUtil.parse(TextFile.fileToString(files[fi]));
+              if (!jr.has("url")) {
+                JsonObject meta = JSONUtil.forceObject(jr, "meta");
+                JsonArray labels = JSONUtil.forceArray(meta, "tag");
+                JsonObject label = JSONUtil.addObj(labels);
+                label.addProperty("system", "http://terminology.hl7.org/CodeSystem/v3-ActReason");
+                label.addProperty("code", "HTEST");
+                label.addProperty("display", "test health data");
+
+              }
+              String jrs = gson.toJson(jr);
+              zip.addBytes(files[fi].getName(), jrs.getBytes(Charsets.UTF_8), true);
+            } catch (Exception e) {
+              throw new Exception("Error pasing "+files[fi].getAbsolutePath()+": "+e.getMessage(), e);
             }
-            String jrs = gson.toJson(jr);
-            zip.addBytes(files[fi].getName(), jrs.getBytes(Charsets.UTF_8), true);
           }
         }
       }
