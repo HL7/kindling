@@ -454,7 +454,7 @@ public class BuildWorkerContext extends BaseWorkerContext implements IWorkerCont
   }
 
   
-  public ValidationResult validateCode(ValidationOptions options, String system, String code, String display) {
+  public ValidationResult validateCode(ValidationOptions options, String system, String version, String code, String display) {
     try {
       if (system.equals("http://snomed.info/sct"))
         return verifySnomed(code, display);
@@ -478,7 +478,7 @@ public class BuildWorkerContext extends BaseWorkerContext implements IWorkerCont
     } catch (Exception e) {
       return new ValidationResult(IssueSeverity.ERROR, "Error validating code \""+code+"\" in system \""+system+"\": "+e.getMessage());
     }
-    return super.validateCode(options, system, code, display);
+    return super.validateCode(options, system, version, code, display);
   }
 
   

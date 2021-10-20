@@ -145,7 +145,11 @@ public class SpecNPMPackageGenerator {
 //    npm.addFile(Category.RESOURCE, "ig-r4.json", bs.toByteArray());
     addConvertedIg(npm, ig, version.toCode());
     for (ResourceEntry e : reslist) {
-      npm.addFile(Category.RESOURCE, e.type+"-"+e.id+".json", e.json);
+      if (Utilities.existsInList(e.type, "CapabilityStatement", "StructureDefinition", "ImplementationGuide", "SearchParameter", "MessageDefinition", "OperationDefinition", "CompartmentDefinition", 
+          "StructureMap", "GraphDefinition", "ExampleScenario", "CodeSystem", "ValueSet", "ConceptMap", "ConceptMap2", "NamingSystem", "TerminologyCapabilities") && 
+          e.canonical != null && !e.canonical.contains("StructureDefinition-de-")) {
+        npm.addFile(Category.RESOURCE, e.type+"-"+e.id+".json", e.json);
+      }
     }
     for (String k : files.keySet()) {
       if (k.endsWith(".png") || k.endsWith(".css") || k.endsWith(".template") || k.endsWith(".zip") || k.endsWith(".gif") 
@@ -287,6 +291,10 @@ public class SpecNPMPackageGenerator {
           e.id = id;
           e.json = b;
           e.conf = false;
+          if (json.has("url")) {
+            e.canonical = json.get("url").getAsString();
+            e.conf = true;
+          }
           reslist.add(e);
         }
       }

@@ -2106,9 +2106,6 @@ public class Publisher implements URIResolver, SectionNumberer {
 
 
   private void produceSpecification() throws Exception {
-    page.setNavigation(new Navigation());
-    page.getNavigation().parse(page.getFolders().srcDir + "navigation.xml");
-
     processCDA();
     page.log("Generate RDF", LogMessageType.Process);
     processRDF();

@@ -251,10 +251,10 @@ public class ValueSetValidator extends BaseValidator {
     if (inc.hasSystem() && canValidate(inc.getSystem())) {
       for (ConceptReferenceComponent cc : inc.getConcept()) {
         if (inc.getSystem().equals("http://dicom.nema.org/resources/ontology/DCM"))
-          warning(errors, IssueType.BUSINESSRULE, getWg(vs)+":ValueSet["+vs.getId()+"].compose.include["+Integer.toString(i)+"]", isValidCode(cc.getCode(), inc.getSystem()), 
+          warning(errors, IssueType.BUSINESSRULE, getWg(vs)+":ValueSet["+vs.getId()+"].compose.include["+Integer.toString(i)+"]", isValidCode(cc.getCode(), inc.getSystem(), inc.getVersion()), 
               "The code '"+cc.getCode()+"' is not valid in the system "+inc.getSystem()+" (1)",
               "<a href=\""+vs.getUserString("path")+"\">Value set "+nameForErrors+" ("+vs.getName()+")</a>: The code '"+cc.getCode()+"' is not valid in the system "+inc.getSystem()+" (1a)");             
-        else if (!isValidCode(cc.getCode(), inc.getSystem()))
+        else if (!isValidCode(cc.getCode(), inc.getSystem(), inc.getVersion()))
           rule(errors, IssueType.BUSINESSRULE, getWg(vs)+":ValueSet["+vs.getId()+"].compose.include["+Integer.toString(i)+"]", false, 
             "The code '"+cc.getCode()+"' is not valid in the system "+inc.getSystem()+" (2)");
         
@@ -383,10 +383,10 @@ public class ValueSetValidator extends BaseValidator {
     return false; 
   }
 
-  private boolean isValidCode(String code, String system) {
+  private boolean isValidCode(String code, String system, String version) {
     CodeSystem cs = context.fetchResource(CodeSystem.class, system);
     if (cs == null || cs.getContent() != CodeSystemContentMode.COMPLETE) 
-      return context.validateCode(new ValidationOptions("en-US"), system, code, null).isOk();
+      return context.validateCode(new ValidationOptions("en-US"), system, version, code, null).isOk();
     else {
       if (hasCode(code, cs.getConcept()))
         return true;

@@ -1196,6 +1196,9 @@ public class ResourceValidator extends BaseValidator {
     }
 
     private boolean noExternals(ValueSet vs) {
+      if (vs == null) {
+        return true;
+      }
         if (Utilities.existsInList(vs.getUrl(), "http://hl7.org/fhir/ValueSet/mimetypes", "http://hl7.org/fhir/ValueSet/languages"))
             return true;
 

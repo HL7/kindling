@@ -69,11 +69,11 @@ public class SchemaGenerator {
 	    }
 	  }
 
-	  XSDBaseGenerator xsdb = new XSDBaseGenerator(new OutputStreamWriter(new FileOutputStream(new CSFile(xsdDir+"fhir-base.xsd")), "UTF-8"), forCodeGeneration, workerContext, new HashSet<>(), version);
+    Set<String> allenums = new HashSet<String>();
+	  XSDBaseGenerator xsdb = new XSDBaseGenerator(new OutputStreamWriter(new FileOutputStream(new CSFile(xsdDir+"fhir-base.xsd")), "UTF-8"), forCodeGeneration, workerContext, allenums, version);
 	  xsdb.setDefinitions(definitions);
 	  xsdb.generate(version, genDate, true);
 	  xsdb.getWriter().close();
-    Set<String> allenums = new HashSet<String>();
 
     List<String> names = new ArrayList<String>();
     names.addAll(definitions.getResources().keySet());
