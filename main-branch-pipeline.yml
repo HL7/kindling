@@ -9,8 +9,8 @@ pr: none
 # Different users have different machine setups, we run the build three times, on ubuntu, osx, and windows
 strategy:
   matrix:
-    # linux:
-    #   imageName: "ubuntu-20.04"
+    linux:
+      imageName: "ubuntu-20.04"
     mac:
       imageName: "macos-10.15"
     windows:
