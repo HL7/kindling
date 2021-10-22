@@ -10,7 +10,7 @@ pr: none
 strategy:
   matrix:
     linux:
-      imageName: 'ubuntu-latest'
+      imageName: "ubuntu-latest"
     mac:
       imageName: "macos-10.15"
     windows:
