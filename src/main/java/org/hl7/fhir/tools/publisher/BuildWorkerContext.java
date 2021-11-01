@@ -597,7 +597,7 @@ public class BuildWorkerContext extends BaseWorkerContext implements IWorkerCont
         triedServer = true;
         // for this, we use the FHIR client
         if (txClient == null) {
-          txClient = new TerminologyClientR5(tsServer);
+          txClient = new TerminologyClientR5(tsServer, "fhir/main-build");
           this.txLog = new HTMLClientLogger(null);
         }
         Map<String, String> params = new HashMap<String, String>();

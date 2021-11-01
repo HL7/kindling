@@ -2790,8 +2790,8 @@ public class Publisher implements URIResolver, SectionNumberer {
       zip.addFileName("redirect.cgi.template", page.getFolders().srcDir + "redirect.cgi", false);
       zip.addFileName("redirect.php.template", page.getFolders().srcDir + "redirect.php", false);
       zip.addFileName("ig-template.zip", Utilities.path(page.getFolders().tmpDir, "ig-template.zip"), false);
-      zip.addFiles(Utilities.path(page.getFolders().rootDir, "publish", ""), "", ".png", null);
-      zip.addFiles(Utilities.path(page.getFolders().rootDir, "publish", ""), "", ".gif", null);
+      zip.addFiles(page.getFolders().dstDir, "", ".png", null);
+      zip.addFiles(page.getFolders().dstDir, "", ".gif", null);
       zip.close();
       page.log("....IG Builder (2)", LogMessageType.Process);
 
