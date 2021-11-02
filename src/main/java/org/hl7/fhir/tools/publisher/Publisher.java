@@ -4548,7 +4548,7 @@ public class Publisher implements URIResolver, SectionNumberer {
   public Resource loadExample(CSFile file) throws IOException, FileNotFoundException {
     if (page.getVersion().isR4B()) {
       org.hl7.fhir.r4.model.Resource res = new org.hl7.fhir.r4.formats.XmlParser().parse(new FileInputStream(file));
-      return new VersionConvertor_40_50(null).convertResource(res);
+      return VersionConvertorFactory_40_50.convertResource(res);
     } else {
       return new XmlParser().parse(new FileInputStream(file));
     }
