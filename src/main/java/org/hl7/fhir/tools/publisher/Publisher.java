@@ -2106,9 +2106,6 @@ public class Publisher implements URIResolver, SectionNumberer {
 
 
   private void produceSpecification() throws Exception {
-    page.setNavigation(new Navigation());
-    page.getNavigation().parse(page.getFolders().srcDir + "navigation.xml");
-
     processCDA();
     page.log("Generate RDF", LogMessageType.Process);
     processRDF();
@@ -2793,8 +2790,8 @@ public class Publisher implements URIResolver, SectionNumberer {
       zip.addFileName("redirect.cgi.template", page.getFolders().srcDir + "redirect.cgi", false);
       zip.addFileName("redirect.php.template", page.getFolders().srcDir + "redirect.php", false);
       zip.addFileName("ig-template.zip", Utilities.path(page.getFolders().tmpDir, "ig-template.zip"), false);
-      zip.addFiles(Utilities.path(page.getFolders().rootDir, "publish", ""), "", ".png", null);
-      zip.addFiles(Utilities.path(page.getFolders().rootDir, "publish", ""), "", ".gif", null);
+      zip.addFiles(page.getFolders().dstDir, "", ".png", null);
+      zip.addFiles(page.getFolders().dstDir, "", ".gif", null);
       zip.close();
       page.log("....IG Builder (2)", LogMessageType.Process);
 
@@ -4551,7 +4548,7 @@ public class Publisher implements URIResolver, SectionNumberer {
   public Resource loadExample(CSFile file) throws IOException, FileNotFoundException {
     if (page.getVersion().isR4B()) {
       org.hl7.fhir.r4.model.Resource res = new org.hl7.fhir.r4.formats.XmlParser().parse(new FileInputStream(file));
-      return new VersionConvertor_40_50(null).convertResource(res);
+      return VersionConvertorFactory_40_50.convertResource(res);
     } else {
       return new XmlParser().parse(new FileInputStream(file));
     }

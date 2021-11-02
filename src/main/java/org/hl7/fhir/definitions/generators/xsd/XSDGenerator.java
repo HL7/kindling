@@ -56,7 +56,7 @@ import org.hl7.fhir.r5.utils.TypesUtilities;
 import org.hl7.fhir.tools.publisher.BuildWorkerContext;
 import org.hl7.fhir.utilities.Utilities;
 
-public class XSDGenerator  {
+public class XSDGenerator extends XSDRootGenerator {
 
   private boolean forCodeGeneration; 
   private OutputStreamWriter writer;
@@ -136,7 +136,7 @@ public class XSDGenerator  {
 	  if (allenums.contains(en)) 
 	    return;
 	  allenums.add(en);
-	  write("  <xs:simpleType name=\""+en+"-list\">\r\n");
+	  write("  <xs:simpleType name=\""+en+"Enum\">\r\n");
 	  write("    <xs:restriction base=\"code-primitive\">\r\n");
 	  ValueSet vs = enums.get(en);
 	  vs.setUserData(ToolResourceUtilities.NAME_VS_USE_MARKER, true);
@@ -155,7 +155,7 @@ public class XSDGenerator  {
 	  write("    </xs:annotation>\r\n");
 	  write("    <xs:complexContent>\r\n");
 	  write("      <xs:extension base=\"Element\">\r\n");
-	  write("        <xs:attribute name=\"value\" type=\""+en + "-list\" use=\"optional\"/>\r\n");
+	  write("        <xs:attribute name=\"value\" type=\""+en + "Enum\" use=\"optional\"/>\r\n");
 	  write("      </xs:extension>\r\n");
 	  write("    </xs:complexContent>\r\n");
 	  write("  </xs:complexType>\r\n");
@@ -440,22 +440,6 @@ public class XSDGenerator  {
 		else  
 			return type.getName()+"_"+upFirst(type.getParams().get(0));
 	}
-
-  private String namify(String name) {
-    StringBuilder b = new StringBuilder();
-    boolean ws = false;
-    for (char c : name.toCharArray()) {
-      if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z')) {
-        if (ws) {
-          ws = false;
-          b.append(Character.toUpperCase(c));
-        } else 
-          b.append(c);          
-      } else 
-        ws = true;        
-    }
-    return b.toString();
-  }
 
   public OutputStreamWriter getWriter() {
     return writer;

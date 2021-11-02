@@ -454,7 +454,7 @@ public class BuildWorkerContext extends BaseWorkerContext implements IWorkerCont
   }
 
   
-  public ValidationResult validateCode(ValidationOptions options, String system, String code, String display) {
+  public ValidationResult validateCode(ValidationOptions options, String system, String version, String code, String display) {
     try {
       if (system.equals("http://snomed.info/sct"))
         return verifySnomed(code, display);
@@ -597,7 +597,7 @@ public class BuildWorkerContext extends BaseWorkerContext implements IWorkerCont
         triedServer = true;
         // for this, we use the FHIR client
         if (txClient == null) {
-          txClient = new TerminologyClientR5(tsServer);
+          txClient = new TerminologyClientR5(tsServer, "fhir/main-build");
           this.txLog = new HTMLClientLogger(null);
         }
         Map<String, String> params = new HashMap<String, String>();

@@ -33,6 +33,7 @@ import java.io.OutputStreamWriter;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -60,7 +61,7 @@ import org.hl7.fhir.r5.utils.TypesUtilities;
 import org.hl7.fhir.tools.publisher.BuildWorkerContext;
 import org.hl7.fhir.utilities.Utilities;
 
-public class XSDBaseGenerator {
+public class XSDBaseGenerator  extends XSDRootGenerator {
 
   private OutputStreamWriter writer;
   
@@ -73,6 +74,7 @@ public class XSDBaseGenerator {
   // private Map<String, ConceptDomain> tx;
   private List<BindingSpecification> enums = new ArrayList<BindingSpecification>();
   private Map<String, String> enumDefs = new HashMap<String, String>();
+  private Set<String> allenums = new HashSet<String>();
 
   private Set<String> genEnums;
   private Map<String, String> regexQueue = new HashMap<String, String>();
@@ -91,6 +93,7 @@ public class XSDBaseGenerator {
     this.workerContext = workerContext;
     this.genEnums = genEnums;
     this.version = version;
+    this.allenums = genEnums;
   }
 
   private void write(String s) throws IOException {
@@ -120,6 +123,7 @@ public class XSDBaseGenerator {
 
 //    genElementRoot();
     write("\r\n");
+    genSharedBindings();
     genPrimitives();
     write("\r\n");
     genResourceReference();
@@ -146,7 +150,19 @@ public class XSDBaseGenerator {
     }
   }
 
+  private void genSharedBindings() throws IOException {
+    for (BindingSpecification bs : definitions.getAllBindings()) {
+      if (isEnum(bs) && (bs.getValueSet() == null ? bs.isShared() : bs.getValueSet().getUserData("build.shared") != null)) {;
+        generateEnum(bs);
+       }
+     }
+    
+  }
+
   protected boolean isEnum(BindingSpecification cd) {
+    if (cd.getBinding() == BindingMethod.Special) {
+      return Utilities.existsInList(cd.getValueSet().getUrl(), "http://hl7.org/fhir/ValueSet/resource-types");
+    }
     boolean ok = cd.getBinding() == (BindingSpecification.BindingMethod.CodeList) || (cd.getStrength() == BindingStrength.REQUIRED && cd.getBinding() == BindingMethod.ValueSet);
     if (ok) {
       if (cd.getValueSet() != null && cd.getValueSet().hasCompose() && cd.getValueSet().getCompose().getInclude().size() == 1) {
@@ -520,11 +536,14 @@ public class XSDBaseGenerator {
   
 
   private void generateEnum(BindingSpecification bs) throws IOException {
-    String en = bs.getValueSet().getName();
+    String en = namify(bs.getValueSet().getName());
     if (genEnums.contains(en))
       return;
+    if (allenums.contains(en)) 
+      return;
+    allenums.add(en);
 
-    write("  <xs:simpleType name=\"" + en + "-list\">\r\n");
+    write("  <xs:simpleType name=\"" + en + "Enum\">\r\n");
     write("    <xs:restriction base=\"code-primitive\">\r\n");
     bs.getValueSet().setUserData(ToolResourceUtilities.NAME_VS_USE_MARKER, true);
     ValueSet ex = workerContext.expandVS(bs.getValueSet(), true, false).getValueset();
@@ -545,7 +564,7 @@ public class XSDBaseGenerator {
     write("    </xs:annotation>\r\n");
     write("    <xs:complexContent>\r\n");
     write("       <xs:extension base=\"Element\">\r\n");
-    write("         <xs:attribute name=\"value\" type=\""+en + "-list\" use=\"optional\"/>\r\n");
+    write("         <xs:attribute name=\"value\" type=\""+en + "Enum\" use=\"optional\"/>\r\n");
     write("       </xs:extension>\r\n");
     write("     </xs:complexContent>\r\n");
     write("  </xs:complexType>\r\n");

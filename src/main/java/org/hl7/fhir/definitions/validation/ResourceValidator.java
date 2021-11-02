@@ -1152,8 +1152,10 @@ public class ResourceValidator extends BaseValidator {
         if (!isComplex && !externalException(path)) {
             ValueSet vs = cd.getValueSet();
             if (warning(errors, IssueType.REQUIRED, path, vs != null || cd.hasReference(), "Unable to resolve value set on 'code' Binding")) {
-                hint(errors, IssueType.REQUIRED, path, noExternals(vs), "Bindings for code data types should only use internally defined codes (" + vs.getUrl() + ")");
-                // don't disable this without discussion on Zulip
+              if (vs != null) {
+                  hint(errors, IssueType.REQUIRED, path, noExternals(vs), "Bindings for code data types should only use internally defined codes (" + vs.getUrl() + ")");
+                  // don't disable this without discussion on Zulip
+              }
             }
         }
 
@@ -1196,6 +1198,9 @@ public class ResourceValidator extends BaseValidator {
     }
 
     private boolean noExternals(ValueSet vs) {
+      if (vs == null) {
+        return true;
+      }
         if (Utilities.existsInList(vs.getUrl(), "http://hl7.org/fhir/ValueSet/mimetypes", "http://hl7.org/fhir/ValueSet/languages"))
             return true;
 

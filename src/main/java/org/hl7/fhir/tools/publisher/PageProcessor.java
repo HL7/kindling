@@ -399,7 +399,6 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
   private Definitions definitions;
   private FolderManager folders;
   private FHIRVersion version;
-  private Navigation navigation;
   private IniFile ini;
   private final Calendar genDate = Calendar.getInstance();
   private final Date start = new Date();
@@ -582,57 +581,6 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     return diffEngine.getDiffAsHtml(this, definitions.getElementDefn(dt).getProfile());
   }
 
-
-  private String generateSideBar(String prefix) throws Exception {
-    if (prevSidebars.containsKey(prefix))
-      return prevSidebars.get(prefix);
-    List<String> links = new ArrayList<String>();
-
-    StringBuilder s = new StringBuilder();
-    s.append("<div class=\"sidebar\">\r\n");
-    s.append("<p><a href=\"http://hl7.org/fhir\" title=\"Fast Healthcare Interoperability Resources - Home Page\"><img border=\"0\" src=\""+prefix+"flame16.png\" style=\"vertical-align: text-bottom\"/></a> "+
-      "<a href=\"http://hl7.org/fhir\" title=\"Fast Healthcare Interoperability Resources - Home Page\"><b>FHIR</b></a>&reg; v"+getVersion()+" &copy; <a href=\"http://hl7.org\">HL7</a></p>\r\n");
-
-    for (Navigation.Category c : navigation.getCategories()) {
-      if (!"nosidebar".equals(c.getMode())) {
-        if (c.getLink() != null) {
-          s.append("  <h2><a href=\""+prefix+c.getLink()+".html\">"+c.getName()+"</a></h2>\r\n");
-          links.add(c.getLink());
-        }
-        else
-          s.append("  <h2>"+c.getName()+"</h2>\r\n");
-        s.append("  <ul>\r\n");
-        for (Navigation.Entry e : c.getEntries()) {
-          if (e.getLink() != null) {
-            links.add(e.getLink());
-            s.append("    <li><a href=\""+prefix+e.getLink()+".html\">"+Utilities.escapeXml(e.getName())+"</a></li>\r\n");
-          } else
-            s.append("    <li>"+e.getName()+"</li>\r\n");
-        }
-        if (c.getEntries().size() ==0 && c.getLink().equals("resourcelist")) {
-          List<String> list = new ArrayList<String>();
-          list.addAll(definitions.getResources().keySet());
-          Collections.sort(list);
-
-          for (String rn : list) {
-          //  if (!links.contains(rn.toLowerCase())) {
-              ResourceDefn r = definitions.getResourceByName(rn);
-              orderedResources.add(r.getName());
-              s.append("    <li><a href=\""+prefix+rn.toLowerCase()+".html\">"+Utilities.escapeXml(r.getName())+"</a></li>\r\n");
-          //  }
-          }
-
-        }
-        s.append("  </ul>\r\n");
-      }
-    }
-    // s.append(SIDEBAR_SPACER);
-    s.append("<p><a href=\"http://gforge.hl7.org/gf/project/fhir/\" title=\"GitHub Commit Hash\">Build "+buildId+"</a> (<a href=\"qa.html\">QA Page</a>)</p><p> <a href=\"http://hl7.org\"><img width=\"42\" height=\"50\" border=\"0\" src=\""+prefix+"hl7logo.png\"/></a></p>\r\n");
-
-    s.append("</div>\r\n");
-    prevSidebars.put(prefix, s.toString());
-    return prevSidebars.get(prefix);
-  }
 
   private String combineNotes(String location, List<String> followUps, String notes, String prefix) throws Exception {
     String s = "";
@@ -7275,7 +7223,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
 
   private boolean usesReference(List<TypeRef> types, String name) {
     for (TypeRef t : types) {
-      if (t.getName().equals("Reference") || t.getName().equals("canonical") ) {
+      if (Utilities.existsInList(t.getName(), "Reference", "CodeableReference", "canonical")) {
         for (String p : t.getParams()) {
           if (p.equals(name))
             return true;
@@ -9169,9 +9117,6 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     return version;
   }
 
-  public Navigation getNavigation() {
-    return navigation;
-  }
 
   public IniFile getIni() {
     return ini;
@@ -9182,7 +9127,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     breadCrumbManager.setDefinitions(definitions);
     TerminologyClient client;
     try {
-      client = new TerminologyClientR5(tsServer);
+      client = new TerminologyClientR5(tsServer, "fhir/main-build");
       client.setTimeout(60000);
     } catch(Exception e) {
       System.out.println("Warning @ PageProcessor client initialize: " + e.getLocalizedMessage());
@@ -9266,10 +9211,6 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
 //    notime = true;
 //  }
 
-
-  public void setNavigation(Navigation navigation) {
-    this.navigation = navigation;
-  }
 
   public List<String> getOrderedResources() {
     return orderedResources;
@@ -10257,7 +10198,6 @@ private int countContains(List<ValueSetExpansionContainsComponent> list) {
   public void clean() {
     // recover some memory. Keep only what is needed for validation
 //    definitions = null;
-    navigation = null;
     ini = null;
     prevSidebars.clear();
     orderedResources.clear();
