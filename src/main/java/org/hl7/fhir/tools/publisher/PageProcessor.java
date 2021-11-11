@@ -70,7 +70,7 @@ import org.apache.commons.lang3.NotImplementedException;
 import org.fhir.ucum.UcumException;
 import org.hl7.fhir.convertors.SpecDifferenceEvaluator;
 import org.hl7.fhir.convertors.TypeLinkProvider;
-import org.hl7.fhir.convertors.loaders.R4ToR5Loader;
+import org.hl7.fhir.convertors.loaders.loaderR5.R4ToR5Loader;
 import org.hl7.fhir.convertors.txClient.TerminologyClientR5;
 import org.hl7.fhir.definitions.Config;
 import org.hl7.fhir.definitions.generators.specification.BaseGenerator;
