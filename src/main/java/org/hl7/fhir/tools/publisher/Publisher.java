@@ -487,8 +487,6 @@ public class Publisher implements URIResolver, SectionNumberer {
     pub.execute(dir, args);
   }
 
-
-
   private static boolean hasParam(String[] args, String param) {
     for (String a : args)
       if (a.equals(param))
@@ -518,7 +516,10 @@ public class Publisher implements URIResolver, SectionNumberer {
             String[] up = url.split("\\/");
             int b = Utilities.findinList(up, "github.com");
             page.getFolders().ghOrg = up[b+1];
-            page.getFolders().ghRepo = up[b+2];  
+            if (page.getFolders().ghOrg.contains(":")) {
+              page.getFolders().ghOrg = page.getFolders().ghOrg.substring(page.getFolders().ghOrg.lastIndexOf(":")+1);
+            }
+            page.getFolders().ghRepo = up[b+2].replace(".git", "");  
             List<Ref> branches = git.branchList().call();
             for (Ref ref : branches) {
               page.getFolders().ghBranch = ref.getName().substring(ref.getName().lastIndexOf("/") + 1, ref.getName().length());
