@@ -47,6 +47,7 @@ import java.io.UnsupportedEncodingException;
 import java.io.Writer;
 import java.net.URL;
 import java.net.URLDecoder;
+import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -58,6 +59,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.zip.ZipEntry;
@@ -404,6 +406,8 @@ public class Publisher implements URIResolver, SectionNumberer {
 
   private static final String HTTP_separator = "/";
 
+  private static final String STATED_KINDLING_VERSION = "2.1"; // arbitray - increase this any time not sure about what version is running on the ci-build
+  private Calendar execTime = Calendar.getInstance();
   private String outputdir;
 
   private SourceParser prsr;
@@ -480,7 +484,7 @@ public class Publisher implements URIResolver, SectionNumberer {
     if (hasParam(args, "-api-key-file")) {
       pub.apiKeyFile = new IniFile(new File(getNamedParam(args, "-api-key-file")).getAbsolutePath());
     }
-    pub.execute(dir);
+    pub.execute(dir, args);
   }
 
 
@@ -533,6 +537,20 @@ public class Publisher implements URIResolver, SectionNumberer {
     page.getFolders().ghRepo = null;
   }
 
+  private static String toMB(long maxMemory) {
+    return Long.toString(maxMemory / (1024*1024));
+  }
+  
+  private static String nowAsString(Calendar cal) {
+    DateFormat df = DateFormat.getDateTimeInstance(DateFormat.FULL, DateFormat.FULL);
+    return df.format(cal.getTime());
+  }
+  
+  private static String nowAsDate(Calendar cal) {
+    DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX", new Locale("en", "US"));
+    return df.format(cal.getTime());
+  }
+
 
   /**
    * Entry point to the publisher. This classes Java Main() calls this function
@@ -541,11 +559,26 @@ public class Publisher implements URIResolver, SectionNumberer {
    * @param folder
    * @throws IOException 
    */
-  public void execute(String folder) throws IOException {
+  public void execute(String folder, String[] args) throws IOException {
     tester = new PublisherTestSuites();
-    
-    
+
     page.log("Publish FHIR in folder " + folder + " @ " + Config.DATE_FORMAT().format(page.getGenDate().getTime()), LogMessageType.Process);
+
+    page.log("FHIR Main Build Publisher "+STATED_KINDLING_VERSION, LogMessageType.Process);
+    page.log("Detected Java version: " + System.getProperty("java.version")+" from "+System.getProperty("java.home")+" on "+System.getProperty("os.name")+"/"+System.getProperty("os.arch")+" ("+System.getProperty("sun.arch.data.model")+"bit). "+toMB(Runtime.getRuntime().maxMemory())+"MB available", LogMessageType.Process);
+    
+    if (!"64".equals(System.getProperty("sun.arch.data.model"))) {
+      page.log("Attention: you should upgrade your Java to a 64bit version in order to be able to run this program without running out of memory", LogMessageType.Process);        
+    }
+    page.log("dir = "+System.getProperty("user.dir")+", path = "+System.getenv("PATH"), LogMessageType.Process);
+    String s = "Parameters:";
+    for (int i = 0; i < args.length; i++) {
+        s = s + " "+args[i];
+    }      
+    page.log(s, LogMessageType.Process);
+    page.log("Start Clock @ "+nowAsString(execTime)+" ("+nowAsDate(execTime)+")", LogMessageType.Process);
+    page.log("", LogMessageType.Process);
+    
     if (web)
       page.log("Build final copy for HL7 web site", LogMessageType.Process);
     else
@@ -558,7 +591,6 @@ public class Publisher implements URIResolver, SectionNumberer {
     }
     page.log("API keys loaded from "+apiKeyFile.getFileName(), LogMessageType.Process);
 
-    page.log("Detected Java version: " + System.getProperty("java.version")+" from "+System.getProperty("java.home")+" on "+System.getProperty("os.arch"), LogMessageType.Process);
     try {
       tester.initialTests();
       page.setFolders(new FolderManager(folder, outputdir));
@@ -668,9 +700,6 @@ public class Publisher implements URIResolver, SectionNumberer {
       if (isGenerate && buildFlags.get("all")) {
         if (apiKeyFile.hasProperty("keys", "tx.fhir.org")) {
           page.commitTerminologyCache(apiKeyFile.getStringProperty("keys", "tx.fhir.org"));
-        }
-        if (System.getenv("TX_SERVER_PASSWORD") != null) {
-          page.commitTerminologyCache(System.getenv("TX_SERVER_PASSWORD"));
         }
       }
       
