@@ -89,6 +89,12 @@ public class FolderManager {
   public String javaDir;
   public String archiveDir;
   
+  public String ghOrg;
+  public String ghRepo;
+  public String ghBranch;
+  public String ghObjId;
+
+  
   public String implDir(String name) {
     return rootDir+"implementations"+sl+name+sl;
   }

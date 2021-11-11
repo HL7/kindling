@@ -7,8 +7,6 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
-import java.net.URL;
-import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -63,6 +61,8 @@ import org.hl7.fhir.r5.utils.IResourceValidator.ReferenceValidationPolicy;
 import org.hl7.fhir.rdf.ModelComparer;
 import org.hl7.fhir.rdf.ShExValidator;
 import org.hl7.fhir.utilities.CSFileInputStream;
+import org.hl7.fhir.utilities.SimpleHTTPClient;
+import org.hl7.fhir.utilities.SimpleHTTPClient.HTTPResult;
 import org.hl7.fhir.utilities.Logger;
 import org.hl7.fhir.utilities.Logger.LogMessageType;
 import org.hl7.fhir.utilities.SIDUtilities;
@@ -634,9 +634,10 @@ public class ExampleInspector implements IValidatorResourceFetcher {
 
   @Override
   public byte[] fetchRaw(IResourceValidator validator, String source) throws MalformedURLException, IOException {
-    URL url = new URL(source);
-    URLConnection c = url.openConnection();
-    return TextFile.streamToBytes(c.getInputStream());
+    SimpleHTTPClient http = new SimpleHTTPClient();
+    HTTPResult res = http.get(source);
+    res.checkThrowException();
+    return res.getContent();
   }
 
 

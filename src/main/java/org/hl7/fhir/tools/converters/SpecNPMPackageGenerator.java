@@ -180,7 +180,7 @@ public class SpecNPMPackageGenerator {
     npm = new NPMPackageGenerator(Utilities.path(folder, pidRoot+".corexml.tgz"), "http://hl7.org/fhir", url, PackageType.CORE, ig, genDate, true);
     bs = new ByteArrayOutputStream();
     new org.hl7.fhir.r5.formats.XmlParser().setOutputStyle(OutputStyle.NORMAL).compose(bs, ig);
-    npm.addFile(Category.RESOURCE, "ig-r4.json", bs.toByteArray());
+    npm.addFile(Category.RESOURCE, "ig-r4.xml", bs.toByteArray());
     addConvertedIgX(npm, ig, version.toCode());
     for (ResourceEntry e : reslist) {
       if (e.xml != null)
