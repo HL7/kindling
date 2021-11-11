@@ -50,6 +50,7 @@ import java.net.URLDecoder;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.EnumSet;
@@ -74,6 +75,12 @@ import javax.xml.transform.stream.StreamSource;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.api.ListBranchCommand;
+import org.eclipse.jgit.api.errors.GitAPIException;
+import org.eclipse.jgit.lib.Ref;
+import org.eclipse.jgit.transport.RemoteConfig;
+import org.eclipse.jgit.transport.URIish;
 import org.hl7.fhir.convertors.conv40_50.VersionConvertor_40_50;
 import org.hl7.fhir.convertors.conv40_50.resources40_50.StructureDefinition40_50;
 import org.hl7.fhir.convertors.conv40_50.resources40_50.ValueSet40_50;
@@ -428,18 +435,13 @@ public class Publisher implements URIResolver, SectionNumberer {
   private int cscounter = 0;
   private int vscounter = 0;
   private int cmcounter = 0;
-
   private ProfileGenerator pgen;
-
   private boolean noSound;
-
   private boolean doValidate;
-
   private boolean isCIBuild;
-
   private boolean isPostPR;
-
   private String validateId;
+  private IniFile apiKeyFile;
 
   public static void main(String[] args) throws Exception {
     Publisher pub = new Publisher();
@@ -475,6 +477,9 @@ public class Publisher implements URIResolver, SectionNumberer {
     String dir = hasParam(args, "-folder") ? getNamedParam(args, "-folder") : System.getProperty("user.dir");
     pub.outputdir = hasParam(args, "-output") ? getNamedParam(args, "-output") : null; 
     pub.isCIBuild = dir.contains("/ubuntu/agents/");
+    if (hasParam(args, "-api-key-file")) {
+      pub.apiKeyFile = new IniFile(new File(getNamedParam(args, "-api-key-file")).getAbsolutePath());
+    }
     pub.execute(dir);
   }
 
@@ -499,6 +504,36 @@ public class Publisher implements URIResolver, SectionNumberer {
     return null;
   }
 
+  private void checkGit(String folder) throws IOException, GitAPIException {
+    try {
+      Git git = Git.open(new File(folder));
+      for (RemoteConfig rc : git.remoteList().call()) {
+        for (URIish u : rc.getURIs()) {
+          String url = u.toString();        
+          if (url.contains("github.com")) {
+            String[] up = url.split("\\/");
+            int b = Utilities.findinList(up, "github.com");
+            page.getFolders().ghOrg = up[b+1];
+            page.getFolders().ghRepo = up[b+2];  
+            List<Ref> branches = git.branchList().call();
+            for (Ref ref : branches) {
+              page.getFolders().ghBranch = ref.getName().substring(ref.getName().lastIndexOf("/") + 1, ref.getName().length());
+              page.getFolders().ghObjId = ref.getObjectId().getName();
+              System.out.println("This is a GitHub Repository: https://github.com/"+page.getFolders().ghOrg+"/"+page.getFolders().ghRepo+"/"+page.getFolders().ghBranch+" ("+page.getFolders().ghObjId+")");
+              return;
+            }          
+          }
+        }
+      }
+      System.out.println("This is not a GitHub Repository");
+    } catch (Exception e) {
+      System.out.println("This is not a GitHub Repository ("+e.getMessage()+")");
+    }
+    page.getFolders().ghOrg = null;
+    page.getFolders().ghRepo = null;
+  }
+
+
   /**
    * Entry point to the publisher. This classes Java Main() calls this function
    * to actually produce the specification
@@ -509,6 +544,7 @@ public class Publisher implements URIResolver, SectionNumberer {
   public void execute(String folder) throws IOException {
     tester = new PublisherTestSuites();
     
+    
     page.log("Publish FHIR in folder " + folder + " @ " + Config.DATE_FORMAT().format(page.getGenDate().getTime()), LogMessageType.Process);
     if (web)
       page.log("Build final copy for HL7 web site", LogMessageType.Process);
@@ -517,10 +553,16 @@ public class Publisher implements URIResolver, SectionNumberer {
     if (outputdir != null) {
       page.log("Create output in "+outputdir, LogMessageType.Process);
     }
+    if (apiKeyFile == null) {
+      apiKeyFile = new IniFile(Utilities.path(System.getProperty("user.home"), "fhir-build-keys.ini"));
+    }
+    page.log("API keys loaded from "+apiKeyFile.getFileName(), LogMessageType.Process);
+
     page.log("Detected Java version: " + System.getProperty("java.version")+" from "+System.getProperty("java.home")+" on "+System.getProperty("os.arch"), LogMessageType.Process);
     try {
       tester.initialTests();
       page.setFolders(new FolderManager(folder, outputdir));
+      checkGit(folder);
       if (!initialize(folder))
         throw new Exception("Unable to publish as preconditions aren't met");
 
@@ -623,6 +665,15 @@ public class Publisher implements URIResolver, SectionNumberer {
         validationProcess();
       page.saveSnomed();
       page.getWorkerContext().saveCache();
+      if (isGenerate && buildFlags.get("all")) {
+        if (apiKeyFile.hasProperty("keys", "tx.fhir.org")) {
+          page.commitTerminologyCache(apiKeyFile.getStringProperty("keys", "tx.fhir.org"));
+        }
+        if (System.getenv("TX_SERVER_PASSWORD") != null) {
+          page.commitTerminologyCache(System.getenv("TX_SERVER_PASSWORD"));
+        }
+      }
+      
       processWarnings(false);
       if (isGenerate && buildFlags.get("all"))
         produceQA();
@@ -689,7 +740,7 @@ public class Publisher implements URIResolver, SectionNumberer {
       page.log("FHIR build failure @ " + Config.DATE_FORMAT().format(Calendar.getInstance().getTime()), LogMessageType.Process);
       System.out.println("Error: " + e.getMessage());
       e.printStackTrace();
-      TextFile.stringToFile(StringUtils.defaultString(e.getMessage()), Utilities.path(folder, "publish", "simple-error.txt"));
+      TextFile.stringToFile(StringUtils.defaultString(e.getMessage()), Utilities.path(outputdir, "simple-error.txt"));
       System.exit(1);
     }
   }
@@ -5675,8 +5726,6 @@ public class Publisher implements URIResolver, SectionNumberer {
   private void validationProcess() throws Exception {
 
     if (!isPostPR) {
-      if (buildFlags.get("all"))
-        runJUnitTestsInProcess();
       page.log("Validating Examples", LogMessageType.Process);
       ExampleInspector ei = new ExampleInspector(page.getWorkerContext(), page, page.getFolders().dstDir, Utilities.path(page.getFolders().rootDir, "tools", "schematron"), page.getValidationErrors(), page.getDefinitions(), page.getVersion());
       page.log(".. Loading", LogMessageType.Process);
@@ -5736,52 +5785,11 @@ public class Publisher implements URIResolver, SectionNumberer {
       }
       ei.summarise();
 
-      if (buildFlags.get("all"))
-        runJUnitTestsEnd();
-
       if (buildFlags.get("all") && isGenerate)
         produceCoverageWarnings();
       if (buildFlags.get("all"))
         miscValidation();
     }    
-
-  }
-
-  private void runJUnitTestsInProcess() throws Exception {
-    /*
-	  TestingUtilities.context = page.getWorkerContext();
-    TestingUtilities.silent = true;
-    TestingUtilities.fixedpath = page.getFolders().rootDir;
-    TestingUtilities.contentpath = page.getFolders().dstDir;
-    
-    runJUnitClass(ValidationTestSuite.class);
-    runJUnitClass(FHIRPathTests.class);
-    runJUnitClass(NarrativeGeneratorTests.class);
-    runJUnitClass(SnomedExpressionsTests.class);
-    runJUnitClass(ResourceRoundTripTests.class);
-    runJUnitClass(SnapShotGenerationTests.class);
-    runJUnitClass(GraphQLParserTests.class);
-    runJUnitClass(GraphQLEngineTests.class);
-    checkAllOk();
-	 */
-  }
-
-  private void runJUnitTestsEnd() throws Exception {
-	  /*
-    ValidationEngineTests.inbuild = true;
-    runJUnitClass(ValidationEngineTests.class);
-    runJUnitClass(TransformationTests.class); 
-    runJUnitClass(AllGuidesTests.class);
-    checkAllOk();
-	 */
-  }
-
-  private void runJUnitClass(Class<?> clzz) {
-    page.log("Run JUnit: "+clzz.getName(), LogMessageType.Process);
-    Result result = JUnitCore.runClasses(clzz);
-    for (Failure failure : result.getFailures()) {
-      page.getValidationErrors().add(new ValidationMessage(Source.Publisher, IssueType.EXCEPTION, -1, -1, clzz.getName(), failure.toString(), IssueSeverity.ERROR));
-    }
   }
 
   private void miscValidation() throws Exception {

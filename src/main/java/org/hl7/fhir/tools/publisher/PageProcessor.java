@@ -202,6 +202,7 @@ import org.hl7.fhir.r5.renderers.utils.RenderingContext.ResourceRendererMode;
 import org.hl7.fhir.r5.renderers.utils.Resolver.IReferenceResolver;
 import org.hl7.fhir.r5.renderers.utils.Resolver.ResourceWithReference;
 import org.hl7.fhir.r5.terminologies.CodeSystemUtilities;
+import org.hl7.fhir.r5.terminologies.TerminologyCacheManager;
 import org.hl7.fhir.r5.terminologies.TerminologyClient;
 import org.hl7.fhir.r5.terminologies.ValueSetExpander.ValueSetExpansionOutcome;
 import org.hl7.fhir.r5.terminologies.ValueSetUtilities;
@@ -9141,8 +9142,10 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     log("Load UTG Terminology", LogMessageType.Process);
     NpmPackage utg = new FilesystemPackageCacheManager(true, ToolsVersion.TOOLS_VERSION).loadPackage("hl7.terminology");
     workerContext.loadFromPackage(utg, new R4ToR5Loader(BuildWorkerContext.defaultTypesToLoad(), new UTGLoader(utg.version())));
-    log("Load Terminology Cache from "+Utilities.path(folders.rootDir, "vscache"), LogMessageType.Process);
-    workerContext.initTS(Utilities.path(folders.rootDir, "vscache"));
+    tcm = new TerminologyCacheManager(client.getServerVersion(), folders.rootDir, folders.ghOrg, folders.ghRepo, folders.ghBranch);
+    log("Load Terminology Cache from "+tcm.getFolder(), LogMessageType.Process);
+    tcm.initialize();
+    workerContext.initTS(tcm.getFolder());
     log("  .. loaded", LogMessageType.Process);
     vsValidator = new ValueSetValidator(workerContext, definitions.getVsFixups(), definitions.getStyleExemptions());
     breadCrumbManager.setContext(workerContext);
@@ -10554,6 +10557,7 @@ private int countContains(List<ValueSetExpansionContainsComponent> list) {
   }
 
   private IEvaluationContext evaluationContext;
+  private TerminologyCacheManager tcm;
 
   public IEvaluationContext getExpressionResolver() {
     if (evaluationContext == null)
@@ -10864,7 +10868,7 @@ private int countContains(List<ValueSetExpansionContainsComponent> list) {
   }
 
   public void makeRenderingContext() {
-    rc = new RenderingContext(workerContext, processor, ValidationOptions.defaults(), "", "", null, ResourceRendererMode.IG);    
+    rc = new RenderingContext(workerContext, processor, ValidationOptions.defaults(), "", "", null, ResourceRendererMode.TECHNICAL);    
     rc.setParser(this);
     rc.setResolver(this);
   }
@@ -10873,5 +10877,10 @@ private int countContains(List<ValueSetExpansionContainsComponent> list) {
   public Base parseType(String xml, String type) throws FHIRFormatError, IOException, FHIRException {
     DataType t = new XmlParser().parseType(xml, type); 
     return t;
+  }
+
+  public void commitTerminologyCache(String token) throws IOException {
+    tcm.commit(token);
+    
   }
 }
