@@ -2,13 +2,13 @@ package org.hl7.fhir.tools.publisher;
 
 import java.io.IOException;
 
-import org.hl7.fhir.convertors.loaders.BaseLoaderR5.ILoaderKnowledgeProvider;
+import org.hl7.fhir.convertors.loaders.loaderR5.ILoaderKnowledgeProviderR5;
 import org.hl7.fhir.r5.model.Resource;
 import org.hl7.fhir.utilities.npm.NpmPackage;
 
 import com.google.gson.JsonSyntaxException;
 
-public class UTGLoader implements ILoaderKnowledgeProvider {
+public class UTGLoader implements ILoaderKnowledgeProviderR5 {
 
   private String version;
   
@@ -25,7 +25,7 @@ public class UTGLoader implements ILoaderKnowledgeProvider {
   }
 
   @Override
-  public ILoaderKnowledgeProvider forNewPackage(NpmPackage npm) throws JsonSyntaxException, IOException {
+  public ILoaderKnowledgeProviderR5 forNewPackage(NpmPackage npm) throws JsonSyntaxException, IOException {
     return this;
   }
 
