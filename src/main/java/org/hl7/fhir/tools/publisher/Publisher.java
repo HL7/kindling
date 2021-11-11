@@ -287,6 +287,7 @@ import com.google.gson.JsonObject;
 
 public class Publisher implements URIResolver, SectionNumberer {
 
+  private static final String STATED_KINDLING_VERSION = "2.1.2"; // arbitray - increase this any time not sure about what version is running on the ci-build
   public static final String CANONICAL_BASE = "http://build.fhir.org/";
   
   public class DocumentHolder {
@@ -406,7 +407,6 @@ public class Publisher implements URIResolver, SectionNumberer {
 
   private static final String HTTP_separator = "/";
 
-  private static final String STATED_KINDLING_VERSION = "2.1.1"; // arbitray - increase this any time not sure about what version is running on the ci-build
   private Calendar execTime = Calendar.getInstance();
   private String outputdir;
 
@@ -507,6 +507,11 @@ public class Publisher implements URIResolver, SectionNumberer {
   }
 
   private void checkGit(String folder) throws IOException, GitAPIException {
+    System.out.println("System.PullRequest.PullRequestId: "+System.getenv("System.PullRequest.PullRequestId"));
+    System.out.println("System.PullRequest.PullRequestNumber: "+System.getenv("System.PullRequest.PullRequestNumber"));
+    System.out.println("System.PullRequest.SourceBranch: "+System.getenv("System.PullRequest.SourceBranch"));
+    System.out.println("System.PullRequest.SourceRepositoryURI: "+System.getenv("System.PullRequest.SourceRepositoryURI"));
+    System.out.println("System.PullRequest.TargetBranch: "+System.getenv("System.PullRequest.TargetBranch"));
     try {
       Git git = Git.open(new File(folder));
       for (RemoteConfig rc : git.remoteList().call()) {
