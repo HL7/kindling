@@ -406,7 +406,7 @@ public class Publisher implements URIResolver, SectionNumberer {
 
   private static final String HTTP_separator = "/";
 
-  private static final String STATED_KINDLING_VERSION = "2.1"; // arbitray - increase this any time not sure about what version is running on the ci-build
+  private static final String STATED_KINDLING_VERSION = "2.1.1"; // arbitray - increase this any time not sure about what version is running on the ci-build
   private Calendar execTime = Calendar.getInstance();
   private String outputdir;
 
