@@ -287,7 +287,7 @@ import com.google.gson.JsonObject;
 
 public class Publisher implements URIResolver, SectionNumberer {
 
-  private static final String STATED_KINDLING_VERSION = "2.1.2"; // arbitray - increase this any time not sure about what version is running on the ci-build
+  private static final String STATED_KINDLING_VERSION = "2.1.3"; // arbitray - increase this any time not sure about what version is running on the ci-build
   public static final String CANONICAL_BASE = "http://build.fhir.org/";
   
   public class DocumentHolder {
