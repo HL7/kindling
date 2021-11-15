@@ -507,11 +507,11 @@ public class Publisher implements URIResolver, SectionNumberer {
   }
 
   private void checkGit(String folder) throws IOException, GitAPIException {
-    System.out.println("System.PullRequest.PullRequestId: "+System.getenv("System.PullRequest.PullRequestId"));
-    System.out.println("System.PullRequest.PullRequestNumber: "+System.getenv("System.PullRequest.PullRequestNumber"));
-    System.out.println("System.PullRequest.SourceBranch: "+System.getenv("System.PullRequest.SourceBranch"));
-    System.out.println("System.PullRequest.SourceRepositoryURI: "+System.getenv("System.PullRequest.SourceRepositoryURI"));
-    System.out.println("System.PullRequest.TargetBranch: "+System.getenv("System.PullRequest.TargetBranch"));
+    System.out.println("System.PullRequest.PullRequestId: "+System.getenv("SYSTEM_PULLREQUEST_PULLREQUESTID"));
+    System.out.println("System.PullRequest.PullRequestNumber: "+System.getenv("SYSTEM_PULLREQUEST_PULLREQUESTIDNUMBER"));
+    System.out.println("System.PullRequest.SourceBranch: "+System.getenv("SYSTEM_PULLREQUEST_SOURCEBRANCH"));
+    System.out.println("System.PullRequest.SourceRepositoryURI: "+System.getenv("SYSTEM_PULLREQUEST_SOURCEREPOSITORYURI"));
+    System.out.println("System.PullRequest.TargetBranch: "+System.getenv("SYSTEM_PULLREQUEST_TARGETBRANCH"));
     try {
       Git git = Git.open(new File(folder));
       for (RemoteConfig rc : git.remoteList().call()) {
