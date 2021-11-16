@@ -287,7 +287,6 @@ import com.google.gson.JsonObject;
 
 public class Publisher implements URIResolver, SectionNumberer {
 
-  private static final String STATED_KINDLING_VERSION = "2.1.4"; // arbitray - increase this any time not sure about what version is running on the ci-build
   public static final String CANONICAL_BASE = "http://build.fhir.org/";
   
   public class DocumentHolder {
@@ -507,29 +506,29 @@ public class Publisher implements URIResolver, SectionNumberer {
   }
 
   private void checkGit(String folder) throws IOException, GitAPIException {
-    System.out.println("System.PullRequest.PullRequestId: "+System.getenv("SYSTEM_PULLREQUEST_PULLREQUESTID"));
-    System.out.println("System.PullRequest.PullRequestNumber: "+System.getenv("SYSTEM_PULLREQUEST_PULLREQUESTIDNUMBER"));
-    System.out.println("System.PullRequest.SourceBranch: "+System.getenv("SYSTEM_PULLREQUEST_SOURCEBRANCH"));
-    System.out.println("System.PullRequest.SourceRepositoryURI: "+System.getenv("SYSTEM_PULLREQUEST_SOURCEREPOSITORYURI"));
-    System.out.println("System.PullRequest.TargetBranch: "+System.getenv("SYSTEM_PULLREQUEST_TARGETBRANCH"));
+    // this is how we find out about the git info on the CI-build
+    String srcRepo = System.getenv("SYSTEM_PULLREQUEST_SOURCEREPOSITORYURI");
+    String srcBranch = System.getenv("SYSTEM_PULLREQUEST_SOURCEBRANCH");
+    if (srcRepo != null && srcBranch != null) {
+      if (srcRepo.contains("github.com")) {
+        processGitHubUrl(srcRepo);
+        page.getFolders().ghBranch = srcBranch;
+        System.out.println("This is a GitHub Repository: https://github.com/"+page.getFolders().ghOrg+"/"+page.getFolders().ghRepo+"/"+page.getFolders().ghBranch);
+        return;
+      }
+    }
+    
     try {
       Git git = Git.open(new File(folder));
       for (RemoteConfig rc : git.remoteList().call()) {
         for (URIish u : rc.getURIs()) {
           String url = u.toString();        
           if (url.contains("github.com")) {
-            String[] up = url.split("\\/");
-            int b = Utilities.findinList(up, "github.com");
-            page.getFolders().ghOrg = up[b+1];
-            if (page.getFolders().ghOrg.contains(":")) {
-              page.getFolders().ghOrg = page.getFolders().ghOrg.substring(page.getFolders().ghOrg.lastIndexOf(":")+1);
-            }
-            page.getFolders().ghRepo = up[b+2].replace(".git", "");  
+            processGitHubUrl(url);  
             List<Ref> branches = git.branchList().call();
             for (Ref ref : branches) {
               page.getFolders().ghBranch = ref.getName().substring(ref.getName().lastIndexOf("/") + 1, ref.getName().length());
-              page.getFolders().ghObjId = ref.getObjectId().getName();
-              System.out.println("This is a GitHub Repository: https://github.com/"+page.getFolders().ghOrg+"/"+page.getFolders().ghRepo+"/"+page.getFolders().ghBranch+" ("+page.getFolders().ghObjId+")");
+              System.out.println("This is a GitHub Repository: https://github.com/"+page.getFolders().ghOrg+"/"+page.getFolders().ghRepo+"/"+page.getFolders().ghBranch);
               return;
             }          
           }
@@ -541,6 +540,16 @@ public class Publisher implements URIResolver, SectionNumberer {
     }
     page.getFolders().ghOrg = null;
     page.getFolders().ghRepo = null;
+  }
+
+  public void processGitHubUrl(String url) {
+    String[] up = url.split("\\/");
+    int b = Utilities.findinList(up, "github.com");
+    page.getFolders().ghOrg = up[b+1];
+    if (page.getFolders().ghOrg.contains(":")) {
+      page.getFolders().ghOrg = page.getFolders().ghOrg.substring(page.getFolders().ghOrg.lastIndexOf(":")+1);
+    }
+    page.getFolders().ghRepo = up[b+2].replace(".git", "");
   }
 
   private static String toMB(long maxMemory) {
@@ -570,7 +579,6 @@ public class Publisher implements URIResolver, SectionNumberer {
 
     page.log("Publish FHIR in folder " + folder + " @ " + Config.DATE_FORMAT().format(page.getGenDate().getTime()), LogMessageType.Process);
 
-    page.log("FHIR Main Build Publisher "+STATED_KINDLING_VERSION, LogMessageType.Process);
     page.log("Detected Java version: " + System.getProperty("java.version")+" from "+System.getProperty("java.home")+" on "+System.getProperty("os.name")+"/"+System.getProperty("os.arch")+" ("+System.getProperty("sun.arch.data.model")+"bit). "+toMB(Runtime.getRuntime().maxMemory())+"MB available", LogMessageType.Process);
     
     if (!"64".equals(System.getProperty("sun.arch.data.model"))) {

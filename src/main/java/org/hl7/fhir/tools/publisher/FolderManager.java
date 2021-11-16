@@ -92,7 +92,6 @@ public class FolderManager {
   public String ghOrg;
   public String ghRepo;
   public String ghBranch;
-  public String ghObjId;
 
   
   public String implDir(String name) {
