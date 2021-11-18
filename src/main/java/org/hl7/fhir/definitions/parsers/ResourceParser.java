@@ -785,6 +785,15 @@ public class ResourceParser {
       cs.setUserData("filename", "codesystem-"+cs.getId());
       cs.setUserData("path", "codesystem-"+cs.getId()+".html");
 
+      if (!cs.hasContent()) {
+        System.out.println("The CodeSystem "+csfn+" doesn't have a content element");
+      }
+      if (!cs.hasCaseSensitive()) {
+        System.out.println("The CodeSystem "+csfn+" doesn't have a caseSensitive element");
+      }
+      if (!cs.hasHierarchyMeaningElement() && CodeSystemUtilities.hasHierarchy(cs)) {
+        System.out.println("The CodeSystem "+csfn+" doesn't have a hierarchyMeaning element");
+      }
       cs.setVersion(version);
       if (!cs.hasExtension(ToolingExtensions.EXT_WORKGROUP)) {
         cs.addExtension().setUrl(ToolingExtensions.EXT_WORKGROUP).setValue(new CodeType(committee.getCode()));

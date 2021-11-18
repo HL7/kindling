@@ -107,6 +107,7 @@ import org.hl7.fhir.r5.model.SearchParameter;
 import org.hl7.fhir.r5.model.StructureDefinition;
 import org.hl7.fhir.r5.model.StructureDefinition.StructureDefinitionContextComponent;
 import org.hl7.fhir.r5.model.StructureDefinition.TypeDerivationRule;
+import org.hl7.fhir.r5.terminologies.CodeSystemUtilities;
 import org.hl7.fhir.r5.model.ValueSet;
 import org.hl7.fhir.r5.utils.ToolingExtensions;
 import org.hl7.fhir.tools.publisher.BuildWorkerContext;
@@ -896,13 +897,23 @@ public class SourceParser {
 
   private void loadCodeSystem(String n) throws FileNotFoundException, Exception {
     XmlParser xml = new XmlParser();
-    CodeSystem cs = (CodeSystem) xml.parse(new CSFileInputStream(srcDir+ini.getStringProperty("codesystems", n).replace('\\', File.separatorChar)));
+    String fn = srcDir+ini.getStringProperty("codesystems", n).replace('\\', File.separatorChar);
+    CodeSystem cs = (CodeSystem) xml.parse(new CSFileInputStream(fn));
     if (!cs.hasId())  
       cs.setId(FormatUtilities.makeId(n));
     if (cs.getUrl().startsWith("http://hl7.org/fhir"))
       cs.setVersion(version.toCode());
     cs.setUserData("path", "codesystem-"+cs.getId()+".html");
     cs.setUserData("filename", "codesystem-"+cs.getId());
+    if (!cs.hasContent()) {
+      System.out.println("The CodeSystem "+fn+" doesn't have a content element");
+    }
+    if (!cs.hasCaseSensitive()) {
+      System.out.println("The CodeSystem "+fn+" doesn't have a caseSensitive element");
+    }
+    if (!cs.hasHierarchyMeaningElement() && CodeSystemUtilities.hasHierarchy(cs)) {
+      System.out.println("The CodeSystem "+fn+" doesn't have a hierarchyMeaning element");
+    }
     definitions.getCodeSystems().see(cs, page.packageInfo());
   }
 

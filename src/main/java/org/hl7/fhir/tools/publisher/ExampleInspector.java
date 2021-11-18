@@ -329,7 +329,7 @@ public class ExampleInspector implements IValidatorResourceFetcher {
       if (!m.getLevel().equals(IssueSeverity.INFORMATION) && !m.getLevel().equals(IssueSeverity.WARNING)) {
         m.setMessage(n+":: "+m.getLocation()+": "+m.getMessage());
         errorsExt.add(m);
-        logger.log(m.getMessage(), LogMessageType.Error);
+        logger.log(m.getMessage()+" ["+m.getMessageId()+"]", LogMessageType.Error);
       }
       if (m.getLevel() == IssueSeverity.WARNING)
         warningCount++;

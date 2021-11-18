@@ -448,7 +448,7 @@ public class Publisher implements URIResolver, SectionNumberer {
 
   public static void main(String[] args) throws Exception {
     Publisher pub = new Publisher();
-    pub.page = new PageProcessor(PageProcessor.DEF_TS_SERVER);
+    pub.page = new PageProcessor(KindlingConstants.DEF_TS_SERVER);
     pub.isGenerate = !(args.length > 1 && hasParam(args, "-nogen"));
     pub.doValidate = true;   
     pub.noArchive = (args.length > 1 && hasParam(args, "-noarchive"));
