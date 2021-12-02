@@ -37,6 +37,7 @@ import org.hl7.fhir.exceptions.FHIRFormatError;
 import org.hl7.fhir.exceptions.PathEngineException;
 import org.hl7.fhir.r5.context.IWorkerContext;
 import org.hl7.fhir.r5.elementmodel.Element;
+import org.hl7.fhir.r5.elementmodel.Element.SpecialElement;
 import org.hl7.fhir.r5.elementmodel.Manager;
 import org.hl7.fhir.r5.elementmodel.Manager.FhirFormat;
 import org.hl7.fhir.r5.elementmodel.ObjectConverter;
@@ -45,6 +46,7 @@ import org.hl7.fhir.r5.model.Base;
 import org.hl7.fhir.r5.model.CanonicalResource;
 import org.hl7.fhir.r5.model.CodeSystem;
 import org.hl7.fhir.r5.model.Constants;
+import org.hl7.fhir.r5.model.ElementDefinition;
 import org.hl7.fhir.r5.model.Enumerations.FHIRVersion;
 import org.hl7.fhir.r5.model.OperationDefinition;
 import org.hl7.fhir.r5.model.SearchParameter;
@@ -53,11 +55,15 @@ import org.hl7.fhir.r5.model.TypeDetails;
 import org.hl7.fhir.r5.model.ValueSet;
 import org.hl7.fhir.r5.utils.FHIRPathEngine;
 import org.hl7.fhir.r5.utils.FHIRPathEngine.IEvaluationContext;
-import org.hl7.fhir.r5.utils.IResourceValidator;
-import org.hl7.fhir.r5.utils.IResourceValidator.BestPracticeWarningLevel;
-import org.hl7.fhir.r5.utils.IResourceValidator.IValidatorResourceFetcher;
-import org.hl7.fhir.r5.utils.IResourceValidator.IdStatus;
-import org.hl7.fhir.r5.utils.IResourceValidator.ReferenceValidationPolicy;
+import org.hl7.fhir.r5.utils.validation.IResourceValidator;
+import org.hl7.fhir.r5.utils.validation.IValidationPolicyAdvisor;
+import org.hl7.fhir.r5.utils.validation.IValidatorResourceFetcher;
+import org.hl7.fhir.r5.utils.validation.constants.BestPracticeWarningLevel;
+import org.hl7.fhir.r5.utils.validation.constants.BindingKind;
+import org.hl7.fhir.r5.utils.validation.constants.CodedContentValidationPolicy;
+import org.hl7.fhir.r5.utils.validation.constants.ContainedReferenceValidationPolicy;
+import org.hl7.fhir.r5.utils.validation.constants.IdStatus;
+import org.hl7.fhir.r5.utils.validation.constants.ReferenceValidationPolicy;
 import org.hl7.fhir.rdf.ModelComparer;
 import org.hl7.fhir.rdf.ShExValidator;
 import org.hl7.fhir.utilities.CSFileInputStream;
@@ -84,7 +90,7 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonSyntaxException;
 
-public class ExampleInspector implements IValidatorResourceFetcher {
+public class ExampleInspector implements IValidatorResourceFetcher, IValidationPolicyAdvisor {
 
   public static class EValidationFailed extends Exception {
     private static final long serialVersionUID = 1538324138218778487L;
@@ -583,21 +589,7 @@ public class ExampleInspector implements IValidatorResourceFetcher {
   }
 
 
-  @Override
-  public ReferenceValidationPolicy validationPolicy(IResourceValidator validator, Object appContext, String path, String url) {
-    String[] parts = url.split("\\/");
-    if (VALIDATE_CONFORMANCE_REFERENCES) {
-      if (Utilities.existsInList(url, "ValueSet/LOINCDepressionAnswersList", "ValueSet/LOINCDifficultyAnswersList", "CodeSystem/npi-taxonomy", "ValueSet/1.2.3.4.5", "StructureDefinition/daf-patient", "ValueSet/zika-affected-area"))
-        return ReferenceValidationPolicy.IGNORE;
-      if (parts.length == 2 && definitions.hasResource(parts[0])) {
-        if (Utilities.existsInList(parts[0], "StructureDefinition", "StructureMap", "DataElement", "CapabilityStatement", "MessageDefinition", "OperationDefinition", "SearchParameter", "CompartmentDefinition", "ImplementationGuide", "CodeSystem", "ValueSet", "ConceptMap", "ExpansionProfile", "NamingSystem"))
-          return ReferenceValidationPolicy.CHECK_EXISTS_AND_TYPE;
-      }    
-    }
-    return ReferenceValidationPolicy.CHECK_TYPE_IF_EXISTS;
-  }
-
-
+ 
   @Override
   public boolean resolveURL(IResourceValidator validator,Object appContext, String path, String url, String type) throws IOException, FHIRException {
     if (path.endsWith(".fullUrl"))
@@ -656,6 +648,35 @@ public class ExampleInspector implements IValidatorResourceFetcher {
   public boolean fetchesCanonicalResource(IResourceValidator validator, String url) {
     return true;
   }
+
+
+  @Override
+  public ReferenceValidationPolicy policyForReference(IResourceValidator validator, Object appContext, String path, String url) {
+    String[] parts = url.split("\\/");
+    if (VALIDATE_CONFORMANCE_REFERENCES) {
+      if (Utilities.existsInList(url, "ValueSet/LOINCDepressionAnswersList", "ValueSet/LOINCDifficultyAnswersList", "CodeSystem/npi-taxonomy", "ValueSet/1.2.3.4.5", "StructureDefinition/daf-patient", "ValueSet/zika-affected-area"))
+        return ReferenceValidationPolicy.IGNORE;
+      if (parts.length == 2 && definitions.hasResource(parts[0])) {
+        if (Utilities.existsInList(parts[0], "StructureDefinition", "StructureMap", "DataElement", "CapabilityStatement", "MessageDefinition", "OperationDefinition", "SearchParameter", "CompartmentDefinition", "ImplementationGuide", "CodeSystem", "ValueSet", "ConceptMap", "ExpansionProfile", "NamingSystem"))
+          return ReferenceValidationPolicy.CHECK_EXISTS_AND_TYPE;
+      }    
+    }
+    return ReferenceValidationPolicy.CHECK_TYPE_IF_EXISTS;
+  }
+
+
+  @Override
+  public ContainedReferenceValidationPolicy policyForContained(IResourceValidator validator, Object appContext, String containerType, String containerId, SpecialElement containingResourceType, String path, String url) {
+    return ContainedReferenceValidationPolicy.CHECK_VALID;
+  }
+
+
+  @Override
+  public CodedContentValidationPolicy policyForCodedContent(IResourceValidator validator, Object appContext, String stackPath, ElementDefinition definition,
+      StructureDefinition structure, BindingKind kind, ValueSet valueSet, List<String> systems) {
+    return CodedContentValidationPolicy.VALUESET;
+  }
+
 
 
 

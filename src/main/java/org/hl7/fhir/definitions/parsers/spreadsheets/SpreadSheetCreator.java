@@ -355,7 +355,7 @@ public class SpreadSheetCreator extends SpreadSheetBase {
         name = "??";
       }      
       addCell(name, row, columnCount++);
-      addCell(ext(bs, BuildExtensions.EXT_DEFINITION), row, columnCount++);
+      addCell(ext(bs, BuildExtensions.EXT_BINDING_DEFINITION), row, columnCount++);
       addCell(bs.getStrength().toCode(), row, columnCount++);
       addCell(bs.getValueSet(), row, columnCount++);
       addCell(null, row, columnCount++);
@@ -389,7 +389,7 @@ public class SpreadSheetCreator extends SpreadSheetBase {
         name = "??";
       }      
       addCell(name, row, columnCount++);
-      addCell(ext(bs, BuildExtensions.EXT_DEFINITION), row, columnCount++);
+      addCell(ext(bs, BuildExtensions.EXT_BINDING_DEFINITION), row, columnCount++);
       addCell(bs.getStrength().toCode(), row, columnCount++);
       addCell(bs.getValueSet(), row, columnCount++);
       addCell(bs.getDescription(), row, columnCount++);

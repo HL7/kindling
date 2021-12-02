@@ -676,8 +676,8 @@ public class ResourceParser {
     if (binding.hasExtension(BuildExtensions.EXT_V3_MAP)) {
       bs.setV3Map(binding.getExtensionString(BuildExtensions.EXT_V3_MAP));
     }
-    if (binding.hasExtension(BuildExtensions.EXT_DEFINITION)) {
-      bs.setDefinition(binding.getExtensionString(BuildExtensions.EXT_DEFINITION));
+    if (binding.hasExtension(BuildExtensions.EXT_BINDING_DEFINITION)) {
+      bs.setDefinition(binding.getExtensionString(BuildExtensions.EXT_BINDING_DEFINITION));
     }
     if (binding.hasExtension(BuildExtensions.EXT_URI)) {
       bs.setUri(binding.getExtensionString(BuildExtensions.EXT_URI));
@@ -724,8 +724,8 @@ public class ResourceParser {
     if (binding.hasExtension(BuildExtensions.EXT_V3_MAP)) {
       bs.setV3Map(binding.getExtensionString(BuildExtensions.EXT_V3_MAP));
     }
-    if (binding.hasExtension(BuildExtensions.EXT_DEFINITION)) {
-      bs.setDefinition(binding.getExtensionString(BuildExtensions.EXT_DEFINITION));
+    if (binding.hasExtension(BuildExtensions.EXT_BINDING_DEFINITION)) {
+      bs.setDefinition(binding.getExtensionString(BuildExtensions.EXT_BINDING_DEFINITION));
     }
     if (binding.hasExtension(BuildExtensions.EXT_URI)) {
       bs.setUri(binding.getExtensionString(BuildExtensions.EXT_URI));

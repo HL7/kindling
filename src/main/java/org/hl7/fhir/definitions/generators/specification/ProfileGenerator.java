@@ -1479,7 +1479,7 @@ public class ProfileGenerator {
     ElementDefinitionBindingComponent dst = new ElementDefinitionBindingComponent();
     dst.setDescription(src.getDescription());
     if (!Utilities.noString(src.getDefinition())) {
-      dst.addExtension().setUrl(BuildExtensions.EXT_DEFINITION).setValue(new StringType(src.getDefinition()));      
+      dst.addExtension().setUrl(BuildExtensions.EXT_BINDING_DEFINITION).setValue(new StringType(src.getDefinition()));      
     }
     if (src.getBinding() != BindingMethod.Unbound) {
       dst.setStrength(src.getStrength());    

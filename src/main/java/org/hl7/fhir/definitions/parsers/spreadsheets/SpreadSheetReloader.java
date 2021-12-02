@@ -53,9 +53,11 @@ import org.hl7.fhir.r5.model.SearchParameter;
 import org.hl7.fhir.r5.model.StringType;
 import org.hl7.fhir.r5.model.StructureDefinition;
 import org.hl7.fhir.r5.model.UriType;
+import org.hl7.fhir.r5.model.UrlType;
 import org.hl7.fhir.r5.utils.ToolingExtensions;
 import org.hl7.fhir.utilities.IniFile;
 import org.hl7.fhir.utilities.Utilities;
+import org.hl7.fhir.utilities.VersionUtilities;
 import org.hl7.fhir.utilities.json.JsonTrackingParser;
 
 import com.google.gson.JsonObject;
@@ -208,7 +210,8 @@ public class SpreadSheetReloader extends SpreadSheetBase {
     ed.getType().clear();
     ed.setContentReferenceElement(null);
     if (ed.getPath().equals("Resource.id")) {
-      ed.addType().setCode("http://hl7.org/fhirpath/System.String").addExtension("http://hl7.org/fhir/StructureDefinition/structuredefinition-fhir-type", new UriType("id"));      
+      ed.addType().setCode("http://hl7.org/fhirpath/System.String").addExtension("http://hl7.org/fhir/StructureDefinition/structuredefinition-fhir-type", 
+          VersionUtilities.isR4BVer(context.getVersion()) ? new UrlType("id") : new UriType("id"));      
     } else {
       if (Utilities.noString(value)) {
         if (ed.getPath().contains(".")) {
@@ -259,7 +262,7 @@ public class SpreadSheetReloader extends SpreadSheetBase {
       ElementDefinitionBindingComponent bs = ed.getBinding();
       bs.removeExtension(BuildExtensions.EXT_NAME);
       readExt(bs, row, cols, CN_BINDING_NAME, BuildExtensions.EXT_BINDING_NAME, ExtensionType.String);
-      readExt(bs, row, cols, CN_DEFINITION, BuildExtensions.EXT_DEFINITION, ExtensionType.String);
+      readExt(bs, row, cols, CN_DEFINITION, BuildExtensions.EXT_BINDING_DEFINITION, ExtensionType.String);
       bs.setStrength(BindingStrength.fromCode(getValue(row, cols, CN_STRENGTH)));
       bs.setValueSet(getValue(row, cols, CN_VALUE_SET));
       readExt(bs, row, cols, CN_OID, BuildExtensions.EXT_VS_OID, ExtensionType.String);
@@ -284,7 +287,7 @@ public class SpreadSheetReloader extends SpreadSheetBase {
       OperationDefinitionParameterBindingComponent bs = param.getBinding();
       bs.removeExtension(BuildExtensions.EXT_NAME);
       readExt(bs, row, cols, CN_BINDING_NAME, BuildExtensions.EXT_BINDING_NAME, ExtensionType.String);
-      readExt(bs, row, cols, CN_DEFINITION, BuildExtensions.EXT_DEFINITION, ExtensionType.String);
+      readExt(bs, row, cols, CN_DEFINITION, BuildExtensions.EXT_BINDING_DEFINITION, ExtensionType.String);
       bs.setStrength(BindingStrength.fromCode(getValue(row, cols, CN_STRENGTH)));
       bs.setValueSet(getValue(row, cols, CN_VALUE_SET));
       readExt(bs, row, cols, CN_OID, BuildExtensions.EXT_VS_OID, ExtensionType.String);
