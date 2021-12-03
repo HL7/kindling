@@ -139,7 +139,11 @@ public class ResourceDefn  {
     
   }
 
-  public class StringPair {
+  public static class StringPair {
+    public StringPair(String name, String value) {
+      this.name = name; 
+      this.value = value;
+    }
     public String name;
     public String value;
   }
@@ -313,9 +317,7 @@ public class ResourceDefn  {
     List<StringPair> results = new ArrayList<ResourceDefn.StringPair>();
     for (InheritedMapping im : inheritedMappings) {
       if (im.mappings.containsKey(m)) {
-        StringPair p = new StringPair();
-        p.name = im.path;
-        p.value = im.mappings.get(m);
+        StringPair p = new StringPair(im.path, im.mappings.get(m));
         results.add(p);
       }
     }

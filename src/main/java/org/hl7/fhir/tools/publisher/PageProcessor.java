@@ -2451,6 +2451,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     s.append("<td><b>Type</b></td>");
     s.append("<td><b><a href=\"defining-extensions.html#context\">Context</a></b></td>");
     s.append("<td><b><a href=\"versions.html#maturity\">FMM</a></b></td>");
+    s.append("<td><b># Examples</b></td>");
     s.append("</tr>");
 
     List<String> names = new ArrayList<String>();
@@ -2512,6 +2513,8 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     s.append("</td>");
     String fmm = ToolingExtensions.readStringExtension(ed, ToolingExtensions.EXT_FMM_LEVEL);
     s.append("<td>"+(Utilities.noString(fmm) ? "0" : fmm)+"</td>");
+    String uc = ed.hasUserData("usage.count") ? ed.getUserData("usage.count").toString() : "";
+    s.append("<td>"+uc+"</td>");
 //    s.append("<td><a href=\"extension-"+ed.getId().toLowerCase()+ ".xml.html\">XML</a></td>");
 //    s.append("<td><a href=\"extension-"+ed.getId().toLowerCase()+ ".json.html\">JSON</a></td>");
     s.append("</tr>");
@@ -8657,7 +8660,8 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     return path.contains(".") ? path.substring(0, path.lastIndexOf('.')) : path;
   }
 
-  public String processExtensionIncludes(String filename, StructureDefinition ed, String xml, String json, String ttl, String tx, String src, String pagePath, ImplementationGuideDefn ig) throws Exception {
+  public String processExtensionIncludes(String filename, StructureDefinition ed, String xml, String json, String ttl, String tx, String src, 
+      String pagePath, ImplementationGuideDefn ig, String usages) throws Exception {
     String workingTitle = null;
     int level = ig.isCore() ? 0 : 1;
 
@@ -8790,6 +8794,8 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
         src = s1+describeExtensionContext(ed)+s3;
       else if (com[0].equals("ext-name"))
         src = s1+Utilities.escapeXml(ed.getName())+s3;
+      else if (com[0].equals("extension-example-references"))
+        src = s1+usages+s3;      
       else if (com[0].equals("search-footer"))
         src = s1+searchFooter(level)+s3;
       else if (com[0].equals("search-header"))

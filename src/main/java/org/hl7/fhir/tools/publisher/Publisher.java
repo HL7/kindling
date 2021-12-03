@@ -124,6 +124,7 @@ import org.hl7.fhir.definitions.model.PrimitiveType;
 import org.hl7.fhir.definitions.model.Profile;
 import org.hl7.fhir.definitions.model.ProfiledType;
 import org.hl7.fhir.definitions.model.ResourceDefn;
+import org.hl7.fhir.definitions.model.ResourceDefn.StringPair;
 import org.hl7.fhir.definitions.model.SearchParameterDefn;
 import org.hl7.fhir.definitions.model.SearchParameterDefn.SearchType;
 import org.hl7.fhir.definitions.model.TypeDefn;
@@ -3606,21 +3607,75 @@ public class Publisher implements URIResolver, SectionNumberer {
       tgen.close();
       String tx = bytes.toString();
 
+      String usages = getExtensionExamples(ed);
+      
       String src = TextFile.fileToString(page.getFolders().templateDir + "template-extension-mappings.html");
-      src = page.processExtensionIncludes(filename, ed, xml, json, ttl, tx, src, filename + ".html", ig);
+      src = page.processExtensionIncludes(filename, ed, xml, json, ttl, tx, src, filename + ".html", ig, usages);
       page.getHTMLChecker().registerFile(prefix+filename + "-mappings.html", "Mappings for Extension " + ed.getName(), HTMLLinkChecker.XHTML_TYPE, true);
       TextFile.stringToFile(src, page.getFolders().dstDir + prefix+filename + "-mappings.html");
 
       src = TextFile.fileToString(page.getFolders().templateDir + "template-extension-definitions.html");
-      src = page.processExtensionIncludes(filename, ed, xml, json, ttl, tx, src, filename + ".html", ig);
+      src = page.processExtensionIncludes(filename, ed, xml, json, ttl, tx, src, filename + ".html", ig, usages);
       page.getHTMLChecker().registerFile(prefix+filename + "-definitions.html", "Definitions for Extension " + ed.getName(), HTMLLinkChecker.XHTML_TYPE, true);
       TextFile.stringToFile(src, page.getFolders().dstDir + prefix+filename + "-definitions.html");
 
       src = TextFile.fileToString(page.getFolders().templateDir + "template-extension.html");
-      src = page.processExtensionIncludes(filename, ed, xml, json, ttl, tx, src, filename + ".html", ig);
+      src = page.processExtensionIncludes(filename, ed, xml, json, ttl, tx, src, filename + ".html", ig, usages);
       page.getHTMLChecker().registerFile(prefix+filename + ".html", "Extension " + ed.getName(), HTMLLinkChecker.XHTML_TYPE, true);
       TextFile.stringToFile(src, page.getFolders().dstDir + prefix+filename + ".html");
     }
+  }
+
+  private String getExtensionExamples(StructureDefinition ed) {
+    List<StringPair> refs = new ArrayList<>();
+    for (CanonicalResource cr : page.getWorkerContext().allConformanceResources()) {
+      if (ToolingExtensions.usesExtension(ed.getUrl(), cr)) {
+        refs.add(new StringPair(cr.present(), cr.getUserString("path")));
+      }
+    }
+    
+    for (String rn : page.getDefinitions().sortedResourceNames()) {
+      ResourceDefn rd = page.getDefinitions().getResourceByName(rn);
+      for (Example e : rd.getExamples()) {
+        if (usesExtension(ed.getUrl(), e.getXml())) {
+          refs.add(new StringPair(e.getName()+": "+rd.getName()+"/"+e.getId(), e.getTitle()+".html"));
+        }        
+      }
+    }      
+    ed.setUserData("usage.count", refs.size());
+    if (refs.size() == 0) {
+      return "";
+    } else {
+      StringBuilder b = new StringBuilder();
+      b.append("<p><b>Examples of this extension</b></p>\r\n<ul>\r\n");
+      for (StringPair p : refs) {
+        b.append(" <li><a href=\""+p.value+"\">"+Utilities.escapeXml(p.name)+"</a></li>\r\n");
+      }
+      b.append("</ul>\r\n");      
+      return b.toString();
+    }
+  }
+
+  private boolean usesExtension(String url, Document xml) {
+    if (xml == null) {
+      return false;
+    }
+    Element e = xml.getDocumentElement();
+    return usesExtension(url, e);
+  }
+
+  private boolean usesExtension(String url, Element e) {
+    if (url.equals(e.getAttribute("url"))) {
+      return true;
+    }
+    Element c = XMLUtil.getFirstChild(e);
+    while (c != null) {
+      if (usesExtension(url, c)) {
+        return true;
+      }
+      c = XMLUtil.getNextSibling(c);
+    }
+    return false;
   }
 
   private WorkGroup wg(StructureDefinition ed) {
