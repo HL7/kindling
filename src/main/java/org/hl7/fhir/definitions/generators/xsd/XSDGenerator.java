@@ -415,7 +415,7 @@ public class XSDGenerator extends XSDRootGenerator {
 				BindingSpecification cd = e.getBinding();
 				if (cd != null && isEnum(cd)) {
 				  if (cd.getValueSet() == null) {
-				    throw new Error("no value for "+cd.getUri()+" on "+cd.getName());
+				    throw new Error("no value for "+cd.getUri()+" on "+cd.getName()+" for "+e.getPath());
 				  }
 					en = namify(cd.getValueSet().getName());
 					if (!cd.isShared()) {
