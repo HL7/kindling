@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -15,6 +16,7 @@ import org.hl7.fhir.definitions.model.BindingSpecification.BindingMethod;
 import org.hl7.fhir.definitions.model.DefinedCode;
 import org.hl7.fhir.definitions.model.Definitions;
 import org.hl7.fhir.definitions.model.EventDefn;
+import org.hl7.fhir.definitions.model.ResourceDefn;
 import org.hl7.fhir.definitions.model.TypeRef;
 import org.hl7.fhir.r5.context.IWorkerContext.PackageVersion;
 import org.hl7.fhir.r5.model.CodeSystem;
@@ -30,6 +32,7 @@ import org.hl7.fhir.r5.model.Enumerations.PublicationStatus;
 import org.hl7.fhir.r5.model.Factory;
 import org.hl7.fhir.r5.model.ValueSet;
 import org.hl7.fhir.r5.model.ValueSet.ValueSetComposeComponent;
+import org.hl7.fhir.r5.terminologies.CodeSystemUtilities;
 import org.hl7.fhir.r5.terminologies.ValueSetUtilities;
 import org.hl7.fhir.r5.utils.ToolingExtensions;
 import org.hl7.fhir.utilities.StandardsStatus;
@@ -165,35 +168,56 @@ public class ValueSetGenerator {
     cs.setUrl("http://hl7.org/fhir/resource-types");
     cs.setVersion(version);
     cs.setCaseSensitive(true);    
+    cs.setHierarchyMeaning(CodeSystemHierarchyMeaning.ISA);
     cs.setContent(CodeSystemContentMode.COMPLETE);
     definitions.getCodeSystems().see(cs, packageInfo);
         
-    List<String> codes = new ArrayList<String>();
-    codes.addAll(definitions.getBaseResources().keySet());
-    codes.addAll(definitions.getKnownResources().keySet());
-    Collections.sort(codes);
-    for (String s : codes) {
-      DefinedCode rd = definitions.getKnownResources().get(s);
-      ConceptDefinitionComponent c = cs.addConcept();
-      Map<String, String> t;
-      if (rd == null) {
-        t = translator.translations(s);
-        c.setCode(s);
-        c.setDisplay(definitions.getBaseResources().get(s).getName());
-        c.setDefinition((definitions.getBaseResources().get(s).isAbstract() ? "--- Abstract Type! ---" : "")+ definitions.getBaseResources().get(s).getDefinition());
-      }  else {
-        t = translator.translations(rd.getCode());
-        c.setCode(rd.getCode());
-        c.setDisplay(rd.getCode());
-        c.setDefinition(rd.getDefinition());
-      }
-      if (t != null) {
-        for (String l : t.keySet())
-          c.addDesignation().setLanguage(l).setValue(t.get(l)).getUse().setSystem("http://terminology.hl7.org/CodeSystem/designation-usage").setCode("display");
+    Map<String, ConceptDefinitionComponent> codes = new HashMap<String, ConceptDefinitionComponent>();
+    for (ResourceDefn rd : definitions.getBaseResources().values()) {
+      ConceptDefinitionComponent cd = makeConceptForResource(rd.getName(), rd.getDefinition(), rd.isAbstract());
+      codes.put(rd.getName(), cd);
+    }
+    for (ResourceDefn rd : definitions.getBaseResources().values()) {
+      ConceptDefinitionComponent cd = codes.get(rd.getName());
+      ConceptDefinitionComponent parent = codes.get(rd.getRoot().typeCode());
+      if (parent != null) {
+        parent.addConcept(cd);
+      } else {
+        cs.addConcept(cd);        
+      }      
+    }
+    for (DefinedCode dc : definitions.getKnownResources().values()) {
+      if (!codes.containsKey(dc.getCode())) {
+        ResourceDefn rd = definitions.getResourceByName(dc.getCode());
+        ConceptDefinitionComponent parent = codes.get(rd.getRoot().typeCode());
+        ConceptDefinitionComponent cd = makeConceptForResource(rd.getName(), rd.getDefinition(), false);
+        codes.put(rd.getName(), cd);
+        if (parent != null) {
+          parent.addConcept(cd);
+        } else {
+          cs.addConcept(cd);        
+        }      
+        codes.put(rd.getName(), cd);
       }
     }
+    CodeSystemUtilities.sortAllCodes(cs);
 
     markSpecialStatus(vs, cs, true);
+  }
+
+
+  private ConceptDefinitionComponent makeConceptForResource(String code, String definition, boolean isAbstract) {
+    ConceptDefinitionComponent c = new ConceptDefinitionComponent();
+    Map<String, String> t = translator.translations(code);
+    c.setCode(code);
+    c.setDisplay(code);
+    c.setDefinition((isAbstract ? "--- Abstract Type! ---" : "")+ definition);
+    if (t != null) {
+      for (String l : t.keySet()) {
+        c.addDesignation().setLanguage(l).setValue(t.get(l)).getUse().setSystem("http://terminology.hl7.org/CodeSystem/designation-usage").setCode("display");
+      }
+    }
+    return c;
   }
 
   private void genAbstractTypes(ValueSet vs) {

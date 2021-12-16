@@ -4540,6 +4540,7 @@ public class Publisher implements URIResolver, SectionNumberer {
       }
     } catch (Exception ex) {
       StringWriter errors = new StringWriter();
+      System.out.println("Error generating narrative for example "+e.getName()+": "+ex.getMessage());
       ex.printStackTrace();
       XhtmlNode xhtml = new XhtmlNode(NodeType.Element, "div");
       xhtml.addTag("p").setAttribute("style", "color: maroon").addText("Error processing narrative: " + ex.getMessage());

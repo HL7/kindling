@@ -194,7 +194,7 @@ public class ProfileGenerator {
     if (uml != null) {
       if (!uml.hasPackage("core")) {
         this.uml = uml.getPackage("core");
-        if (version == FHIRVersion.R4B) {
+        if (version.isR4B()) {
           this.uml.getTypes().put("Type", new UMLClass("Type", UMLClassType.Class));
           this.uml.getTypes().put("PrimitiveType", new UMLClass("PrimitiveType", UMLClassType.Class));
         } else {
@@ -325,7 +325,7 @@ public class ProfileGenerator {
     TypeRefComponent t = ec.addType();
     t.getFormatCommentsPre().add("Note: special primitive values have a FHIRPath system type. e.g. this is compiler magic (a)");
     t.setCode(Constants.NS_SYSTEM_TYPE+type.getFHIRPathType());
-    ToolingExtensions.addUriExtension(t, ToolingExtensions.EXT_FHIR_TYPE, type.getCode());
+    ToolingExtensions.addUrlExtension(t, ToolingExtensions.EXT_FHIR_TYPE, type.getCode());
     if (!Utilities.noString(type.getRegex())) {
       ToolingExtensions.addStringExtension(t, ToolingExtensions.EXT_REGEX, type.getRegex());
     }
@@ -358,7 +358,7 @@ public class ProfileGenerator {
     TypeRefComponent tr = ec2.addType();
     t.getFormatCommentsPre().add("Note: special primitive values have a FHIRPath system type. e.g. this is compiler magic (b)");
     tr.setCode(Constants.NS_SYSTEM_TYPE+ "String"); 
-    ToolingExtensions.addUriExtension(tr, ToolingExtensions.EXT_FHIR_TYPE, "string");
+    ToolingExtensions.addUrlExtension(tr, ToolingExtensions.EXT_FHIR_TYPE, "string");
 
     generateElementDefinition(p, ec2, ec1);
     ec2.makeBase("Element.id", 0, "1");
@@ -379,7 +379,7 @@ public class ProfileGenerator {
     t.setCodeElement(new UriType());
     t.getFormatCommentsPre().add("Note: special primitive values have a FHIRPath system type. e.g. this is compiler magic (c)");
     t.setCode(Constants.NS_SYSTEM_TYPE+type.getFHIRPathType());
-    ToolingExtensions.addUriExtension(t, ToolingExtensions.EXT_FHIR_TYPE, type.getCode());
+    ToolingExtensions.addUrlExtension(t, ToolingExtensions.EXT_FHIR_TYPE, type.getCode());
     if (!Utilities.noString(type.getRegex()))
       ToolingExtensions.addStringExtension(t, ToolingExtensions.EXT_REGEX, type.getRegex());
     addSpecificDetails(type, ec3);
@@ -544,7 +544,7 @@ public class ProfileGenerator {
     t.setCodeElement(new UriType());
     t.getFormatCommentsPre().add("Note: special primitive values have a FHIRPath system type. e.g. this is compiler magic (d)");
     t.setCode(Constants.NS_SYSTEM_TYPE+"String");
-    ToolingExtensions.addUriExtension(t, ToolingExtensions.EXT_FHIR_TYPE, "string");
+    ToolingExtensions.addUrlExtension(t, ToolingExtensions.EXT_FHIR_TYPE, "string");
 
     reset();
     // now. the snapshot
@@ -573,7 +573,7 @@ public class ProfileGenerator {
     TypeRefComponent tr = ec2.addType();
     t.getFormatCommentsPre().add("Note: special primitive values have a FHIRPath system type. e.g. this is compiler magic (e)");
     tr.setCode(Constants.NS_SYSTEM_TYPE+ "String"); 
-    ToolingExtensions.addUriExtension(t, ToolingExtensions.EXT_FHIR_TYPE, "string");
+    ToolingExtensions.addUrlExtension(t, ToolingExtensions.EXT_FHIR_TYPE, "string");
     generateElementDefinition(p, ec2, ec1);
     ec2.makeBase("Element.id", 0, "1");
 
@@ -593,7 +593,7 @@ public class ProfileGenerator {
     t.setCodeElement(new UriType());
     t.getFormatCommentsPre().add("Note: special primitive values have a FHIRPath system type. e.g. this is compiler magic (f)");
     t.setCode(Constants.NS_SYSTEM_TYPE+"String");
-    ToolingExtensions.addUriExtension(t, ToolingExtensions.EXT_FHIR_TYPE, "string");
+    ToolingExtensions.addUrlExtension(t, ToolingExtensions.EXT_FHIR_TYPE, "string");
     ec3.makeBase();
     generateElementDefinition(p, ec3, ec);
 
@@ -671,7 +671,7 @@ public class ProfileGenerator {
     t.setCodeElement(new UriType());
     t.getFormatCommentsPre().add("Note: special primitive values have a FHIRPath system type. e.g. this is compiler magic (g)");
     t.setCode(Constants.NS_SYSTEM_TYPE+type.getFHIRPathType());
-    ToolingExtensions.addUriExtension(t, ToolingExtensions.EXT_FHIR_TYPE, type.getCode());
+    ToolingExtensions.addUrlExtension(t, ToolingExtensions.EXT_FHIR_TYPE, type.getCode());
     if (!Utilities.noString(type.getRegex())) {
       ToolingExtensions.addStringExtension(t, ToolingExtensions.EXT_REGEX, type.getRegex());
     }
@@ -703,7 +703,7 @@ public class ProfileGenerator {
     TypeRefComponent tr = ecid.addType();
     tr.getFormatCommentsPre().add("Note: special primitive values have a FHIRPath system type. e.g. this is compiler magic (h)");
     tr.setCode(Constants.NS_SYSTEM_TYPE+ "String"); 
-    ToolingExtensions.addUriExtension(tr, ToolingExtensions.EXT_FHIR_TYPE, "string");
+    ToolingExtensions.addUrlExtension(tr, ToolingExtensions.EXT_FHIR_TYPE, "string");
     ecid.makeBase("Element.id", 0, "1");
 
     makeExtensionSlice("extension", p, p.getSnapshot(), null, type.getCode());
@@ -722,7 +722,7 @@ public class ProfileGenerator {
     t = ecB.addType();
     t.getFormatCommentsPre().add("Note: special primitive values have a FHIRPath system type. e.g. this is compiler magic (i)");
     t.setCode(Constants.NS_SYSTEM_TYPE+"String");
-    ToolingExtensions.addUriExtension(t, ToolingExtensions.EXT_FHIR_TYPE, "string");
+    ToolingExtensions.addUrlExtension(t, ToolingExtensions.EXT_FHIR_TYPE, "string");
     if (!Utilities.noString(type.getRegex()))
       ToolingExtensions.addStringExtension(t, ToolingExtensions.EXT_REGEX, type.getRegex());
 //    generateElementDefinition(ecB, ecA);
@@ -1634,11 +1634,11 @@ public class ProfileGenerator {
         tr.getFormatCommentsPre().add("Note: special primitive values have a FHIRPath system type. e.g. this is compiler magic (j)");
         tr.setCode(Constants.NS_SYSTEM_TYPE+ "String"); 
         if (path.equals("Extension.url")) {
-          ToolingExtensions.addUriExtension(tr, ToolingExtensions.EXT_FHIR_TYPE, "uri");
+          ToolingExtensions.addUrlExtension(tr, ToolingExtensions.EXT_FHIR_TYPE, "uri");
         } else if (p.getKind() == StructureDefinitionKind.RESOURCE) {
-          ToolingExtensions.addUriExtension(tr, ToolingExtensions.EXT_FHIR_TYPE, "id");
+          ToolingExtensions.addUrlExtension(tr, ToolingExtensions.EXT_FHIR_TYPE, "id");
         } else {
-          ToolingExtensions.addUriExtension(tr, ToolingExtensions.EXT_FHIR_TYPE, "string");
+          ToolingExtensions.addUrlExtension(tr, ToolingExtensions.EXT_FHIR_TYPE, "string");
         }
       } else {
         List<TypeRef> expandedTypes = new ArrayList<TypeRef>();

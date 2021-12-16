@@ -210,8 +210,7 @@ public class SpreadSheetReloader extends SpreadSheetBase {
     ed.getType().clear();
     ed.setContentReferenceElement(null);
     if (ed.getPath().equals("Resource.id")) {
-      ed.addType().setCode("http://hl7.org/fhirpath/System.String").addExtension("http://hl7.org/fhir/StructureDefinition/structuredefinition-fhir-type", 
-          VersionUtilities.isR4BVer(context.getVersion()) ? new UrlType("id") : new UriType("id"));      
+      ed.addType().setCode("http://hl7.org/fhirpath/System.String").addExtension("http://hl7.org/fhir/StructureDefinition/structuredefinition-fhir-type", new UrlType("id"));      
     } else {
       if (Utilities.noString(value)) {
         if (ed.getPath().contains(".")) {
