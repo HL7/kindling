@@ -10153,21 +10153,28 @@ private int countContains(List<ValueSetExpansionContainsComponent> list) {
   private String genCSList() throws FHIRException {
     StringBuilder b = new StringBuilder();
     List<String> names = new ArrayList<String>();
-    names.addAll(definitions.getCodeSystems().keys());
+    for (CodeSystem cs : definitions.getCodeSystems().getSortedList()) {
+      names.add(cs.getId());
+    }
     Collections.sort(names);
+    Set<String> urls = new HashSet<>();
     for (String n : names) {
       CodeSystem cs = definitions.getCodeSystems().get(n);
       if (cs != null) {
         if (cs.getUrl().startsWith("http://hl7.org/fhir") && !cs.getUrl().startsWith("http://terminology.hl7.org/CodeSystem/v2-") && !cs.getUrl().startsWith("http://terminology.hl7.org/CodeSystem/v3-")) {
-          b.append("  <tr>\r\n");
-          b.append("    <td><a href=\""+cs.getUserString("path")+"\">"+cs.getName()+"</a>");
-          if (StandardsStatus.NORMATIVE == ToolingExtensions.getStandardsStatus(cs))
-            b.append(" <a href=\"versions.html#std-process\" title=\"Normative Content\" class=\"normative-flag\">N</a>");
-          b.append("</td>\r\n");
-          b.append("    <td>"+(cs.hasTitle() ? cs.getTitle()+": " : "")+Utilities.escapeXml(cs.getDescription())+"</td>\r\n");
-          String oid = CodeSystemUtilities.getOID(cs);
-          b.append("    <td>"+(oid == null ? "" : oid)+"</td>\r\n");
-          b.append("  </tr>\r\n");
+          if (!urls.contains(cs.getUrl()) && !Utilities.isAbsoluteUrl(cs.getUserString("path"))) {
+            urls.add(cs.getUrl());
+            b.append("  <tr>\r\n");
+            b.append("    <td><a href=\""+cs.getUserString("path")+"\">"+cs.getId()+"</a>");
+            if (StandardsStatus.NORMATIVE == ToolingExtensions.getStandardsStatus(cs))
+              b.append(" <a href=\"versions.html#std-process\" title=\"Normative Content\" class=\"normative-flag\">N</a>");
+            b.append("</td>\r\n");
+            b.append("    <td>"+Utilities.escapeXml(cs.present())+"</td>\r\n");
+            b.append("    <td>"+(cs.hasTitle() ? cs.getTitle()+": " : "")+Utilities.escapeXml(cs.getDescription())+"</td>\r\n");
+//            String oid = CodeSystemUtilities.getOID(cs);
+//            b.append("    <td>"+(oid == null ? "" : oid)+"</td>\r\n");
+            b.append("  </tr>\r\n");
+          }
         }
       }
     }

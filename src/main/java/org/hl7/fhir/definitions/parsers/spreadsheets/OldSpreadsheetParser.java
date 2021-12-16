@@ -2176,10 +2176,15 @@ public class OldSpreadsheetParser {
 	  if (Utilities.noString(name))
 	    throw new Exception("No code found on Extension at "+getLocation(row));
 
-	  if (name.contains("."))
-	    throw new Exception("Extension Definition Error: Extension names cannot contain '.': "+name+"  at "+getLocation(row));
-
-	  ex.setUrl(uri+name);
+	  if (name.contains(".")) {
+	    if (Utilities.isAbsoluteUrl(name)) {
+	      ex.setUrl(name);
+	    } else {
+	      throw new Exception("Extension Definition Error: Extension names cannot contain '.': "+name+"  at "+getLocation(row));
+      }
+	  } else {
+  	  ex.setUrl(uri+name);
+	  }
     ex.setId(tail(ex.getUrl()));
     ex.setUserData("path", "extension-"+ex.getId().toLowerCase()+".html");
 	  ap.getExtensions().add(ex);
