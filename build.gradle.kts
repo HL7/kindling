@@ -19,9 +19,6 @@ repositories {
     mavenLocal()
     mavenCentral()
     maven {
-        url = uri("https://dl.bintray.com/labra/maven")
-    }
-    maven {
         url = uri("https://jitpack.io")
     }
     maven {
@@ -137,7 +134,7 @@ dependencies {
     implementation("org.slf4j", "slf4j-log4j12", "1.7.22")
     implementation("org.slf4j", "slf4j-jdk14", "1.7.22")
     implementation("org.slf4j", "slf4j-api", "1.7.22")
-    implementation("org.apache.logging.log4j", "log4j", "2.11.1")
+    implementation("org.apache.logging.log4j", "log4j", "2.15.0")
     implementation("com.squareup.okhttp3", "okhttp", "4.9.0")
     implementation("com.squareup.okio", "okio", "2.9.0")
     implementation("org.jetbrains.kotlin", "kotlin-stdlib", "1.4.21")
