@@ -678,6 +678,11 @@ public class ExampleInspector implements IValidatorResourceFetcher, IValidationP
   }
 
 
+  public List<ValidationMessage> getErrors() {
+    return errorsInt;
+  }
+
+
 
 
   

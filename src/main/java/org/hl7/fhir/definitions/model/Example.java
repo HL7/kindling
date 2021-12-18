@@ -29,7 +29,9 @@ POSSIBILITY OF SUCH DAMAGE.
 */
 import java.io.File;
 import java.io.FileOutputStream;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import javax.xml.parsers.DocumentBuilder;
@@ -39,6 +41,8 @@ import org.hl7.fhir.r5.elementmodel.Element;
 import org.hl7.fhir.utilities.CSFileInputStream;
 import org.hl7.fhir.utilities.CSVProcessor;
 import org.hl7.fhir.utilities.Utilities;
+import org.hl7.fhir.utilities.validation.ValidationMessage;
+import org.hl7.fhir.utilities.xhtml.XhtmlNode;
 import org.hl7.fhir.utilities.xml.XMLUtil;
 import org.w3c.dom.Document;
 
@@ -56,6 +60,7 @@ public class Example {
   private String ig;
   private String exampleFor;
   private Element element;
+  private List<ValidationMessage> errors = new ArrayList<>();
   
   
   public enum ExampleType {
@@ -233,6 +238,11 @@ public class Example {
 
   public boolean hasXml() {
     return xml != null;
+  }
+
+
+  public List<ValidationMessage> getErrors() {
+    return errors;
   }
   
   

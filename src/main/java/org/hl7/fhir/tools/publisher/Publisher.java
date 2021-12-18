@@ -5838,8 +5838,12 @@ public class Publisher implements URIResolver, SectionNumberer {
             ImplementationGuideDefn ig = e.getIg() == null ? null : page.getDefinitions().getIgs().get(e.getIg());
             if (ig != null)
               n = ig.getCode()+File.separator+n;
-            if (validateId == null || validateId.equals(n))
+            if (validateId == null || validateId.equals(n)) {
               ei.validate(n, rname);
+              for (ValidationMessage vm : ei.getErrors()) {
+                e.getErrors().add(vm);
+              }
+            }
           }
 
           for (Profile e : r.getConformancePackages()) {

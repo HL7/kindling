@@ -11,11 +11,13 @@ import java.util.Map;
 
 import org.hl7.fhir.definitions.model.Definitions;
 import org.hl7.fhir.definitions.model.ElementDefn;
+import org.hl7.fhir.definitions.model.Example;
 import org.hl7.fhir.definitions.model.ResourceDefn;
 import org.hl7.fhir.utilities.TextFile;
 import org.hl7.fhir.utilities.Utilities;
 import org.hl7.fhir.utilities.XsltUtilities;
 import org.hl7.fhir.utilities.validation.ValidationMessage;
+import org.hl7.fhir.utilities.validation.ValidationMessage.IssueSeverity;
 
 public class QaTracker {
 
@@ -28,14 +30,16 @@ public class QaTracker {
     
     private int hints;
     private int warnings;
+    private int errors;
   }
   
   
   private SnapShot current = new SnapShot();
-  
   private Map<Date, SnapShot> records = new HashMap<Date, SnapShot>();
+  private Definitions definitions;
   
   public void countDefinitions(Definitions definitions) throws Exception {
+    this.definitions = definitions;
     current.resources = definitions.getResources().size();
     current.types = definitions.getResources().size() + definitions.getTypes().size()   
          + definitions.getShared().size() + definitions.getPrimitives().size()+ definitions.getInfrastructure().size();
@@ -68,9 +72,12 @@ public class QaTracker {
     s.append(" <tr><td>packs</td><td>"+Integer.toString(current.packs)+"</td></tr>\r\n");
     s.append(" <tr><td>paths</td><td>"+Integer.toString(current.paths)+"</td></tr>\r\n");
     s.append(" <tr><td>valuesets</td><td>"+Integer.toString(current.valuesets)+"</td></tr>\r\n");
+    s.append(" <tr><td>errors</td><td>"+Integer.toString(current.errors)+"</td></tr>\r\n");
     s.append(" <tr><td>warnings</td><td>"+Integer.toString(current.warnings)+"</td></tr>\r\n");
     s.append(" <tr><td>information messages</td><td>"+Integer.toString(current.hints)+"</td></tr>\r\n");
     s.append("</table>\r\n");
+    
+    addExampleErrors(s, errors);
     
     String xslt = Utilities.path(page.getFolders().rootDir, "implementations", "xmltools", "WarningsToQA.xslt");
     s.append(XsltUtilities.saxonTransform(page.getFolders().dstDir + "work-group-warnings.xml", xslt));
@@ -78,6 +85,56 @@ public class QaTracker {
     return s.toString(); 
   }
   
+  private void addExampleErrors(StringBuilder s, List<ValidationMessage> errors) {
+    s.append("<h2>Errors in Examples</h2>\r\n");
+    s.append("<table border=\"1\" cellspacing=\"1\">\r\n");
+    s.append(" <tr>\r\n");
+    s.append("  <td>Path</td>\r\n");
+    s.append("  <td>Type</td>\r\n");
+    s.append("  <td>Message</td>\r\n");
+    s.append(" </tr>\r\n");
+    for (String n: definitions.sortedResourceNames()) {
+      ResourceDefn rd = definitions.getResourceByName(n);
+      int e = 0;
+      for (Example ex : rd.getExamples()) {
+        for (ValidationMessage vm : ex.getErrors()) {
+          if (vm.getLevel() == IssueSeverity.ERROR) {
+            e++;
+          }
+        }
+      }
+      if (e == 0) {
+      } else {
+        s.append(" <tr>\r\n");
+        s.append("  <td colspan=\"3\"><b>"+n+"</b></td>\r\n");
+        s.append(" </tr>\r\n");
+        for (Example ex : rd.getExamples()) {
+          e = 0;
+          for (ValidationMessage vm : ex.getErrors()) {
+            if (vm.getLevel() == IssueSeverity.ERROR) {
+              e++;
+            }
+          }
+          if (e > 0) {
+            s.append(" <tr>\r\n");
+            s.append("  <td colspan=\"3\">"+ex.getId()+" ("+ex.getTitle()+")</td>\r\n");
+            s.append(" </tr>\r\n");
+            for (ValidationMessage vm : ex.getErrors()) {
+              if (vm.getLevel() == IssueSeverity.ERROR) {
+                s.append(" <tr>\r\n");
+                s.append("  <td>"+vm.getLocation()+"</td>\r\n");
+                s.append("  <td>"+vm.getType().toString()+"</td>\r\n");
+                s.append("  <td>"+Utilities.escapeXml(vm.getMessage())+"</td>\r\n");
+                s.append(" </tr>\r\n");                
+              }
+            }
+          }
+        }
+      }
+    }
+    s.append("</table>\r\n");            
+  }
+
   public void commit(String rootDir) throws IOException {
     String src = TextFile.fileToString(rootDir+"records.csv");
     
@@ -117,6 +174,7 @@ public class QaTracker {
   }
 
   public void setCounts(int e, int w, int i) {
+    current.errors = e;
     current.hints = i;
     current.warnings = w;
   }
