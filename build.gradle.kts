@@ -15,7 +15,6 @@ java {
 
 repositories {
     google()
-    jcenter()
     mavenLocal()
     mavenCentral()
     maven {
@@ -35,18 +34,16 @@ repositories {
     }
 }
 
-var coreVersion = "5.6.28-SNAPSHOT";
-
 dependencies {
     implementation("ca.uhn.hapi.fhir", "hapi-fhir-base", "4.0.0")
-    implementation("ca.uhn.hapi.fhir", "org.hl7.fhir.utilities", coreVersion)
-    implementation("ca.uhn.hapi.fhir", "org.hl7.fhir.dstu2", coreVersion)
-    implementation("ca.uhn.hapi.fhir", "org.hl7.fhir.dstu2016may", coreVersion)
-    implementation("ca.uhn.hapi.fhir", "org.hl7.fhir.dstu3", coreVersion)
-    implementation("ca.uhn.hapi.fhir", "org.hl7.fhir.r4", coreVersion)
-    implementation("ca.uhn.hapi.fhir", "org.hl7.fhir.r5", coreVersion)
-    implementation("ca.uhn.hapi.fhir", "org.hl7.fhir.convertors", coreVersion)
-    implementation("ca.uhn.hapi.fhir", "org.hl7.fhir.validation", coreVersion)
+    implementation("ca.uhn.hapi.fhir", "org.hl7.fhir.utilities", property("fhirCoreVersion").toString())
+    implementation("ca.uhn.hapi.fhir", "org.hl7.fhir.dstu2", property("fhirCoreVersion").toString())
+    implementation("ca.uhn.hapi.fhir", "org.hl7.fhir.dstu2016may", property("fhirCoreVersion").toString())
+    implementation("ca.uhn.hapi.fhir", "org.hl7.fhir.dstu3", property("fhirCoreVersion").toString())
+    implementation("ca.uhn.hapi.fhir", "org.hl7.fhir.r4", property("fhirCoreVersion").toString())
+    implementation("ca.uhn.hapi.fhir", "org.hl7.fhir.r5", property("fhirCoreVersion").toString())
+    implementation("ca.uhn.hapi.fhir", "org.hl7.fhir.convertors", property("fhirCoreVersion").toString())
+    implementation("ca.uhn.hapi.fhir", "org.hl7.fhir.validation", property("fhirCoreVersion").toString())
     implementation("org.eclipse.jgit", "org.eclipse.jgit", "5.13.0.202109080827-r")
     implementation("ch.qos.logback", "logback-classic", "1.2.3")
     implementation("com.google.code.gson", "gson", "2.8.5")
