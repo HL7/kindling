@@ -2,7 +2,7 @@ plugins {
     java
     `maven-publish`
     signing
-    id("com.github.johnrengelman.shadow") version "6.1.0"
+    id("com.github.johnrengelman.shadow") version "7.0.0"
 }
 
 group = "org.hl7.fhir"
@@ -144,12 +144,6 @@ dependencies {
 configurations {
     implementation {
         resolutionStrategy.failOnVersionConflict()
-    }
-}
-
-sourceSets {
-    main {
-        java.srcDir("src/main/java")
     }
 }
 
