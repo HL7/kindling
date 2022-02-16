@@ -53,12 +53,12 @@ steps:
       gpg --list-secret-keys --keyid-format LONG
     displayName: 'Import signing keys into gpg.'
 
-  # For creating a snapshot release with maven, we need to build a local gradle.properties file where
-  # we can set our credentials for both sonatype and gpg. Then gradle can read the necessary fields from it.
+  # For creating a snapshot release with maven, we need to add content to the local gradle.properties that
+  # sets our credentials for both sonatype and gpg. Then gradle can read the necessary fields from it.
 
   # 4. Create local gradle.properties file
   - bash: |
-      cat >$(System.DefaultWorkingDirectory)/gradle.properties <<EOL
+      cat >>$(System.DefaultWorkingDirectory)/gradle.properties <<EOL
       signing.gnupg.keyName=$(GPG_KEYNAME)
       signing.gnupg.passphrase=$(GPG_PASSPHRASE)
       signatory.keyId=$(GPG_KEYNAME)
