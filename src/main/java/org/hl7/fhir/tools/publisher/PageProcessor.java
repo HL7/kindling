@@ -4555,13 +4555,17 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     sorts.addAll(conceptMaps.keys());
     Collections.sort(sorts);
 
+    Set<String> urls = new HashSet<>();
+    
     for (String sn : sorts) {
       ConceptMap ae = conceptMaps.get(sn);
-      //String n = sn.substring(23);
-      ConceptMap cm = ae;
-      s.append(" <tr><td><a href=\"").append(ae.getUserData("path")).append("\">").append(cm.getName()).append("</a></td>")
-              .append("<td><a href=\"").append(getValueSetRef("", cm.hasSourceCanonicalType() ? (cm.getSourceCanonicalType()).getValue() : cm.getSourceUriType().asStringValue())).append("\">").append(describeValueSetByRef(cm.getSource())).append("</a></td>")
-              .append("<td><a href=\"").append(getValueSetRef("", cm.hasTargetCanonicalType() ? (cm.getTargetCanonicalType()).getValue() : cm.getTargetUriType().asStringValue())).append("\">").append(describeValueSetByRef(cm.getTarget())).append("</a></td></tr>\r\n");
+      if (!urls.contains(ae.getUrl())) {
+        urls.add(ae.getUrl());
+        ConceptMap cm = ae;
+        s.append(" <tr><td><a href=\"").append(ae.getUserData("path")).append("\">").append(cm.getName()).append("</a></td>")
+                .append("<td><a href=\"").append(getValueSetRef("", cm.hasSourceCanonicalType() ? (cm.getSourceCanonicalType()).getValue() : cm.getSourceUriType().asStringValue())).append("\">").append(describeValueSetByRef(cm.getSource())).append("</a></td>")
+                .append("<td><a href=\"").append(getValueSetRef("", cm.hasTargetCanonicalType() ? (cm.getTargetCanonicalType()).getValue() : cm.getTargetUriType().asStringValue())).append("\">").append(describeValueSetByRef(cm.getTarget())).append("</a></td></tr>\r\n");
+      }
     }
     s.append("</table>\r\n");
     return s.toString();
@@ -10859,6 +10863,7 @@ private int countContains(List<ValueSetExpansionContainsComponent> list) {
     rc = new RenderingContext(workerContext, processor, ValidationOptions.defaults(), "", "", null, ResourceRendererMode.TECHNICAL);    
     rc.setParser(this);
     rc.setResolver(this);
+    rc.setDestDir(folders.dstDir);
   }
 
   @Override
