@@ -3,9 +3,12 @@ package org.hl7.fhir.definitions.uml;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.hl7.fhir.r4b.model.Enumerations.FHIRVersion;
+
 public class UMLModel extends UMLEntity {
   
   private List<UMLPackage> packages = new ArrayList<>();
+  private String version;
 
   
   public UMLModel(String name) {
@@ -27,7 +30,7 @@ public class UMLModel extends UMLEntity {
         return p;
       }
     }
-    UMLPackage p = new UMLPackage(name);
+    UMLPackage p = new UMLPackage(name, version);
     packages.add(p);
     return p;
   }
@@ -40,4 +43,14 @@ public class UMLModel extends UMLEntity {
     }
     return false;
   }
+
+  public String getVersion() {
+    return version;
+  }
+
+  public void setVersion(String version) {
+    this.version = version;
+  }
+  
+  
 }

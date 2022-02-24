@@ -402,7 +402,7 @@ public class ProfileGenerator {
   public void genUml(PrimitiveType type) {
     UMLClass c = uml.getClassByNameCreate(type.getCode());
     c.setDocumentation(type.getDefinition());
-    c.setSpecialises(uml.getClassByName("PrimitiveType"));
+    c.setSpecialises(uml.getClassByName("PrimitiveType", "code"));
     String t = type.getSchemaType();
     if (!t.startsWith("xs:"))
       t = "xs:"+t;
@@ -806,10 +806,13 @@ public class ProfileGenerator {
       UMLClass c = new UMLClass(t.getName(), UMLClassType.Class);
       uml.getTypes().put(t.getName(), c);
     }
-    UMLClass c = uml.getClassByName(t.getName());
+    UMLClass c = uml.getClassByName(t.getName(), t.getName());
     c.setDocumentation(t.getDefinition());
     if (!t.getTypes().isEmpty()) {
-      c.setSpecialises(uml.getClassByName(t.typeCodeNoParams()));
+      if (Utilities.noString(t.typeCodeNoParams())) {
+        throw new Error("No type on "+t.getName());
+      }
+      c.setSpecialises(uml.getClassByName(t.typeCodeNoParams(), t.getName()));
     }
     if (!c.hasAttributes()) {
       for (ElementDefn e : t.getElements()) {

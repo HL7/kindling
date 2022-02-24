@@ -9141,6 +9141,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     definitions.setVersion(version);
     workerContext.setVersion(version.toCode());
     htmlchecker.setVersion(version);
+    uml.setVersion(version.toCode());
     if (version.isR4B() && baseURL.equals("http://build.fhir.org/")) {
       setBaseURL("http://build.fhir.org/branches/R4B/");
     }

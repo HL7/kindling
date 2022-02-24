@@ -8,7 +8,9 @@ import java.util.List;
 import java.util.Map;
 
 import org.hl7.fhir.definitions.uml.UMLClass.UMLClassType;
+import org.hl7.fhir.r5.model.Enumerations.FHIRVersion;
 import org.hl7.fhir.utilities.Utilities;
+import org.hl7.fhir.utilities.VersionUtilities;
 
 public class UMLPackage extends UMLEntity {
 
@@ -50,9 +52,11 @@ public class UMLPackage extends UMLEntity {
 
   private Map<String, UMLType> types = new HashMap<>();
   private Map<String, UMLDiagram> diagrams = new HashMap<>();
+  private String version;
   
-  public UMLPackage(String name) {
+  public UMLPackage(String name, String version) {
     super(name);
+    this.version = version;
   }
 
   public Map<String, UMLType> getTypes() {
@@ -106,12 +110,15 @@ public class UMLPackage extends UMLEntity {
     return res;
   }
 
-  public UMLClass getClassByName(String name) {
+  public UMLClass getClassByName(String name, String source) {
+    if (VersionUtilities.isR4BVer(version) && name.equals("Type")) {
+      name = "Element";
+    }
     UMLType t = types.get(name);
     if (t != null && t instanceof UMLClass) {
       return (UMLClass) t;
     }
-    throw new Error("UML Class "+name+" not found");
+    throw new Error("UML Class '"+name+"' not found from("+source+")");
   }
 
   public boolean hasPrimitive(String name) {
