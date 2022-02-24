@@ -29,4 +29,10 @@ public class UTGLoader implements ILoaderKnowledgeProviderR5 {
     return this;
   }
 
+  @Override
+  public String getWebRoot() {
+    String path = "http://terminology.hl7.org/"+version;
+    return path;
+  }
+
 }
