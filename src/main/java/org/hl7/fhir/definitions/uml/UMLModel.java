@@ -3,8 +3,6 @@ package org.hl7.fhir.definitions.uml;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.hl7.fhir.r4b.model.Enumerations.FHIRVersion;
-
 public class UMLModel extends UMLEntity {
   
   private List<UMLPackage> packages = new ArrayList<>();
