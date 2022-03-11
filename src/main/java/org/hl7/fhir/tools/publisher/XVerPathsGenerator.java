@@ -27,6 +27,7 @@ public class XVerPathsGenerator {
     private List<String> types = new ArrayList<>();
     private List<String> elements = new ArrayList<>();
     private String path;
+    private boolean modifier;
   }
 
 
@@ -63,9 +64,13 @@ public class XVerPathsGenerator {
     }
     StringBuilder r5 = new StringBuilder();
     r5.append("{\r\n");
+    r5.append("  \"doco\" : \"Each non-primitive element is listed with either a type or a list of elements. If the type/element existed in R4 it is prefixed with a !\",\r\n");
     int i = 0;
     for (ElementInfo ei : r5List) {
       r5.append(" \""+ei.path+"\": { ");
+      if (ei.modifier) {
+        r5.append(" \"modifier\" : true, ");        
+      }
       if (ei.types.size() > 0) {
         r5.append( "\"types\": [");
         boolean first = true;
@@ -108,17 +113,22 @@ public class XVerPathsGenerator {
     ei.path = path;
     r5List.add(ei);
     ElementInfo r4 = r4List.get(path);
+    ei.modifier = ed.isModifier();
     if (ed.getTypes().size() > 0) {
       // leaf
       for (TypeRef tr : ed.getTypes()) {
         if (r4 == null || !r4.types.contains(tr.summary())) {
           ei.types.add(tr.summary());
+        } else {
+          ei.types.add("!"+tr.summary());          
         }
       }
     } else {
       for (ElementDefn child : ed.getElements()) {
         if (r4 == null || !r4.elements.contains(child.getName())) {
           ei.elements.add(child.getName());
+        } else {
+          ei.elements.add("!"+child.getName());
         }
         process(child, path+"."+child.getName());      
       }
