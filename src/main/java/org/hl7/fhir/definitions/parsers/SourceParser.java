@@ -365,6 +365,7 @@ public class SourceParser {
       if (bs.hasReference() && bs.getValueSet() == null) {
         bs.setValueSet(findValueSet(bs.getReference()));
       }
+      definitions.getAllBindings().add(bs);
     }
     for (ElementDefn e : ed.getElements()) {
       findValueSets(e);
