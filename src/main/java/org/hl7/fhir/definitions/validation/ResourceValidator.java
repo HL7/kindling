@@ -174,7 +174,8 @@ public class ResourceValidator extends BaseValidator {
                 warning(errors, IssueType.REQUIRED, rd.getName(), false, "A resource must have an 'entered in error' status"); // too many downstream issues in the parsers, and it would only happen as a transient thing when designing the resources
 
         String s = rd.getRoot().getMapping(Definitions.RIM_MAPPING);
-        hint(errors, IssueType.REQUIRED, rd.getName(), !Utilities.noString(s), "RIM Mapping is required");
+// We no longer require RIM mappings
+//        hint(errors, IssueType.REQUIRED, rd.getName(), !Utilities.noString(s), "RIM Mapping is required");
 
         for (Operation op : rd.getOperations()) {
             warning(errors, IssueType.BUSINESSRULE, rd.getName() + ".$" + op.getName(), hasOpExample(op.getExamples(), false), "Operation must have an example request");

@@ -595,8 +595,8 @@ public class ResourceParser {
         if (!Utilities.existsInList(tr.getCode(), "Element", "BackboneElement")) {
           TypeRef t = new TypeRef();
           ed.getTypes().add(t);
-          if (tr.hasExtension("http://hl7.org/fhir/StructureDefinition/structuredefinition-fhir-type")) {
-            t.setName(tr.getExtensionString("http://hl7.org/fhir/StructureDefinition/structuredefinition-fhir-type"));
+          if (tr.hasExtension(ToolingExtensions.EXT_FHIR_TYPE)) {
+            t.setName(tr.getExtensionString(ToolingExtensions.EXT_FHIR_TYPE));
           } else { 
             t.setName(tr.getCode());
           }
