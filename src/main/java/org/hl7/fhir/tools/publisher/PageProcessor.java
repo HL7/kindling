@@ -10842,7 +10842,7 @@ private int countContains(List<ValueSetExpansionContainsComponent> list) {
   }
 
   public PackageVersion packageInfo() {
-    return new PackageVersion(pidRoot()+".core", version.toCode());
+    return new PackageVersion(pidRoot()+".core", version.toCode(), new Date());
   }
 
   private String pidRoot() {
@@ -10859,6 +10859,7 @@ private int countContains(List<ValueSetExpansionContainsComponent> list) {
     rc = new RenderingContext(workerContext, processor, ValidationOptions.defaults(), "", "", null, ResourceRendererMode.TECHNICAL);    
     rc.setParser(this);
     rc.setResolver(this);
+    rc.setDestDir(folders.dstDir);
   }
 
   @Override

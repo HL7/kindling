@@ -914,7 +914,7 @@ public class BuildWorkerContext extends BaseWorkerContext implements IWorkerCont
     }
     for (PackageResourceInformation pri : pi.listIndexedResources(types)) {
       try {
-        registerResourceFromPackage(new PackageResourceLoader(pri, loader), new PackageVersion(pi.id(), pi.version()));
+        registerResourceFromPackage(new PackageResourceLoader(pri, loader), new PackageVersion(pi.id(), pi.version(), pi.dateAsDate()));
         t++;
       } catch (FHIRException e) {
         throw new FHIRException(formatMessage(I18nConstants.ERROR_READING__FROM_PACKAGE__, pri.getFilename(), pi.name(), pi.version(), e.getMessage()), e);
