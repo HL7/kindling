@@ -356,13 +356,17 @@ public class ResourceValidator extends BaseValidator {
                         ElementDefn e;
                         String pp = trimIndexes(path);
                         e = rd.getRoot().getElementForPath(pp, definitions, "Resolving Search Parameter Path", true, false);
-                        for (TypeRef t : e.getTypes()) {
-                            if (t.getName().equals("Reference") || t.getName().equals("canonical")) {
-                                for (String pn : t.getParams()) {
-                                    if (definitions.hasLogicalModel(pn))
-                                        p.getTargets().addAll(definitions.getLogicalModel(pn).getImplementations());
-                                    else
-                                        p.getTargets().add(pn);
+                        if (e == null) {
+                            rule(errors, IssueType.STRUCTURE, rd.getName(), false, "Unable to find element for Search Parameter Path: \"" + pp + "\"");
+                        } else {
+                            for (TypeRef t : e.getTypes()) {
+                                if (t.getName().equals("Reference") || t.getName().equals("canonical")) {
+                                    for (String pn : t.getParams()) {
+                                        if (definitions.hasLogicalModel(pn))
+                                            p.getTargets().addAll(definitions.getLogicalModel(pn).getImplementations());
+                                        else
+                                            p.getTargets().add(pn);
+                                    }
                                 }
                             }
                         }
@@ -373,9 +377,13 @@ public class ResourceValidator extends BaseValidator {
                         ElementDefn e;
                         String pp = trimIndexes(path);
                         e = rd.getRoot().getElementForPath(pp, definitions, "Resolving Search Parameter Path", true, false);
-                        for (TypeRef t : e.getTypes()) {
-                            if (t.getName().equals("Reference")/* || t.getName().equals("canonical")*/) {
-                                rule(errors, IssueType.STRUCTURE, rd.getName(), false, "Parameters of type uri cannot refer to the types Reference or canonical (" + p.getCode() + ")");
+                        if (e == null) {
+                            rule(errors, IssueType.STRUCTURE, rd.getName(), false, "Unable to find element for Search Parameter Path: \"" + pp + "\"");
+                        } else {
+                            for (TypeRef t : e.getTypes()) {
+                                if (t.getName().equals("Reference")/* || t.getName().equals("canonical")*/) {
+                                    rule(errors, IssueType.STRUCTURE, rd.getName(), false, "Parameters of type uri cannot refer to the types Reference or canonical (" + p.getCode() + ")");
+                                }
                             }
                         }
                     }
