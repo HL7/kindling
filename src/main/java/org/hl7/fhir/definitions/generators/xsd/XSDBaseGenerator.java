@@ -357,6 +357,7 @@ public class XSDBaseGenerator  extends XSDRootGenerator {
   }
 
   private void genInfrastructure(ElementDefn elem) throws Exception {
+    boolean rootElement = elem.getName().equals("Base") || (elem.getName().equals("Element") && (version.startsWith("4.0") || version.startsWith("4.3")));
     enums.clear();
     enumDefs.clear();
     String name = elem.getName();
@@ -365,7 +366,7 @@ public class XSDBaseGenerator  extends XSDRootGenerator {
     write("      <xs:documentation xml:lang=\"en\">"+Utilities.escapeXml(elem.getDefinition())+"</xs:documentation>\r\n");
     write("      <xs:documentation xml:lang=\"en\">If the element is present, it must have a value for at least one of the defined elements, an @id referenced from the Narrative, or extensions</xs:documentation>\r\n");
     write("    </xs:annotation>\r\n");
-    if (!elem.getName().equals("Base")) {
+    if (!rootElement) {
       write("    <xs:complexContent>\r\n");
       write("      <xs:extension base=\""+getParentType(elem)+"\">\r\n");
     }
@@ -386,7 +387,7 @@ public class XSDBaseGenerator  extends XSDRootGenerator {
       }
     }
     
-    if (!elem.getName().equals("Base")) {
+    if (!rootElement) {
       write("      </xs:extension>\r\n");
       write("    </xs:complexContent>\r\n");
     }

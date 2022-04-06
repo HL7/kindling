@@ -1169,7 +1169,7 @@ public class Publisher implements URIResolver, SectionNumberer {
       if (profile.getResource().hasBaseDefinition() && !profile.getResource().hasSnapshot()) {
         // cause it probably doesn't, coming from the profile directly
         StructureDefinition base = getSnapShotForProfile(profile.getResource().getBaseDefinition());
-        new ProfileUtilities(page.getWorkerContext(), page.getValidationErrors(), page).generateSnapshot(base, profile.getResource(), profile.getResource().getBaseDefinition().split("#")[0], "http://hl7.org/fhir", profile.getResource().getName());
+        new ProfileUtilities(page.getWorkerContext(), page.getValidationErrors(), page).generateSnapshot(base, profile.getResource(), profile.getResource().getBaseDefinition().split("#")[0], null, profile.getResource().getName());
       }
       if (page.getProfiles().has(profile.getResource().getUrl()))
         throw new Exception("Duplicate Profile URL "+profile.getResource().getUrl());

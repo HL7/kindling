@@ -208,7 +208,9 @@ public class SpreadSheetBase {
 
   protected void saveXml(String fn, Resource res) throws IOException {
     File f = new CSFile(fn);
-    new XmlParser().setOutputStyle(OutputStyle.PRETTY).compose(new FileOutputStream(f), res);
+    XmlParser p = new XmlParser();
+    p.setSchemaPath("../../publish");
+    p.setOutputStyle(OutputStyle.PRETTY).compose(new FileOutputStream(f), res);
     f.setLastModified(date);    
   }
   
