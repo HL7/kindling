@@ -1643,7 +1643,10 @@ public class ProfileGenerator {
         tr.setCode(Constants.NS_SYSTEM_TYPE+ "String"); 
         if (path.equals("Extension.url")) {
           ToolingExtensions.addUrlExtension(tr, ToolingExtensions.EXT_FHIR_TYPE, "uri");
-        } else if (p.getKind() == StructureDefinitionKind.RESOURCE && !path.substring(0, path.length()-3).contains(".")) {
+// Had added this in the PR, but don't know why.  Keeping it here commented out in case it helps resolve a subsequent issue
+// (in which case, we can document why it's needed)
+//        } else if (p.getKind() == StructureDefinitionKind.RESOURCE && !path.substring(0, path.length()-3).contains(".")) {
+        } else if (p.getKind() == StructureDefinitionKind.RESOURCE) {
           ToolingExtensions.addUrlExtension(tr, ToolingExtensions.EXT_FHIR_TYPE, "id");
         } else {
           ToolingExtensions.addUrlExtension(tr, ToolingExtensions.EXT_FHIR_TYPE, "string");
