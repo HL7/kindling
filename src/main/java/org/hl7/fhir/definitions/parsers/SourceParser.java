@@ -928,6 +928,7 @@ public class SourceParser {
     if (!vs.hasVersion() || vs.getUrl().startsWith("http://hl7.org/fhir"))
       vs.setVersion(version.toCode());
 
+    vs.setExperimental(false);
     vs.setUserData("path", "valueset-"+vs.getId()+".html");
     vs.setUserData("filename", "valueset-"+vs.getId());
     definitions.getExtraValuesets().put(n, vs) ;

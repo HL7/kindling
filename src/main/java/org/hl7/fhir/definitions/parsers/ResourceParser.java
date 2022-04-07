@@ -13,7 +13,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.hl7.fhir.definitions.BuildExtensions;
 import org.hl7.fhir.definitions.generators.specification.ToolResourceUtilities;
 import org.hl7.fhir.definitions.model.BindingSpecification;
 import org.hl7.fhir.definitions.model.BindingSpecification.BindingMethod;
@@ -77,6 +76,7 @@ import org.hl7.fhir.r5.model.StructureDefinition.StructureDefinitionMappingCompo
 import org.hl7.fhir.r5.model.ValueSet;
 import org.hl7.fhir.r5.terminologies.CodeSystemUtilities;
 import org.hl7.fhir.r5.terminologies.ValueSetUtilities;
+import org.hl7.fhir.r5.utils.BuildExtensions;
 import org.hl7.fhir.r5.utils.ToolingExtensions;
 import org.hl7.fhir.tools.publisher.BuildWorkerContext;
 import org.hl7.fhir.utilities.CSFile;
@@ -861,6 +861,7 @@ public class ResourceParser {
       boolean save = ValueSetUtilities.makeVSShareable(vs);
       vs.setUserData("filename", "valueset-"+vs.getId());
       vs.setUserData("path", "valueset-"+vs.getId()+".html");
+      vs.setExperimental(false);
       if (!vs.hasDescription()) {
         vs.setDescription("Description Needed Here");
         save = true;
