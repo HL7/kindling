@@ -169,6 +169,7 @@ import org.hl7.fhir.r5.model.CapabilityStatement.SystemInteractionComponent;
 import org.hl7.fhir.r5.model.CapabilityStatement.SystemRestfulInteraction;
 import org.hl7.fhir.r5.model.CapabilityStatement.TypeRestfulInteraction;
 import org.hl7.fhir.r5.model.CodeSystem;
+import org.hl7.fhir.r5.model.CodeSystem.CodeSystemContentModeEnumFactory;
 import org.hl7.fhir.r5.model.CodeSystem.ConceptDefinitionComponent;
 import org.hl7.fhir.r5.model.CodeType;
 import org.hl7.fhir.r5.model.CompartmentDefinition;
@@ -1452,20 +1453,7 @@ public class Publisher implements URIResolver, SectionNumberer {
         }
       }
     }
-    xml.compose(new FileOutputStream(Utilities.path(page.getFolders().dstDir, "namingsystem-terminologies.xml")), bnd);
-    cloneToXhtml("namingsystem-terminologies", "Terminology Registry", false, "resource-instance:NamingSystem", "Terminology Registry", null, wg("vocab"));
-    xml.setOutputStyle(OutputStyle.CANONICAL);
-    xml.compose(new FileOutputStream(Utilities.path(page.getFolders().dstDir, "namingsystem-terminologies.canonical.xml")), bnd);
-    JsonParser json = new JsonParser();
-    json.setOutputStyle(OutputStyle.PRETTY);
-    json.compose(new FileOutputStream(Utilities.path(page.getFolders().dstDir, "namingsystem-terminologies.json")), bnd);
-    jsonToXhtml("namingsystem-terminologies", "Terminology Registry", TextFile.fileToString(Utilities.path(page.getFolders().dstDir, "namingsystem-terminologies.json")), "resource-instance:NamingSystem", "Terminology Registry", null, wg("vocab"));
-    json.setOutputStyle(OutputStyle.CANONICAL);
-    json.compose(new FileOutputStream(Utilities.path(page.getFolders().dstDir, "namingsystem-terminologies.canonical.json")), bnd);
-    RdfParser rdf = new RdfParser();
-    rdf.setOutputStyle(OutputStyle.PRETTY);
-    rdf.compose(new FileOutputStream(Utilities.path(page.getFolders().dstDir, "namingsystem-terminologies.ttl")), bnd);
-    ttlToXhtml("namingsystem-terminologies", "Terminology Registry", TextFile.fileToString(Utilities.path(page.getFolders().dstDir, "namingsystem-terminologies.ttl")), "resource-instance:NamingSystem", "Terminology Registry", null, wg("vocab"));
+    serializeResource(bnd, "namingsystem-terminologies", "Terminology Registry", "resource-instance:NamingSystem", wg("vocab"));
 
     StringBuilder b = new StringBuilder();
     b.append("<table class=\"grid\">\r\n");
@@ -1500,6 +1488,102 @@ public class Publisher implements URIResolver, SectionNumberer {
     cachePage("namingsystem-terminologies.html", html, "Registered Code Systems", false);
   }
 
+  void fixCanonicalResource(CanonicalResource r, String fileName) {
+    fixCanonicalResource(r, fileName, false);
+  }
+  
+  void fixCanonicalResource(CanonicalResource r, String fileName, boolean isExample) {
+    if (r.hasUserData("example") && r.getUserData("example").equals("true"))
+      isExample = true;
+    // Set the 'experimental' element based on whether the resource is an example or not
+    // (and if it's already set, spit out a warning if it doesn't align)
+    if (r.hasExperimental()) {
+      if (r.getExperimental() != isExample)
+        page.getValidationErrors().add(new ValidationMessage(Source.Publisher, IssueType.INFORMATIONAL, -1, -1, fileName + ".html", r.fhirType() + " " + r.getUrl() + " is " + (isExample ? "" : "not ") + "an example, however 'experimental is " + r.getExperimental(), IssueSeverity.INFORMATION));
+    } else {
+      try {
+        r.setExperimental(isExample);
+      } catch (Error e) {
+        // If experimental isn't supported, then ignore it
+      }
+    }
+    if (r instanceof CodeSystem) {
+      // Set the caseSensitive to 'true' for all HL7 code systems that aren't supplements
+      CodeSystem cs = (CodeSystem)r;
+      if (!cs.hasCaseSensitive() && !cs.getContent().equals(CodeSystem.CodeSystemContentMode.SUPPLEMENT) && cs.getUrl().contains("hl7.org"))
+        cs.setCaseSensitive(true);
+    }
+  }
+  
+  void serializeResource(Resource r, String baseFileName, String description, String pageType, String crumbTitle, WorkGroup wg) throws Exception {
+    serializeResource(r, baseFileName, description, pageType, crumbTitle, wg, true, true);
+  }
+  
+  void serializeResource(Resource r, String baseFileName, String description, String pageType, WorkGroup wg) throws Exception {
+    serializeResource(r, baseFileName, description, pageType, description, wg, true, true);
+  }
+  
+  void serializeResource(Resource r, String baseFileName, boolean showCanonical) throws Exception {
+    serializeResource(r, baseFileName, null, null, null, null, showCanonical, false);
+  }
+  
+  void serializeResource(Resource r, String baseFileName, boolean showCanonical, boolean showTtl) throws Exception {
+    serializeResource(r, baseFileName, null, null, null, null, showCanonical, showTtl);
+  }
+  
+  void serializeResource(Resource r, String baseFileName, String description, String pageType, String crumbTitle, WorkGroup wg, boolean showCanonical) throws Exception {
+    serializeResource(r, baseFileName, description, pageType, crumbTitle, wg, showCanonical, false);
+  }
+
+  void serializeResource(Resource r, String baseFileName, String description, String pageType, String crumbTitle, WorkGroup wg, boolean showCanonical, boolean showTtl) throws Exception {
+    serializeResource(r, baseFileName, description, pageType, crumbTitle, wg, showCanonical, showTtl, false);
+  }
+
+  void serializeResource(Resource r, String baseFileName, String description, String pageType, String crumbTitle, WorkGroup wg, boolean showCanonical, boolean showTtl, boolean canonicalTtlOnly) throws Exception {
+    if (page.getVersion().isR4B()) {
+      org.hl7.fhir.r4.model.Resource r2 = VersionConvertorFactory_40_50.convertResource(r);
+      org.hl7.fhir.r4.formats.IParser xml = new org.hl7.fhir.r4.formats.XmlParser().setOutputStyle(org.hl7.fhir.r4.formats.IParser.OutputStyle.PRETTY);
+      xml.compose(new FileOutputStream(Utilities.path(page.getFolders().dstDir, baseFileName + ".xml")), r2);
+      if (showCanonical) {
+        xml.setOutputStyle(org.hl7.fhir.r4.formats.IParser.OutputStyle.CANONICAL);
+        xml.compose(new FileOutputStream(Utilities.path(page.getFolders().dstDir, baseFileName + ".canonical.xml")), r2);
+      }
+      org.hl7.fhir.r4.formats.IParser json = new org.hl7.fhir.r4.formats.JsonParser().setOutputStyle(org.hl7.fhir.r4.formats.IParser.OutputStyle.PRETTY);
+      json.compose(new FileOutputStream(Utilities.path(page.getFolders().dstDir, baseFileName + ".json")), r2);
+      if (showCanonical) {
+        json.setOutputStyle(org.hl7.fhir.r4.formats.IParser.OutputStyle.CANONICAL);
+        json.compose(new FileOutputStream(Utilities.path(page.getFolders().dstDir, baseFileName + ".canonical.json")), r2);
+      }
+      if (showTtl && !canonicalTtlOnly) {
+        org.hl7.fhir.r4.formats.IParser rdf = new org.hl7.fhir.r4.formats.RdfParser().setOutputStyle(org.hl7.fhir.r4.formats.IParser.OutputStyle.PRETTY);
+        rdf.compose(new FileOutputStream(Utilities.path(page.getFolders().dstDir, baseFileName + ".ttl")), r2);
+      }
+    } else {
+      IParser xml = new XmlParser().setOutputStyle(OutputStyle.PRETTY);
+      xml.compose(new FileOutputStream(Utilities.path(page.getFolders().dstDir, baseFileName + ".xml")), r);
+      if (showCanonical) {
+        xml.setOutputStyle(OutputStyle.CANONICAL);
+        xml.compose(new FileOutputStream(Utilities.path(page.getFolders().dstDir, baseFileName + ".canonical.xml")), r);
+      }
+      IParser json = new JsonParser().setOutputStyle(OutputStyle.PRETTY);
+      json.compose(new FileOutputStream(Utilities.path(page.getFolders().dstDir, baseFileName + ".json")), r);
+      if (showCanonical) {
+        json.setOutputStyle(OutputStyle.CANONICAL);
+        json.compose(new FileOutputStream(Utilities.path(page.getFolders().dstDir, baseFileName + ".canonical.json")), r);
+      }
+      if (showTtl && !canonicalTtlOnly) {
+        IParser rdf = new RdfParser().setOutputStyle(OutputStyle.PRETTY);
+        rdf.compose(new FileOutputStream(Utilities.path(page.getFolders().dstDir, baseFileName + ".ttl")), r);
+      }
+    }
+    if (description!=null) {
+      cloneToXhtml(baseFileName, description, false, pageType, crumbTitle, null, wg);
+      jsonToXhtml(baseFileName, description, resource2Json(r), pageType, crumbTitle, null, wg);
+      if (showTtl)
+        ttlToXhtml(baseFileName, description, resource2Ttl(r), pageType, crumbTitle, null, wg);
+    }
+  };
+    
   private WorkGroup wg(String code) {
     return page.getDefinitions().getWorkgroups().get(code);
   }
@@ -1572,24 +1656,7 @@ public class Publisher implements URIResolver, SectionNumberer {
     }
     RenderingContext lrc = page.getRc().copy().setLocalPrefix("").setTooCostlyNoteEmpty(PageProcessor.TOO_MANY_CODES_TEXT_EMPTY).setTooCostlyNoteNotEmpty(PageProcessor.TOO_MANY_CODES_TEXT_NOT_EMPTY);
     RendererFactory.factory(cpd, lrc).render(cpd);
-    FileOutputStream s = new FileOutputStream(page.getFolders().dstDir + "compartmentdefinition-" + c.getName().toLowerCase() + ".xml");
-    new XmlParser().setOutputStyle(OutputStyle.PRETTY).compose(s, cpd);
-    s.close();
-    s = new FileOutputStream(page.getFolders().dstDir + "compartmentdefinition-" + c.getName().toLowerCase() + ".canonical.xml");
-    new XmlParser().setOutputStyle(OutputStyle.CANONICAL).compose(s, cpd);
-    s.close();
-    cloneToXhtml("compartmentdefinition-" + c.getName().toLowerCase(), "Compartment Definition for "+c.getName(), true, "resource-instance:CompartmentDefinition", "Compartment Definition for "+c.getName(), null, wg("fhir"));
-    s = new FileOutputStream(page.getFolders().dstDir + "compartmentdefinition-" + c.getName().toLowerCase() + ".json");
-    new JsonParser().setOutputStyle(OutputStyle.PRETTY).compose(s, cpd);
-    s.close();
-    s = new FileOutputStream(page.getFolders().dstDir + "compartmentdefinition-" + c.getName().toLowerCase() + ".canonical.json");
-    new JsonParser().setOutputStyle(OutputStyle.CANONICAL).compose(s, cpd);
-    s.close();
-    jsonToXhtml("compartmentdefinition-" + c.getName().toLowerCase(), "Compartment Definition for "+c.getName(), resource2Json(cpd), "resource-instance:CompartmentDefinition", "Compartment Definition for "+c.getName(), null, wg("fhir"));
-    s = new FileOutputStream(page.getFolders().dstDir + "compartmentdefinition-" + c.getName().toLowerCase() + ".ttl");
-    new RdfParser().setOutputStyle(OutputStyle.PRETTY).compose(s, cpd);
-    s.close();
-    ttlToXhtml("compartmentdefinition-" + c.getName().toLowerCase(), "Compartment Definition for "+c.getName(), resource2Ttl(cpd), "resource-instance:CompartmentDefinition", "Compartment Definition for "+c.getName(), null, wg("fhir"));
+    serializeResource(cpd, "compartmentdefinition-" + c.getName().toLowerCase(), "Compartment Definition for "+c.getName(), "resource-instance:CompartmentDefinition", wg("fhir"));
 
     Utilities.copyFile(new CSFile(page.getFolders().dstDir + "compartmentdefinition-" + c.getName().toLowerCase() + ".xml"), new CSFile(page.getFolders().dstDir + "examples" + File.separator
         + "compartmentdefinition-" + c.getName().toLowerCase()+ ".xml"));
@@ -1704,24 +1771,9 @@ public class Publisher implements URIResolver, SectionNumberer {
     if (register) {
       RenderingContext lrc = page.getRc().copy().setLocalPrefix("").setTooCostlyNoteEmpty(PageProcessor.TOO_MANY_CODES_TEXT_EMPTY).setTooCostlyNoteNotEmpty(PageProcessor.TOO_MANY_CODES_TEXT_NOT_EMPTY);
       RendererFactory.factory(cpbs, lrc).render(cpbs);
-      FileOutputStream s = new FileOutputStream(page.getFolders().dstDir + "capabilitystatement-" + name + ".xml");
-      new XmlParser().setOutputStyle(OutputStyle.PRETTY).compose(s, cpbs);
-      s.close();
-      s = new FileOutputStream(page.getFolders().dstDir + "capabilitystatement-" + name + ".canonical.xml");
-      new XmlParser().setOutputStyle(OutputStyle.CANONICAL).compose(s, cpbs);
-      s.close();
-      cloneToXhtml("capabilitystatement-" + name + "", "Basic Capability Statement", true, "resource-instance:CapabilityStatement", "Capability Statement", null, wg("fhir"));
-      s = new FileOutputStream(page.getFolders().dstDir + "capabilitystatement-" + name + ".json");
-      new JsonParser().setOutputStyle(OutputStyle.PRETTY).compose(s, cpbs);
-      s.close();
-      s = new FileOutputStream(page.getFolders().dstDir + "capabilitystatement-" + name + ".canonical.json");
-      new JsonParser().setOutputStyle(OutputStyle.CANONICAL).compose(s, cpbs);
-      s.close();
-      jsonToXhtml("capabilitystatement-" + name, "Base Capability Statement", resource2Json(cpbs), "resource-instance:CapabilityStatement", "Capability Statement", null, wg("fhir"));
-      s = new FileOutputStream(page.getFolders().dstDir + "capabilitystatement-" + name + ".ttl");
-      new RdfParser().setOutputStyle(OutputStyle.PRETTY).compose(s, cpbs);
-      s.close();
-      ttlToXhtml("capabilitystatement-" + name, "Base Capability Statement", resource2Ttl(cpbs), "resource-instance:CapabilityStatement", "Capability Statement", null, wg("fhir"));
+      String fName = "capabilitystatement-" + name;
+      fixCanonicalResource(cpbs, fName);
+      serializeResource(cpbs, fName, "Base Capability Statement", "resource-instance:CapabilityStatement", wg("fhir"));
 
       Utilities.copyFile(new CSFile(page.getFolders().dstDir + "capabilitystatement-" + name + ".xml"), new CSFile(page.getFolders().dstDir + "examples" + File.separator
           + "capabilitystatement-" + name + ".xml"));
@@ -2584,21 +2636,12 @@ public class Publisher implements URIResolver, SectionNumberer {
       checkBundleURLs(page.getResourceBundle());
       checkStructureDefinitions(page.getResourceBundle());
       page.getResourceBundle().getEntry().sort(new ProfileBundleSorter());
-      FileOutputStream s = new FileOutputStream(page.getFolders().dstDir + "profiles-resources.xml");
-      new XmlParser().setOutputStyle(OutputStyle.PRETTY).compose(s, page.getResourceBundle());
-      s.close();
-      s = new FileOutputStream(page.getFolders().dstDir + "profiles-resources.json");
-      new JsonParser().setOutputStyle(OutputStyle.PRETTY).compose(s, page.getResourceBundle());
-      s.close();
+      serializeResource(page.getResourceBundle(), "profiles-resources", false);
+
       checkBundleURLs(page.getTypeBundle());
       checkStructureDefinitions(page.getTypeBundle());
       page.getTypeBundle().getEntry().sort(new ProfileBundleSorter());
-      s = new FileOutputStream(page.getFolders().dstDir + "profiles-types.xml");
-      new XmlParser().setOutputStyle(OutputStyle.PRETTY).compose(s, page.getTypeBundle());
-      s.close();
-      s = new FileOutputStream(page.getFolders().dstDir + "profiles-types.json");
-      new JsonParser().setOutputStyle(OutputStyle.PRETTY).compose(s, page.getTypeBundle());
-      s.close();
+      serializeResource(page.getTypeBundle(), "profiles-types", false);
       
       Bundle extensionsFeed = new Bundle();
       extensionsFeed.setId("extensions");
@@ -2613,20 +2656,10 @@ public class Publisher implements URIResolver, SectionNumberer {
       }
       checkBundleURLs(extensionsFeed);
       checkStructureDefinitions(extensionsFeed);
-      s = new FileOutputStream(page.getFolders().dstDir + "extension-definitions.xml");
-      new XmlParser().setOutputStyle(OutputStyle.PRETTY).compose(s, extensionsFeed);
-      s.close();
-      s = new FileOutputStream(page.getFolders().dstDir + "extension-definitions.json");
-      new JsonParser().setOutputStyle(OutputStyle.PRETTY).compose(s, extensionsFeed);
-      s.close();
+      serializeResource(extensionsFeed, "extension-definitions", false);
       Utilities.copyFile(page.getFolders().dstDir + "extension-definitions.xml", page.getFolders().dstDir + "examples" + File.separator + "extension-definitions.xml");
 
-      s = new FileOutputStream(page.getFolders().dstDir + "search-parameters.xml");
-      new XmlParser().setOutputStyle(OutputStyle.PRETTY).compose(s, searchParamsFeed);
-      s.close();
-      s = new FileOutputStream(page.getFolders().dstDir + "search-parameters.json");
-      new JsonParser().setOutputStyle(OutputStyle.PRETTY).compose(s, searchParamsFeed);
-      s.close();
+      serializeResource(searchParamsFeed, "search-parameters", false);
       Utilities.copyFile(page.getFolders().dstDir + "search-parameters.xml", page.getFolders().dstDir + "examples" + File.separator + "search-parameters.xml");
 
       for (ResourceDefn rd : page.getDefinitions().getResources().values())
@@ -2636,12 +2669,7 @@ public class Publisher implements URIResolver, SectionNumberer {
       }
       checkBundleURLs(profileBundle);
       checkStructureDefinitions(profileBundle);
-      s = new FileOutputStream(page.getFolders().dstDir + "profiles-others.xml");
-      new XmlParser().setOutputStyle(OutputStyle.PRETTY).compose(s, profileBundle);
-      s.close();
-      s = new FileOutputStream(page.getFolders().dstDir + "profiles-others.json");
-      new JsonParser().setOutputStyle(OutputStyle.PRETTY).compose(s, profileBundle);
-      s.close();
+      serializeResource(profileBundle, "profiles-others", false);
       Utilities.copyFile(page.getFolders().dstDir + "profiles-others.xml", page.getFolders().dstDir + "examples" + File.separator + "profiles-others.xml");
             // todo-bundle - should this be checked?
 //      int ec = 0;
@@ -2656,40 +2684,20 @@ public class Publisher implements URIResolver, SectionNumberer {
 //        throw new Exception("Cannot continue due to value set mis-identification");
 
       checkBundleURLs(dataElements);
-      s = new FileOutputStream(page.getFolders().dstDir + "dataelements.xml");
-      new XmlParser().setOutputStyle(OutputStyle.PRETTY).compose(s, dataElements);
-      s.close();
+      serializeResource(dataElements, "dataelements", false);
       Utilities.copyFile(page.getFolders().dstDir + "dataelements.xml", page.getFolders().dstDir + "examples" + File.separator + "dataelements.xml");
-      s = new FileOutputStream(page.getFolders().dstDir + "dataelements.json");
-      new JsonParser().setOutputStyle(OutputStyle.PRETTY).compose(s, dataElements);
-      s.close();
 
       checkBundleURLs(valueSetsFeed);
-      s = new FileOutputStream(page.getFolders().dstDir + "valuesets.xml");
-      new XmlParser().setOutputStyle(OutputStyle.PRETTY).compose(s, valueSetsFeed);
-      s.close();
+      serializeResource(valueSetsFeed, "valuesets", false);
       Utilities.copyFile(page.getFolders().dstDir + "valuesets.xml", page.getFolders().dstDir + "examples" + File.separator + "valuesets.xml");
-      s = new FileOutputStream(page.getFolders().dstDir + "valuesets.json");
-      new JsonParser().setOutputStyle(OutputStyle.PRETTY).compose(s, valueSetsFeed);
-      s.close();
 
       checkBundleURLs(conceptMapsFeed);
-      s = new FileOutputStream(page.getFolders().dstDir + "conceptmaps.xml");
-      new XmlParser().setOutputStyle(OutputStyle.PRETTY).compose(s, conceptMapsFeed);
-      s.close();
+      serializeResource(conceptMapsFeed, "conceptmaps", false);
       Utilities.copyFile(page.getFolders().dstDir + "conceptmaps.xml", page.getFolders().dstDir + "examples" + File.separator + "conceptmaps.xml");
-      s = new FileOutputStream(page.getFolders().dstDir + "conceptmaps.json");
-      new JsonParser().setOutputStyle(OutputStyle.PRETTY).compose(s, conceptMapsFeed);
-      s.close();
 
       checkBundleURLs(externals);
-      s = new FileOutputStream(page.getFolders().dstDir + "external-resources.xml");
-      new XmlParser().setOutputStyle(OutputStyle.PRETTY).compose(s, externals);
-      s.close();
+      serializeResource(externals, "external-resources", false);
       Utilities.copyFile(page.getFolders().dstDir + "external-resources.xml", page.getFolders().dstDir + "examples" + File.separator + "external-resources.xml");
-      s = new FileOutputStream(page.getFolders().dstDir + "external-resources.json");
-      new JsonParser().setOutputStyle(OutputStyle.PRETTY).compose(s, externals);
-      s.close();
 
       ImplementationGuide expIg = new ImplementationGuide();
       expIg.addFhirVersion(page.getVersion());
@@ -2738,12 +2746,7 @@ public class Publisher implements URIResolver, SectionNumberer {
         new FilesystemPackageCacheManager(true, ToolsVersion.TOOLS_VERSION).addPackageToCache(id, "current", new FileInputStream(Utilities.path(page.getFolders().dstDir, id+".tgz")), Utilities.path(page.getFolders().dstDir, id+".tgz"));
       }
       
-      s = new FileOutputStream(page.getFolders().dstDir + "expansions.xml");
-      new XmlParser().setOutputStyle(OutputStyle.PRETTY).compose(s, expansionFeed);
-      s.close();
-      s = new FileOutputStream(page.getFolders().dstDir + "expansions.json");
-      new JsonParser().setOutputStyle(OutputStyle.PRETTY).compose(s, expansionFeed);
-      s.close();
+      serializeResource(expansionFeed, "expansions", false);
 
 
       produceComparisons();
@@ -2805,7 +2808,7 @@ public class Publisher implements URIResolver, SectionNumberer {
       zip.close();
 
       page.log("....dstu3 format (xml)", LogMessageType.Process);
-      DSTU3ValidationConvertor dstu3 = new DSTU3ValidationConvertor();
+      DSTU3ValidationConvertor dstu3 = new DSTU3ValidationConvertor(page.getVersion());
       dstu3.convert(page.getFolders().dstDir + "profiles-types.xml", page.getFolders().tmpDir + "profiles-types-r3.xml");
       dstu3.convert(page.getFolders().dstDir + "profiles-resources.xml", page.getFolders().tmpDir + "profiles-resources-r3.xml");
       dstu3.convert(page.getFolders().dstDir + "profiles-others.xml", page.getFolders().tmpDir + "profiles-others-r3.xml");
@@ -2965,18 +2968,9 @@ public class Publisher implements URIResolver, SectionNumberer {
     RenderingContext lrc = page.getRc().copy().setLocalPrefix("");
     RendererFactory.factory(cm, lrc).render(cm);
     String n = cm.getUserString("path");
-    FileOutputStream s = new FileOutputStream(page.getFolders().dstDir + Utilities.changeFileExt(n, ".xml"));
-    new XmlParser().setOutputStyle(OutputStyle.PRETTY).compose(s, cm);
-    s.close();
-    s = new FileOutputStream(page.getFolders().dstDir + Utilities.changeFileExt(n, ".canonical.xml"));
-    new XmlParser().setOutputStyle(OutputStyle.CANONICAL).compose(s, cm);
-    s.close();
-    s = new FileOutputStream(page.getFolders().dstDir + Utilities.changeFileExt(n, ".json"));
-    new JsonParser().setOutputStyle(OutputStyle.PRETTY).compose(s, cm);
-    s.close();
-    s = new FileOutputStream(page.getFolders().dstDir + Utilities.changeFileExt(n, ".canonical.json"));
-    new JsonParser().setOutputStyle(OutputStyle.CANONICAL).compose(s, cm);
-    s.close();
+    String fName = Utilities.changeFileExt(n,"");
+    fixCanonicalResource(cm, fName);
+    serializeResource(cm, fName, cm.getTitle(), "conceptmap-instance", "Profile", ((ResourceDefn) cm.getUserData("resource-definition")).getWg(), true, true, true);
 
     Utilities.copyFile(new CSFile(page.getFolders().dstDir + Utilities.changeFileExt(n, ".xml")), new CSFile(page.getFolders().dstDir + "examples" + File.separator + Utilities.changeFileExt(n, ".xml")));
 //    saveAsPureHtml(cm, new FileOutputStream(Utilities.path(page.getFolders().dstDir, "html", n)), true);
@@ -2985,9 +2979,6 @@ public class Publisher implements URIResolver, SectionNumberer {
     others.put("status-map", new XhtmlComposer(XhtmlComposer.HTML).compose(cm.getText().getDiv()));
     TextFile.stringToFile(insertSectionNumbers(page.processPageIncludes(n, src, "conceptmap-instance", others, null, null, "Profile", null, rd, rd.getWg()), st, n, 0, null), page.getFolders().dstDir + n);
     page.getHTMLChecker().registerFile(n, cm.getTitle(), HTMLLinkChecker.XHTML_TYPE, true);
-    cloneToXhtml(Utilities.changeFileExt(n, ""), cm.getTitle(), true, "conceptmap-instance", "Profile", null, ((ResourceDefn) cm.getUserData("resource-definition")).getWg());
-    jsonToXhtml(Utilities.changeFileExt(n, ""), cm.getTitle(), resource2Json(cm), "conceptmap-instance", "Profile", null, ((ResourceDefn) cm.getUserData("resource-definition")).getWg());
-    ttlToXhtml(Utilities.changeFileExt(n, ""), cm.getTitle(), resource2Ttl(cm),  "conceptmap-instance", "Profile", null, ((ResourceDefn) cm.getUserData("resource-definition")).getWg());
   }
 
   public class ProfileBundleSorter implements Comparator<BundleEntryComponent> {
@@ -3568,21 +3559,9 @@ public class Publisher implements URIResolver, SectionNumberer {
       ImplementationGuideDefn ig = page.getDefinitions().getIgs().get(ed.getUserString(ToolResourceUtilities.NAME_RES_IG));
       String prefix = ig.isCore() ? "" : ig.getCode()+File.separator;
       String filename = ed.getUserString("filename");
-      FileOutputStream s = new FileOutputStream(page.getFolders().dstDir + prefix+filename+".xml");
-      new XmlParser().setOutputStyle(OutputStyle.PRETTY).compose(s, ed);
-      s.close();
-      s = new FileOutputStream(page.getFolders().dstDir + prefix+filename+".canonical.xml");
-      new XmlParser().setOutputStyle(OutputStyle.CANONICAL).compose(s, ed);
-      s.close();
-      s = new FileOutputStream(page.getFolders().dstDir + prefix+filename+".json");
-      new JsonParser().setOutputStyle(OutputStyle.PRETTY).compose(s, ed);
-      s.close();
-      s = new FileOutputStream(page.getFolders().dstDir + prefix+filename+".canonical.json");
-      new JsonParser().setOutputStyle(OutputStyle.CANONICAL).compose(s, ed);
-      s.close();
-      cloneToXhtml(prefix+filename, ed.getName(), false, "summary-instance", ed.getUrl(), null, wg(ed));
-      jsonToXhtml(prefix+filename, ed.getName(), resource2Json(ed), "extension", ed.getUrl(), null, wg(ed));
-      ttlToXhtml(prefix+filename, ed.getName(), resource2Ttl(ed), "extension", ed.getUrl(), null, wg(ed));
+      String fName = prefix+filename;
+      fixCanonicalResource(ed, fName);
+      serializeResource(ed, fName, ed.getName(), "extension", ed.getUrl(), wg(ed), true, true, true);
 
       ByteArrayOutputStream bytes = new ByteArrayOutputStream();
       XmlSpecGenerator gen = new XmlSpecGenerator(bytes, filename+"-definitions.html", null /*"http://hl7.org/fhir/"*/, page, page.genlevel(ig.isCore() ? 0 : 1));
@@ -3755,30 +3734,32 @@ public class Publisher implements URIResolver, SectionNumberer {
     }
   }
 
-  /** this is only used when generating xhtml of json **/
-  private String resource2Json(Bundle profileFeed2) throws Exception {
-    ByteArrayOutputStream bytes = new ByteArrayOutputStream();
-    IParser json = new JsonParser().setOutputStyle(OutputStyle.PRETTY);
-    json.setSuppressXhtml("Snipped for Brevity");
-    json.compose(bytes, page.getResourceBundle());
-    bytes.close();
-    return new String(bytes.toByteArray());
-  }
-
   private String resource2Json(Resource r) throws Exception {
     ByteArrayOutputStream bytes = new ByteArrayOutputStream();
-    IParser json = new JsonParser().setOutputStyle(OutputStyle.PRETTY);
-    json.setSuppressXhtml("Snipped for Brevity");
-    json.compose(bytes, r);
+    if (page.getVersion().isR4B()) {
+      org.hl7.fhir.r4.formats.IParser json = new org.hl7.fhir.r4.formats.JsonParser().setOutputStyle(org.hl7.fhir.r4.formats.IParser.OutputStyle.PRETTY);
+      json.setSuppressXhtml("Snipped for Brevity");
+      json.compose(bytes, VersionConvertorFactory_40_50.convertResource(r));      
+    } else {
+      IParser json = new JsonParser().setOutputStyle(OutputStyle.PRETTY);
+      json.setSuppressXhtml("Snipped for Brevity");
+      json.compose(bytes, r);
+    }
     bytes.close();
     return new String(bytes.toByteArray());
   }
 
   private String resource2Ttl(Resource r) throws Exception {
     ByteArrayOutputStream bytes = new ByteArrayOutputStream();
-    IParser rdf = new RdfParser().setOutputStyle(OutputStyle.PRETTY);
-    rdf.setSuppressXhtml("Snipped for Brevity");
-    rdf.compose(bytes, r);
+    if (page.getVersion().isR4B()) {
+      org.hl7.fhir.r4.formats.IParser rdf = new org.hl7.fhir.r4.formats.RdfParser().setOutputStyle(org.hl7.fhir.r4.formats.IParser.OutputStyle.PRETTY);
+      rdf.setSuppressXhtml("Snipped for Brevity");
+      rdf.compose(bytes, VersionConvertorFactory_40_50.convertResource(r));
+    } else {
+      IParser rdf = new RdfParser().setOutputStyle(OutputStyle.PRETTY);
+      rdf.setSuppressXhtml("Snipped for Brevity");
+      rdf.compose(bytes, r);      
+    }
     bytes.close();
     return new String(bytes.toByteArray());
   }
@@ -3812,24 +3793,12 @@ public class Publisher implements URIResolver, SectionNumberer {
     String fn = pt.getName().toLowerCase() + ".profile.xml";
     StructureDefinition rp = pt.getProfile();
 
-    FileOutputStream s = new FileOutputStream(page.getFolders().dstDir + fn);
-    new XmlParser().setOutputStyle(OutputStyle.PRETTY).compose(s, rp);
-    s.close();
-    s = new FileOutputStream(page.getFolders().dstDir + Utilities.changeFileExt(fn, ".canonical.xml"));
-    new XmlParser().setOutputStyle(OutputStyle.CANONICAL).compose(s, rp);
-    s.close();
-    s = new FileOutputStream(page.getFolders().dstDir + Utilities.changeFileExt(fn, ".json"));
-    new JsonParser().setOutputStyle(OutputStyle.PRETTY).compose(s, rp);
-    s.close();
-    s = new FileOutputStream(page.getFolders().dstDir + Utilities.changeFileExt(fn, ".canonical.json"));
-    new JsonParser().setOutputStyle(OutputStyle.CANONICAL).compose(s, rp);
-    s.close();
+    String fName = Utilities.changeFileExt(fn, "");
+    fixCanonicalResource(rp, fName);
+    serializeResource(rp, fName, "StructureDefinition for " + pt.getName(), "profile-instance:type:" + pt.getName(), "Type", wg("mnm"), true, true, true);
 
     Utilities.copyFile(new CSFile(page.getFolders().dstDir + fn), new CSFile(Utilities.path(page.getFolders().dstDir, "examples", fn)));
     addToResourceFeed(rp, page.getTypeBundle(), (fn));
-    cloneToXhtml(pt.getName().toLowerCase() + ".profile", "StructureDefinition for " + pt.getName(), false, "profile-instance:type:" + pt.getName(), "Type", null, wg("mnm"));
-    jsonToXhtml(pt.getName().toLowerCase() + ".profile", "StructureDefinition for " + pt.getName(), resource2Json(rp), "profile-instance:type:" + pt.getName(), "Type", null, wg("mnm"));
-    ttlToXhtml(pt.getName().toLowerCase() + ".profile", "StructureDefinition for " + pt.getName(), resource2Ttl(rp), "profile-instance:type:" + pt.getName(), "Type", null, wg("mnm"));
     String shex = new ShExGenerator(page.getWorkerContext()).generate(HTMLLinkPolicy.NONE, rp);
     TextFile.stringToFile(shex, Utilities.changeFileExt(page.getFolders().dstDir + fn, ".shex"));
     shexToXhtml(pt.getName().toLowerCase(), "ShEx statement for " + pt.getName(), shex, "profile-instance:type:" + pt.getName(), "Type", null, wg("mnm"));
@@ -3840,18 +3809,9 @@ public class Publisher implements URIResolver, SectionNumberer {
     String fn = "xhtml.profile.xml";
     StructureDefinition rp = page.getProfiles().get("xhtml");
 
-    FileOutputStream s = new FileOutputStream(page.getFolders().dstDir + fn);
-    new XmlParser().setOutputStyle(OutputStyle.PRETTY).compose(s, rp);
-    s.close();
-    s = new FileOutputStream(page.getFolders().dstDir + Utilities.changeFileExt(fn, ".canonical.xml"));
-    new XmlParser().setOutputStyle(OutputStyle.CANONICAL).compose(s, rp);
-    s.close();
-    s = new FileOutputStream(page.getFolders().dstDir + Utilities.changeFileExt(fn, ".json"));
-    new JsonParser().setOutputStyle(OutputStyle.PRETTY).compose(s, rp);
-    s.close();
-    s = new FileOutputStream(page.getFolders().dstDir + Utilities.changeFileExt(fn, ".canonical.json"));
-    new JsonParser().setOutputStyle(OutputStyle.CANONICAL).compose(s, rp);
-    s.close();
+    String fName = Utilities.changeFileExt(fn, "");
+    fixCanonicalResource(rp, fName);
+    serializeResource(rp, fName, "StructureDefinition for xhtml", "profile-instance:type:xhtml", "Type", wg("mnm"), true, true, true);
 
     String shex = new ShExGenerator(page.getWorkerContext()).generate(HTMLLinkPolicy.NONE, rp);
     TextFile.stringToFile(shex, Utilities.changeFileExt(page.getFolders().dstDir + fn, ".shex"));
@@ -3860,9 +3820,6 @@ public class Publisher implements URIResolver, SectionNumberer {
     addToResourceFeed(rp, page.getTypeBundle(), (fn));
     // saveAsPureHtml(rp, new FileOutputStream(page.getFolders().dstDir+ "html"
     // + File.separator + "datatypes.html"));
-    cloneToXhtml("xhtml.profile", "StructureDefinition for xhtml", false, "profile-instance:type:xhtml", "Type", null, wg("mnm"));
-    jsonToXhtml("xhtml.profile", "StructureDefinition for xhtml", resource2Json(rp), "profile-instance:type:xhtml", "Type", null, wg("mnm"));
-    ttlToXhtml("xhtml.profile", "StructureDefinition for xhtml", resource2Ttl(rp), "profile-instance:type:xhtml", "Type", null, wg("mnm"));
     shexToXhtml("xhtml", "ShEx statement for xhtml", shex, "profile-instance:type:xhtml", "Type", null, wg("mnm"));
   }
 
@@ -3872,18 +3829,9 @@ public class Publisher implements URIResolver, SectionNumberer {
     String fn = type.getCode().toLowerCase() + ".profile.xml";
     StructureDefinition rp = type.getProfile();
 
-    FileOutputStream s = new FileOutputStream(page.getFolders().dstDir + fn);
-    new XmlParser().setOutputStyle(OutputStyle.PRETTY).compose(s, rp);
-    s.close();
-    s = new FileOutputStream(page.getFolders().dstDir + Utilities.changeFileExt(fn, ".canonical.xml"));
-    new XmlParser().setOutputStyle(OutputStyle.CANONICAL).compose(s, rp);
-    s.close();
-    s = new FileOutputStream(page.getFolders().dstDir + Utilities.changeFileExt(fn, ".json"));
-    new JsonParser().setOutputStyle(OutputStyle.PRETTY).compose(s, rp);
-    s.close();
-    s = new FileOutputStream(page.getFolders().dstDir + Utilities.changeFileExt(fn, ".canonical.json"));
-    new JsonParser().setOutputStyle(OutputStyle.CANONICAL).compose(s, rp);
-    s.close();
+    String fName = Utilities.changeFileExt(fn, "");
+    fixCanonicalResource(rp, fName);
+    serializeResource(rp, fName, "StructureDefinition for " + type.getCode(), "profile-instance:type:" + type.getCode(), "Type", wg("mnm"), true, true, true);
 
     String shex = new ShExGenerator(page.getWorkerContext()).generate(HTMLLinkPolicy.NONE, rp);
     TextFile.stringToFile(shex, Utilities.changeFileExt(page.getFolders().dstDir + fn, ".shex"));
@@ -3892,9 +3840,6 @@ public class Publisher implements URIResolver, SectionNumberer {
     addToResourceFeed(rp, page.getTypeBundle(), (fn));
     // saveAsPureHtml(rp, new FileOutputStream(page.getFolders().dstDir+ "html"
     // + File.separator + "datatypes.html"));
-    cloneToXhtml(type.getCode().toLowerCase() + ".profile", "StructureDefinition for " + type.getCode(), false, "profile-instance:type:" + type.getCode(), "Type", null, wg("mnm"));
-    jsonToXhtml(type.getCode().toLowerCase() + ".profile", "StructureDefinition for " + type.getCode(), resource2Json(rp), "profile-instance:type:" + type.getCode(), "Type", null, wg("mnm"));
-    ttlToXhtml(type.getCode().toLowerCase() + ".profile", "StructureDefinition for " + type.getCode(), resource2Ttl(rp), "profile-instance:type:" + type.getCode(), "Type", null, wg("mnm"));
     shexToXhtml(type.getCode().toLowerCase(), "ShEx statement for " + type.getCode(), shex, "profile-instance:type:" + type.getCode(), "Type", null, wg("mnm"));
   }
 
@@ -3916,26 +3861,14 @@ public class Publisher implements URIResolver, SectionNumberer {
     String fn = type.getName().toLowerCase() + ".profile.xml";
     StructureDefinition rp = type.getProfile();
 
-    FileOutputStream s = new FileOutputStream(page.getFolders().dstDir + fn);
-    new XmlParser().setOutputStyle(OutputStyle.PRETTY).compose(s, rp);
-    s.close();
-    s = new FileOutputStream(page.getFolders().dstDir + Utilities.changeFileExt(fn, ".canonical.xml"));
-    new XmlParser().setOutputStyle(OutputStyle.CANONICAL).compose(s, rp);
-    s.close();
-    s = new FileOutputStream(page.getFolders().dstDir + Utilities.changeFileExt(fn, ".json"));
-    new JsonParser().setOutputStyle(OutputStyle.PRETTY).compose(s, rp);
-    s.close();
-    s = new FileOutputStream(page.getFolders().dstDir + Utilities.changeFileExt(fn, ".canonical.json"));
-    new JsonParser().setOutputStyle(OutputStyle.CANONICAL).compose(s, rp);
-    s.close();
+    String fName = Utilities.changeFileExt(fn, "");
+    fixCanonicalResource(rp, fName);
+    serializeResource(rp, fName, "StructureDefinition for " + type.getName(), "profile-instance:type:" + type.getName(), "Type", wg("mnm"), true, true, true);
 
     Utilities.copyFile(new CSFile(page.getFolders().dstDir + fn), new CSFile(Utilities.path(page.getFolders().dstDir, "examples", fn)));
     addToResourceFeed(rp, page.getTypeBundle(), fn);
     // saveAsPureHtml(rp, new FileOutputStream(page.getFolders().dstDir+ "html"
     // + File.separator + "datatypes.html"));
-    cloneToXhtml(type.getName().toLowerCase() + ".profile", "StructureDefinition for " + type.getName(), false, "profile-instance:type:" + type.getName(), "Type", null, wg("mnm"));
-    jsonToXhtml(type.getName().toLowerCase() + ".profile", "StructureDefinition for " + type.getName(), resource2Json(rp), "profile-instance:type:" + type.getName(), "Type", null, wg("mnm"));
-    ttlToXhtml(type.getName().toLowerCase() + ".profile", "StructureDefinition for " + type.getName(), resource2Ttl(rp), "profile-instance:type:" + type.getName(), "Type", null, wg("mnm"));
     String shex = new ShExGenerator(page.getWorkerContext()).generate(HTMLLinkPolicy.NONE, rp);
     TextFile.stringToFile(shex, Utilities.changeFileExt(page.getFolders().dstDir + fn, ".shex"));
     shexToXhtml(type.getName().toLowerCase(), "ShEx statement for " + type.getName(), shex, "profile-instance:type:" + type.getName(), "Type", null, wg("mnm"));
@@ -4225,25 +4158,9 @@ public class Publisher implements URIResolver, SectionNumberer {
     
     String dir = ig == null ? "" : ig.getCode()+File.separator;
 
-    FileOutputStream s = new FileOutputStream(page.getFolders().dstDir + dir+"operation-" + name + ".xml");
-    new XmlParser().setOutputStyle(OutputStyle.PRETTY).compose(s, opd);
-    s.close();
-    s = new FileOutputStream(page.getFolders().dstDir + dir+"operation-" + name + ".canonical.xml");
-    new XmlParser().setOutputStyle(OutputStyle.CANONICAL).compose(s, opd);
-    s.close();
-    cloneToXhtml(dir+"operation-" + name + "", "Operation Definition", true, "resource-instance:OperationDefinition", "Operation definition", resource, resource.getWg());
-    s = new FileOutputStream(page.getFolders().dstDir + dir+"operation-" + name + ".json");
-    new JsonParser().setOutputStyle(OutputStyle.PRETTY).compose(s, opd);
-    s.close();
-    s = new FileOutputStream(page.getFolders().dstDir + dir+"operation-" + name + ".canonical.json");
-    new JsonParser().setOutputStyle(OutputStyle.CANONICAL).compose(s, opd);
-    s.close();
-    jsonToXhtml(dir+"operation-" + name, "Operation Definition", resource2Json(opd), "resource-instance:OperationDefinition", "Operation definition", resource, resource.getWg());
-
-    s = new FileOutputStream(page.getFolders().dstDir + dir+"operation-" + name + ".ttl");
-    new RdfParser().setOutputStyle(OutputStyle.PRETTY).compose(s, opd);
-    s.close();
-    ttlToXhtml(dir+"operation-" + name, "Operation Definition", resource2Ttl(opd), "resource-instance:OperationDefinition", "Operation definition", resource, resource.getWg());
+    String fName = dir+"operation-" + name;
+    fixCanonicalResource(opd, fName);
+    serializeResource(opd, fName, "Operation Definition", "resource-instance:OperationDefinition", "Operation definition", resource.getWg());
     
     Utilities.copyFile(new CSFile(page.getFolders().dstDir + dir+"operation-" + name + ".xml"), new CSFile(page.getFolders().dstDir + "examples" + File.separator + "operation-" + name + ".xml"));
     if (buildFlags.get("all")) {
@@ -4280,9 +4197,9 @@ public class Publisher implements URIResolver, SectionNumberer {
     b.build();
     Questionnaire q = b.getQuestionnaire();
 
-    new XmlParser().setOutputStyle(OutputStyle.PRETTY).compose(new FileOutputStream(page.getFolders().dstDir + n + "-questionnaire.xml"), q);
-    new JsonParser().setOutputStyle(OutputStyle.PRETTY).compose(new FileOutputStream(page.getFolders().dstDir + n + "-questionnaire.json"), q);
-
+    fName = n + "-questionnaire";
+    fixCanonicalResource(q, fName);
+    serializeResource(q,  fName, false);
   }
 
   */
@@ -4353,18 +4270,9 @@ public class Publisher implements URIResolver, SectionNumberer {
     qb.build();
     Questionnaire q = qb.getQuestionnaire();
 
-    FileOutputStream s = new FileOutputStream(page.getFolders().dstDir + prefix+ profile.getId().toLowerCase() + "-questionnaire.json");
-    new JsonParser().setOutputStyle(OutputStyle.PRETTY).compose(s, q);
-    s.close();
-    s = new FileOutputStream(page.getFolders().dstDir + prefix+ profile.getId().toLowerCase() + "-questionnaire.canonical.json");
-    new JsonParser().setOutputStyle(OutputStyle.CANONICAL).compose(s, q);
-    s.close();
-    s = new FileOutputStream(page.getFolders().dstDir + prefix+ profile.getId().toLowerCase() + "-questionnaire.xml");
-    new XmlParser().setOutputStyle(OutputStyle.PRETTY).compose(s, q);
-    s.close();
-    s = new FileOutputStream(page.getFolders().dstDir + prefix+ profile.getId().toLowerCase() + "-questionnaire.canonical.xml");
-    new XmlParser().setOutputStyle(OutputStyle.CANONICAL).compose(s, q);
-    s.close();
+    String fName = prefix+ profile.getId().toLowerCase() + "-questionnaire";
+    fixCanonicalResource(q, fName);
+    serializeResource(q, fName, true);
 
     String json = "<div class=\"example\">\r\n<p>Generated Questionnaire for "+profile.getId()+"</p>\r\n<pre class=\"json\">\r\n" + Utilities.escapeXml(new JsonParser().setOutputStyle(OutputStyle.PRETTY).composeString(q)) + "\r\n</pre>\r\n</div>\r\n";
     String html = TextFile.fileToString(page.getFolders().templateDir + "template-example-json.html").replace("<%example%>", json);
@@ -4551,6 +4459,7 @@ public class Publisher implements URIResolver, SectionNumberer {
     if (rt.equals("ValueSet")) {
       try {
         ValueSet vs = (ValueSet) loadExample(file);
+        fixCanonicalResource(vs, prefix + n, true);
         vs.setUserData("filename", Utilities.changeFileExt(file.getName(), ""));
         vs.addExtension().setUrl(ToolingExtensions.EXT_WORKGROUP).setValue(new CodeType("fhir"));
         if (vs.getUrl().startsWith("http://hl7.org/fhir"))
@@ -4573,6 +4482,7 @@ public class Publisher implements URIResolver, SectionNumberer {
       }
     } else if (rt.equals("CodeSystem")) {
       CodeSystem cs = (CodeSystem) loadExample(file);
+      fixCanonicalResource(cs, prefix + n, true);
       if (cs.getUrl().startsWith("http://hl7.org/fhir"))
         cs.setVersion(page.getVersion().toCode());
       cs.setUserData("example", "true");
@@ -4581,11 +4491,14 @@ public class Publisher implements URIResolver, SectionNumberer {
       cs.setUserData("path", prefix +n + ".html");
       addToResourceFeed(cs, valueSetsFeed, file.getName());
       page.getCodeSystems().see(cs, page.packageInfo());
-    } else if (rt.equals("ConceptMap") && !page.getVersion().isR4B()) {
+      // There's no longer a reason to exclude R4B concept maps
+      //    } else if (rt.equals("ConceptMap") && !page.getVersion().isR4B()) {
+    } else if (rt.equals("ConceptMap")) {
       ConceptMap cm = (ConceptMap) loadExample(file);
+      fixCanonicalResource(cm, prefix + n, true);
       new ConceptMapValidator(page.getDefinitions(), e.getTitle()).validate(cm, false);
       if (cm.getUrl() == null)
-        throw new Exception("Value set example " + e.getTitle() + " has no identifier");
+        throw new Exception("Concept Map example " + e.getTitle() + " has no identifier");
       if (cm.getUrl().startsWith("http://hl7.org/fhir"))
         cm.setVersion(page.getVersion().toCode());
       addToResourceFeed(cm, conceptMapsFeed, file.getName());
@@ -4595,6 +4508,7 @@ public class Publisher implements URIResolver, SectionNumberer {
     } else if (rt.equals("Library")) {
       try {
         Library lib = (Library) loadExample(file);
+        fixCanonicalResource(lib, prefix + n, true);
         if (lib.hasUrl() && lib.getUrl().startsWith("http://hl7.org/fhir"))
           lib.setVersion(page.getVersion().toCode());
         lib.setUserData("example", "true");
@@ -4610,13 +4524,41 @@ public class Publisher implements URIResolver, SectionNumberer {
     // queue for json and canonical XML generation processing
     e.setResourceName(resn.getName());
     String canonical = "http://hl7.org/fhir/";
-    
-    org.hl7.fhir.r5.elementmodel.Element ex = Manager.parseSingle(page.getWorkerContext(), new CSFileInputStream(page.getFolders().dstDir + prefix+n + ".xml"), FhirFormat.XML);
-    new DefinitionsUsageTracker(page.getDefinitions()).updateUsage(ex);
-    Manager.compose(page.getWorkerContext(), ex, new FileOutputStream(page.getFolders().dstDir + prefix+n + ".json"), FhirFormat.JSON, OutputStyle.PRETTY, canonical); 
-//    Manager.compose(page.getWorkerContext(), ex, new FileOutputStream(Utilities.changeFileExt(destName, ".canonical.json")), FhirFormat.JSON, OutputStyle.CANONICAL); 
-//    Manager.compose(page.getWorkerContext(), ex, new FileOutputStream(Utilities.changeFileExt(destName, ".canonical.xml")), FhirFormat.XML, OutputStyle.CANONICAL); 
-    Manager.compose(page.getWorkerContext(), ex, new FileOutputStream(page.getFolders().dstDir + prefix+n + ".ttl"), FhirFormat.TURTLE, OutputStyle.PRETTY, resn.getName().equals("Parameters") || resn.getName().equals("OperationOutcome")  ? null : canonical); 
+
+    Resource r = null;
+    try {
+      r = loadExample(file);
+      if (r instanceof CanonicalResource) {
+        fixCanonicalResource((CanonicalResource)r, prefix + n, true);
+      }
+    } catch (Exception ex) {
+      // If it's not a resource, that's fine
+    }
+    if (r != null && page.getVersion().isR4B()) {
+      org.hl7.fhir.r4.model.Resource r2 = VersionConvertorFactory_40_50.convertResource(r);
+      org.hl7.fhir.r4.formats.IParser xml = new org.hl7.fhir.r4.formats.XmlParser().setOutputStyle(org.hl7.fhir.r4.formats.IParser.OutputStyle.PRETTY);
+      xml.compose(new FileOutputStream(Utilities.path(page.getFolders().dstDir, prefix + n + ".xml")), r2);
+      org.hl7.fhir.r4.formats.IParser json = new org.hl7.fhir.r4.formats.JsonParser().setOutputStyle(org.hl7.fhir.r4.formats.IParser.OutputStyle.PRETTY);
+      json.compose(new FileOutputStream(Utilities.path(page.getFolders().dstDir, prefix + n + ".json")), r2);
+      org.hl7.fhir.r4.formats.IParser rdf = new org.hl7.fhir.r4.formats.RdfParser().setOutputStyle(org.hl7.fhir.r4.formats.IParser.OutputStyle.PRETTY);
+      rdf.compose(new FileOutputStream(Utilities.path(page.getFolders().dstDir, prefix + n + ".ttl")), r2);
+
+    } else if (r != null) {
+      IParser xml = new XmlParser().setOutputStyle(IParser.OutputStyle.PRETTY);
+      xml.compose(new FileOutputStream(Utilities.path(page.getFolders().dstDir, prefix + n + ".xml")), r);
+      IParser json = new JsonParser().setOutputStyle(IParser.OutputStyle.PRETTY);
+      json.compose(new FileOutputStream(Utilities.path(page.getFolders().dstDir, prefix + n + ".json")), r);
+      IParser rdf = new RdfParser().setOutputStyle(IParser.OutputStyle.PRETTY);
+      rdf.compose(new FileOutputStream(Utilities.path(page.getFolders().dstDir, prefix + n + ".ttl")), r);
+      
+    } else {
+      org.hl7.fhir.r5.elementmodel.Element ex = Manager.parseSingle(page.getWorkerContext(), new CSFileInputStream(page.getFolders().dstDir + prefix+n + ".xml"), FhirFormat.XML);
+      new DefinitionsUsageTracker(page.getDefinitions()).updateUsage(ex);
+      Manager.compose(page.getWorkerContext(), ex, new FileOutputStream(page.getFolders().dstDir + prefix+n + ".json"), FhirFormat.JSON, OutputStyle.PRETTY, canonical); 
+  //    Manager.compose(page.getWorkerContext(), ex, new FileOutputStream(Utilities.changeFileExt(destName, ".canonical.json")), FhirFormat.JSON, OutputStyle.CANONICAL); 
+  //    Manager.compose(page.getWorkerContext(), ex, new FileOutputStream(Utilities.changeFileExt(destName, ".canonical.xml")), FhirFormat.XML, OutputStyle.CANONICAL); 
+      Manager.compose(page.getWorkerContext(), ex, new FileOutputStream(page.getFolders().dstDir + prefix+n + ".ttl"), FhirFormat.TURTLE, OutputStyle.PRETTY, resn.getName().equals("Parameters") || resn.getName().equals("OperationOutcome")  ? null : canonical); 
+    }
     
     String json = TextFile.fileToString(page.getFolders().dstDir + prefix+n + ".json");
     //        String json2 = "<div class=\"example\">\r\n<p>" + Utilities.escapeXml(e.getDescription()) + "</p>\r\n<p><a href=\""+ n + ".json\">Raw JSON</a> (<a href=\""+n + ".canonical.json\">Canonical</a>)</p>\r\n<pre class=\"json\">\r\n" + Utilities.escapeXml(json)
@@ -4805,32 +4747,16 @@ public class Publisher implements URIResolver, SectionNumberer {
     LoincToDEConvertor conv = new LoincToDEConvertor();
     conv.setDefinitions(Utilities.path(page.getFolders().srcDir, "loinc", "loincS.xml"));
     conv.process();
-    IParser xml = new XmlParser().setOutputStyle(OutputStyle.PRETTY);
-    FileOutputStream s = new FileOutputStream(Utilities.path(page.getFolders().dstDir, filename+".xml"));
-    xml.compose(s, conv.getBundle());
-    s.close();
-    IParser json = new JsonParser().setOutputStyle(OutputStyle.PRETTY);
-    s = new FileOutputStream(Utilities.path(page.getFolders().dstDir, filename+".json"));
-    json.compose(s, conv.getBundle());
-    s.close();
+    serializeResource(conv.getBundle(), filename, false);
     return "Loinc Narrative";
   }
 
   private StructureDefinition generateProfile(ResourceDefn root, String n, String xmlSpec, String jsonSpec, String ttlSpec, boolean gen) throws Exception, FileNotFoundException {
     StructureDefinition rp = root.getProfile();
     page.getProfiles().see(rp, page.packageInfo());
-    FileOutputStream s = new FileOutputStream(page.getFolders().dstDir + n + ".profile.xml");
-    new XmlParser().setOutputStyle(OutputStyle.PRETTY).compose(s, rp);
-    s.close();
-    s = new FileOutputStream(page.getFolders().dstDir + n + ".profile.canonical.xml");
-    new XmlParser().setOutputStyle(OutputStyle.CANONICAL).compose(s, rp);
-    s.close();
-    s = new FileOutputStream(page.getFolders().dstDir + n + ".profile.json");
-    new JsonParser().setOutputStyle(OutputStyle.PRETTY).compose(s, rp);
-    s.close();
-    s = new FileOutputStream(page.getFolders().dstDir + n + ".profile.canonical.json");
-    new JsonParser().setOutputStyle(OutputStyle.CANONICAL).compose(s, rp);
-    s.close();
+    String fName = n + ".profile";
+    fixCanonicalResource(rp, fName);
+    serializeResource(rp, fName, true);
 
     Utilities.copyFile(new CSFile(page.getFolders().dstDir + n + ".profile.xml"), new CSFile(page.getFolders().dstDir + "examples" + File.separator + n
         + ".profile.xml"));
@@ -5052,20 +4978,9 @@ public class Publisher implements URIResolver, SectionNumberer {
     String prefix = (ig == null || ig.isCore()) ? "" : ig.getCode()+File.separator;
     int level = (ig == null || ig.isCore()) ? 0 : 1;
 
-    XmlParser comp = new XmlParser();
-    FileOutputStream s = new FileOutputStream(page.getFolders().dstDir + prefix+title + ".xml");
-    comp.setOutputStyle(OutputStyle.PRETTY).compose(s, sp);
-    s.close();
-    s = new FileOutputStream(page.getFolders().dstDir + prefix+title + ".canonical.xml");
-    comp.setOutputStyle(OutputStyle.CANONICAL).compose(s, sp);
-    s.close();
-    JsonParser jcomp = new JsonParser();
-    s = new FileOutputStream(page.getFolders().dstDir + prefix+title + ".json");
-    jcomp.setOutputStyle(OutputStyle.PRETTY).compose(s, sp);
-    s.close();
-    s = new FileOutputStream(page.getFolders().dstDir + prefix+title + ".canonical.json");
-    jcomp.setOutputStyle(OutputStyle.CANONICAL).compose(s, sp);
-    s.close();
+    String fName = prefix+title;
+    fixCanonicalResource(sp, fName);
+    serializeResource(sp, fName, true);
 
     String src = TextFile.fileToString(page.getFolders().templateDir + "template-search-parameter.html");
     src = page.processPageIncludes(sp.getId()+".html", src, "search-parameter:"+(res == null ? "na" : res.getName())+"/"+pack.getId()+"/"+sp.getId(), null, sp, null, "Search Parameter", ig, res, res == null ? wg("fhir"): res.getWg());
@@ -5103,15 +5018,10 @@ public class Publisher implements URIResolver, SectionNumberer {
     genJ.close();
     String json = new String(bs.toByteArray());
 
-    XmlParser comp = new XmlParser();
-    FileOutputStream s = new FileOutputStream(page.getFolders().dstDir + prefix +title + ".profile.xml");
-    comp.setOutputStyle(OutputStyle.PRETTY).compose(s, profile.getResource());
-    s.close();
+    String fName = prefix +title + ".profile";
+    fixCanonicalResource(profile.getResource(), fName);
+    serializeResource(profile.getResource(), fName, false);
     Utilities.copyFile(new CSFile(page.getFolders().dstDir + prefix +title + ".profile.xml"), new CSFile(page.getFolders().dstDir + "examples" + File.separator + title+ ".profile.xml"));
-    JsonParser jcomp = new JsonParser();
-    s = new FileOutputStream(page.getFolders().dstDir + prefix +title + ".profile.json");
-    jcomp.setOutputStyle(OutputStyle.PRETTY).compose(s, profile.getResource());
-    s.close();
 //    String shex = new ShExGenerator(page.getWorkerContext()).generate(HTMLLinkPolicy.NONE, profile.getResource());
 //    TextFile.stringToFile(shex, Utilities.changeFileExt(page.getFolders().dstDir + prefix +title + ".profile.shex", ".shex"));
 //    shexToXhtml(prefix +title + ".profile", "ShEx statement for " + prefix +title, shex, "profile-instance:type:" + title, "Type");
@@ -5405,11 +5315,9 @@ public class Publisher implements URIResolver, SectionNumberer {
     page.getSectionTrackerCache().put(fn, st);
 
     if (lm.getDefinition() != null) {
-      new XmlParser().setOutputStyle(OutputStyle.PRETTY).compose(new FileOutputStream(Utilities.path(page.getFolders().dstDir, ig.getPrefix(), n+".xml")), lm.getDefinition());
-      cloneToXhtml(ig.getPrefix()+n, "Logical Model "+lm.getDefinition().getName(), true, "logical-model", lm.getDefinition().getName(), null, lm.getWg());
-      new JsonParser().setOutputStyle(OutputStyle.PRETTY).compose(new FileOutputStream(Utilities.path(page.getFolders().dstDir, ig.getPrefix(), n+".json")), lm.getDefinition());
-      jsonToXhtml(ig.getPrefix()+n, "Logical Model "+lm.getDefinition().getName(), new JsonParser().setOutputStyle(OutputStyle.PRETTY).composeString(lm.getDefinition()), "logical-model", lm.getDefinition().getName(), null, lm.getWg());
-      ttlToXhtml(ig.getPrefix()+n, "Logical Model "+lm.getDefinition().getName(), new RdfParser().setOutputStyle(OutputStyle.PRETTY).composeString(lm.getDefinition()), "logical-model", lm.getDefinition().getName(), null, lm.getWg());
+      String fName = Utilities.path(ig.getPrefix(), n);
+      fixCanonicalResource(lm.getDefinition(), fName);
+      serializeResource(lm.getDefinition(), fName, "Logical Model "+lm.getDefinition().getName(), "logical-model", lm.getDefinition().getName(), lm.getWg(), false, true, true);
     }
     if (lm.getWg() != null && lm.getResource().getWg() == null)
       lm.getResource().setWg(lm.getWg());
@@ -5488,25 +5396,7 @@ public class Publisher implements URIResolver, SectionNumberer {
     src = page.processPageIncludesForBook(filename+".html", src, "page", dict, null, null);
     cachePage(filename+".html", src, d.getId(), true);
 
-    xml.setOutputStyle(OutputStyle.PRETTY);
-    FileOutputStream s = new FileOutputStream(page.getFolders().dstDir + filename+".xml");
-    xml.compose(s, dict);
-    s.close();
-    xml.setOutputStyle(OutputStyle.CANONICAL);
-    s = new FileOutputStream(page.getFolders().dstDir + filename+".canonical.xml");
-    xml.compose(s, dict);
-    s.close();
-    cloneToXhtml(filename, "Source for Dictionary" + d.getName(), false, "dict-instance", "Dictionary", null, null);
-    IParser json = new JsonParser().setOutputStyle(OutputStyle.PRETTY);
-    s = new FileOutputStream(page.getFolders().dstDir+filename+ ".json");
-    json.compose(s, dict);
-    s.close();
-    json = new JsonParser().setOutputStyle(OutputStyle.CANONICAL);
-    s = new FileOutputStream(page.getFolders().dstDir+filename+ ".canonical.json");
-    json.compose(s, dict);
-    s.close();
-    jsonToXhtml(filename, "Source for Dictionary" + d.getName(), resource2Json(dict), "dict-instance", "Dictionary", null, null);
-    ttlToXhtml(filename, "Source for Dictionary" + d.getName(), resource2Ttl(dict), "dict-instance", "Dictionary", null, null);
+    serializeResource(dict, filename, "Source for Dictionary" + d.getName(), "dict-instance", "Dictionary", null, true, true, true);
     throw new Error("must be redone");
 //    for (BundleEntryComponent e : dict.getEntry()) {
 //      produceDictionaryProfile(d, file, filename, (DataElement) e.getResource(), d.getIg());
@@ -5572,24 +5462,7 @@ public class Publisher implements URIResolver, SectionNumberer {
 //    TextFile.stringToFile(src, page.getFolders().dstDir + file + "-definitions.html");
 //
 //    // now, save the profile and generate equivalents
-//    xml.setOutputStyle(OutputStyle.PRETTY);
-//    FileOutputStream s = new FileOutputStream(page.getFolders().dstDir + file+".profile.xml");
-//    xml.compose(s, p);
-//    s.close();
-//    xml.setOutputStyle(OutputStyle.CANONICAL);
-//    s = new FileOutputStream(page.getFolders().dstDir + file+".profile.canonical.xml");
-//    xml.compose(s, p);
-//    s.close();
-//    cloneToXhtml(file+".profile", "Source for Dictionary" + page.getDefinitions().getDictionaries().get(file), false, "dict-instance", "Profile", null, null);
-//    IParser json = new JsonParser().setOutputStyle(OutputStyle.PRETTY);
-//    s = new FileOutputStream(page.getFolders().dstDir+file+ ".profile.json");
-//    json.compose(s, p);
-//    s.close();
-//    json = new JsonParser().setOutputStyle(OutputStyle.CANONICAL);
-//    s = new FileOutputStream(page.getFolders().dstDir+file+ ".profile.canonical.json");
-//    json.compose(s, p);
-//    s.close();
-//    jsonToXhtml(file+".profile", "Source for Dictionary based StructureDefinition" + page.getDefinitions().getDictionaries().get(file), resource2Json(p), "dict-instance", "Profile", null, null);
+//    serializeResource(p, file+".profile, "Source for Dictionary" + page.getDefinitions().getDictionaries().get(file), "dict-instance", "Profiel", null, true, false);
 //    new ReviewSpreadsheetGenerator().generate(page.getFolders().dstDir + file+ "-review.xls", "Health Level Seven International", page.getGenDate(), p, page);
 //  }
 
@@ -6048,25 +5921,8 @@ public class Publisher implements URIResolver, SectionNumberer {
         cachePage(name + ".html", src, "Value Set " + title, false);
         page.setId(null);
 
-        IParser json = new JsonParser().setOutputStyle(OutputStyle.PRETTY);
-        FileOutputStream s = new FileOutputStream(page.getFolders().dstDir+name + ".json");
-        json.compose(s, vs);
-        s.close();
-        json = new JsonParser().setOutputStyle(OutputStyle.CANONICAL);
-        s = new FileOutputStream(page.getFolders().dstDir+name + ".canonical.json");
-        json.compose(s, vs);
-        s.close();
-        IParser xml = new XmlParser().setOutputStyle(OutputStyle.PRETTY);
-        s = new FileOutputStream(page.getFolders().dstDir+name + ".xml");
-        xml.compose(s, vs);
-        s.close();
-        xml = new XmlParser().setOutputStyle(OutputStyle.CANONICAL);
-        s = new FileOutputStream(page.getFolders().dstDir+name + ".canonical.xml");
-        xml.compose(s, vs);
-        s.close();
-        cloneToXhtml(name, "Definition for Value Set" + vs.getName(), false, "valueset-instance", "Value Set", null, wg("vocab"));
-        jsonToXhtml(name, "Definition for Value Set" + vs.getName(), resource2Json(vs), "valueset-instance", "Value Set", null, wg("vocab"));
-        ttlToXhtml(name, "Definition for Value Set" + vs.getName(), resource2Ttl(vs), "valueset-instance", "Value Set", null, wg("vocab"));
+        fixCanonicalResource(vs, name);
+        serializeResource(vs, name, "Definition for Value Set" + vs.getName(), "valueset-instance", "Value Set", wg("vocab"), true, true);
       }
     }
   }
@@ -6140,28 +5996,10 @@ public class Publisher implements URIResolver, SectionNumberer {
         throw new Exception("Error processing "+n+".html: "+e.getMessage(), e);
       }
 
-      IParser json = new JsonParser().setOutputStyle(OutputStyle.PRETTY);
-      FileOutputStream s = new FileOutputStream(page.getFolders().dstDir + n + ".json");
-      json.compose(s, vs);
-      s.close();
-      json = new JsonParser().setOutputStyle(OutputStyle.CANONICAL);
-      s = new FileOutputStream(page.getFolders().dstDir + n + ".canonical.json");
-      json.compose(s, vs);
-      s.close();
-      IParser xml = new XmlParser().setOutputStyle(OutputStyle.PRETTY);
-      s = new FileOutputStream(page.getFolders().dstDir + n + ".xml");
-      xml.compose(s, vs);
-      s.close();
-      xml = new XmlParser().setOutputStyle(OutputStyle.CANONICAL);
-      s = new FileOutputStream(page.getFolders().dstDir + n + ".canonical.xml");
-      xml.compose(s, vs);
-      s.close();
+      fixCanonicalResource(vs, n);
+      serializeResource(vs, n, "Definition for Value Set" + vs.present(), "valueset-instance", "Value Set", wg("vocab"), true, true, true);
 //      System.out.println(vs.getUrl());
-      cloneToXhtml(n, "Definition for Value Set" + vs.present(), false, "valueset-instance", "Value Set", null, wg("vocab"));
-      jsonToXhtml(n, "Definition for Value Set" + vs.present(), resource2Json(vs), "valueset-instance", "Value Set", null, wg("vocab"));
-      ttlToXhtml(n, "Definition for Value Set" + vs.present(), resource2Ttl(vs), "valueset-instance", "Value Set", null, wg("vocab"));
     }
-
   }
 
 
@@ -6221,26 +6059,9 @@ public class Publisher implements URIResolver, SectionNumberer {
         throw new Exception("Error processing "+n+".html: "+e.getMessage(), e);
       }
 
-      IParser json = new JsonParser().setOutputStyle(OutputStyle.PRETTY);
-      FileOutputStream s = new FileOutputStream(page.getFolders().dstDir + n + ".json");
-      json.compose(s, cs);
-      s.close();
-      json = new JsonParser().setOutputStyle(OutputStyle.CANONICAL);
-      s = new FileOutputStream(page.getFolders().dstDir + n + ".canonical.json");
-      json.compose(s, cs);
-      s.close();
-      IParser xml = new XmlParser().setOutputStyle(OutputStyle.PRETTY);
-      s = new FileOutputStream(page.getFolders().dstDir + n + ".xml");
-      xml.compose(s, cs);
-      s.close();
-      xml = new XmlParser().setOutputStyle(OutputStyle.CANONICAL);
-      s = new FileOutputStream(page.getFolders().dstDir + n + ".canonical.xml");
-      xml.compose(s, cs);
-      s.close();
+      fixCanonicalResource(cs, n);
+      serializeResource(cs, n, "Definition for Code System" + cs.getName(), "codesystem-instance", "Code System", wg, true, true, true);
 //      System.out.println(vs.getUrl());
-      cloneToXhtml(n, "Definition for Code System " + cs.getName(), false, "codesystem-instance", "Code System", null, wg);
-      jsonToXhtml(n, "Definition for Code System " + cs.getName(), resource2Json(cs), "codesystem-instance", "Code System", null, wg);
-      ttlToXhtml(n, "Definition for Code System " + cs.getName(), resource2Ttl(cs), "codesystem-instance", "Code System", null, wg);
     }
   }
 private String csCounter() {
@@ -6306,34 +6127,17 @@ private String csCounter() {
       if (cm.hasUserData("generate")) {
         generateConceptMap(cm);
       }
-    }
-    
+    } 
   }
+  
   private void generateConceptMap(ConceptMap cm) throws Exception {
     String filename = cm.getUserString("path");
     RenderingContext lrc = page.getRc().copy().setLocalPrefix("").setTooCostlyNoteEmpty(PageProcessor.TOO_MANY_CODES_TEXT_EMPTY).setTooCostlyNoteNotEmpty(PageProcessor.TOO_MANY_CODES_TEXT_NOT_EMPTY);
     RendererFactory.factory(cm, lrc).render(cm);
 
-    IParser json = new JsonParser().setOutputStyle(OutputStyle.PRETTY);
-    FileOutputStream s = new FileOutputStream(page.getFolders().dstDir + Utilities.changeFileExt(filename, ".json"));
-    json.compose(s, cm);
-    s.close();
-    json = new JsonParser().setOutputStyle(OutputStyle.CANONICAL);
-    s = new FileOutputStream(page.getFolders().dstDir + Utilities.changeFileExt(filename, ".canonical.json"));
-    json.compose(s, cm);
-    s.close();
     String n = Utilities.changeFileExt(filename, "");
-    jsonToXhtml(n, cm.getName(), resource2Json(cm), "conceptmap-instance", "Concept Map", null, wg("vocab"));
-    ttlToXhtml(n, cm.getName(), resource2Ttl(cm), "conceptmap-instance", "Concept Map", null, wg("vocab"));
-    IParser xml = new XmlParser().setOutputStyle(OutputStyle.PRETTY);
-    s = new FileOutputStream(page.getFolders().dstDir + Utilities.changeFileExt(filename, ".xml"));
-    xml.compose(s, cm);
-    s.close();
-    xml = new XmlParser().setOutputStyle(OutputStyle.CANONICAL);
-    s = new FileOutputStream(page.getFolders().dstDir + Utilities.changeFileExt(filename, ".canonical.xml"));
-    xml.compose(s, cm);
-    s.close();
-    cloneToXhtml(n, cm.getName(), false, "conceptmap-instance", "Concept Map", null, wg("vocab"));
+    fixCanonicalResource(cm, n);
+    serializeResource(cm, n, cm.getName(), "conceptmap-instance", "Concept Map", wg("vocab"), true, true, true);
 
     // now, we create an html page from the narrative
     String narrative = new XhtmlComposer(XhtmlComposer.HTML).compose(cm.getText().getDiv());
