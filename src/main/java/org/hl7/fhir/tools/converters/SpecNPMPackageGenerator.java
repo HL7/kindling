@@ -82,8 +82,10 @@ public class SpecNPMPackageGenerator {
     SpecMapManager spm = new SpecMapManager(files.get("spec.internals"), version.toCode());    
     System.out.println(" .. Conformance Resources");
     List<ResourceEntry> reslist = makeResourceList(files, version.toCode());
+    checkForDE(reslist);
     System.out.println(" .. Other Resources");
     addToResList(folder, reslist, version.toCode());
+    checkForDE(reslist);
     
     System.out.println(" .. building IG");
     ImplementationGuide ig = new ImplementationGuide();
@@ -190,6 +192,15 @@ public class SpecNPMPackageGenerator {
     System.out.println(" .. Built");
 
   }
+
+  private void checkForDE(List<ResourceEntry> reslist) {
+    for (ResourceEntry r : reslist) {
+      if (r.canonical != null && r.canonical.contains("/de-")) {
+        System.out.println("Waht?");
+      }
+    }
+  
+}
 
   private void addConvertedIg(NPMPackageGenerator npm, ImplementationGuide ig, String version) throws IOException, FHIRException {
     if (VersionUtilities.isR5Ver(version))
@@ -358,7 +369,7 @@ public class SpecNPMPackageGenerator {
 
   private List<ResourceEntry> makeResourceList4B(Map<String, byte[]> files, String version, List<ResourceEntry> res) throws FHIRFormatError, IOException {
     for (String k : files.keySet()) {
-      if (k.endsWith(".xml")) {
+      if (k.endsWith(".xml") && !k.equals("dataelements.xml")) {
         org.hl7.fhir.r4b.model.Bundle b = (org.hl7.fhir.r4b.model.Bundle) new org.hl7.fhir.r4b.formats.XmlParser().parse(files.get(k));
         for (org.hl7.fhir.r4b.model.Bundle.BundleEntryComponent be : b.getEntry()) {
           if (be.hasResource()) {
@@ -368,8 +379,12 @@ public class SpecNPMPackageGenerator {
             e.json = new org.hl7.fhir.r4b.formats.JsonParser().composeBytes(be.getResource());
             e.xml = new org.hl7.fhir.r4b.formats.XmlParser().composeBytes(be.getResource());
             e.conf = true;
-            if (be.getResource() instanceof org.hl7.fhir.r4b.model.CanonicalResource)
+            if (be.getResource() instanceof org.hl7.fhir.r4b.model.CanonicalResource) {
               e.canonical = ((org.hl7.fhir.r4b.model.CanonicalResource) be.getResource()).getUrl();
+              if (e.canonical.contains("/de-")) {
+                System.out.println("whoops!");
+              }
+            }
             res.add(e);
           }
         }
