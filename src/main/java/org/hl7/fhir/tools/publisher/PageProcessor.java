@@ -2275,7 +2275,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
          if (c.getSystem().equals("http://hl7.org/fhir/identifier-type"))
            b.append("  <td><a href=\"valueset-identifier-type.html#"+c.getCode()+"\">"+c.getCode()+"</a>"+country+"</td>\r\n");
          else if (c.getSystem().equals("http://terminology.hl7.org/CodeSystem/v2-0203"))
-           b.append("  <td><a href=\"v2/0203/index.html#"+c.getCode()+"\">"+c.getCode()+"</a>"+country+"</td>\r\n");
+           b.append("  <td><a href=\"http://terminology.hl7.org/CodeSystem-v2-0203.html#v2-0203-"+c.getCode()+"\">"+c.getCode()+"</a>"+country+"</td>\r\n");
          else
            throw new Exception("Unknown Identifier Type System");
         }
