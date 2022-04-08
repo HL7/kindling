@@ -68,9 +68,9 @@ public class TableGenerator extends BaseGenerator {
       gc.addStyledText("This element has or is affected by some invariants", "I", null, null, prefix+"conformance-rules.html#constraints", false);
     }
     if (isInterface) {
-      gc.addStyledText("This is an abstract type", "«A»", null, null, prefix+"uml.html#abstract", false);      
-    } else if (isAbstract) {
       gc.addStyledText("This is an interface resource", "«I»", null, null, prefix+"uml.html#interface", false);      
+    } else if (isAbstract) {
+      gc.addStyledText("This is an abstract type", "«A»", null, null, prefix+"uml.html#abstract", false);      
     }
     if (rootStatus != null)
       gc.addStyledText("Standards Status = "+rootStatus.toDisplay(), rootStatus.getAbbrev(), "black", rootStatus.getColor(), prefix+"versions.html#std-process", true);
