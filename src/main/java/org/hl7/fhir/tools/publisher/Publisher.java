@@ -184,6 +184,7 @@ import org.hl7.fhir.r5.model.ContactPoint;
 import org.hl7.fhir.r5.model.ContactPoint.ContactPointSystem;
 import org.hl7.fhir.r5.model.DomainResource;
 import org.hl7.fhir.r5.model.ElementDefinition;
+import org.hl7.fhir.r5.model.ElementDefinition.ElementDefinitionBindingComponent;
 import org.hl7.fhir.r5.model.ElementDefinition.TypeRefComponent;
 import org.hl7.fhir.r5.model.Enumerations.BindingStrength;
 import org.hl7.fhir.r5.model.Enumerations.CapabilityStatementKind;
@@ -225,6 +226,7 @@ import org.hl7.fhir.r5.terminologies.CodeSystemUtilities;
 import org.hl7.fhir.r5.terminologies.LoincToDEConvertor;
 import org.hl7.fhir.r5.terminologies.ValueSetExpander.ValueSetExpansionOutcome;
 import org.hl7.fhir.r5.terminologies.ValueSetUtilities;
+import org.hl7.fhir.r5.utils.BuildExtensions;
 import org.hl7.fhir.r5.utils.EOperationOutcome;
 import org.hl7.fhir.r5.utils.FHIRPathEngine;
 import org.hl7.fhir.r5.utils.GraphQLSchemaGenerator;
@@ -1064,8 +1066,24 @@ public class Publisher implements URIResolver, SectionNumberer {
   }
 
   private void processExtension(StructureDefinition ex) throws Exception {
+    for (ElementDefinition e : ex.getDifferential().getElement()) {
+      fixBinding(e, ex.getUrl());
+    }
     StructureDefinition bd = page.getDefinitions().getSnapShotForBase(ex.getBaseDefinition());
     new ProfileUtilities(page.getWorkerContext(), page.getValidationErrors(), page).generateSnapshot(bd, ex, ex.getUrl(), null, ex.getName());
+  }
+  
+  private void fixBinding(ElementDefinition e, String url) throws Exception {
+    if (e.hasBinding()) {
+      ElementDefinitionBindingComponent b = e.getBinding();
+      if (!b.hasDescription() && !b.hasValueSet()) {
+        if (ToolingExtensions.hasExtension(b, BuildExtensions.EXT_BINDING_DEFINITION)) {
+          b.setDescription(ToolingExtensions.readStringExtension(b, BuildExtensions.EXT_BINDING_DEFINITION));
+        } else {
+          page.getValidationErrors().add(new ValidationMessage(Source.Publisher, IssueType.NOTFOUND, e.getPath(), "No binding description or value set in model " + url, IssueSeverity.ERROR));     
+        }
+      }
+    }
   }
 
   private Profile makeConformancePack(ResourceDefn r) {
@@ -1161,9 +1179,11 @@ public class Publisher implements URIResolver, SectionNumberer {
     } else {
       profile.getResource().setUserData("pack", ap);
       sortProfile(profile.getResource());
-      for (ElementDefinition ed : profile.getResource().getDifferential().getElement())
+      for (ElementDefinition ed : profile.getResource().getDifferential().getElement()) {
         if (!ed.hasId())
           throw new Exception("Missing ID");
+        fixBinding(ed, profile.getResource().getUrl());
+      }
       // special case: if the profile itself doesn't claim a date, it's date is the date of this publication
       if (!profile.getResource().hasDate())
         profile.getResource().setDate(page.getGenDate().getTime());
