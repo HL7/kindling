@@ -317,6 +317,7 @@ public class ExampleInspector implements IValidatorResourceFetcher, IValidationP
   public void doValidate(String n, String rt, StructureDefinition profile) {
     errorsInt.clear();
     logger.log(" ...validate " + n, LogMessageType.Process);
+
     try {
       Element e = validateLogical(Utilities.path(rootDir, n+".xml"), profile, FhirFormat.XML);
       org.w3c.dom.Element xe = validateXml(Utilities.path(rootDir, n+".xml"), profile == null ? null : profile.getId());
@@ -423,7 +424,7 @@ public class ExampleInspector implements IValidatorResourceFetcher, IValidationP
 
   public void summarise() throws EValidationFailed {
     logger.log("Summary: Errors="+Integer.toString(errorCount)+", Warnings="+Integer.toString(warningCount)+", Information messages="+Integer.toString(informationCount), LogMessageType.Error);
-    if (errorCount > 0 && !version.isR4B()) {
+    if (errorCount > 0) {
       throw new EValidationFailed("Resource Examples failed instance validation");
     }
   }

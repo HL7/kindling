@@ -2928,7 +2928,7 @@ public class Publisher implements URIResolver, SectionNumberer {
       gson = new GsonBuilder().setPrettyPrinting().create();
       File f = new CSFile(page.getFolders().dstDir);
       File[] files = f.listFiles();
-      String[] noExt = new String[] {".schema.json", ".canonical.json", ".diff.json", "expansions.json", "package.json", "choice-elements.json", "backbone-elements.json"};
+      String[] noExt = new String[] {".schema.json", ".canonical.json", ".manifest.json", ".diff.json", "expansions.json", "package.json", "choice-elements.json", "backbone-elements.json", "package-min-ver.json", "xver-paths-5.0.json", "uml.json"};
       for (int fi = 0; fi < files.length; fi++) {
         if (files[fi].isFile() && (files[fi].getName().endsWith(".json"))) {
           boolean ok = true;
@@ -4547,9 +4547,11 @@ public class Publisher implements URIResolver, SectionNumberer {
 
     Resource r = null;
     try {
-      r = loadExample(file);
-      if (r instanceof CanonicalResource) {
-        fixCanonicalResource((CanonicalResource)r, prefix + n, true);
+      if (Utilities.existsInList(resn.getName(), page.getWorkerContext().getCanonicalResourceNames())) {
+        r = loadExample(file);
+        if (r instanceof CanonicalResource) {
+          fixCanonicalResource((CanonicalResource)r, prefix + n, true);
+        }
       }
     } catch (Exception ex) {
       // If it's not a resource, that's fine
