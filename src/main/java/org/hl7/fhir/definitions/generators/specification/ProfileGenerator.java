@@ -2381,7 +2381,7 @@ public class ProfileGenerator {
     ToolingExtensions.setStandardsStatus(opd, op.getStandardsStatus() == null ? rd.getStatus() : op.getStandardsStatus(), op.getNormativeVersion());
     opd.setId(FormatUtilities.makeId(id));
     opd.setUrl("http://hl7.org/fhir/OperationDefinition/"+id);
-    opd.setName(op.getName());
+    opd.setName(fixName(op.getName()));
     opd.setTitle(op.getTitle());
     opd.setVersion(version.toCode());
     opd.setPublisher("HL7 (FHIR Project)");
@@ -2415,6 +2415,23 @@ public class ProfileGenerator {
     opr.render(opd);
     return opd;
   }
+
+  private String fixName(String name) {
+    StringBuilder b = new StringBuilder();
+    boolean first = true;
+    for (char c : name.toCharArray()) {
+      if (!Character.isLetter(c)) {
+        first = true;
+      } else if (first){
+        b.append(Character.toUpperCase(c));
+        first = false;
+      } else {
+        b.append(c);
+      }
+    }
+    return b.toString();
+  }
+
 
   private void produceOpParam(String path, List<OperationDefinitionParameterComponent> opd, OperationParameter p, OperationParameterUse defUse) throws Exception {
     OperationDefinitionParameterComponent pp = new OperationDefinitionParameterComponent();

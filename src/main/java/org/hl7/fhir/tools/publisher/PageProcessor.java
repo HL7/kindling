@@ -2326,7 +2326,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
   private String genCompModel(StructureDefinition sd, String name, String base, String prefix) throws Exception {
     if (sd == null)
       return "<p style=\"color: maroon\">No "+name+" could be generated</p>\r\n";
-    return new XhtmlComposer(XhtmlComposer.HTML).compose(new ProfileUtilities(workerContext, null, this).generateTable("??", sd, false, folders.dstDir, false, base, true, prefix, prefix, false, false, null, true, false));
+    return new XhtmlComposer(XhtmlComposer.HTML).compose(new ProfileUtilities(workerContext, null, this).generateTable("??", sd, false, folders.dstDir, false, base, true, prefix, prefix, false, false, null, true, false, rc.copy().setLang("*")));
   }
 
   private String genPCLink(String leftName, String leftLink) {
@@ -8819,7 +8819,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
   }
 
   private String generateExtensionTable(StructureDefinition ed, String filename, String full, String prefix) throws Exception {
-    return new XhtmlComposer(XhtmlComposer.HTML).compose(new ProfileUtilities(workerContext, null, this).generateExtensionTable(filename, ed, folders.dstDir, false, full.equals("true"), prefix, prefix, null));
+    return new XhtmlComposer(XhtmlComposer.HTML).compose(new ProfileUtilities(workerContext, null, this).generateExtensionTable(filename, ed, folders.dstDir, false, full.equals("true"), prefix, prefix, null, rc.copy().setLang("*")));
   }
 
 
@@ -9050,7 +9050,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
   private String generateProfileStructureTable(ConstraintStructure profile, boolean diff, String filename, String baseName, String prefix) throws Exception {
     String fn = filename.contains(".") ? filename.substring(0, filename.indexOf('.')) : filename;
     String deffile = fn+"-definitions.html";
-    return new XhtmlComposer(XhtmlComposer.HTML).compose(new ProfileUtilities(workerContext, null, this).generateTable(deffile, profile.getResource(), diff, folders.dstDir, false, baseName, !diff, prefix, prefix, false, false, null, true, false));
+    return new XhtmlComposer(XhtmlComposer.HTML).compose(new ProfileUtilities(workerContext, null, this).generateTable(deffile, profile.getResource(), diff, folders.dstDir, false, baseName, !diff, prefix, prefix, false, false, null, true, false, rc.copy().setLang("*")));
   }
 
   private boolean isAggregationEndpoint(String name) {
