@@ -1157,7 +1157,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
 //      } else if (com[0].equals("dictionary.view"))
 //        src = s1 + ResourceUtilities.representDataElementCollection(this.workerContext, (Bundle) resource, true, "hspc-qnlab-de") + s3;
       } else if (com[0].equals("search-param-pack") && resource instanceof SearchParameter)
-        src = s1 + ((SearchParameter) resource).getUserData("pack") + s3;
+        src = s1 + ((SearchParameter) resource).getUserData("pack").toString().toLowerCase() + s3;
       else if (com[0].equals("search-param-name") && resource instanceof SearchParameter)
         src = s1 + ((SearchParameter) resource).getName() + s3;
       else if (com[0].equals("search-param-url") && resource instanceof SearchParameter)

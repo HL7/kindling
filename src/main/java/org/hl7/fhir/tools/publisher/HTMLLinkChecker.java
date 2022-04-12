@@ -316,7 +316,7 @@ public class HTMLLinkChecker implements FileNotifier {
     for (Entry e : entries) {
       if (e.filename.equalsIgnoreCase(target)) {
         if (!e.filename.equals(target))
-          System.out.println("Case Error: found "+e.filename+" looking for "+target+" in "+source);
+          reportError(source, "Case Error: found "+e.filename+" looking for "+target+" in "+source);
         return e;
       }
     }
