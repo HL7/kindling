@@ -757,7 +757,8 @@ public class ResourceValidator extends BaseValidator {
         }
 
         String s = e.getMapping(Definitions.RIM_MAPPING);
-        hint(errors, IssueType.REQUIRED, path, !needsRimMapping || !Utilities.noString(s), "RIM Mapping is required");
+// RIM mappings are no longer required
+//        hint(errors, IssueType.REQUIRED, path, !needsRimMapping || !Utilities.noString(s), "RIM Mapping is required");
 
         needsRimMapping = needsRimMapping && !"n/a".equalsIgnoreCase(s) && !Utilities.noString(s);
 
