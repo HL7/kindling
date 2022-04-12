@@ -1516,32 +1516,43 @@ public class ProfileGenerator {
     if (src.getBinding() == null) {
       System.out.println("no binding!");
     }
+    String ref = null;
     switch (src.getBinding()) {
-    case Unbound: return null;
-    case CodeList:
-      if (src.getValueSet()!= null)
-        return src.getValueSet().getUrl()+v;
-      else if (src.getReference().startsWith("#"))
-        return "http://hl7.org/fhir/ValueSet/"+src.getReference().substring(1)+v;
-      else
-        throw new Exception("not done yet");
-    case ValueSet: 
-      if (!Utilities.noString(src.getReference()))
-        if (src.getReference().startsWith("http"))
-          return src.getReference()+v;
-        else if (src.getValueSet()!= null)
-          return src.getValueSet().getUrl()+v;
-        else if (src.getReference().startsWith("valueset-"))
-          return "http://hl7.org/fhir/ValueSet/"+src.getReference().substring(9)+v;
+      case Unbound: return null;
+      case CodeList:
+        if (src.getValueSet()!= null)
+          ref = src.getValueSet().getUrl();
+        else if (src.getReference().startsWith("#"))
+          ref = "http://hl7.org/fhir/ValueSet/"+src.getReference().substring(1);
         else
-          return "http://hl7.org/fhir/ValueSet/"+src.getReference()+v;
-      else
-        return null; // throw new Exception("not done yet");
-    case Special: 
-      return "http://hl7.org/fhir/ValueSet/"+src.getReference().substring(1)+v;
-    default: 
-      throw new Exception("not done yet");
+          throw new Exception("not done yet");
+        break;
+      case ValueSet: 
+        if (!Utilities.noString(src.getReference()))
+          if (src.getReference().startsWith("http"))
+            ref = src.getReference();
+          else if (src.getValueSet()!= null)
+            ref = src.getValueSet().getUrl();
+          else if (src.getReference().startsWith("valueset-"))
+            ref = "http://hl7.org/fhir/ValueSet/"+src.getReference().substring(9);
+          else
+            ref = "http://hl7.org/fhir/ValueSet/"+src.getReference();
+        else
+          return null; // throw new Exception("not done yet");
+        break;
+      case Special: 
+        ref = "http://hl7.org/fhir/ValueSet/"+src.getReference().substring(1);
+        break;
+      default: 
+        throw new Exception("not done yet");
     }
+    if (ref.contains("|") && !v.isEmpty()) {
+      String refVer = ref.substring(ref.indexOf("|"));
+      if (!refVer.equals(refVer))
+        System.out.println("Versioned valueset reference " + ref + " not using expected version of " + v);
+      return ref;
+    }
+    return ref + v;
   }
 
   /**
