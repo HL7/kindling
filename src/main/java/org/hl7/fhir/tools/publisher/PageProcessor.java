@@ -2326,7 +2326,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
   private String genCompModel(StructureDefinition sd, String name, String base, String prefix) throws Exception {
     if (sd == null)
       return "<p style=\"color: maroon\">No "+name+" could be generated</p>\r\n";
-    return new XhtmlComposer(XhtmlComposer.HTML).compose(new ProfileUtilities(workerContext, null, this).generateTable("??", sd, false, folders.dstDir, false, base, true, prefix, prefix, false, false, null, true, false, getRc()));
+    return new XhtmlComposer(XhtmlComposer.HTML).compose(new ProfileUtilities(workerContext, null, this).generateTable("??", sd, false, folders.dstDir, false, base, true, prefix, prefix, false, false, null, true, false, rc.copy().setLang("*")));
   }
 
   private String genPCLink(String leftName, String leftLink) {
@@ -8012,9 +8012,11 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     XhtmlNode doc;
     try {
       doc = new XhtmlParser().parse("<div>"+res+"</div>", null).getFirstElement();
-    if (doc.getFirstElement() == null || !doc.getFirstElement().getName().equals("div"))
-      log("file \""+filename+"\": root element should be 'div'", LogMessageType.Error);
-    else if (doc.getFirstElement() == null) {
+      if (doc.getFirstElement() == null)
+        log("file \""+filename+"\": root element should have a name 'div' (has no name)", LogMessageType.Error);
+      else if (!doc.getFirstElement().getName().equals("div"))
+        log("file \""+filename+"\": root element should be 'div' not '"+doc.getFirstElement().getName()+"'", LogMessageType.Error);
+      else if (doc.getFirstElement() == null) {
       log("file \""+filename+"\": there is no 'Scope and Usage'", LogMessageType.Error);
     } else {
       XhtmlNode scope = null;
@@ -9468,8 +9470,10 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
         br.url = null;
         br.display = ref;
       } else {
+        System.out.println("Unresolved Value set "+ref+"@"+path+" in "+profile.getUrl());
         br.url = ref;
         br.display = "????";
+        
         getValidationErrors().add(
             new ValidationMessage(Source.Publisher, IssueType.NOTFOUND, -1, -1, path, "Unresolved Value set "+ref, IssueSeverity.WARNING));
       }

@@ -158,6 +158,10 @@ public class HTMLLinkChecker implements FileNotifier {
   }
 
   private void checkNormativeStatus(String filename) {
+    if (Utilities.existsInList(filename, "known-issues/index.html")) {
+      return;
+    }
+    
     String src;
     try {
       src = TextFile.fileToString(Utilities.path(page.getFolders().dstDir, filename));
@@ -311,8 +315,10 @@ public class HTMLLinkChecker implements FileNotifier {
   private Entry getEntryForFile(String target, String source) {
     for (Entry e : entries) {
       if (e.filename.equalsIgnoreCase(target)) {
-        if (!e.filename.equals(target))
-          reportError(source, "Case Error: found "+e.filename+" looking for "+target+" in "+source);
+        if (!e.filename.equals(target)) {
+          System.out.println("Case Error: found "+e.filename+" looking for "+target+" in "+source);
+          reportError(target, "Case Error: found "+e.filename+" looking for "+target+" in "+source);
+        }
         return e;
       }
     }

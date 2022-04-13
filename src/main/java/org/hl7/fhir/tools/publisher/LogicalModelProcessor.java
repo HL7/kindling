@@ -14,6 +14,7 @@ import org.hl7.fhir.r5.conformance.ProfileUtilities.ProfileKnowledgeProvider;
 import org.hl7.fhir.r5.model.ElementDefinition.ElementDefinitionBindingComponent;
 import org.hl7.fhir.r5.model.Enumerations.FHIRVersion;
 import org.hl7.fhir.r5.model.StructureDefinition;
+import org.hl7.fhir.r5.renderers.utils.RenderingContext;
 import org.hl7.fhir.r5.utils.ToolingExtensions;
 import org.hl7.fhir.utilities.StandardsStatus;
 import org.hl7.fhir.utilities.Utilities;
@@ -30,8 +31,9 @@ public class LogicalModelProcessor extends BuildToolScriptedPageProcessor implem
   private ImplementationGuideDefn guide;
   private Definitions definitions;
   private FHIRVersion version;
+  private RenderingContext rc;
   
-  public LogicalModelProcessor(String title, PageProcessor page, ImplementationGuideDefn ig, String name, String type, String pagePath, StructureDefinition definition, String tx, String dict, Map<String, String> examples, List<LogicalModel> logicalModelSet, Definitions definitions, FHIRVersion version) {
+  public LogicalModelProcessor(String title, PageProcessor page, ImplementationGuideDefn ig, String name, String type, String pagePath, StructureDefinition definition, String tx, String dict, Map<String, String> examples, List<LogicalModel> logicalModelSet, Definitions definitions, FHIRVersion version, RenderingContext rc) {
     super(title, ig.getLevel(), page, ig, name, type, pagePath);
     this.guide = ig;
     this.definition = definition;
@@ -41,6 +43,7 @@ public class LogicalModelProcessor extends BuildToolScriptedPageProcessor implem
     this.logicalModelSet = logicalModelSet;
     this.definitions = definitions;
     this.version = version;
+    this.rc = rc;
   }
 
   @Override
@@ -139,7 +142,7 @@ public class LogicalModelProcessor extends BuildToolScriptedPageProcessor implem
 
   private String genLogicalModelTable(StructureDefinition sd, String prefix) throws Exception {
     ProfileUtilities pu = new ProfileUtilities(page.getWorkerContext(), null, this);
-    XhtmlNode x = pu.generateTable(sd.getId()+"-definitions.html", sd, sd.hasSnapshot() ? false : true, page.getFolders().dstDir, false, sd.getId(), true, prefix, prefix, true, false, null, true, false, page.getRc());
+    XhtmlNode x = pu.generateTable(sd.getId()+"-definitions.html", sd, sd.hasSnapshot() ? false : true, page.getFolders().dstDir, false, sd.getId(), true, prefix, prefix, true, false, null, true, false, rc);
     return new XhtmlComposer(XhtmlComposer.HTML).compose(x);
   }
 
