@@ -1157,7 +1157,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
 //      } else if (com[0].equals("dictionary.view"))
 //        src = s1 + ResourceUtilities.representDataElementCollection(this.workerContext, (Bundle) resource, true, "hspc-qnlab-de") + s3;
       } else if (com[0].equals("search-param-pack") && resource instanceof SearchParameter)
-        src = s1 + ((SearchParameter) resource).getUserData("pack") + s3;
+        src = s1 + ((SearchParameter) resource).getUserData("pack").toString().toLowerCase() + s3;
       else if (com[0].equals("search-param-name") && resource instanceof SearchParameter)
         src = s1 + ((SearchParameter) resource).getName() + s3;
       else if (com[0].equals("search-param-url") && resource instanceof SearchParameter)
@@ -2275,7 +2275,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
          if (c.getSystem().equals("http://hl7.org/fhir/identifier-type"))
            b.append("  <td><a href=\"valueset-identifier-type.html#"+c.getCode()+"\">"+c.getCode()+"</a>"+country+"</td>\r\n");
          else if (c.getSystem().equals("http://terminology.hl7.org/CodeSystem/v2-0203"))
-           b.append("  <td><a href=\"v2/0203/index.html#"+c.getCode()+"\">"+c.getCode()+"</a>"+country+"</td>\r\n");
+           b.append("  <td><a href=\"http://terminology.hl7.org/CodeSystem-v2-0203.html#v2-0203-"+c.getCode()+"\">"+c.getCode()+"</a>"+country+"</td>\r\n");
          else
            throw new Exception("Unknown Identifier Type System");
         }
@@ -8821,7 +8821,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
   }
 
   private String generateExtensionTable(StructureDefinition ed, String filename, String full, String prefix) throws Exception {
-    return new XhtmlComposer(XhtmlComposer.HTML).compose(new ProfileUtilities(workerContext, null, this).generateExtensionTable(filename, ed, folders.dstDir, false, full.equals("true"), prefix, prefix, null, rc.copy().setLang("*")));
+    return new XhtmlComposer(XhtmlComposer.HTML).compose(new ProfileUtilities(workerContext, null, this).generateExtensionTable(filename, ed, folders.dstDir, false, full.equals("true"), prefix, prefix, null, getRc()));
   }
 
 
@@ -9052,7 +9052,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
   private String generateProfileStructureTable(ConstraintStructure profile, boolean diff, String filename, String baseName, String prefix) throws Exception {
     String fn = filename.contains(".") ? filename.substring(0, filename.indexOf('.')) : filename;
     String deffile = fn+"-definitions.html";
-    return new XhtmlComposer(XhtmlComposer.HTML).compose(new ProfileUtilities(workerContext, null, this).generateTable(deffile, profile.getResource(), diff, folders.dstDir, false, baseName, !diff, prefix, prefix, false, false, null, true, false, rc.copy().setLang("*")));
+    return new XhtmlComposer(XhtmlComposer.HTML).compose(new ProfileUtilities(workerContext, null, this).generateTable(deffile, profile.getResource(), diff, folders.dstDir, false, baseName, !diff, prefix, prefix, false, false, null, true, false, getRc()));
   }
 
   private boolean isAggregationEndpoint(String name) {

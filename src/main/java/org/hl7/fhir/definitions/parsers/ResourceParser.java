@@ -413,6 +413,9 @@ public class ResourceParser {
     for (SearchParameterComponentComponent comp : src.getComponent()) {
       sp.getComposites().add(new CompositeDefinition(comp.getDefinition(), comp.getExpression()));
     }
+    for (CodeType target : src.getTarget()) {
+      sp.getManualTargets().add(target.asStringValue());
+    }
   }
 
   private SearchType type(SearchParamType type) {
