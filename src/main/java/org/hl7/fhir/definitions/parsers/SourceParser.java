@@ -1287,6 +1287,9 @@ public class SourceParser {
         definitions.getKnownResources().put(rootNew.getName(), new DefinedCode(rootNew.getName(), rootNew.getRoot().getDefinition(), n));
         context.getResourceNames().add(rootNew.getName());
       }
+      if (f.exists()) { 
+        parseSvgFile(f, rootNew.getLayout(), f.getName());
+      }
       setResourceProps(n, wg, rootNew);
       if (map != null) {
         map.put(rootNew.getName(), rootNew);
