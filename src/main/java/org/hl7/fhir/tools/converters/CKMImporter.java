@@ -76,7 +76,7 @@ public class CKMImporter {
       System.out.println("Fetch "+id);
   		Document sxml = loadXml(ckm+"/services/ArchetypeFinderBean/getArchetypeInXML?archetypeId="+id);
   		Element e = XMLUtil.getFirstChild(sxml.getDocumentElement());
-  		String src = Utilities.path("c:\\temp", id+".xml");
+  		String src = Utilities.path("[tmp]", id+".xml");
   		TextFile.stringToFile(e.getTextContent(), src);
 	  }
 	}

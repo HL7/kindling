@@ -78,7 +78,7 @@ public class CDAGenerator {
   }
 
   public static void main(String[] args) throws Exception {
-    int lp = new CDAGenerator().execute("c:\\temp\\cda", "c:\\temp\\cda\\out");
+    int lp = new CDAGenerator().execute(Utilities.path("tmp]", "cda"), Utilities.path("tmp]", "cda\\out"));
     System.out.println("Done. Longest path = "+Integer.toString(lp));
   }
 
@@ -96,7 +96,7 @@ public class CDAGenerator {
   }
 
   private void generateSchema() throws Exception {
-    XmlSchemaGenerator xsg = new XmlSchemaGenerator("c:\\temp\\cda\\out", null);
+    XmlSchemaGenerator xsg = new XmlSchemaGenerator(Utilities.path("tmp]", "cda\\out"), null);
     xsg.setSingle(true);
     xsg.setLicense("a license text");
     xsg.setGenDate(new SimpleDateFormat().format(new Date()));

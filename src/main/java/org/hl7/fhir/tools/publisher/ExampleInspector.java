@@ -400,7 +400,7 @@ public class ExampleInspector implements IValidatorResourceFetcher, IValidationP
       json.add("@context", jsonLdDefns.get("@context"));
       Gson gson = new GsonBuilder().setPrettyPrinting().create();
       String jcnt = gson.toJson(json);
-//      TextFile.stringToFile(jcnt, "c:\\temp\\jsonld\\"+rt+".jsonld");
+//      TextFile.stringToFile(jcnt, Utilities.path("[tmp]", "jsonld\\"+rt+".jsonld");
       // parse to a model
       Model mj = ModelFactory.createDefaultModel();
       mj.read(new StringReader(jcnt), null, "JSON-LD");
@@ -416,8 +416,8 @@ public class ExampleInspector implements IValidatorResourceFetcher, IValidationP
 //        for (String s : diffs) {
 //          System.out.println("  "+s);
 //        }
-//        RDFDataMgr.write(new FileOutputStream("c:\\temp\\json.nt"), mj, RDFFormat.NTRIPLES_UTF8);
-//        RDFDataMgr.write(new FileOutputStream("c:\\temp\\ttl.nt"), mt, RDFFormat.NTRIPLES_UTF8);
+//        RDFDataMgr.write(new FileOutputStream(Utilities.path("tmp]", "json.nt")), mj, RDFFormat.NTRIPLES_UTF8);
+//        RDFDataMgr.write(new FileOutputStream(Utilities.path("tmp]", "ttl.nt")), mt, RDFFormat.NTRIPLES_UTF8);
 //      }
     }
   }

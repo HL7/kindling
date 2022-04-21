@@ -7,6 +7,7 @@ import org.apache.jena.graph.Triple;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Statement;
 import org.apache.jena.rdf.model.StmtIterator;
+import org.hl7.fhir.utilities.Utilities;
 
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -28,7 +29,7 @@ public class ModelComparer {
         model1 = model;
         name1 = name;
         tl1 = listAllTriples(model1);
-        log(model, "c:\\temp\\triples-" + name + ".txt");
+        log(model, Utilities.path("tmp]", "triples-" + name + ".txt"));
         return this;
     }
 
@@ -54,7 +55,7 @@ public class ModelComparer {
         model2 = model;
         name2 = name;
         tl2 = listAllTriples(model2);
-        log(model, "c:\\temp\\triples-" + name + ".txt");
+        log(model, Utilities.path("tmp]", "triples-" + name + ".txt"));
         return this;
     }
 
