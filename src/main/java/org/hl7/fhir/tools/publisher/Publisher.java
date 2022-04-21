@@ -5563,7 +5563,7 @@ public class Publisher implements URIResolver, SectionNumberer {
 
   private String insertSectionNumbers(String src, SectionTracker st, String link, int level, DocumentHolder doch) throws Exception {
     try {
-      // TextFile.stringToFile(src, "c:\\temp\\text.html");
+      // TextFile.stringToFile(src, Utilities.path("tmp]", "text.html"));
       XhtmlDocument doc = new XhtmlParser().parse(src, "html");
       insertSectionNumbersInNode(doc, st, link, level, new BooleanHolder(), null);
       if (doch != null)
@@ -5571,7 +5571,7 @@ public class Publisher implements URIResolver, SectionNumberer {
       return new XhtmlComposer(XhtmlComposer.HTML).compose(doc);
     } catch (Exception e) {
       System.out.println(e.getMessage());
-      //TextFile.stringToFile(src, "c:\\temp\\dump.html");
+      //TextFile.stringToFile(src, Utilities.path("tmp]", "dump.html"));
       TextFile.stringToFile(src, Utilities.appendSlash(System.getProperty("user.dir")) + "fhir-error-dump.html");
 
       throw new Exception("Exception inserting section numbers in " + link + ": " + e.getMessage(), e);

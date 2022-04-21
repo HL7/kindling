@@ -10649,7 +10649,7 @@ private int countContains(List<ValueSetExpansionContainsComponent> list) {
 
       } else {
         b.append("<tr><td>"+n+"</td>");
-        b.append("<td colspan=\"54\" style=\"background-color: #efefef\">No r2:r3 maps available</td>");
+        b.append("<td colspan=\"54\" style=\"background-color: #efefef\">No r3:r4 maps available</td>");
       }
       b.append("</tr>");
     }
