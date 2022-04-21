@@ -1657,7 +1657,7 @@ public class ProfileGenerator {
 // Had added this in the PR, but don't know why.  Keeping it here commented out in case it helps resolve a subsequent issue
 // (in which case, we can document why it's needed)
 //        } else if (p.getKind() == StructureDefinitionKind.RESOURCE && !path.substring(0, path.length()-3).contains(".")) {
-        } else if (p.getKind() == StructureDefinitionKind.RESOURCE) {
+        } else if (Utilities.charCount(path, '.') < 2) {
           ToolingExtensions.addUrlExtension(tr, ToolingExtensions.EXT_FHIR_TYPE, "id");
         } else {
           ToolingExtensions.addUrlExtension(tr, ToolingExtensions.EXT_FHIR_TYPE, "string");
