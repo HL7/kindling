@@ -237,3 +237,7 @@ notifications/
 .idea/
 # End of https://www.toptal.com/developers/gitignore/api/java,intellij,eclipse,gradle,kotlin
 .DS_Store
+
+fhir-error-dump.html
+
+simple-error.txt
