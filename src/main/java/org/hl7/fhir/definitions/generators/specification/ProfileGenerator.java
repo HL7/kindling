@@ -1548,11 +1548,12 @@ public class ProfileGenerator {
     }
     if (ref.contains("|") && !v.isEmpty()) {
       String refVer = ref.substring(ref.indexOf("|"));
-      if (!refVer.equals(refVer))
+      if (!refVer.equals(v))
         System.out.println("Versioned valueset reference " + ref + " not using expected version of " + v);
       return ref;
+    } else {
+      return ref + v;
     }
-    return ref + v;
   }
 
   /**
