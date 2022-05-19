@@ -410,6 +410,8 @@ public class Publisher implements URIResolver, SectionNumberer {
 
   private static final String HTTP_separator = "/";
 
+  private static final long GB_12 = 12 * 1024 * 1024 * 1024;
+
   private Calendar execTime = Calendar.getInstance();
   private String outputdir;
 
@@ -584,9 +586,11 @@ public class Publisher implements URIResolver, SectionNumberer {
     page.log("Publish FHIR in folder " + folder + " @ " + Config.DATE_FORMAT().format(page.getGenDate().getTime()), LogMessageType.Process);
 
     page.log("Detected Java version: " + System.getProperty("java.version")+" from "+System.getProperty("java.home")+" on "+System.getProperty("os.name")+"/"+System.getProperty("os.arch")+" ("+System.getProperty("sun.arch.data.model")+"bit). "+toMB(Runtime.getRuntime().maxMemory())+"MB available", LogMessageType.Process);
-    
     if (!"64".equals(System.getProperty("sun.arch.data.model"))) {
       page.log("Attention: you should upgrade your Java to a 64bit version in order to be able to run this program without running out of memory", LogMessageType.Process);        
+    }
+    if (Runtime.getRuntime().maxMemory() < GB_12) {
+      page.log("Memory is probably insufficient (<12GB). If the build fails without error, try running again with more memory", LogMessageType.Process);      
     }
     page.log("dir = "+System.getProperty("user.dir")+", path = "+System.getenv("PATH"), LogMessageType.Process);
     String s = "Parameters:";
@@ -3703,7 +3707,7 @@ public class Publisher implements URIResolver, SectionNumberer {
 
     page.log("Copy HTML templates", LogMessageType.Process);
     Utilities.copyDirectory(page.getFolders().rootDir + page.getIni().getStringProperty("html", "source"), page.getFolders().dstDir, page.getHTMLChecker());
-    TextFile.stringToFile("\r\n[FHIR]\r\nFhirVersion=" + page.getVersion() + "-" + page.getBuildId() + "\r\nversion=" + page.getVersion().toCode()
+    TextFile.stringToFile("\r\n[FHIR]\r\nFhirVersion=" + page.getVersion() + "\r\nversion=" + page.getVersion().toCode()
         + "\r\nbuildId=" + page.getBuildId() + "\r\ndate=" + new SimpleDateFormat("yyyyMMddHHmmss").format(page.getGenDate().getTime()),
         Utilities.path(page.getFolders().dstDir, "version.info"), false);
 
