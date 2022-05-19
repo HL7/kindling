@@ -7220,7 +7220,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
   }
   */
 
-  private String getSearch(ResourceDefn resource, String searchAdditions) {
+  private String getSearch(ResourceDefn resource, String searchAdditions) throws Exception {
     if (resource.getSearchParams().size() == 0)
       return "";
     else {
@@ -7242,13 +7242,30 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
         String pp = presentPaths(p.getPaths());
         String sst = (p.getStandardsStatus() == null || p.getStandardsStatus() == st) ? "" : makeStandardsStatusRef(p.getStandardsStatus());
         
+        String md = stripSimplePara(processMarkdown("SearchParameter.description", p.getDescription(), ""));
+        
         b.append("<tr><td><a name=\"sp-").append(p.getCode()).append("\"> </a>").append(p.getCode()).append(sst).append("</td><td><a href=\"search.html#").append(p.getType()).append("\">").append(p.getType()).append("</a></td><td>")
-                .append(Utilities.escapeXml(p.getDescription())).append("</td><td>").append(p.getType() == SearchType.composite ? getCompositeExpression(p) : Utilities.escapeXml(p.getExpression())).append(p.getType() == SearchType.reference ? p.getTargetTypesAsText() : "")
+                .append(md).append("</td><td>").append(p.getType() == SearchType.composite ? getCompositeExpression(p) : Utilities.escapeXml(p.getExpression())).append(p.getType() == SearchType.reference ? p.getTargetTypesAsText() : "")
                 .append("</td><td>").append(presentOthers(p)).append("</td></tr>\r\n");
       }
       b.append(searchAdditions);
       b.append("</table>\r\n");
       return b.toString();
+    }
+  }
+
+  private String stripSimplePara(String md) {
+    String s = md.trim();
+    if (s.startsWith("<p>")) {
+      s = s.substring(3);
+    }
+    if (s.endsWith("</p>")) {
+      s = s.substring(0, s.length() - 4);
+    }
+    if (!s.contains("<")) {
+      return s;
+    } else {
+      return md;
     }
   }
 
