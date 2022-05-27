@@ -224,8 +224,9 @@ public class SchemaGenerator {
 	          enums.append("        <xs:enumeration value=\""+c.getCode()+"\">\r\n");
 	          enums.append("          <xs:annotation>\r\n");
 	          enums.append("            <xs:documentation xml:lang=\"en\">"+Utilities.escapeXml(c.getDefinition())+"</xs:documentation>\r\n");
-	          for (String l : c.getLangs().keySet())
+	          for (String l : c.getLangs().keySet()) {
 	            enums.append("            <xs:documentation xml:lang=\""+l+"\">"+Utilities.escapeXml(c.getLangs().get(l))+"</xs:documentation>\r\n");
+	          }
 	          enums.append("          </xs:annotation>\r\n");
 	          enums.append("        </xs:enumeration>\r\n");
 	        }

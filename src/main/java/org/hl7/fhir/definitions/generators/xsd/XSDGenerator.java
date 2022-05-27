@@ -168,10 +168,12 @@ public class XSDGenerator extends XSDRootGenerator {
 	  CodeSystem cs = workerContext.fetchCodeSystem(cc.getSystem());
 	  if (cs != null && cc.hasCode()) {
 	    ConceptDefinitionComponent c = getCodeDefinition(cc.getCode(), cs.getConcept());
-	    if (c != null)
+	    if (c != null) {
 	      for (ConceptDefinitionDesignationComponent l : c.getDesignation())
-	        if (l.hasLanguage())
+          if (l.hasLanguage() && !(l.getLanguage().equals("en") && l.getValue().equals(cc.getDisplay()))) {
 	          write("          <xs:documentation xml:lang=\""+l.getLanguage()+"\">"+Utilities.escapeXml(l.getValue())+"</xs:documentation>\r\n");
+          }
+	    }
 	  }
 	  write("        </xs:annotation>\r\n");
 	  write("      </xs:enumeration>\r\n");

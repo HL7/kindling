@@ -582,7 +582,7 @@ public class XSDBaseGenerator  extends XSDRootGenerator {
       ConceptDefinitionComponent c = getCodeDefinition(cc.getCode(), cs.getConcept());
       if (c != null && c.hasDesignation()) {
         for (ConceptDefinitionDesignationComponent l : c.getDesignation()) {
-          if (l.hasLanguage()) {
+          if (l.hasLanguage() && !(l.getLanguage().equals("en") && l.getValue().equals(cc.getDisplay()))) {
             write("          <xs:documentation xml:lang=\""+l.getLanguage()+"\">"+Utilities.escapeXml(l.getValue())+"</xs:documentation>\r\n");
           }
         }
