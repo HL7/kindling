@@ -257,7 +257,7 @@ import org.hl7.fhir.utilities.ZipGenerator;
 import org.hl7.fhir.utilities.npm.FilesystemPackageCacheManager;
 import org.hl7.fhir.utilities.npm.PackageGenerator.PackageType;
 import org.hl7.fhir.utilities.npm.ToolsVersion;
-import org.hl7.fhir.utilities.json.JSONUtil;
+import org.hl7.fhir.utilities.json.JsonUtilities;
 import org.hl7.fhir.utilities.validation.ValidationMessage;
 import org.hl7.fhir.utilities.validation.ValidationMessage.IssueSeverity;
 import org.hl7.fhir.utilities.validation.ValidationMessage.IssueType;
@@ -2941,11 +2941,11 @@ public class Publisher implements URIResolver, SectionNumberer {
           }
           if (ok) {
             try {
-              JsonObject jr = JSONUtil.parse(TextFile.fileToString(files[fi]));
+              JsonObject jr = JsonUtilities.parse(TextFile.fileToString(files[fi]));
               if (!jr.has("url")) {
-                JsonObject meta = JSONUtil.forceObject(jr, "meta");
-                JsonArray labels = JSONUtil.forceArray(meta, "tag");
-                JsonObject label = JSONUtil.addObj(labels);
+                JsonObject meta = JsonUtilities.forceObject(jr, "meta");
+                JsonArray labels = JsonUtilities.forceArray(meta, "tag");
+                JsonObject label = JsonUtilities.addObj(labels);
                 label.addProperty("system", "http://terminology.hl7.org/CodeSystem/v3-ActReason");
                 label.addProperty("code", "HTEST");
                 label.addProperty("display", "test health data");

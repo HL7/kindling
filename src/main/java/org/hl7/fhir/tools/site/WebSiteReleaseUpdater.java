@@ -9,7 +9,7 @@ import org.apache.commons.io.FileUtils;
 import org.hl7.fhir.utilities.IniFile;
 import org.hl7.fhir.utilities.TextFile;
 import org.hl7.fhir.utilities.Utilities;
-import org.hl7.fhir.utilities.json.JSONUtil;
+import org.hl7.fhir.utilities.json.JsonUtilities;
 
 import com.google.gson.JsonObject;
 
@@ -33,7 +33,7 @@ public class WebSiteReleaseUpdater {
   }
 
   public void execute(List<String> exempt) throws FileNotFoundException, IOException {
-    System.out.print("v"+JSONUtil.str(ver, "version"));
+    System.out.print("v"+JsonUtilities.str(ver, "version"));
     String statusMsg = generateStatusMessage(exempt);
     updateStatus(new File(dir), statusMsg, exempt, 0);
     System.out.println(" - "+total+" files updated");
@@ -44,16 +44,16 @@ public class WebSiteReleaseUpdater {
   }
 
   private String generateStatusMessage(List<String> exempt) {
-    String version = JSONUtil.str(ver, "version");
-    String sequence = JSONUtil.str(ver, "sequence");
-    String cSeq = JSONUtil.str(currentVer, "sequence");
+    String version = JsonUtilities.str(ver, "version");
+    String sequence = JsonUtilities.str(ver, "sequence");
+    String cSeq = JsonUtilities.str(currentVer, "sequence");
 
     if (exempt != null)
       return "<p id=\"publish-box-current\">This is the current officially released version of FHIR, which is <a href=\"history.html\">"+sequence+
           "</a> (v"+version+"). For a full list of all versions, see the <a href=\"http://hl7.org/fhir/directory.cfml\">Directory of published versions <img src=\"{pd}external.png\" style=\"vertical-align: baseline\"></a>.</p>";
     
-    String desc = JSONUtil.str(ver, "desc");
-    String status = JSONUtil.str(ver, "status");
+    String desc = JsonUtilities.str(ver, "desc");
+    String status = JsonUtilities.str(ver, "status");
     boolean lastInSequence = Utilities.existsInList(status, "trial-use", "normative+trial-use");
     
     if (lastInSequence) {
