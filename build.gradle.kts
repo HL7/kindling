@@ -73,7 +73,7 @@ dependencies {
     implementation("org.eclipse.emf", "org.eclipse.emf.ecore", "2.9.2-v20131212-0545")
     implementation("org.eclipse.emf", "org.eclipse.emf.ecore.xmi", "2.9.1-v20131212-0545")
     implementation("org.eclipse.emf", "org.eclipse.emf.common", "2.9.2-v20131212-0545")
-    implementation("org.apache.poi", "poi", "4.0.1")
+    implementation("org.apache.poi", "poi", "4.1.1")
     implementation("org.apache.poi", "poi-ooxml", "4.0.1")
     implementation("org.apache.poi", "poi-ooxml-schemas", "4.0.1")
     implementation("org.apache.xmlbeans", "xmlbeans", "3.1.0")
