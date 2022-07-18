@@ -2911,7 +2911,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
   private String conceptmaplist(String id, String level) throws FHIRException {
     List<ConceptMap> cmaps = new ArrayList<ConceptMap>();
     for (ConceptMap cm : conceptMaps.getList()) {
-      if (getCMRef(cm.getSource()).equals(id) || getCMRef(cm.getTarget()).equals(id))
+      if (getCMRef(cm.getSourceScope()).equals(id) || getCMRef(cm.getTargetScope()).equals(id))
         cmaps.add(cm);
     }
     if (cmaps.size() == 0)
@@ -2929,12 +2929,12 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
       b.append("<table class=\"grid\">\r\n");
       for (ConceptMap cm : cmaps) {
         b.append(" <tr><td>");
-        if (cm.getSourceCanonicalType().getValue().equals(id)) {
-          b.append("to <a href=\"").append(getValueSetRef(prefix, cm.getTargetCanonicalType().getValue())).append("\">")
-                  .append(describeValueSetByRef(cm.getTarget()));
+        if (cm.getSourceScopeCanonicalType().getValue().equals(id)) {
+          b.append("to <a href=\"").append(getValueSetRef(prefix, cm.getTargetScopeCanonicalType().getValue())).append("\">")
+                  .append(describeValueSetByRef(cm.getTargetScope()));
         } else {
-          b.append("from <a href=\"").append(getValueSetRef(prefix, cm.getSourceCanonicalType().getValue())).append("\">")
-                  .append(describeValueSetByRef(cm.getSource()));
+          b.append("from <a href=\"").append(getValueSetRef(prefix, cm.getSourceScopeCanonicalType().getValue())).append("\">")
+                  .append(describeValueSetByRef(cm.getSourceScope()));
         }
         b.append("</a></td><td><a href=\"").append(prefix).append(cm.getUserData("path")).append("\">").append(cm.getName())
                 .append("</a></td><td><a href=\"").append(prefix).append(Utilities.changeFileExt((String) cm.getUserData("path"), ".xml.html"))
@@ -2946,10 +2946,13 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
   }
 
   private String getCMRef(DataType target) {
-    return target.primitiveValue();
+    return target == null ? "??" : target.primitiveValue();
   }
 
   private String getValueSetRef(String prefix, String ref) {
+    if (ref == null) {
+      return "??";
+    }
     ValueSet vs = definitions.getValuesets().get(ref);
     if (vs == null) {
       if (ref.equals("http://snomed.info/id"))
@@ -2962,6 +2965,9 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
 
   private String describeValueSetByRef(DataType reft) {
     String ref = reft.primitiveValue();
+    if (ref == null) {
+      return "??";
+    }
     ValueSet vs = definitions.getValuesets().get(ref);
     if (vs == null) {
       if (ref.equals("http://snomed.info/id"))
@@ -3542,17 +3548,17 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
 
     for (ConceptMap cm : getConceptMaps().getList()) {
       String p = cm.getUserString("path");
-      if (cm.hasSourceUriType() && cm.getSourceUriType().equals(vs.getUrl())) {
+      if (cm.hasSourceScopeUriType() && cm.getSourceScopeUriType().equals(vs.getUrl())) {
         addItem(items, "<li>ConceptMap: Translation source in <a href=\""+(Utilities.isAbsoluteUrl(p) ? "" : prefix)+p+"\">"+cm.present()+"</a> "+"</li>\r\n");
-      } else if (cm.hasSourceCanonicalType() && (cm.getSourceCanonicalType().getValue().equals(vs.getUrl()) || vs.getUrl().endsWith("/"+cm.getSourceCanonicalType().getValue()))) {
+      } else if (cm.hasSourceScopeCanonicalType() && (cm.getSourceScopeCanonicalType().getValue().equals(vs.getUrl()) || vs.getUrl().endsWith("/"+cm.getSourceScopeCanonicalType().getValue()))) {
         addItem(items, "<li>ConceptMap: Translation source in <a href=\""+(Utilities.isAbsoluteUrl(p) ? "" : prefix)+p+"\">"+cm.getName()+"</a> "+"</li>\r\n");
       }
     }
     for (ConceptMap cm : getConceptMaps().getList()) {
       String p = cm.getUserString("path");
-      if (cm.hasTargetUriType() && cm.getTargetUriType().equals(vs.getUrl())) {
+      if (cm.hasTargetScopeUriType() && cm.getTargetScopeUriType().equals(vs.getUrl())) {
         addItem(items, "<li>ConceptMap: Translation target in <a href=\""+(Utilities.isAbsoluteUrl(p) ? "" : prefix)+p+"\">"+cm.present()+"</a> "+"</li>\r\n");
-      } else if (cm.hasTargetCanonicalType() && (cm.getTargetCanonicalType().getValue().equals(vs.getUrl()) || vs.getUrl().endsWith("/"+cm.getTargetCanonicalType().getValue()))) {
+      } else if (cm.hasTargetScopeCanonicalType() && (cm.getTargetScopeCanonicalType().getValue().equals(vs.getUrl()) || vs.getUrl().endsWith("/"+cm.getTargetScopeCanonicalType().getValue()))) {
         addItem(items, "<li>ConceptMap: Translation target ConceptMap <a href=\""+(Utilities.isAbsoluteUrl(p) ? "" : prefix)+p+"\">"+cm.getName()+"</a> "+"</li>\r\n");
       }
     }
@@ -4563,8 +4569,8 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
         urls.add(ae.getUrl());
         ConceptMap cm = ae;
         s.append(" <tr><td><a href=\"").append(ae.getUserData("path")).append("\">").append(cm.getName()).append("</a></td>")
-                .append("<td><a href=\"").append(getValueSetRef("", cm.hasSourceCanonicalType() ? (cm.getSourceCanonicalType()).getValue() : cm.getSourceUriType().asStringValue())).append("\">").append(describeValueSetByRef(cm.getSource())).append("</a></td>")
-                .append("<td><a href=\"").append(getValueSetRef("", cm.hasTargetCanonicalType() ? (cm.getTargetCanonicalType()).getValue() : cm.getTargetUriType().asStringValue())).append("\">").append(describeValueSetByRef(cm.getTarget())).append("</a></td></tr>\r\n");
+                .append("<td><a href=\"").append(getValueSetRef("", cm.hasSourceScopeCanonicalType() ? (cm.getSourceScopeCanonicalType()).getValue() : cm.getSourceScopeUriType().asStringValue())).append("\">").append(describeValueSetByRef(cm.getSourceScope())).append("</a></td>")
+                .append("<td><a href=\"").append(getValueSetRef("", cm.hasTargetScopeCanonicalType() ? (cm.getTargetScopeCanonicalType()).getValue() : cm.getTargetScopeUriType().asStringValue())).append("\">").append(describeValueSetByRef(cm.getTargetScope())).append("</a></td></tr>\r\n");
       }
     }
     s.append("</table>\r\n");
@@ -6627,7 +6633,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
       if (p.length < 2)
         throw new FHIRException("Unable to parse map details '"+src+"'");
       if (":default".equals(p[0].trim())) {
-        grp.getUnmapped().setMode(Enumerations.ConceptMapGroupUnmappedMode.FIXED);
+        grp.getUnmapped().setMode(ConceptMap.ConceptMapGroupUnmappedMode.FIXED);
         grp.getUnmapped().setCode(p[1].trim());
       } else {
         grp.addElement().setCode(p[0].trim()).addTarget().setRelationship(ConceptMapRelationship.EQUIVALENT).setCode(p[1].trim());

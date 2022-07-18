@@ -6,7 +6,7 @@ plugins {
 }
 
 group = "org.hl7.fhir"
-version = "1.0.10-SNAPSHOT"
+version = "1.0.11-SNAPSHOT"
 
 java {
     withJavadocJar()
@@ -41,6 +41,7 @@ dependencies {
     implementation("ca.uhn.hapi.fhir", "org.hl7.fhir.dstu2016may", property("fhirCoreVersion").toString())
     implementation("ca.uhn.hapi.fhir", "org.hl7.fhir.dstu3", property("fhirCoreVersion").toString())
     implementation("ca.uhn.hapi.fhir", "org.hl7.fhir.r4", property("fhirCoreVersion").toString())
+    implementation("ca.uhn.hapi.fhir", "org.hl7.fhir.r4b", property("fhirCoreVersion").toString())
     implementation("ca.uhn.hapi.fhir", "org.hl7.fhir.r5", property("fhirCoreVersion").toString())
     implementation("ca.uhn.hapi.fhir", "org.hl7.fhir.convertors", property("fhirCoreVersion").toString())
     implementation("ca.uhn.hapi.fhir", "org.hl7.fhir.validation", property("fhirCoreVersion").toString())

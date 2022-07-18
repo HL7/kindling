@@ -1090,9 +1090,9 @@ public class OldSpreadsheetParser {
     if ("normal".equals(s))
       return SearchParameter.XPathUsageType.NORMAL;
     if ("nearby".equals(s))
-      return SearchParameter.XPathUsageType.NEARBY;
+      return SearchParameter.XPathUsageType.OTHER;
     if ("distance".equals(s))
-      return SearchParameter.XPathUsageType.DISTANCE;
+      return SearchParameter.XPathUsageType.OTHER;
     if ("phonetic".equals(s))
       return SearchParameter.XPathUsageType.PHONETIC;
 //    if ("external".equals(s))
