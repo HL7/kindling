@@ -191,16 +191,8 @@ import org.hl7.fhir.r5.utils.TypesUtilities;
 import org.hl7.fhir.r5.utils.TypesUtilities.TypeClassification;
 import org.hl7.fhir.r5.utils.TypesUtilities.WildcardInformation;
 import org.hl7.fhir.tools.converters.MarkDownPreProcessor;
-import org.hl7.fhir.utilities.CSFile;
-import org.hl7.fhir.utilities.CSFileInputStream;
-import org.hl7.fhir.utilities.CommaSeparatedStringBuilder;
-import org.hl7.fhir.utilities.IniFile;
-import org.hl7.fhir.utilities.Logger;
-import org.hl7.fhir.utilities.MarkDownProcessor;
+import org.hl7.fhir.utilities.*;
 import org.hl7.fhir.utilities.MarkDownProcessor.Dialect;
-import org.hl7.fhir.utilities.StandardsStatus;
-import org.hl7.fhir.utilities.TextFile;
-import org.hl7.fhir.utilities.Utilities;
 import org.hl7.fhir.utilities.npm.FilesystemPackageCacheManager;
 import org.hl7.fhir.utilities.npm.NpmPackage;
 import org.hl7.fhir.utilities.npm.ToolsVersion;
@@ -9167,7 +9159,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     workerContext.setVersion(version.toCode());
     htmlchecker.setVersion(version);
     uml.setVersion(version.toCode());
-    if (version.isR4B() && baseURL.equals("http://build.fhir.org/")) {
+    if (VersionUtilities.isR4BVer(version.toCode()) && baseURL.equals("http://build.fhir.org/")) {
       setBaseURL("http://build.fhir.org/branches/R4B/");
     }
   }
@@ -10878,7 +10870,7 @@ private int countContains(List<ValueSetExpansionContainsComponent> list) {
   }
 
   private String pidRoot() {
-    return version.isR4B() ? "hl7.fhir.r4b" : "hl7.fhir.r5";
+    return VersionUtilities.isR4BVer(version.toCode()) ? "hl7.fhir.r4b" : "hl7.fhir.r5";
   }
 
 

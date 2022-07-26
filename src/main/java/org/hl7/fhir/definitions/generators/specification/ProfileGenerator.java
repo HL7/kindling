@@ -195,7 +195,7 @@ public class ProfileGenerator {
     if (uml != null) {
       if (!uml.hasPackage("core")) {
         this.uml = uml.getPackage("core");
-        if (version.isR4B()) {
+        if (VersionUtilities.isR4BVer(version.toCode())) {
           this.uml.getTypes().put("Type", new UMLClass("Type", UMLClassType.Class));
           this.uml.getTypes().put("PrimitiveType", new UMLClass("PrimitiveType", UMLClassType.Class));
         } else {

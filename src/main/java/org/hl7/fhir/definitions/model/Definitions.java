@@ -54,6 +54,7 @@ import org.hl7.fhir.r5.model.ValueSet;
 import org.hl7.fhir.r5.model.Enumerations.FHIRVersion;
 import org.hl7.fhir.r5.utils.FHIRPathEngine;
 import org.hl7.fhir.utilities.Utilities;
+import org.hl7.fhir.utilities.VersionUtilities;
 
 /**
  * This class is the root to all the definitions in FHIR. There are the
@@ -866,7 +867,7 @@ public class Definitions {
   }
 
   public String getElementLink() {
-    if (version.isR4B()) {
+    if (VersionUtilities.isR4BVer(version.toCode())) {
       return "element.html";
     } else {
       return "types.html#Element";
@@ -874,7 +875,7 @@ public class Definitions {
   }
 
   public String getBackboneLink() {
-    if (version.isR4B()) {
+    if (VersionUtilities.isR4BVer(version.toCode())) {
       return "backboneelement.html";
     } else {
       return "types.html#BackBoneElement";
@@ -882,7 +883,7 @@ public class Definitions {
   }
 
   public String getBaseLink() {
-    if (version.isR4B()) {
+    if (VersionUtilities.isR4BVer(version.toCode())) {
       return "element.html";
     } else {
       return "types.html#Base";
@@ -890,7 +891,7 @@ public class Definitions {
   }
 
   public String getElementExtrasLink() {
-    if (version.isR4B()) {
+    if (VersionUtilities.isR4BVer(version.toCode())) {
       return "element-extras.html";
     } else {
       return "types-extras.html#Element";

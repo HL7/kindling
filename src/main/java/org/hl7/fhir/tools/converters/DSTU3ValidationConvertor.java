@@ -11,6 +11,7 @@ import org.hl7.fhir.dstu3.formats.IParser.OutputStyle;
 import org.hl7.fhir.r5.formats.XmlParser;
 import org.hl7.fhir.r5.model.Bundle;
 import org.hl7.fhir.r5.model.Enumerations.FHIRVersion;
+import org.hl7.fhir.utilities.VersionUtilities;
 
 public class DSTU3ValidationConvertor {
 
@@ -25,7 +26,7 @@ public class DSTU3ValidationConvertor {
     
     try {
       org.hl7.fhir.dstu3.model.Bundle target = null;      
-      if (version.isR4B()) {
+      if (VersionUtilities.isR4BVer(version.toCode())) {
         org.hl7.fhir.r4.model.Bundle source = (org.hl7.fhir.r4.model.Bundle) new org.hl7.fhir.r4.formats.XmlParser().parse(new FileInputStream(bundleSource));
         target = (org.hl7.fhir.dstu3.model.Bundle) VersionConvertorFactory_30_40.convertResource(source);
         
@@ -45,7 +46,7 @@ public class DSTU3ValidationConvertor {
     
     try {
       org.hl7.fhir.dstu3.model.Bundle target = null;      
-      if (version.isR4B()) {
+      if (VersionUtilities.isR4BVer(version.toCode())) {
         org.hl7.fhir.r4.model.Bundle source = (org.hl7.fhir.r4.model.Bundle) new org.hl7.fhir.r4.formats.XmlParser().parse(new FileInputStream(bundleSource));
         target = (org.hl7.fhir.dstu3.model.Bundle) VersionConvertorFactory_30_40.convertResource(source);
         

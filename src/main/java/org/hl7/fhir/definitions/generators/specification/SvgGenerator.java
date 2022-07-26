@@ -25,6 +25,7 @@ import org.hl7.fhir.tools.publisher.PageProcessor;
 import org.hl7.fhir.utilities.IniFile;
 import org.hl7.fhir.utilities.StandardsStatus;
 import org.hl7.fhir.utilities.Utilities;
+import org.hl7.fhir.utilities.VersionUtilities;
 import org.hl7.fhir.utilities.xml.XMLWriter;
 
 public class SvgGenerator extends BaseGenerator {
@@ -751,7 +752,7 @@ public class SvgGenerator extends BaseGenerator {
           if (cd instanceof DefinedStringPattern) {
             links.add(new Link(classes.get(fakes.get(((DefinedStringPattern) cd).getBase())), drawClass(xml, fake, false, null, true, null, cd, StandardsStatus.NORMATIVE), LinkType.SPECIALIZATION, null, null, PointKind.unknown, null, null));        
           } else {
-            ClassItem parent = classes.get(definitions.getElementDefn(version.isR4B() ? "Element" : "PrimitiveType"));
+            ClassItem parent = classes.get(definitions.getElementDefn(VersionUtilities.isR4BVer(version.toCode()) ? "Element" : "PrimitiveType"));
             if (parent == null) {
               drawClass(xml, fake, false, null, true, null, cd, StandardsStatus.NORMATIVE); 
             } else {
@@ -761,7 +762,7 @@ public class SvgGenerator extends BaseGenerator {
         } else if ("xhtml".equals(cn)) {
           DefinedCode cd = new DefinedCode("xhtml", "XHTML for resource narrative", null);
           ElementDefn fake = fakes.get(cn);
-          ClassItem parent = classes.get(definitions.getElementDefn(version.isR4B() ? "Element" :"DataType"));
+          ClassItem parent = classes.get(definitions.getElementDefn(VersionUtilities.isR4BVer(version.toCode()) ? "Element" :"DataType"));
           if (parent == null) {
             drawClass(xml, fake, false, null, true, null, cd, StandardsStatus.NORMATIVE);
           } else {
@@ -1011,7 +1012,7 @@ public class SvgGenerator extends BaseGenerator {
           allPrimitive = false;
         }
       }
-      if (version.isR4B()) {
+      if (VersionUtilities.isR4BVer(version.toCode())) {
         return "Element";
       } if (allPrimitive) {
         return "PrimitiveType";

@@ -67,6 +67,7 @@ import org.hl7.fhir.tools.publisher.PageProcessor;
 import org.hl7.fhir.utilities.CommaSeparatedStringBuilder;
 import org.hl7.fhir.utilities.StandardsStatus;
 import org.hl7.fhir.utilities.Utilities;
+import org.hl7.fhir.utilities.VersionUtilities;
 
 public class DictHTMLGenerator  extends OutputStreamWriter {
 
@@ -547,7 +548,7 @@ public class DictHTMLGenerator  extends OutputStreamWriter {
 	}
 	
 	private boolean isR5() {
-    return !page.getVersion().isR4B();
+    return !VersionUtilities.isR4BVer(page.getVersion().toCode());
   }
 
   private String patternAnalysis(ElementDefn e) {
