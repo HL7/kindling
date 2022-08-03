@@ -16,6 +16,7 @@ import org.hl7.fhir.utilities.TextFile;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
+import org.hl7.fhir.utilities.VersionUtilities;
 
 public class JsonLDDefinitionsGenerator {
 
@@ -39,7 +40,7 @@ public class JsonLDDefinitionsGenerator {
 	  addProperty(context, "value", "fhir:value", "xsd:string");
     addProperty(context, "decimal", "fhir:value", "xsd:decimal");
     addProperty(context, "integer", "fhir:value", "xsd:integer");
-    if (!version.isR4B()) {
+    if (!VersionUtilities.isR4BVer(version.toCode())) {
       addProperty(context, "integer64", "fhir:value", "xsd:string");
     }
     addProperty(context, "boolean", "fhir:value", "xsd:boolean");

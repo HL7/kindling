@@ -242,18 +242,8 @@ import org.hl7.fhir.tools.converters.CDAGenerator;
 import org.hl7.fhir.tools.converters.DSTU3ValidationConvertor;
 import org.hl7.fhir.tools.converters.SpecNPMPackageGenerator;
 import org.hl7.fhir.tools.publisher.ExampleInspector.EValidationFailed;
-import org.hl7.fhir.utilities.CSFile;
-import org.hl7.fhir.utilities.CSFileInputStream;
-import org.hl7.fhir.utilities.CloseProtectedZipInputStream;
-import org.hl7.fhir.utilities.CommaSeparatedStringBuilder;
-import org.hl7.fhir.utilities.IniFile;
+import org.hl7.fhir.utilities.*;
 import org.hl7.fhir.utilities.Logger.LogMessageType;
-import org.hl7.fhir.utilities.NDJsonWriter;
-import org.hl7.fhir.utilities.SIDUtilities;
-import org.hl7.fhir.utilities.TextFile;
-import org.hl7.fhir.utilities.Utilities;
-import org.hl7.fhir.utilities.XsltUtilities;
-import org.hl7.fhir.utilities.ZipGenerator;
 import org.hl7.fhir.utilities.npm.FilesystemPackageCacheManager;
 import org.hl7.fhir.utilities.npm.PackageGenerator.PackageType;
 import org.hl7.fhir.utilities.npm.ToolsVersion;
@@ -1564,7 +1554,7 @@ public class Publisher implements URIResolver, SectionNumberer {
   }
 
   void serializeResource(Resource r, String baseFileName, String description, String pageType, String crumbTitle, WorkGroup wg, boolean showCanonical, boolean showTtl, boolean canonicalTtlOnly) throws Exception {
-    if (page.getVersion().isR4B()) {
+    if (VersionUtilities.isR4BVer(page.getVersion().toCode())) {
       org.hl7.fhir.r4.model.Resource r2 = VersionConvertorFactory_40_50.convertResource(r);
       org.hl7.fhir.r4.formats.IParser xml = new org.hl7.fhir.r4.formats.XmlParser().setOutputStyle(org.hl7.fhir.r4.formats.IParser.OutputStyle.PRETTY);
       xml.compose(new FileOutputStream(Utilities.path(page.getFolders().dstDir, baseFileName + ".xml")), r2);
@@ -2978,7 +2968,7 @@ public class Publisher implements URIResolver, SectionNumberer {
   }
 
   private String pidRoot() {
-    return page.getVersion().isR4B() ? "hl7.fhir.r4b" : "hl7.fhir.r5";
+    return VersionUtilities.isR4BVer(page.getVersion().toCode()) ? "hl7.fhir.r4b" : "hl7.fhir.r5";
   }
 
 
@@ -3760,7 +3750,7 @@ public class Publisher implements URIResolver, SectionNumberer {
 
   private String resource2Json(Resource r) throws Exception {
     ByteArrayOutputStream bytes = new ByteArrayOutputStream();
-    if (page.getVersion().isR4B()) {
+    if (VersionUtilities.isR4BVer(page.getVersion().toCode())) {
       org.hl7.fhir.r4.formats.IParser json = new org.hl7.fhir.r4.formats.JsonParser().setOutputStyle(org.hl7.fhir.r4.formats.IParser.OutputStyle.PRETTY);
       json.setSuppressXhtml("Snipped for Brevity");
       json.compose(bytes, VersionConvertorFactory_40_50.convertResource(r));      
@@ -3775,7 +3765,7 @@ public class Publisher implements URIResolver, SectionNumberer {
 
   private String resource2Ttl(Resource r) throws Exception {
     ByteArrayOutputStream bytes = new ByteArrayOutputStream();
-    if (page.getVersion().isR4B()) {
+    if (VersionUtilities.isR4BVer(page.getVersion().toCode())) {
       org.hl7.fhir.r4.formats.IParser rdf = new org.hl7.fhir.r4.formats.RdfParser().setOutputStyle(org.hl7.fhir.r4.formats.IParser.OutputStyle.PRETTY);
       rdf.setSuppressXhtml("Snipped for Brevity");
       rdf.compose(bytes, VersionConvertorFactory_40_50.convertResource(r));
@@ -4408,7 +4398,7 @@ public class Publisher implements URIResolver, SectionNumberer {
           wantSave = true;
         }
         if (wantSave) {
-          if (page.getVersion().isR4B()) {
+          if (VersionUtilities.isR4BVer(page.getVersion().toCode())) {
             org.hl7.fhir.r4.model.Resource r4 = new org.hl7.fhir.r4.formats.XmlParser().parse(new FileInputStream(file));
             new org.hl7.fhir.r4.formats.XmlParser().setOutputStyle(org.hl7.fhir.r4.formats.IParser.OutputStyle.PRETTY).compose(new FileOutputStream(file), r4);
           } else {
@@ -4498,7 +4488,7 @@ public class Publisher implements URIResolver, SectionNumberer {
         addToResourceFeed(vs, valueSetsFeed, file.getName());
         page.getDefinitions().getValuesets().see(vs, page.packageInfo());
       } catch (Exception ex) {
-        if (page.getVersion().isR4B()) {
+        if (VersionUtilities.isR4BVer(page.getVersion().toCode())) {
           System.out.println("Value set "+file.getAbsolutePath()+" couldn't be parsed - ignoring! msg = "+ex.getMessage());
         } else {
           throw new FHIRException("Unable to parse "+file.getAbsolutePath()+": "+ex.getMessage(), ex);             
@@ -4560,7 +4550,7 @@ public class Publisher implements URIResolver, SectionNumberer {
     } catch (Exception ex) {
       // If it's not a resource, that's fine
     }
-    if (r != null && page.getVersion().isR4B()) {
+    if (r != null && VersionUtilities.isR4BVer(page.getVersion().toCode())) {
       org.hl7.fhir.r4.model.Resource r2 = VersionConvertorFactory_40_50.convertResource(r);
       org.hl7.fhir.r4.formats.IParser xml = new org.hl7.fhir.r4.formats.XmlParser().setOutputStyle(org.hl7.fhir.r4.formats.IParser.OutputStyle.PRETTY);
       xml.compose(new FileOutputStream(Utilities.path(page.getFolders().dstDir, prefix + n + ".xml")), r2);
@@ -4664,7 +4654,7 @@ public class Publisher implements URIResolver, SectionNumberer {
   }
 
   public Resource loadExample(CSFile file) throws IOException, FileNotFoundException {
-    if (page.getVersion().isR4B()) {
+    if (VersionUtilities.isR4BVer(page.getVersion().toCode())) {
       org.hl7.fhir.r4.model.Resource res = new org.hl7.fhir.r4.formats.XmlParser().parse(new FileInputStream(file));
       return VersionConvertorFactory_40_50.convertResource(res);
     } else {

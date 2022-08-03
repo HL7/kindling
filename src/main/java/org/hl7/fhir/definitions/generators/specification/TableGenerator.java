@@ -16,6 +16,7 @@ import org.hl7.fhir.r5.model.ValueSet;
 import org.hl7.fhir.tools.publisher.PageProcessor;
 import org.hl7.fhir.utilities.StandardsStatus;
 import org.hl7.fhir.utilities.Utilities;
+import org.hl7.fhir.utilities.VersionUtilities;
 import org.hl7.fhir.utilities.xhtml.HierarchicalTableGenerator;
 import org.hl7.fhir.utilities.xhtml.HierarchicalTableGenerator.Cell;
 import org.hl7.fhir.utilities.xhtml.HierarchicalTableGenerator.Row;
@@ -68,9 +69,9 @@ public class TableGenerator extends BaseGenerator {
       gc.addStyledText("This element has or is affected by some invariants", "I", null, null, prefix+"conformance-rules.html#constraints", false);
     }
     if (isInterface) {
-      gc.addStyledText("This is an interface resource", "«I»", null, null, page.getVersion().isR4B() ? null : prefix+"uml.html#interface", false);
+      gc.addStyledText("This is an interface resource", "«I»", null, null, VersionUtilities.isR4BVer(page.getVersion().toCode()) ? null : prefix+"uml.html#interface", false);
     } else if (isAbstract) {
-      gc.addStyledText("This is an abstract type", "«A»", null, null, page.getVersion().isR4B() ? null : prefix+"uml.html#abstract", false);
+      gc.addStyledText("This is an abstract type", "«A»", null, null, VersionUtilities.isR4BVer(page.getVersion().toCode()) ? null : prefix+"uml.html#abstract", false);
     }
     if (rootStatus != null)
       gc.addStyledText("Standards Status = "+rootStatus.toDisplay(), rootStatus.getAbbrev(), "black", rootStatus.getColor(), prefix+"versions.html#std-process", true);
@@ -98,7 +99,7 @@ public class TableGenerator extends BaseGenerator {
         else if (e.getName().equals("Type"))
           row.getCells().add(gen.new Cell(null, null, "", null, null)); 
         else if (e.getName().equals("Element")) {
-          if (version.isR4B()) {
+          if (VersionUtilities.isR4BVer(page.getVersion().toCode())) {
             row.getCells().add(gen.new Cell(null, prefix+definitions.getElementLink(), "Element", null, null));
           } else {
             row.getCells().add(gen.new Cell(null, prefix+definitions.getBaseLink(), "Base", null, null));            
