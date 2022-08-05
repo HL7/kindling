@@ -657,7 +657,7 @@ public class Publisher implements URIResolver, SectionNumberer {
       }
       if (isGenerate && page.getBuildId() == null)
         page.setBuildId(getGitBuildId());
-      page.log("Version " + page.getVersion() + "-" + page.getBuildId(), LogMessageType.Hint);
+      page.log("Version " + page.getVersion().toCode() + "-" + page.getBuildId(), LogMessageType.Hint);
       Utilities.createDirectory(page.getFolders().dstDir);
       Utilities.deleteTempFiles();
 
@@ -3697,7 +3697,7 @@ public class Publisher implements URIResolver, SectionNumberer {
 
     page.log("Copy HTML templates", LogMessageType.Process);
     Utilities.copyDirectory(page.getFolders().rootDir + page.getIni().getStringProperty("html", "source"), page.getFolders().dstDir, page.getHTMLChecker());
-    TextFile.stringToFile("\r\n[FHIR]\r\nFhirVersion=" + page.getVersion() + "\r\nversion=" + page.getVersion().toCode()
+    TextFile.stringToFile("\r\n[FHIR]\r\nFhirVersion=" + page.getVersion().toCode() + "\r\nversion=" + page.getVersion().toCode()
         + "\r\nbuildId=" + page.getBuildId() + "\r\ndate=" + new SimpleDateFormat("yyyyMMddHHmmss").format(page.getGenDate().getTime()),
         Utilities.path(page.getFolders().dstDir, "version.info"), false);
 
