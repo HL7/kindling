@@ -1692,7 +1692,7 @@ public class ProfileGenerator {
             }
           } else if (t.isWildcardType()) {
             // this list is filled out manually because it may be running before the types referred to have been loaded
-            for (String n : TypesUtilities.wildcardTypes(version.toString())) 
+            for (String n : TypesUtilities.wildcardTypes(version.toCode()))
               expandedTypes.add(new TypeRef(n));
 
           } else if (!t.getName().startsWith("=")) {
@@ -2268,7 +2268,7 @@ public class ProfileGenerator {
           }
         }
       } else if (t.isWildcardType()) {
-        for (String n : TypesUtilities.wildcardTypes(version.toString())) 
+        for (String n : TypesUtilities.wildcardTypes(version.toCode()))
           dst.getType(n);
       } else {
         if (definitions != null && definitions.getConstraints().containsKey(t.getName())) {
