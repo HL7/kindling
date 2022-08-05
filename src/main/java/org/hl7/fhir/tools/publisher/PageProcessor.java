@@ -959,7 +959,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
       else if (com[0].equals("jsonldname"))
         src = s1+makeJsonld(name)+s3;
       else if (com[0].equals("version"))
-        src = s1+version+s3;
+        src = s1+version.toCode()+s3;
       else if (com[0].equals("gendate"))
         src = s1+Config.DATE_FORMAT().format(new Date())+s3;
       else if (com[0].equals("maindiv"))
@@ -9604,7 +9604,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
       else if (com[0].equals("prettyname"))
         src = s1+makePretty(pack.getId())+s3;
       else if (com[0].equals("version"))
-        src = s1+version+s3;
+        src = s1+version.toCode()+s3;
       else if (com[0].equals("gendate"))
         src = s1+Config.DATE_FORMAT().format(new Date())+s3;
       else if (com[0].equals("maindiv"))
