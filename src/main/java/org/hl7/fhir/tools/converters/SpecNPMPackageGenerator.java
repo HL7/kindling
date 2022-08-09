@@ -78,7 +78,7 @@ public class SpecNPMPackageGenerator {
     Map<String, byte[]> files = loadZip(new FileInputStream(Utilities.path(folder, "igpack.zip")));
     FHIRVersion version = determineVersion(files);    
     
-    System.out.println(" .. Loading v"+version);
+    System.out.println(" .. Loading v"+version.toCode());
     SpecMapManager spm = new SpecMapManager(files.get("spec.internals"), version.toCode());    
     System.out.println(" .. Conformance Resources");
     List<ResourceEntry> reslist = makeResourceList(files, version.toCode());
