@@ -99,7 +99,7 @@ public class TableGenerator extends BaseGenerator {
         else if (e.getName().equals("Type"))
           row.getCells().add(gen.new Cell(null, null, "", null, null)); 
         else if (e.getName().equals("Element")) {
-          if (VersionUtilities.isR4BVer(page.getVersion().toCode())) {
+          if (VersionUtilities.isR4BVer(version.toCode())) {
             row.getCells().add(gen.new Cell(null, prefix+definitions.getElementLink(), "Element", null, null));
           } else {
             row.getCells().add(gen.new Cell(null, prefix+definitions.getBaseLink(), "Base", null, null));            
