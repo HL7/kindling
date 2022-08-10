@@ -87,8 +87,12 @@ public class TableGenerator extends BaseGenerator {
         row.getCells().add(gen.new Cell(null, prefix+"structuredefinition.html#logical", e.typeCode(), null, null)); 
       else if ("Base".equals(e.typeCode()))
         row.getCells().add(gen.new Cell(null, prefix+definitions.getSrcFile("Base")+".html#"+e.typeCode(), e.typeCode(), null, null)); 
-      else
-        row.getCells().add(gen.new Cell(null, prefix+e.typeCode().toLowerCase()+".html", e.typeCode(), null, null)); 
+      else if (Utilities.existsInList(e.typeCode(), definitions.getInterfaceNames())) {
+        Cell c = gen.new Cell(null, prefix+"domainresource.html", "DomainResource", null, null);
+        row.getCells().add(c);
+      } else {
+        row.getCells().add(gen.new Cell(null, prefix+e.typeCode().toLowerCase()+".html", e.typeCode(), null, null));
+      }
       // todo: base elements
     } else {
       if (!e.getElements().isEmpty()) {
@@ -196,11 +200,14 @@ public class TableGenerator extends BaseGenerator {
         cc.getPieces().add(gen.new Piece(null, "This repeating element order: "+e.getOrderMeaning(), null));
       }
     }
+    cc.getPieces().add(gen.new Piece("br"));
     if (isRoot && !Utilities.noString(e.typeCode()) && !"Logical".equals(e.typeCode())) {
       List<ElementDefn> ancestors = new ArrayList<ElementDefn>();
       ElementDefn f = definitions.getElementDefn(e.typeCode());
       while (f != null) {
-        ancestors.add(0, f);
+        if (!Utilities.existsInList(f.getName(), definitions.getInterfaceNames())) {
+          ancestors.add(0, f);
+        }
         f = Utilities.noString(f.typeCode()) || "Logical".equals(f.typeCode()) ? null : definitions.getElementDefn(f.typeCode());
       }
       
@@ -215,7 +222,28 @@ public class TableGenerator extends BaseGenerator {
             cc.getPieces().add(gen.new Piece(null, ", ", null));
           cc.getPieces().add(gen.new Piece(definitions.getSrcFile(fi.getName())+".html#"+fi.getName(), fc.getName(), fc.getDefinition()));
         }
+      }      
+    }
+    if (isRoot && !Utilities.noString(e.typeCode()) && Utilities.existsInList(e.typeCode(), definitions.getInterfaceNames())) {
+      List<ElementDefn> ancestors = new ArrayList<ElementDefn>();
+      ElementDefn f = definitions.getElementDefn(e.typeCode());
+      while (f != null) {
+        if (Utilities.existsInList(f.getName(), definitions.getInterfaceNames())) {
+          ancestors.add(0, f);
+        }
+        f = Utilities.noString(f.typeCode()) || "Logical".equals(f.typeCode()) ? null : definitions.getElementDefn(f.typeCode());
       }
+      
+      cc.getPieces().add(gen.new Piece("br"));
+      cc.getPieces().add(gen.new Piece(null, "Interfaces Implemented: ", null));
+      boolean first = true;
+      for (ElementDefn fi : ancestors) { 
+        if (first)
+          first = false;
+        else
+          cc.getPieces().add(gen.new Piece(null, ", ", null));
+        cc.getPieces().add(gen.new Piece(definitions.getSrcFile(fi.getName())+".html#"+fi.getName(), fi.getName(), fi.getDefinition()));
+      }      
     }
     if (mode == RenderMode.LOGICAL) {
       String logical = e.getMappings().get("http://hl7.org/fhir/logical");

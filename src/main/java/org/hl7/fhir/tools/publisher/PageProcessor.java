@@ -2391,13 +2391,39 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     String c = "";
     if (vs.hasCopyright())
       c = "<tr><td>Copyright:</td><td>"+processMarkdown("vs.copyright", vs.getCopyright(), prefix)+"</td></tr>\r\n";
+    if (vs.hasExperimental() || vs.hasImmutable()) {
+      c = c + "<tr><td>Flags:</td><td>"+
+        Utilities.stringJoin(", ", vs.hasExperimental() && vs.getExperimental() ? "Experimental" : "", 
+        (vs.hasImmutable() && vs.getImmutable() ? "Immutable" : ""))+
+        "</td></tr>\r\n";
+    }
     return c;
   }
 
-  private String txsummary(CodeSystem vs, String prefix) throws Exception {
+  private String txsummary(CodeSystem cs, String prefix) throws Exception {
     String c = "";
-    if (vs.hasCopyright())
-      c = "<tr><td>Copyright:</td><td>"+processMarkdown("cs.copyright", vs.getCopyright(), prefix)+"</td></tr>\r\n";
+    if (cs.hasCopyright())
+      c = "<tr><td>Copyright:</td><td>"+processMarkdown("cs.copyright", cs.getCopyright(), prefix)+"</td></tr>\r\n";
+    if (cs.hasExperimental() || cs.hasCaseSensitive() || cs.hasCompositional() || cs.hasContent() || cs.hasVersionNeeded()) {
+      c = c + "<tr><td>Flags:</td><td>"+
+        Utilities.stringJoin(", ", cs.hasExperimental() && cs.getExperimental() ? "Experimental" : "", 
+        (cs.hasCaseSensitive() ?  cs.getCaseSensitive() ? "CaseSensitive" : "Not CaseSensitive" : ""),
+        (cs.hasVersionNeeded() && cs.getVersionNeeded() ? "VersionNeeded" : ""),
+        (cs.hasCompositional() && cs.getCompositional() ? "Compositional" : ""),
+        (cs.hasContent() ? cs.getContent().getDisplay() : ""))+
+        "</td></tr>\r\n";
+    }
+    if (cs.hasValueSet()) {
+      ValueSet vs = definitions.getValuesets().get(cs.getValueSet());
+      if (vs != null) {
+        c = c + "<tr><td>All codes ValueSet:</td><td><a href=\""+cs.getUserString("path")+"\">"+cs.present()+"</a></td></tr>\r\n";
+      } else {
+        c = c + "<tr><td>All codes ValueSet:</td><td>"+cs.getValueSet()+"</td></tr>\r\n";        
+      }
+    }
+    if (cs.hasSupplements()) {
+      c = c + "<tr><td>Supplements:</td><td>"+cs.getSupplements()+"</td></tr>\r\n";
+    }
     return c;
   }
 

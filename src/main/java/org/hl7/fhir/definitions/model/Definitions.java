@@ -898,4 +898,11 @@ public class Definitions {
     }
   }
 
+  public List<String> getInterfaceNames() {
+    List<String> res = new ArrayList<>();
+    res.add("CanonicalResource");
+    res.add("MetadataResource");
+    return res;
+  }
+
 }

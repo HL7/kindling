@@ -1025,8 +1025,14 @@ public class ProfileGenerator {
     p.setAbstract(r.isAbstract());
     assert !Utilities.noString(r.getRoot().typeCode());
     if (!Utilities.noString(r.getRoot().typeCode())) {
-      p.setBaseDefinition("http://hl7.org/fhir/StructureDefinition/"+r.getRoot().typeCode());
-      p.setDerivation(TypeDerivationRule.SPECIALIZATION);
+      if (Utilities.existsInList(r.getRoot().typeCode(), definitions.getInterfaceNames())) {
+        p.setBaseDefinition("http://hl7.org/fhir/StructureDefinition/DomainResource");
+        p.setDerivation(TypeDerivationRule.SPECIALIZATION);        
+        ToolingExtensions.addUriExtension(p, ToolingExtensions.EXT_RESOURCE_IMPLEMENTS, "http://hl7.org/fhir/StructureDefinition/"+r.getRoot().typeCode());       
+      } else {
+        p.setBaseDefinition("http://hl7.org/fhir/StructureDefinition/"+r.getRoot().typeCode());
+        p.setDerivation(TypeDerivationRule.SPECIALIZATION);
+      }
 //      if (r.getTemplate() != null)
 //        ToolingExtensions.addStringExtension(p.getBaseDefinitionElement(), ToolingExtensions.EXT_CODE_GENERATION_PARENT, r.getTemplate().getName());
     }
