@@ -873,20 +873,36 @@ public class SvgGenerator extends BaseGenerator {
       } else {
         xml.attribute("class", "diagram-class-title-link");
         xml.enter("tspan");
-        xml.text(" (");
-        if ("Logical".equals(e.typeCode()))
-          xml.attribute("xlink:href", prefix+definitions.getBaseLink());
-        else
+        if (Utilities.existsInList(e.typeCode(), definitions.getInterfaceNames())) {
+          xml.text(" (");
+          xml.attribute("xlink:href", prefix+definitions.getSrcFile("DomainResource")+".html#"+"DomainResource");
+          xml.attribute("class", "diagram-class-reference");
+          xml.attribute("id", "n"+(++nc));
+          xml.attribute("style", "font-style: italic");
+          xml.element("a", "DomainResource");
+          xml.text(") +");
           xml.attribute("xlink:href", prefix+definitions.getSrcFile(e.typeCode())+".html#"+e.typeCode());
-        xml.attribute("class", "diagram-class-reference");
-        xml.attribute("id", "n"+(++nc));
-        xml.attribute("style", "font-style: italic");
-        if ("Logical".equals(e.typeCode())) {
-          xml.element("a", "Base");
-        } else {
+          xml.attribute("class", "diagram-class-reference");
+          xml.attribute("id", "n"+(++nc));
+          xml.attribute("style", "font-style: italic");
           xml.element("a", e.typeCode());
+        } else {
+          xml.text(" (");
+          if ("Logical".equals(e.typeCode())) {
+            xml.attribute("xlink:href", prefix+definitions.getBaseLink());
+          } else {
+            xml.attribute("xlink:href", prefix+definitions.getSrcFile(e.typeCode())+".html#"+e.typeCode());
+          }
+          xml.attribute("class", "diagram-class-reference");
+          xml.attribute("id", "n"+(++nc));
+          xml.attribute("style", "font-style: italic");
+          if ("Logical".equals(e.typeCode())) {
+            xml.element("a", "Base");
+          } else {
+            xml.element("a", e.typeCode());
+          }
+          xml.text(")");
         }
-        xml.text(")");
         xml.exit("tspan");
       }
       if ("Logical".equals(e.typeCode())) {
