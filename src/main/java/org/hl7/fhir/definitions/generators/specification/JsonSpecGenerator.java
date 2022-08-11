@@ -195,8 +195,9 @@ public class JsonSpecGenerator extends OutputStreamWriter {
     if ((root.getName().equals(rn) || "[name]".equals(rn)) && resource) {
       if (!Utilities.noString(root.typeCode())) {
         write("  // from <a href=\""+prefix+"resource.html\">Resource</a>: <a href=\""+prefix+"resource.html#id\">id</a>, <a href=\""+prefix+"resource.html#meta\">meta</a>, <a href=\""+prefix+"resource.html#implicitRules\">implicitRules</a>, and <a href=\""+prefix+"resource.html#language\">language</a>\r\n");
-        if (root.typeCode().equals("DomainResource"))
+        if (root.typeCode().equals("DomainResource") || Utilities.existsInList(root.typeCode(), definitions.getInterfaceNames())) {
           write("  // from <a href=\""+prefix+"domainresource.html\">DomainResource</a>: <a href=\""+prefix+"narrative.html#Narrative\">text</a>, <a href=\""+prefix+"references.html#contained\">contained</a>, <a href=\""+prefix+"extensibility.html\">extension</a>, and <a href=\""+prefix+"extensibility.html#modifierExtension\">modifierExtension</a>\r\n");
+        }
       }
     } else if (!resource) {
       if (root.typeCode().equals("BackboneElement"))

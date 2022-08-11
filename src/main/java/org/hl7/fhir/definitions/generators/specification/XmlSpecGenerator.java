@@ -202,8 +202,9 @@ public class XmlSpecGenerator extends OutputStreamWriter {
     if (rn.equals(root.getName()) && resource) {
       if (!Utilities.noString(root.typeCode())) {
         write(" &lt;!-- from <a href=\""+prefix+"resource.html\">Resource</a>: <a href=\""+prefix+"resource.html#id\">id</a>, <a href=\""+prefix+"resource.html#meta\">meta</a>, <a href=\""+prefix+"resource.html#implicitRules\">implicitRules</a>, and <a href=\""+prefix+"resource.html#language\">language</a> -->\r\n");
-        if (root.typeCode().equals("DomainResource"))
+        if (root.typeCode().equals("DomainResource") || Utilities.existsInList(root.typeCode(), definitions.getInterfaceNames())) {
           write(" &lt;!-- from <a href=\""+prefix+"domainresource.html\">DomainResource</a>: <a href=\""+prefix+"narrative.html#Narrative\">text</a>, <a href=\""+prefix+"references.html#contained\">contained</a>, <a href=\""+prefix+"extensibility.html\">extension</a>, and <a href=\""+prefix+"extensibility.html#modifierExtension\">modifierExtension</a> -->\r\n");
+        }
       }
     } else if (root.typeCode().equals("BackboneElement")) {
       write(" &lt;!-- from BackboneElement: <a href=\""+prefix+"extensibility.html\">extension</a>, <a href=\""+prefix+"extensibility.html\">modifierExtension</a> -->\r\n");
