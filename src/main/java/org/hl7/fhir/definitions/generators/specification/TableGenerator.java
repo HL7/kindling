@@ -87,7 +87,7 @@ public class TableGenerator extends BaseGenerator {
         row.getCells().add(gen.new Cell(null, prefix+"structuredefinition.html#logical", e.typeCode(), null, null)); 
       else if ("Base".equals(e.typeCode()))
         row.getCells().add(gen.new Cell(null, prefix+definitions.getSrcFile("Base")+".html#"+e.typeCode(), e.typeCode(), null, null)); 
-      else if (Utilities.existsInList(e.typeCode(), definitions.getInterfaceNames())) {
+      else if (Utilities.existsInList(e.typeCode(), definitions.getInterfaceNames()) && !Utilities.existsInList(e.getName(), definitions.getInterfaceNames())) {
         Cell c = gen.new Cell(null, prefix+"domainresource.html", "DomainResource", null, null);
         row.getCells().add(c);
       } else {
@@ -205,7 +205,7 @@ public class TableGenerator extends BaseGenerator {
       List<ElementDefn> ancestors = new ArrayList<ElementDefn>();
       ElementDefn f = definitions.getElementDefn(e.typeCode());
       while (f != null) {
-        if (!Utilities.existsInList(f.getName(), definitions.getInterfaceNames())) {
+        if (Utilities.existsInList(e.getName(), definitions.getInterfaceNames()) || !Utilities.existsInList(f.getName(), definitions.getInterfaceNames())) {
           ancestors.add(0, f);
         }
         f = Utilities.noString(f.typeCode()) || "Logical".equals(f.typeCode()) ? null : definitions.getElementDefn(f.typeCode());
@@ -224,7 +224,7 @@ public class TableGenerator extends BaseGenerator {
         }
       }      
     }
-    if (isRoot && !Utilities.noString(e.typeCode()) && Utilities.existsInList(e.typeCode(), definitions.getInterfaceNames())) {
+    if (isRoot && !Utilities.noString(e.typeCode()) && Utilities.existsInList(e.typeCode(), definitions.getInterfaceNames()) && !Utilities.existsInList(e.getName(), definitions.getInterfaceNames())) {
       List<ElementDefn> ancestors = new ArrayList<ElementDefn>();
       ElementDefn f = definitions.getElementDefn(e.typeCode());
       while (f != null) {

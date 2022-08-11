@@ -1802,11 +1802,11 @@ public class ProfileGenerator {
     if (snapshot != SnapShotMode.None) {
       if (!root && Utilities.noString(e.typeCode())) {
         if (snapshot == SnapShotMode.Resource)
-          defineAncestorElements("BackboneElement", path, snapshot, containedSlices, p, elements, defType, defaults);
+          defineAncestorElements("BackboneElement", path, snapshot, containedSlices, p, elements, defType, defaults, Utilities.existsInList(e.getName(), definitions.getInterfaceNames()));
         else
-          defineAncestorElements("Element", path, snapshot, containedSlices, p, elements, defType, defaults);
+          defineAncestorElements("Element", path, snapshot, containedSlices, p, elements, defType, defaults, Utilities.existsInList(e.getName(), definitions.getInterfaceNames()));
       } else if (root && !Utilities.noString(e.typeCode())) 
-        defineAncestorElements(e.typeCode(), path, snapshot, containedSlices, p, elements, defType, defaults);
+        defineAncestorElements(e.typeCode(), path, snapshot, containedSlices, p, elements, defType, defaults, Utilities.existsInList(e.getName(), definitions.getInterfaceNames()));
     }
     
     for (ElementDefn child : e.getElements()) 
@@ -1996,12 +1996,12 @@ public class ProfileGenerator {
       return "BackboneElement";
     return type;
   }
-  private void defineAncestorElements(String type, String path, SnapShotMode snapshot, Set<String> containedSlices, StructureDefinition p, List<ElementDefinition> elements, String dt, boolean defaults) throws Exception {
+  private void defineAncestorElements(String type, String path, SnapShotMode snapshot, Set<String> containedSlices, StructureDefinition p, List<ElementDefinition> elements, String dt, boolean defaults, boolean isInterface) throws Exception {
     ElementDefn e = definitions.getElementDefn(actualTypeName(type));
     if (!Utilities.noString(e.typeCode()))
-      defineAncestorElements(e.typeCode(), path, snapshot, containedSlices, p, elements, dt, defaults);
+      defineAncestorElements(e.typeCode(), path, snapshot, containedSlices, p, elements, dt, defaults, isInterface);
 
-    if (!definitions.getBaseResources().containsKey(e.getName()) || !definitions.getBaseResources().get(e.getName()).isInterface()) {
+    if (!definitions.getBaseResources().containsKey(e.getName()) || isInterface || !definitions.getBaseResources().get(e.getName()).isInterface()) {
       for (ElementDefn child : e.getElements()) {
         ElementDefinition ed = defineElement(null, p, elements, child, path+"."+child.getName(), containedSlices, new ArrayList<ProfileGenerator.SliceHandle>(), snapshot, false, dt, null, defaults);
         if (!ed.hasBase())
