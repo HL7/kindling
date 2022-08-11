@@ -4121,6 +4121,12 @@ public class Publisher implements URIResolver, SectionNumberer {
           page.getFolders().dstDir + n + ".schema.json.html");
       page.getHTMLChecker().registerFile(n + ".schema.json.html", "Json Schema for " + resource.getName(), HTMLLinkChecker.XHTML_TYPE, true);
 
+      src = TextFile.fileToString(page.getFolders().templateDir + "template-search.html");
+      TextFile.stringToFile(
+          insertSectionNumbers(page.processResourceIncludes(n, resource, xml, json, ttl, tx, dict, src, mappings, mappingsList, "res-Mappings", n + "-search.html", null, values, resource.getWg(), null), st, n + "-search.html", 0, null),
+          page.getFolders().dstDir + n + "-search.html");
+      page.getHTMLChecker().registerFile(n + "-search.html", "Search Parameters for " + resource.getName(), HTMLLinkChecker.XHTML_TYPE, true);
+      
       src = TextFile.fileToString(page.getFolders().templateDir + "template-dependencies.html");
       TextFile.stringToFile(
           insertSectionNumbers(page.processResourceIncludes(n, resource, xml, json, ttl, tx, dict, src, mappings, mappingsList, "res-Dependencies", n + "-dependencies.html", null, values, resource.getWg(), null), st, n
@@ -4259,6 +4265,7 @@ public class Publisher implements URIResolver, SectionNumberer {
   private void cloneToXhtml(String n, String description, boolean adorn, String pageType, String crumbTitle, ResourceDefn rd, WorkGroup wg) throws Exception {
     cloneToXhtml(n, description, adorn, pageType, crumbTitle, null, rd, wg);
   }
+  
   private void cloneToXhtml(String n, String description, boolean adorn, String pageType, String crumbTitle, ImplementationGuideDefn igd, ResourceDefn rd, WorkGroup wg) throws Exception {
     DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
     factory.setNamespaceAware(true);

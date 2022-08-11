@@ -4527,7 +4527,8 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     if (hasOps)
       b.append(makeHeaderTab("Operations", n+"-operations.html", "operations".equals(mode)));
     if (new File(Utilities.path(folders.rootDir, "implementations", "r3maps", "R4toR3", title+".map")).exists())
-      b.append(makeHeaderTab("R3 Conversions", n+"-version-maps.html", "conversion".equals(mode)));
+      b.append(makeHeaderTab("R4 Conversions", n+"-version-maps.html", "conversion".equals(mode)));
+    b.append(makeHeaderTab("Search Params", n+"-search.html", "search".equals(mode)));
     b.append("</ul>\r\n");
 
     return b.toString();
@@ -6139,9 +6140,11 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
       else if (com[0].equals("search-additions")) {
         searchAdditions = s2.substring(16).trim();
         src = s1+s3;
-      } else if (com[0].equals("search"))
+      } else if (com[0].equals("search")) {
         src = s1+getSearch(resource, searchAdditions )+s3;
-      else if (com[0].equals("asearch"))
+      } else if (com[0].equals("searchParamTable")) {
+        src = s1+getSearchParamTable(resource, searchAdditions )+s3;
+      } else if (com[0].equals("asearch"))
         src = s1+getAbstractSearch(resource, searchAdditions)+s3;
       else if (com[0].equals("version"))
         src = s1+ini.getStringProperty("FHIR", "version")+s3;
@@ -7277,6 +7280,59 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     return Utilities.noString(name) ? "Index" : Utilities.capitalize(Utilities.fileTitle(name));
   }
   */
+
+  private String getSearchParamTable(ResourceDefn resource, String searchAdditions) throws Exception {
+    if (resource.getSearchParams().size() == 0)
+      return "";
+    else {
+      StandardsStatus st = resource.getStatus();
+      
+      StringBuilder b = new StringBuilder();
+      b.append("<h2>Search Parameters</h2>\r\n");
+      if (resource.getName().equals("Query"))
+        b.append("<p>Search parameter list for this resource. The <a href=\"#all\">common parameters</a> also apply.</p>\r\n");
+      else
+        b.append("<p>Search parameter list for this resource. The <a href=\"search.html#all\">common parameters</a> also apply. See <a href=\"search.html\">Searching</a> for more information about searching in REST, messaging, and services.</p>\r\n");
+      b.append("<table class=\"grid\" width=\"60%\">\r\n");
+//      b.append("<tr><td><b>Name</b></td><td><b>Type</b></td><td><b>Description</b></td><td><b>Expression</b></td><td><b>In Common</b></td></tr>\r\n");
+      List<String> names = new ArrayList<String>();
+      names.addAll(resource.getSearchParams().keySet());
+      Collections.sort(names);
+      for (String name : names)  {
+        SearchParameterDefn p = resource.getSearchParams().get(name);
+        SearchParameter pp = p.getResource();
+
+
+        b.append("<tr>");
+        b.append("<td style=\"border-top: 1px black solid\">"+pp.getUrl()+"</td>");
+        b.append("</tr>"); 
+        b.append("<tr>");
+        b.append("<td style=\"border-bottom: 1px black solid\">");
+        XhtmlNode div = new XhtmlNode(NodeType.Element, "div");
+        RendererFactory.factory(pp, rc).render(div, pp);
+        b.append(new XhtmlComposer(false).compose(div));
+        b.append("</td>");
+        b.append("</tr>"); 
+        b.append("<tr>");
+        b.append("<td style=\"border-top: 1px black solid\">&nbsp;</td>");
+        b.append("</tr>"); 
+
+        // expression + usage + targets (+components)
+        // base resources 
+        
+//        b.append("</tr>"); 
+//        
+//        String md = stripSimplePara(processMarkdown("SearchParameter.description", p.getDescription(), ""));
+//        
+//        b.append("<tr><td><a name=\"sp-").append(p.getCode()).append("\"> </a>").append(p.getCode()).append(sst).append("</td><td><a href=\"search.html#").append(p.getType()).append("\">").append(p.getType()).append("</a></td><td>")
+//                .append(md).append("</td><td>").append(p.getType() == SearchType.composite ? getCompositeExpression(p) : Utilities.escapeXml(p.getExpression())).append(p.getType() == SearchType.reference ? p.getTargetTypesAsText() : "")
+//                .append("</td><td>").append(presentOthers(p)).append("</td></tr>\r\n");
+      }
+      b.append(searchAdditions);
+      b.append("</table>\r\n");
+      return b.toString();
+    }
+  }
 
   private String getSearch(ResourceDefn resource, String searchAdditions) throws Exception {
     if (resource.getSearchParams().size() == 0)
