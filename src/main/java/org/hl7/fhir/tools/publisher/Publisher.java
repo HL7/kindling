@@ -4012,7 +4012,8 @@ public class Publisher implements URIResolver, SectionNumberer {
     String xml = xmls.get(n);
     String json = jsons.get(n);
     String ttl = ttls.get(n);
-
+    boolean isInterface = resource.isInterface();
+    
     TerminologyNotesGenerator tgen = new TerminologyNotesGenerator(new FileOutputStream(tmp), page);
     tgen.generate("", resource.getRoot());
     tgen.close();
@@ -4046,7 +4047,7 @@ public class Publisher implements URIResolver, SectionNumberer {
       st.start("");
       page.getSectionTrackerCache().put(n, st);
 
-      String template = isAbstract ? "template-abstract" : "template";
+      String template = isInterface ? "template-intf" : isAbstract ? "template-abstract" : "template";
       String src = TextFile.fileToString(page.getFolders().templateDir + template+".html");
       src = insertSectionNumbers(page.processResourceIncludes(n, resource, xml, json, ttl, tx, dict, src, mappings, mappingsList, "resource", n + ".html", null, values, resource.getWg(), null), st, n + ".html", 0, null);
       TextFile.stringToFile(src, page.getFolders().dstDir + n + ".html");
