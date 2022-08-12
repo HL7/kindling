@@ -664,40 +664,14 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
         src = s1+atHeader(com.length > 1 ? com[1] : null)+s3;
       else if (com[0].equals("mdtheader"))
         src = s1+mdtHeader(com.length > 1 ? com[1] : null)+s3;
-      else if (com[0].equals("edheader"))
-        src = s1+edHeader(com.length > 1 ? com[1] : null)+s3;
-      else if (com[0].equals("elheader"))
-        src = s1+elHeader(com.length > 1 ? com[1] : null)+s3;
-      else if (com[0].equals("belheader"))
-        src = s1+belHeader(com.length > 1 ? com[1] : null)+s3;
+      else if (com[0].equals("dtxheader"))
+        src = s1+dtxHeader(com.length > 1 ? com[1] : null, com.length > 2 ? com[2] : null)+s3;
       else if (com[0].equals("extheader"))
         src = s1+extHeader(com.length > 1 ? com[1] : null)+s3;
       else if (com[0].equals("mmheader"))
         src = s1+mmHeader(com.length > 1 ? com[1] : null)+s3;
-      else if (com[0].equals("cdheader"))
-        src = s1+cdHeader(com.length > 1 ? com[1] : null)+s3;
-      else if (com[0].equals("diheader"))
-        src = s1+diHeader(com.length > 1 ? com[1] : null)+s3;
-      else if (com[0].equals("ctheader"))
-        src = s1+ctHeader(com.length > 1 ? com[1] : null)+s3;
-      else if (com[0].equals("ucheader"))
-        src = s1+ucHeader(com.length > 1 ? com[1] : null)+s3;
-      else if (com[0].equals("rrheader"))
-        src = s1+rrHeader(com.length > 1 ? com[1] : null)+s3;
-      else if (com[0].equals("drheader"))
-        src = s1+drHeader(com.length > 1 ? com[1] : null)+s3;
-      else if (com[0].equals("adheader"))
-        src = s1+adHeader(com.length > 1 ? com[1] : null)+s3;
-      else if (com[0].equals("pdheader"))
-        src = s1+pdHeader(com.length > 1 ? com[1] : null) + s3;
-      else if (com[0].equals("tdheader"))
-        src = s1+tdHeader(com.length > 1 ? com[1] : null)+s3;
       else if (com[0].equals("narrheader"))
         src = s1+narrHeader(com.length > 1 ? com[1] : null)+s3;
-      else if (com[0].equals("statheader"))
-        src = s1+statHeader(com.length > 1 ? com[1] : null)+s3;
-      else if (com[0].equals("ordistheader"))
-        src = s1+ordistHeader(com.length > 1 ? com[1] : null)+s3;
       else if (com[0].equals("profilesheader"))
         src = s1+profilesHeader(com.length > 1 ? com[1] : null)+s3;
       else if (com[0].equals("refheader"))
@@ -4042,135 +4016,19 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     return b.toString();
   }
 
-  private String cdHeader(String mode) {
+  private String dtxHeader(String mode, String type) {
     StringBuilder b = new StringBuilder();
     b.append("<ul class=\"nav nav-tabs\">");
-    b.append(makeHeaderTab("Contact Detail", "contactdetail.html", mode==null || "base".equals(mode)));
-    b.append(makeHeaderTab("Examples", "contactdetail-examples.html", mode==null || "examples".equals(mode)));
-    b.append(makeHeaderTab("Detailed Descriptions", "contactdetail-definitions.html", mode==null || "definitions".equals(mode)));
-    b.append(makeHeaderTab("Mappings", "contactdetail-mappings.html", mode==null || "mappings".equals(mode)));
+    String t = type.toLowerCase();
+    b.append(makeHeaderTab(type+" Detail", t+".html", mode==null || "base".equals(mode)));
+    b.append(makeHeaderTab("Examples", t+"-examples.html", mode==null || "examples".equals(mode)));
+    b.append(makeHeaderTab("Detailed Descriptions", t+"-definitions.html", mode==null || "definitions".equals(mode)));
+    b.append(makeHeaderTab("Mappings", t+"-mappings.html", mode==null || "mappings".equals(mode)));
+    b.append(makeHeaderTab("Profiles &amp; Extensions", t+"-extras.html", mode==null || "profiles".equals(mode)));
     b.append("</ul>\r\n");
     return b.toString();
   }
 
-  private String diHeader(String mode) {
-    StringBuilder b = new StringBuilder();
-    b.append("<ul class=\"nav nav-tabs\">");
-    b.append(makeHeaderTab("Dosage Instruction Detail", "dosage.html", mode==null || "base".equals(mode)));
-    b.append(makeHeaderTab("Examples", "dosage-examples.html", mode==null || "examples".equals(mode)));
-    b.append(makeHeaderTab("Detailed Descriptions", "dosage-definitions.html", mode==null || "definitions".equals(mode)));
-    b.append(makeHeaderTab("Mappings", "dosage-mappings.html", mode==null || "mappings".equals(mode)));
-    b.append("</ul>\r\n");
-    return b.toString();
-  }
-
-  private String ctHeader(String mode) {
-    StringBuilder b = new StringBuilder();
-    b.append("<ul class=\"nav nav-tabs\">");
-    b.append(makeHeaderTab("Contributor", "contributor.html", mode==null || "base".equals(mode)));
-    b.append(makeHeaderTab("Examples", "contributor-examples.html", mode==null || "examples".equals(mode)));
-    b.append(makeHeaderTab("Detailed Descriptions", "contributor-definitions.html", mode==null || "definitions".equals(mode)));
-    b.append(makeHeaderTab("Mappings", "contributor-mappings.html", mode==null || "mappings".equals(mode)));
-    b.append("</ul>\r\n");
-    return b.toString();
-  }
-
-  private String ucHeader(String mode) {
-    StringBuilder b = new StringBuilder();
-    b.append("<ul class=\"nav nav-tabs\">");
-    b.append(makeHeaderTab("UsageContext", "usagecontext.html", mode==null || "base".equals(mode)));
-    b.append(makeHeaderTab("Examples", "usagecontext-examples.html", mode==null || "examples".equals(mode)));
-    b.append(makeHeaderTab("Detailed Descriptions", "usagecontext-definitions.html", mode==null || "definitions".equals(mode)));
-    b.append(makeHeaderTab("Mappings", "usagecontext-mappings.html", mode==null || "mappings".equals(mode)));
-    b.append("</ul>\r\n");
-    return b.toString();
-  }
-
-  private String rrHeader(String mode) {
-    StringBuilder b = new StringBuilder();
-    b.append("<ul class=\"nav nav-tabs\">");
-    b.append(makeHeaderTab("RelatedResource", "relatedartifact.html", mode==null || "base".equals(mode)));
-    b.append(makeHeaderTab("Examples", "relatedartifact-examples.html", mode==null || "examples".equals(mode)));
-    b.append(makeHeaderTab("Detailed Descriptions", "relatedartifact-definitions.html", mode==null || "definitions".equals(mode)));
-    b.append(makeHeaderTab("Mappings", "relatedartifact-mappings.html", mode==null || "mappings".equals(mode)));
-    b.append("</ul>\r\n");
-    return b.toString();
-  }
-
-  private String drHeader(String mode) {
-    StringBuilder b = new StringBuilder();
-    b.append("<ul class=\"nav nav-tabs\">");
-    b.append(makeHeaderTab("Data Requirement", "datarequirement.html", mode==null || "base".equals(mode)));
-    b.append(makeHeaderTab("Examples", "datarequirement-examples.html", mode==null || "examples".equals(mode)));
-    b.append(makeHeaderTab("Detailed Descriptions", "datarequirement-definitions.html", mode==null || "definitions".equals(mode)));
-    b.append(makeHeaderTab("Mappings", "datarequirement-mappings.html", mode==null || "mappings".equals(mode)));
-    b.append("</ul>\r\n");
-    return b.toString();
-  }
-
-  private String adHeader(String mode) {
-    StringBuilder b = new StringBuilder();
-    b.append("<ul class=\"nav nav-tabs\">");
-    b.append(makeHeaderTab("Action Definition", "actiondefinition.html", mode==null || "base".equals(mode)));
-    b.append(makeHeaderTab("Examples", "actiondefinition-examples.html", mode==null || "examples".equals(mode)));
-    b.append(makeHeaderTab("Detailed Descriptions", "actiondefinition-definitions.html", mode==null || "definitions".equals(mode)));
-    b.append(makeHeaderTab("Mappings", "actiondefinition-mappings.html", mode==null || "mappings".equals(mode)));
-    b.append("</ul>\r\n");
-    return b.toString();
-  }
-
-  private String pdHeader(String mode) {
-    StringBuilder b = new StringBuilder();
-    b.append("<ul class=\"nav nav-tabs\">");
-    b.append(makeHeaderTab("Parameter Definition", "parameterdefinition.html", mode==null || "base".equals(mode)));
-    b.append(makeHeaderTab("Examples", "parameterdefinition-examples.html", mode==null || "examples".equals(mode)));
-    b.append(makeHeaderTab("Detailed Descriptions", "parameterdefinition-definitions.html", mode==null || "definitions".equals(mode)));
-    b.append(makeHeaderTab("Mappings", "parameterdefinition-mappings.html", mode==null || "mappings".equals(mode)));
-    b.append("</ul>\r\n");
-    return b.toString();
-  }
-
-  private String tdHeader(String mode) {
-    StringBuilder b = new StringBuilder();
-    b.append("<ul class=\"nav nav-tabs\">");
-    b.append(makeHeaderTab("Trigger Definition", "triggerdefinition.html", mode==null || "base".equals(mode)));
-    b.append(makeHeaderTab("Examples", "triggerdefinition-examples.html", mode==null || "examples".equals(mode)));
-    b.append(makeHeaderTab("Detailed Descriptions", "triggerdefinition-definitions.html", mode==null || "definitions".equals(mode)));
-    b.append(makeHeaderTab("Mappings", "triggerdefinition-mappings.html", mode==null || "mappings".equals(mode)));
-    b.append("</ul>\r\n");
-    return b.toString();
-  }
-
-  private String edHeader(String mode) {
-    StringBuilder b = new StringBuilder();
-    b.append("<ul class=\"nav nav-tabs\">");
-    b.append(makeHeaderTab("Element Definition", "elementdefinition.html", mode==null || "base".equals(mode)));
-    b.append(makeHeaderTab("Examples", "elementdefinition-examples.html", mode==null || "examples".equals(mode)));
-    b.append(makeHeaderTab("Detailed Descriptions", "elementdefinition-definitions.html", mode==null || "definitions".equals(mode)));
-    b.append(makeHeaderTab("Mappings", "elementdefinition-mappings.html", mode==null || "mappings".equals(mode)));
-    b.append(makeHeaderTab("Extensions", "elementdefinition-extras.html", mode==null || "extensions".equals(mode)));
-    b.append("</ul>\r\n");
-    return b.toString();
-  }
-
-  private String elHeader(String mode) {
-    StringBuilder b = new StringBuilder();
-    b.append("<ul class=\"nav nav-tabs\">");
-    b.append(makeHeaderTab("Element", "element.html", mode==null || "base".equals(mode)));
-    b.append(makeHeaderTab("Detailed Descriptions", "element-definitions.html", mode==null || "definitions".equals(mode)));
-    b.append(makeHeaderTab("Extensions", "element-extras.html", mode==null || "extensions".equals(mode)));
-    b.append("</ul>\r\n");
-    return b.toString();
-  }
-
-  private String belHeader(String mode) {
-    StringBuilder b = new StringBuilder();
-    b.append("<ul class=\"nav nav-tabs\">");
-    b.append(makeHeaderTab("Element", "backboneelement.html", mode==null || "base".equals(mode)));
-    b.append(makeHeaderTab("Detailed Descriptions", "backboneelement-definitions.html", mode==null || "definitions".equals(mode)));
-    b.append("</ul>\r\n");
-    return b.toString();
-  }
 
   private String extHeader(String mode) {
     StringBuilder b = new StringBuilder();
@@ -4190,28 +4048,6 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     b.append(makeHeaderTab("Narrative", "narrative.html", mode==null || "base".equals(mode)));
     b.append(makeHeaderTab("Examples", "narrative-example.html", mode==null || "examples".equals(mode)));
     b.append(makeHeaderTab("Detailed Descriptions", "narrative-definitions.html", mode==null || "definitions".equals(mode)));
-    b.append("</ul>\r\n");
-    return b.toString();
-  }
-
-  private String statHeader(String mode) {
-    StringBuilder b = new StringBuilder();
-    b.append("<ul class=\"nav nav-tabs\">");
-    b.append(makeHeaderTab("Statistic", "statistic.html", mode==null || "base".equals(mode)));
-    b.append(makeHeaderTab("Examples", "statistic-examples.html", mode==null || "examples".equals(mode)));
-    b.append(makeHeaderTab("Detailed Descriptions", "statistic-definitions.html", mode==null || "definitions".equals(mode)));
-    b.append(makeHeaderTab("Mappings", "statistic-mappings.html", mode==null || "mappings".equals(mode)));
-    b.append("</ul>\r\n");
-    return b.toString();
-  }
-  
-  private String ordistHeader(String mode) {
-    StringBuilder b = new StringBuilder();
-    b.append("<ul class=\"nav nav-tabs\">");
-    b.append(makeHeaderTab("OrderedDistribution", "ordereddistribution.html", mode==null || "base".equals(mode)));
-    b.append(makeHeaderTab("Examples", "ordereddistribution-examples.html", mode==null || "examples".equals(mode)));
-    b.append(makeHeaderTab("Detailed Descriptions", "ordereddistribution-definitions.html", mode==null || "definitions".equals(mode)));
-    b.append(makeHeaderTab("Mappings", "ordereddistribution-mappings.html", mode==null || "mappings".equals(mode)));
     b.append("</ul>\r\n");
     return b.toString();
   }
@@ -4243,7 +4079,6 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     b.append("</ul>\r\n");
     return b.toString();
   }
-
 
 
 //  private String resourcesHeader(String n, String mode) {
@@ -4661,7 +4496,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     CanonicalResourceManager<ValueSet> vslist = new CanonicalResourceManager<ValueSet>(false);
     for (String sn : definitions.getValuesets().keys()) {
       ValueSet vs = definitions.getValuesets().get(sn);
-      if (vs.hasUrl() && !vs.getUrl().startsWith("http://terminology.hl7.org")) {
+      if (vs.hasUrl() && isLocalResource(vs)) {
         vslist.see(vs, packageInfo());
         String n = getNamespace(sn);
         if (!n.equals("http://hl7.org/fhir/ValueSet") && !namespaces.contains(n) && !sn.startsWith("http://terminology.hl7.org/ValueSet/v2-") && !sn.startsWith("http://terminology.hl7.org/ValueSet/v3-"))
@@ -4678,6 +4513,10 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
       generateVSforNS(s, n, definitions.getValuesets(), true, ig);
     s.append("</table>\r\n");
     return s.toString();
+  }
+
+  public boolean isLocalResource(CanonicalResource cr) {
+    return !cr.hasUserData("external.url"); // && (!cr.hasUrl() || !(cr.getUrl().startsWith("http://terminology.hl7.org") || cr.getUrl().contains("dicom.nema.org")));
   }
 
   private void generateVSforNS(StringBuilder s, String ns, CanonicalResourceManager<ValueSet> vslist, boolean hasId, ImplementationGuideDefn ig) throws FHIRException {
@@ -5439,6 +5278,8 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
         src = s1+buildPatternList(com[1])+s3;       
       } else if (com[0].equals("StandardsStatus")) {
         src = s1+getStandardsStatusNote(genlevel(level), com[1], com[2], com.length == 4 ? com[3] : null)+s3;
+      } else if (com[0].equals("dtxheader")) {
+          src = s1+dtxHeader(com.length > 1 ? com[1] : null, com.length > 2 ? com[2] : null)+s3;
       } else if (com[0].equals("diff-analysis")) {
         if ("*".equals(com[1])) {
           updateDiffEngineDefinitions();
@@ -5747,7 +5588,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
   private String getSnomedCTConceptList() throws Exception {
     Map<String, SnomedConceptUsage> concepts = new HashMap<String, SnomedConceptUsage>();
     for (ValueSet vs : definitions.getValuesets().getList()) {
-      if (!vs.hasUrl() || !vs.getUrl().startsWith("http://terminology.hl7.org")) {
+      if (isLocalResource(vs)) {
         for (ConceptSetComponent cc : vs.getCompose().getInclude())
           if (cc.hasSystem() && cc.getSystem().equals("http://snomed.info/sct")) {
             for (ConceptReferenceComponent c : cc.getConcept()) {
@@ -5810,7 +5651,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
 
     List<String> sorts = new ArrayList<String>();
     for (ValueSet vs : definitions.getValuesets().getList()) {
-      if (referencesSnomed(vs) && !(vs.hasUrl() && vs.getUrl().startsWith("http://terminology.hl7.org"))) {
+      if (referencesSnomed(vs) && isLocalResource(vs)) {
         sorts.add(vs.getUrl());
       }
     }
@@ -9262,7 +9103,14 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     log("Load UTG Terminology", LogMessageType.Process);
     NpmPackage utg = new FilesystemPackageCacheManager(true, ToolsVersion.TOOLS_VERSION).loadPackage("hl7.terminology");
     workerContext.loadFromPackage(utg, new R4ToR5Loader(BuildWorkerContext.defaultTypesToLoad(), new UTGLoader(utg.version()), workerContext.getVersion()));
+    log("Load DICOM Terminology", LogMessageType.Process);
+    NpmPackage dicom = new FilesystemPackageCacheManager(true, ToolsVersion.TOOLS_VERSION).loadPackage("fhir.dicom");
+    workerContext.loadFromPackage(dicom, new R4ToR5Loader(BuildWorkerContext.defaultTypesToLoad(), new DICOMLoader(utg.version()), workerContext.getVersion()));
+    log("Load IHE Format Codes", LogMessageType.Process);
+    NpmPackage ihe = new FilesystemPackageCacheManager(true, ToolsVersion.TOOLS_VERSION).loadPackage("ihe.formatcode.fhir");
+    workerContext.loadFromPackage(ihe, new R4ToR5Loader(BuildWorkerContext.defaultTypesToLoad(), new IHELoader(), workerContext.getVersion()));
 
+    
 
     log("  .. loaded", LogMessageType.Process);
     vsValidator = new ValueSetValidator(workerContext, definitions.getVsFixups(), definitions.getStyleExemptions());

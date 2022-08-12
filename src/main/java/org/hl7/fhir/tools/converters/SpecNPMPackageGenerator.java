@@ -196,7 +196,7 @@ public class SpecNPMPackageGenerator {
   private void checkForDE(List<ResourceEntry> reslist) {
     for (ResourceEntry r : reslist) {
       if (r.canonical != null && r.canonical.contains("/de-")) {
-        System.out.println("Waht?");
+        System.out.println("Error: Found DataElement resource '"+r.canonical+" where it shouldn't be");
       }
     }
   
@@ -396,7 +396,7 @@ public class SpecNPMPackageGenerator {
   
   private List<ResourceEntry> makeResourceList5(Map<String, byte[]> files, String version, List<ResourceEntry> res) throws FHIRFormatError, IOException {
     for (String k : files.keySet()) {
-      if (k.endsWith(".xml")) {
+      if (k.endsWith(".xml") && !k.contains("dataelements")) {
         Bundle b = (Bundle) new org.hl7.fhir.r5.formats.XmlParser().parse(files.get(k));
         for (org.hl7.fhir.r5.model.Bundle.BundleEntryComponent be : b.getEntry()) {
           if (be.hasResource()) {

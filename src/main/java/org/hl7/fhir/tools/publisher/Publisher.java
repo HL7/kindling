@@ -1436,7 +1436,7 @@ public class Publisher implements URIResolver, SectionNumberer {
     Collections.sort(names);
     for (String n : names) {
       CodeSystem cs = page.getCodeSystems().get(n);
-      if (cs != null && !urls.contains(cs.getUrl()) && cs.hasUrl() && !cs.getUrl().startsWith("http://terminology.hl7.org")) {
+      if (cs != null && !urls.contains(cs.getUrl()) && page.isLocalResource(cs)) {
         urls.add(cs.getUrl());
         if (cs.hasName()) {
           NamingSystem ns = new NamingSystem();
@@ -3254,7 +3254,7 @@ public class Publisher implements URIResolver, SectionNumberer {
 
   private boolean checkMetaData(StructureDefinition sd) {
     check(tail(sd.getUrl()).equals(sd.getId()), sd, "id must equal tail of URL");
-    check(page.getVersion().toCode().equals(sd.getFhirVersion()), sd, "FhirVersion is wrong (should be "+page.getVersion().toCode()+", is "+sd.getFhirVersion().toCode()+")");
+    check(VersionUtilities.versionsCompatible(page.getVersion().toCode(), sd.getFhirVersion().toCode()), sd, "FhirVersion is wrong (should be "+page.getVersion().toCode()+", is "+sd.getFhirVersion().toCode()+")");
     switch (sd.getKind()) {
     case COMPLEXTYPE: return checkDataType(sd);
     case PRIMITIVETYPE: return checkDataType(sd);
@@ -3625,7 +3625,7 @@ public class Publisher implements URIResolver, SectionNumberer {
   private String getExtensionExamples(StructureDefinition ed) {
     List<StringPair> refs = new ArrayList<>();
     for (CanonicalResource cr : page.getWorkerContext().allConformanceResources()) {
-      if (ToolingExtensions.usesExtension(ed.getUrl(), cr)) {
+      if (ToolingExtensions.usesExtension(ed.getUrl(), cr) && page.isLocalResource(cr)) {
         refs.add(new StringPair(cr.present(), cr.getUserString("path")));
       }
     }
@@ -5927,7 +5927,7 @@ public class Publisher implements URIResolver, SectionNumberer {
     Set<String> urls = new HashSet<String>();
 
     for (CodeSystem cs : page.getDefinitions().getCodeSystems().getList()) {
-      if (cs != null && !cs.hasUserData("external.url")) {
+      if (cs != null && page.isLocalResource(cs)) {
         if (cs.getUserData("example") == null && !cs.getUrl().contains("/v2-") && !cs.getUrl().contains("/v3-"))
           if (!urls.contains(cs.getUrl())) {
             urls.add(cs.getUrl());
@@ -6100,7 +6100,7 @@ private String csCounter() {
   private void generateCodeSystemsPart1() throws Exception {
     page.log(" ...code systems", LogMessageType.Process);
     for (CodeSystem cs : page.getDefinitions().getCodeSystems().getList()) {
-      if (cs != null && !cs.hasUserData("external.url")) {
+      if (cs != null && page.isLocalResource(cs)) {
         if (!cs.hasText()) {
           cs.setText(new Narrative());
           cs.getText().setStatus(NarrativeStatus.EMPTY);
