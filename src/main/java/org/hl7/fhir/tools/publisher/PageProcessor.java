@@ -443,6 +443,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
   private PatternFinder patternFinder;
   private Map<String, String> macros = new HashMap<String, String>();
   private RenderingContext rc;
+  private Map<String, List<SearchParameter>> extensionSearchParameterMap;
   
   public PageProcessor(String tsServer) throws URISyntaxException, UcumException {
     super();
@@ -7145,7 +7146,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
 
 
         b.append("<tr>");
-        b.append("<td style=\"border-top: 1px black solid\">"+pp.getUrl()+"</td>");
+        b.append("<td style=\"border-top: 1px black solid\"><code>"+pp.getUrl()+"</code></td>");
         b.append("</tr>"); 
         b.append("<tr>");
         b.append("<td style=\"border-bottom: 1px black solid\">");
@@ -8745,6 +8746,8 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
         src = s1+""+s3;
       else if (com[0].equals("context-info"))
         src = s1+describeExtensionContext(ed)+s3;
+      else if (com[0].equals("ext-search"))
+        src = s1+describeExtensionSearchParameters(ed)+s3;
       else if (com[0].equals("ext-name"))
         src = s1+Utilities.escapeXml(ed.getName())+s3;
       else if (com[0].equals("extension-example-references"))
@@ -8786,6 +8789,73 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
         throw new Exception("Instruction <%"+s2+"%> not understood parsing resource "+filename);
     }
     return src;
+  }
+
+  private String describeExtensionSearchParameters(StructureDefinition ed) {
+    if (extensionSearchParameterMap == null) {
+      extensionSearchParameterMap = new HashMap<>();
+      for (Profile cp : getDefinitions().getPackList()) {
+        addExtensionSearchParams(cp);
+      }
+      for (ResourceDefn rd : definitions.getResources().values()) {
+        addExtensionSearchParams(rd);
+        for (Profile cp : rd.getConformancePackages()) {
+          addExtensionSearchParams(cp);
+        }
+      }
+    }
+    StringBuilder b = new StringBuilder();
+    b.append("<h3>Search Parameters</h3> <a name=\"search\"> </a>");
+    if (extensionSearchParameterMap.containsKey(ed.getUrl())) {
+      for (SearchParameter sp : extensionSearchParameterMap.get(ed.getUrl())) {
+        b.append("<p>Search parameters for this extension. See <a href=\"search.html\">Searching</a> for more information about searching in REST, messaging, and services.</p><table class=\"list\">");
+        b.append("<tr>"+
+          "<td>"+sp.getCode()+"</td>"+
+          "<td><a href=\"search.html#"+sp.getType().toCode()+"\">"+sp.getType().toCode()+"</a></td>"+
+          "<td>"+Utilities.escapeXml(sp.getDescription())+"<br/>"+
+          "<b>Expression:</b> "+Utilities.escapeXml(sp.getExpression())+"</td></tr>\r\n");
+      }
+      b.append("</table>");
+    } else {
+      b.append("<p>No Search Parameters defined for this extension</p>");
+    }
+    return b.toString();
+  }
+
+  private void addExtensionSearchParams(Profile cp) {
+    for (SearchParameter spd : cp.getSearchParameters()) {
+      addExtensionSearchParams(spd);      
+    }
+    
+  }
+
+  private void addExtensionSearchParams(ResourceDefn rd) {
+    for (SearchParameterDefn spd : rd.getSearchParams().values()) {
+      addExtensionSearchParams(spd.getResource());
+    }    
+  }
+
+  private void addExtensionSearchParams(SearchParameter sp) {
+    if (!sp.hasExpression()) {
+      return;
+    }
+    int iStart = sp.getExpression().indexOf(".extension(");
+    if (iStart > 0) {
+      String s = sp.getExpression().substring(iStart + 12).trim();
+      if (s.startsWith("'")) {
+        s = s.substring(1);
+      }
+      int iEnd = s.indexOf("'");
+      if (iEnd > 1) {
+        s = s.substring(0, iEnd);
+        if (Utilities.isAbsoluteUrl(s)) {
+          if (!extensionSearchParameterMap.containsKey(s)) {
+            extensionSearchParameterMap.put(s, new ArrayList<SearchParameter>());
+          }
+          extensionSearchParameterMap.get(s).add(sp);
+        }
+      }
+    }    
   }
 
   private String describeExtensionContext(StructureDefinition ed) {
