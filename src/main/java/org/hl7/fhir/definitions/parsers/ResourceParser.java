@@ -922,7 +922,11 @@ public class ResourceParser {
     if (d == 0) {
       f.setLastModified(new Date().getTime());
     }
-    return new XmlParser().parse(new CSFileInputStream(f));
+    try {
+      return new XmlParser().parse(new CSFileInputStream(f));
+    } catch (Exception e) {
+      throw new IOException("Error parsing "+name+": "+e.getMessage(), e);
+    }
   }
 
   private void saveXml(Resource res, String name) throws FHIRFormatError, FileNotFoundException, IOException {
