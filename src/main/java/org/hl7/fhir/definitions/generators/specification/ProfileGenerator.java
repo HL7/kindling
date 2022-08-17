@@ -1044,8 +1044,13 @@ public class ProfileGenerator {
     p.setVersion(version.toCode());
     ToolingExtensions.setStandardsStatus(p, r.getStatus(), r.getNormativeVersion());
 
-    if (r.getFmmLevel() != null)
-      ToolingExtensions.addIntegerExtension(p, ToolingExtensions.EXT_FMM_LEVEL, Integer.parseInt(r.getFmmLevel()));
+    if (r.getFmmLevel() != null) {
+      int fmm = Integer.parseInt(r.getFmmLevel());
+      ToolingExtensions.addIntegerExtension(p, ToolingExtensions.EXT_FMM_LEVEL, fmm);
+      if (fmm < 1) {
+        p.setExperimental(true);
+      }
+    }
     if (r.getSecurityCategorization() != null)
       ToolingExtensions.addCodeExtension(p, ToolingExtensions.EXT_SEC_CAT, r.getSecurityCategorization().toCode());
     ToolResourceUtilities.updateUsage(p, usage);
@@ -2539,6 +2544,8 @@ public class ProfileGenerator {
     p.setType(r.getRoot().getName());
     ToolingExtensions.setStandardsStatus(p, r.getStatus(), null);
 
+    p.setBaseDefinition("http://hl7.org/fhir/StructureDefinition/Base");
+    
     ToolResourceUtilities.updateUsage(p, igd.getCode());
     p.setName(r.getRoot().getName());
     p.setPublisher("Health Level Seven International"+(r.getWg() == null ? " "+igd.getCommittee() : " ("+r.getWg().getName()+")"));
