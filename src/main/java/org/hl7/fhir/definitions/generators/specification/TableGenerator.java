@@ -230,6 +230,7 @@ public class TableGenerator extends BaseGenerator {
       while (f != null) {
         if (Utilities.existsInList(f.getName(), definitions.getInterfaceNames())) {
           ancestors.add(0, f);
+          break;
         }
         f = Utilities.noString(f.typeCode()) || "Logical".equals(f.typeCode()) ? null : definitions.getElementDefn(f.typeCode());
       }
