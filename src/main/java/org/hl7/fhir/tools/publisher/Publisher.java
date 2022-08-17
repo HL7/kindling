@@ -3976,7 +3976,11 @@ public class Publisher implements URIResolver, SectionNumberer {
     zip.close();
     Utilities.copyFile(new CSFile(page.getFolders().tmpResDir + "fhir.schema.graphql.zip"), f);
     zip = new ZipGenerator(page.getFolders().dstDir + "fhir.schema.shex.zip");
-    zip.addFileName("fhir.shex", Utilities.path(page.getFolders().dstDir, "fhir.shex"), false);
+    for (String fn : new File(page.getFolders().dstDir).list()) {
+      if (fn.endsWith(".shex")) {
+        zip.addFileName(fn, Utilities.path(page.getFolders().dstDir, fn), false);   
+      }
+    }
     zip.close();
   }
 
