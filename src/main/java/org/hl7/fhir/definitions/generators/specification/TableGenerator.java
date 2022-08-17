@@ -210,19 +210,43 @@ public class TableGenerator extends BaseGenerator {
         }
         f = Utilities.noString(f.typeCode()) || "Logical".equals(f.typeCode()) ? null : definitions.getElementDefn(f.typeCode());
       }
-      
+
+      boolean isIntf = definitions.isInterface(e);
+      boolean hasIntf = false;
+      for (ElementDefn fi : ancestors) {
+        hasIntf = hasIntf || definitions.isInterface(fi);
+      }
+
       cc.getPieces().add(gen.new Piece("br"));
-      cc.getPieces().add(gen.new Piece(null, "Elements defined in Ancestors: ", null));
+      cc.getPieces().add(gen.new Piece(null, isIntf || hasIntf ? "Elements defined in Ancestor Resources: " : "Elements defined in Ancestors: ", null));
       boolean first = true;
       for (ElementDefn fi : ancestors) { 
-        for (ElementDefn fc : fi.getElements()) {
-          if (first)
-            first = false;
-          else
-            cc.getPieces().add(gen.new Piece(null, ", ", null));
-          cc.getPieces().add(gen.new Piece(definitions.getSrcFile(fi.getName())+".html#"+fi.getName(), fc.getName(), fc.getDefinition()));
+        if (!definitions.isInterface(fi)) {
+          for (ElementDefn fc : fi.getElements()) {
+            if (first)
+              first = false;
+            else
+              cc.getPieces().add(gen.new Piece(null, ", ", null));
+            cc.getPieces().add(gen.new Piece(definitions.getSrcFile(fi.getName())+".html#"+fi.getName(), fc.getName(), fc.getDefinition()));
+          }
         }
       }      
+      if (hasIntf) {
+        cc.getPieces().add(gen.new Piece("br"));
+        cc.getPieces().add(gen.new Piece(null, "Elements defined in Ancestor interfaces: ", null));
+        first = true;
+        for (ElementDefn fi : ancestors) { 
+          if (definitions.isInterface(fi)) {
+            for (ElementDefn fc : fi.getElements()) {
+              if (first)
+                first = false;
+              else
+                cc.getPieces().add(gen.new Piece(null, ", ", null));
+              cc.getPieces().add(gen.new Piece(definitions.getSrcFile(fi.getName())+".html#"+fi.getName(), fc.getName(), fc.getDefinition()));
+            }
+          }     
+        }
+      }
     }
     if (isRoot && !Utilities.noString(e.typeCode()) && Utilities.existsInList(e.typeCode(), definitions.getInterfaceNames()) && !Utilities.existsInList(e.getName(), definitions.getInterfaceNames())) {
       List<ElementDefn> ancestors = new ArrayList<ElementDefn>();
@@ -236,7 +260,7 @@ public class TableGenerator extends BaseGenerator {
       }
       
       cc.getPieces().add(gen.new Piece("br"));
-      cc.getPieces().add(gen.new Piece(null, "Interfaces Implemented: ", null));
+      cc.getPieces().add(gen.new Piece(null, "Interfaces Implemented: ", "uml.html#interfaces"));
       boolean first = true;
       for (ElementDefn fi : ancestors) { 
         if (first)

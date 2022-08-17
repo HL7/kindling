@@ -924,4 +924,9 @@ public class Definitions {
     return res;
   }
 
+  public boolean isInterface(ElementDefn fi) {
+    ResourceDefn rd = baseResources.get(fi.getName());
+    return rd != null && rd.isInterface();
+  }
+
 }

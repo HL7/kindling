@@ -34,6 +34,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
+import java.security.spec.ECField;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.HashMap;
@@ -893,7 +894,7 @@ public class SourceParser {
           c.getResources().put(r,  sheet.getColumn(row, c.getName()));
         }
       }
-    }    
+    }
   }
 
   private void loadCodeSystem(String n) throws FileNotFoundException, Exception {

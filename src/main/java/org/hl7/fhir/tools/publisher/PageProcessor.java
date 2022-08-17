@@ -3113,8 +3113,9 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
       String rules = map.get(rd);
       if (Utilities.noString(rules)) {
         out.append(" <li><a href=\"").append(rd.getName().toLowerCase()).append(".html\">").append(rd.getName()).append("</a></li>\r\n");
-      } else if (!rules.equals("{def}")) {
-        in.append(" <tr><td><a href=\"").append(rd.getName().toLowerCase()).append(".html\">").append(rd.getName()).append("</a></td><td>").append(rules.replace("|", "or")).append("</td></tr>\r\n");
+      } else { // if (!rules.equals("{def}")) {
+        in.append(" <tr><td><a href=\"").append(rd.getName().toLowerCase()).append(".html\">").append(rd.getName()).append("</a></td><td>")
+          .append(rules.replace("|", "or").replace("{def}", "<span style=\"color: maroon\"><b>[base]</b></span>")).append("</td></tr>\r\n");
       }
     }
     return "<p>\r\nThe following resources may be in this compartment:\r\n</p>\r\n" +
@@ -3122,12 +3123,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
         " <tr><td><b>Resource</b></td><td><b>Inclusion Criteria</b></td></tr>\r\n"+
         in.toString()+
         "</table>\r\n"+
-        "<p>\r\nA resource is in this compartment if the nominated search parameter (or chain) refers to the patient resource that defines the compartment.\r\n</p>\r\n" +
-        "<p>\r\n\r\n</p>\r\n" +
-        "<p>\r\nThe following resources are never in this compartment:\r\n</p>\r\n" +
-        "<ul>\r\n"+
-        out.toString()+
-        "</ul>\r\n";
+        "<p>\r\nA resource is in this compartment if the nominated search parameter (or chain) refers to the "+name+" resource that defines the compartment.\r\n</p>\r\n";
   }
 
   private String compartmentlist() {
