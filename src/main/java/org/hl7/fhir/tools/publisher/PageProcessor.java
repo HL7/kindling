@@ -141,6 +141,7 @@ import org.hl7.fhir.r5.model.BooleanType;
 import org.hl7.fhir.r5.model.Bundle;
 import org.hl7.fhir.r5.model.Bundle.BundleEntryComponent;
 import org.hl7.fhir.r5.model.CanonicalResource;
+import org.hl7.fhir.r5.model.CanonicalType;
 import org.hl7.fhir.r5.model.CodeSystem;
 import org.hl7.fhir.r5.model.CodeSystem.ConceptDefinitionComponent;
 import org.hl7.fhir.r5.model.CodeSystem.ConceptDefinitionDesignationComponent;
@@ -216,6 +217,7 @@ import org.hl7.fhir.r5.utils.TypesUtilities.WildcardInformation;
 import org.hl7.fhir.r5.utils.structuremap.StructureMapUtilities;
 import org.hl7.fhir.r5.utils.validation.IResourceValidator;
 import org.hl7.fhir.tools.converters.MarkDownPreProcessor;
+import org.hl7.fhir.tools.publisher.ReferenceTracker.RefType;
 import org.hl7.fhir.utilities.CSFile;
 import org.hl7.fhir.utilities.CSFileInputStream;
 import org.hl7.fhir.utilities.CommaSeparatedStringBuilder;
@@ -7006,20 +7008,15 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
   }
 
   private String getReferences(String name) throws Exception {
-    List<String> refs = new ArrayList<String>();
+    ReferenceTracker refs = new ReferenceTracker();
     if (definitions.hasLogicalModel(name)) {
       ElementDefn r = definitions.getLogicalModel(name).getResource().getRoot();
       List<String> names = definitions.listAllPatterns(r.getName());
       for (String rn : definitions.sortedResourceNames()) {
         checkPatternReferences(names, refs, rn, definitions.getResourceByName(rn).getRoot(), definitions.getLogicalModel(name).getMappingUrl());
       }
-      if (refs.size() == 1)
-        return "<h2>References</h2><p>This pattern is implemented by "+renderRef(refs.get(0), name)+".</p>\r\n";
-      else if (refs.size() > 1)
-        return "<h2>References</h2><p>This pattern is implemented by "+asLinks(refs, name)+".</p>\r\n";
-      else
-        return "<h2>References</h2><p>No resources follow this pattern.</p>";
-    
+      return refs.render("Pattern", name);
+
     } else {
       for (String tn : definitions.sortedTypeNames()) {
         checkReferences(name, refs, tn, definitions.getElementDefn(tn));
@@ -7027,65 +7024,65 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
       for (String rn : definitions.sortedResourceNames()) {
         checkReferences(name, refs, rn, definitions.getResourceByName(rn).getRoot());
       }
-      String r;
-      if (refs.size() == 1)
-        r = "<h2>References</h2><p>This resource is referenced by "+renderRef(refs.get(0), name)+".</p>\r\n";
-      else if (refs.size() > 1)
-        r = "<h2>References</h2><p>This resource is referenced by "+asLinks(refs, name)+".</p>\r\n";
-      else
-        r = "<h2>References</h2><p>No resources refer to this resource directly.</p>";
-      refs.clear();
       for (ImplementationGuideDefn ig : definitions.getSortedIgs()) {
         for (LogicalModel lm : ig.getLogicalModels()) {
           checkPatternUsage(lm.getResource().getRoot().getName(), refs, definitions.getResourceByName(name).getRoot(), lm.getMappingUrl());
         }
       }
-      if (refs.size() == 1)
-        return r + "<p>This resource implements the "+renderRef(refs.get(0), name)+" pattern.</p>\r\n";
-      else if (refs.size() > 1)
-        return r + "<p>This resource implements the "+asLinks(refs, name)+" patterns.</p>\r\n";
-      else
-        return r + "<p>This resource does not implement any patterns.</p>";
+      for (StructureDefinition ae : getWorkerContext().getExtensionDefinitions()) {
+        checkExtensionReferences(name, refs, ae);
+      }
+      for (StructureDefinition sd : definitions.getAllProfiles()) {
+        checkProfileReferences(name, refs, sd);
+      }
+
+      return refs.render("Resource", name);
     }
   }
 
-  private void checkPatternUsage(String name, List<String> refs, TypeDefn e, String url) {
-    String p = e.getMapping(url);
-    if (name.equals(p))
-      refs.add(name);
+  private void checkProfileReferences(String name, ReferenceTracker refs, StructureDefinition sd) {
+    if (!refs.hasLink(RefType.RESOURCE_REF, sd.getType())) {
+      for (ElementDefinition ed : sd.getSnapshot().getElement()) {
+        for (TypeRefComponent tr : ed.getType()) {
+          for (CanonicalType ct : tr.getTargetProfile()) {
+            if (ct.hasValue() && (ct.getValue().equals(name) || ct.getValue().endsWith("/"+name))) {
+              refs.link(RefType.PROFILE_REF, sd.getId(), sd.getUserString("path"), sd.present(), ed.getPath());            
+            }
+          }
+        }
+      }
+    }
   }
 
-  public void checkPatternReferences(List<String> names, List<String> refs, String rn, ElementDefn r, String url) throws FHIRException {
+  private void checkExtensionReferences(String name, ReferenceTracker refs, StructureDefinition ae) {
+    for (ElementDefinition ed : ae.getSnapshot().getElement()) {
+      for (TypeRefComponent tr : ed.getType()) {
+        for (CanonicalType ct : tr.getTargetProfile()) {
+          if (ct.hasValue() && (ct.getValue().equals(name) || ct.getValue().endsWith("/"+name))) {
+            refs.link(RefType.EXTENSION_REF, ae.getId(), ae.getUserString("path"), ae.present());            
+          }
+        }
+      }
+    }
+  }
+
+  private void checkPatternUsage(String name, ReferenceTracker refs, TypeDefn e, String url) {
+    String p = e.getMapping(url);
+    if (name.equals(p))
+      refs.link(RefType.RESOURCE_IMPL, name, definitions.getSrcFile(name)+".html#"+name, name);
+  }
+
+  public void checkPatternReferences(List<String> names, ReferenceTracker refs, String rn, ElementDefn r, String url) throws FHIRException {
     if (followsPattern(r, names, url)) {
-      refs.add(rn);
+      refs.link(RefType.PATTERN_IMPL, rn, definitions.getSrcFile(rn)+".html#"+rn, rn);
     }
   }
   
-  public void checkReferences(String name, List<String> refs, String rn, ElementDefn r) throws FHIRException {
-    if (usesReference(r, name)) {
-      refs.add(rn);
+  public void checkReferences(String name, ReferenceTracker refs, String rn, ElementDefn r) throws FHIRException {
+    usesReference(r, name, refs, rn);
+    if (name.equals("CodeSystem") && Utilities.existsInList(rn, "ValueSet", "ConceptMap", "Coding") && !refs.hasLink(RefType.RESOURCE_REF, rn)) {
+      refs.link(RefType.RESOURCE_REF, rn, definitions.getSrcFile(rn)+".html#"+rn, rn);
     }
-    if (name.equals("CodeSystem") && Utilities.existsInList(rn, "ValueSet", "ConceptMap", "Coding") && !refs.contains(rn))
-      refs.add(rn);
-  }
-
-  private String renderRef(String ref, String name) {
-    if (ref.equals(name))
-      return "itself";
-    else
-      return "<a href=\""+definitions.getSrcFile(ref)+".html#"+ref+"\">"+ref+"</a>";
-  }
-
-  private String asLinks(List<String> refs, String name) {
-    StringBuilder b = new StringBuilder();
-    for (int i = 0; i < refs.size(); i++) {
-      if (i == refs.size() - 1)
-        b.append(" and ");
-      else if (i > 0)
-        b.append(", ");
-      b.append(renderRef(refs.get(i), name));
-    }
-    return b.toString();
   }
 
   private boolean followsPattern(ElementDefn e, List<String> names, String url) {
@@ -7095,14 +7092,12 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     return false;
   }
   
-  private boolean usesReference(ElementDefn e, String name) {
+  private void usesReference(ElementDefn e, String name, ReferenceTracker refs, String rn) {
     if (usesReference(e.getTypes(), name))
-      return true;
+       refs.link(RefType.RESOURCE_REF, rn, definitions.getSrcFile(rn)+".html#"+rn, rn, e.getPath());
     for (ElementDefn c : e.getElements()) {
-      if (usesReference(c, name))
-        return true;
+       usesReference(c, name, refs, rn);
     }
-    return false;
   }
 
   private boolean usesReference(List<TypeRef> types, String name) {

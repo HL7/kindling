@@ -905,4 +905,23 @@ public class Definitions {
     return res;
   }
 
+  public List<StructureDefinition> getAllProfiles() {
+    List<StructureDefinition> res = new ArrayList<>();
+    for (ResourceDefn r : getResources().values()) {
+      for (Profile cp : r.getConformancePackages()) {
+        for (ConstraintStructure s : cp.getProfiles()) {          
+          res.add(s.getResource());
+        }
+      }
+    }
+    for (ImplementationGuideDefn e : getIgs().values()) {
+      for (Profile cp : e.getProfiles()) {
+        for (ConstraintStructure s : cp.getProfiles()) {          
+          res.add(s.getResource());
+        }
+      }
+    }
+    return res;
+  }
+
 }
