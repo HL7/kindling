@@ -4075,6 +4075,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     b.append("<ul class=\"nav nav-tabs\">");
     b.append(makeHeaderTab("References", "references.html", mode==null || "base".equals(mode)));
     b.append(makeHeaderTab("Detailed Descriptions", "references-definitions.html", mode==null || "definitions".equals(mode)));
+    b.append(makeHeaderTab("Profiles &amp; Extensions", "references-extras.html", mode==null || "profiles".equals(mode)));
     b.append("</ul>\r\n");
     return b.toString();
   }

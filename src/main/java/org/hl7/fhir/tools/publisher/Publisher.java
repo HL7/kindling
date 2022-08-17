@@ -858,11 +858,13 @@ public class Publisher implements URIResolver, SectionNumberer {
       if (!Utilities.noString(self.get(i))) {
         String cc = canonical.get(i);
         String sc = self.get(i);
-        SourceElementComponent e = grp.addElement();
-        e.setCode(sc);
-        TargetElementComponent t = e.addTarget();
-        t.setCode(cc);
-        t.setRelationship(ConceptMapRelationship.EQUIVALENT);
+        for (String scp : sc.split("\\,")) {
+          SourceElementComponent e = grp.addElement();
+          e.setCode(scp.trim());
+          TargetElementComponent t = e.addTarget();
+          t.setCode(cc);
+          t.setRelationship(ConceptMapRelationship.EQUIVALENT);
+        }
       }
     }
     if (!grp.hasElement())
