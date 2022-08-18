@@ -3823,7 +3823,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
 
   private String genResourceTable(ResourceDefn res, String prefix) throws Exception {
     ResourceTableGenerator gen = new ResourceTableGenerator(folders.dstDir, this, res.getName()+"-definitions.html", false, version);
-    return new XhtmlComposer(XhtmlComposer.HTML).compose(gen.generate(res, prefix, true));
+    return new XhtmlComposer(XhtmlComposer.HTML).compose(gen.generate(res, prefix, true))+(!res.isAbstract() ? "<p><a href=\""+res.getName().toLowerCase()+"-profiles.html#extensions\">See the Extensions</a> for this resource</p>" : "");
   }
 
   private String genResourceConstraints(ResourceDefn res, String prefix) throws Exception {
@@ -5550,15 +5550,6 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     return title == null ? "" : Utilities.escapeXml(title);
   }
 
-  private String genResExtLink(ResourceDefn resource) {
-    boolean isAbstract = resource.isAbstract();
-
-    if (isAbstract)
-      return "See the ";
-    else
-      return "See the <a href=\""+resource.getName().toLowerCase()+"-profiles.html\">Profiles &amp; Extensions</a> and the ";
-  }
-
   public class SnomedConceptUsage {
     private String code;
     private String display;
@@ -6092,8 +6083,6 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
         src = s1+genLogicalMappings(resource, genlevel(level))+s3; 
       else if (com[0].equals("no-extensions-base-warning"))
         src = s1+genNoExtensionsWarning(resource)+s3; 
-      else if (com[0].equals("res-ext-link"))  
-        src = s1+genResExtLink(resource)+s3;
       else if (com[0].equals("pattern-analysis"))  
         src = s1+genLogicalAnalysis(resource, genlevel(level))+s3;
       else if (com[0].equals("resurl")) {

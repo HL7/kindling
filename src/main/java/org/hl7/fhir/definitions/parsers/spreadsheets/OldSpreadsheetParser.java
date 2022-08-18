@@ -2226,6 +2226,7 @@ public class OldSpreadsheetParser {
     parseExtensionElement(sheet, row, definitions, exe, false);
     String sl = exe.getShortDefn();
     ex.setName(sheet.getColumn(row, "Name"));
+    ex.setTitle(sheet.getColumn(row, "Title"));
     if (!ex.hasName())
       ex.setName(exe.getName());
     if (!ex.hasName())
