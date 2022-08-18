@@ -3573,6 +3573,10 @@ public class Publisher implements URIResolver, SectionNumberer {
   Set<StructureDefinition> ped = new HashSet<StructureDefinition>();
 
   private void produceExtensionDefinition(StructureDefinition ed) throws FileNotFoundException, Exception {
+    if (ed.getSnapshot().getElementFirstRep().getMin() != 0) {
+      page.getValidationErrors().add(new ValidationMessage(Source.Publisher, IssueType.BUSINESSRULE, -1, -1, "StructureDefinition/"+ed.getIdBase(),
+          "Extension has minimum cardinality = 0 - probably wrong", IssueSeverity.WARNING));
+    }
     if (!ped.contains(ed)) {
       ped.add(ed);
       ImplementationGuideDefn ig = page.getDefinitions().getIgs().get(ed.getUserString(ToolResourceUtilities.NAME_RES_IG));
@@ -4102,12 +4106,12 @@ public class Publisher implements URIResolver, SectionNumberer {
             insertSectionNumbers(page.processResourceIncludes(n, resource, xml, json, ttl, tx, dict, src, mappings, mappingsList, "res-Mappings", n + "-mappings.html", null, values, resource.getWg(), null), st, n + "-mappings.html", 0, null),
             page.getFolders().dstDir + n + "-mappings.html");
         page.getHTMLChecker().registerFile(n + "-mappings.html", "Formal Mappings for " + resource.getName(), HTMLLinkChecker.XHTML_TYPE, true);
-        src = TextFile.fileToString(page.getFolders().templateDir + "template-profiles.html");
-        TextFile.stringToFile(
-            insertSectionNumbers(page.processResourceIncludes(n, resource, xml, json, ttl, tx, dict, src, mappings, mappingsList, "res-Profiles", n + "-profiles.html", null, values, resource.getWg(), null), st, n + "-profiles.html", 0, null),
-            page.getFolders().dstDir + n + "-profiles.html");
-        page.getHTMLChecker().registerFile(n + "-profiles.html", "Profiles for " + resource.getName(), HTMLLinkChecker.XHTML_TYPE, true);
       }
+      src = TextFile.fileToString(page.getFolders().templateDir + (resource.getName().equals("Resource") ? "template-resource-profiles.html" : "template-profiles.html"));
+      TextFile.stringToFile(
+          insertSectionNumbers(page.processResourceIncludes(n, resource, xml, json, ttl, tx, dict, src, mappings, mappingsList, "res-Profiles", n + "-profiles.html", null, values, resource.getWg(), null), st, n + "-profiles.html", 0, null),
+          page.getFolders().dstDir + n + "-profiles.html");
+      page.getHTMLChecker().registerFile(n + "-profiles.html", "Profiles for " + resource.getName(), HTMLLinkChecker.XHTML_TYPE, true);
       if (!resource.getOperations().isEmpty()) {
         src = TextFile.fileToString(page.getFolders().templateDir + "template-operations.html");
         TextFile.stringToFile(
