@@ -2583,6 +2583,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     b.append("   <p><b>Structure</b></p>\r\n");
     b.append("   <div id=\"tbl-inner\">\r\n");
     b.append("    "+tree+"\r\n");
+    b.append("    <p>Profile: <a href=\""+name.toLowerCase()+".profile.xml.html\">XML</a> | <a href=\""+name.toLowerCase()+".profile.json.html\">JSON</a></p>\r\n");
     b.append("   </div>\r\n");
     b.append("  </div>\r\n");
     b.append(" </div>\r\n");
@@ -4355,8 +4356,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     b.append(makeHeaderTab("Detailed Descriptions", n+"-definitions.html", "definitions".equals(mode)));
     if (!isAbstract)
       b.append(makeHeaderTab("Mappings", n+"-mappings.html", "mappings".equals(mode)));
-    if (!isAbstract)
-      b.append(makeHeaderTab("Profiles &amp; Extensions", n+"-profiles.html", "profiles".equals(mode)));
+    b.append(makeHeaderTab("Profiles &amp; Extensions", n+"-profiles.html", "profiles".equals(mode)));
 //    if (!isAbstract)
 //      b.append(makeHeaderTab("HTML Form", n+"-questionnaire.html", "questionnaire".equals(mode)));
     if (hasOps)
@@ -4401,6 +4401,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     b.append(makeHeaderTab("Detailed Descriptions", n+"-definitions.html", "definitions".equals(mode)));
     if (hasExamples)
       b.append(makeHeaderTab("Examples", n+"-examples.html", "operations".equals(mode)));
+    b.append(makeHeaderTab("Profiles &amp; Extensions", n+"-profiles.html", "profiles".equals(mode)));
     if (hasOps)
       b.append(makeHeaderTab("Operations", n+"-operations.html", "operations".equals(mode)));
 
@@ -5894,6 +5895,8 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
         src = s1 + genOtherTabs(com[1], tabs) + s3;
       else if (com[0].equals("svg"))
         src = s1+new SvgGenerator(this, genlevel(level), resource.getLayout(), true, false, version).generate(resource, com[1])+s3;
+      else if (com[0].equals("dtextensions")) 
+        src = s1+produceDataTypeExtras(com[1], false)+s3;
       else if (com[0].equals("normative")) {
         String np = null;
         if (com[2].equals("%check") || com[2].equals("%check-op")) {
