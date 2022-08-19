@@ -544,6 +544,7 @@ public class SourceParser {
     if (lm.getResource().getFmmLevel() == null)
       lm.getResource().setFmmLevel("1");
     lm.getResource().setStatus(StandardsStatus.INFORMATIVE);
+    lm.getResource().setPattern(true);
     errors.addAll(sparser.getErrors());
     File f = new File(Utilities.path(srcDir, n, n+".svg"));
     if (f.exists()) 

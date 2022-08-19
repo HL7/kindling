@@ -16,6 +16,7 @@ import org.hl7.fhir.r5.model.ConceptMap.TargetElementComponent;
 import org.hl7.fhir.r5.model.Constants;
 import org.hl7.fhir.r5.model.ContactDetail;
 import org.hl7.fhir.r5.model.ContactPoint;
+import org.hl7.fhir.r5.model.DateTimeType;
 import org.hl7.fhir.r5.model.Enumerations.ConceptMapRelationship;
 import org.hl7.fhir.r5.model.Factory;
 import org.hl7.fhir.r5.model.ValueSet;
@@ -99,6 +100,10 @@ public class CodeListToValueSetParser {
           for (String ct : sheet.columns) 
             if (ct.startsWith("Display:") && !Utilities.noString(sheet.getColumn(row, ct)))
               cc.addDesignation().setLanguage(ct.substring(8)).setValue(sheet.getColumn(row, ct));
+          String deprecated = sheet.getColumn(row, "Deprecated");
+          if (!Utilities.noString(deprecated)) {
+            CodeSystemUtilities.setDeprecated(cs, cc, new DateTimeType(deprecated));
+          }
           String parent = sheet.getColumn(row, "Parent");
           if (Utilities.noString(parent))
             cs.addConcept(cc);

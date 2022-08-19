@@ -2583,7 +2583,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     b.append("   <p><b>Structure</b></p>\r\n");
     b.append("   <div id=\"tbl-inner\">\r\n");
     b.append("    "+tree+"\r\n");
-    b.append("    <p>Profile: <a href=\""+name.toLowerCase()+".profile.xml.html\">XML</a> | <a href=\""+name.toLowerCase()+".profile.json.html\">JSON</a></p>\r\n");
+    b.append("    <p>Definition: <a href=\""+name.toLowerCase()+".profile.xml.html\">XML</a> | <a href=\""+name.toLowerCase()+".profile.json.html\">JSON</a></p>\r\n");
     b.append("   </div>\r\n");
     b.append("  </div>\r\n");
     b.append(" </div>\r\n");
@@ -3823,7 +3823,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
 
   private String genResourceTable(ResourceDefn res, String prefix) throws Exception {
     ResourceTableGenerator gen = new ResourceTableGenerator(folders.dstDir, this, res.getName()+"-definitions.html", false, version);
-    return new XhtmlComposer(XhtmlComposer.HTML).compose(gen.generate(res, prefix, true))+(!res.isAbstract() ? "<p><a href=\""+res.getName().toLowerCase()+"-profiles.html#extensions\">See the Extensions</a> for this resource</p>" : "");
+    return new XhtmlComposer(XhtmlComposer.HTML).compose(gen.generate(res, prefix, true))+(!res.isAbstract() && !res.isPattern() ? "<p><a href=\""+res.getName().toLowerCase()+"-profiles.html#extensions\">See the Extensions</a> for this resource</p>" : "");
   }
 
   private String genResourceConstraints(ResourceDefn res, String prefix) throws Exception {

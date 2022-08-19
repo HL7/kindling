@@ -167,6 +167,7 @@ public class ResourceDefn  {
   private StandardsStatus status = StandardsStatus.TRIAL_USE;
   private boolean abstract_;
   private boolean interface_;
+  private boolean pattern;
   private WorkGroup wg;
   private Profile conformancePack;
 
@@ -489,6 +490,14 @@ public class ResourceDefn  {
 
   public List<InheritedMapping> getInheritedMappings() {
     return inheritedMappings;
+  }
+
+  public boolean isPattern() {
+    return pattern;
+  }
+
+  public void setPattern(boolean pattern) {
+    this.pattern = pattern;
   }
   
   
