@@ -1276,7 +1276,9 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
       } else if (com[0].equals("diff-links-all")) { 
         src = s1+genDiffLinks()+s3;
       } else if (com[0].equals("res-type-count")) { 
-        src = s1+definitions.getResources().size()+s3;        
+        src = s1+definitions.getResources().size()+s3; 
+      } else if (com[0].equals("contained-resource-examples")) { 
+        src = s1+listContainedExamples()+s3;
       } else if (com[0].equals("patterns-analysis")) { 
         src = s1+patternFinder.generateReport()+s3;
       } else if (macros.containsKey(com[0])) {
@@ -4532,7 +4534,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
       }
     }
     if (!sorts.isEmpty()) {
-      s.append(" <tr><td colspan=\"5\" style=\"background: #DFDFDF\"><b>Namespace: </b>"+ns+"</td></tr>\r\n");
+      s.append(" <tr><td colspan=\"3\" style=\"background: #DFDFDF\"><b>Namespace: </b>"+ns+"</td></tr>\r\n");
       Collections.sort(sorts);
       for (String sn : sorts) {
         ValueSet ae = vslist.get(sn);
@@ -10852,6 +10854,21 @@ private int countContains(List<ValueSetExpansionContainsComponent> list) {
     for (String rn : definitions.sortedResourceNames()) {
      if (definitions.getResourceByName(rn).getTemplate() != null)
         b.append("<li><a href=\""+rn.toLowerCase()+".html\">"+rn+"</a></li>\r\n");
+    }
+    b.append("</ul>\r\n");
+    return b.toString();
+  }
+  
+  private String listContainedExamples() throws FHIRException {
+    StringBuilder b = new StringBuilder();
+    b.append("<ul style=\"column-count: 3\">\r\n");
+    for (String rn : definitions.sortedResourceNames()) {
+      ResourceDefn rd = definitions.getResourceByName(rn);
+      for (Example e : rd.getExamples()) {
+        if (e.hasContained()) {
+          b.append("<li><a href=\""+e.getTitle()+".html\">"+rn+"/"+e.getId()+"</a></li>\r\n");
+        }
+      }
     }
     b.append("</ul>\r\n");
     return b.toString();

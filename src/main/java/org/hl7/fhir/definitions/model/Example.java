@@ -45,6 +45,7 @@ import org.hl7.fhir.utilities.validation.ValidationMessage;
 import org.hl7.fhir.utilities.xhtml.XhtmlNode;
 import org.hl7.fhir.utilities.xml.XMLUtil;
 import org.w3c.dom.Document;
+import org.w3c.dom.Node;
 
 public class Example {
   private String name;
@@ -244,6 +245,14 @@ public class Example {
   public List<ValidationMessage> getErrors() {
     return errors;
   }
-  
+
+
+  public boolean hasContained() {
+    Node n = xml.getDocumentElement().getFirstChild();
+    while (n != null && !"contained".equals(n.getNodeName())) {
+      n = n.getNextSibling();      
+    }
+    return n != null;
+  }
   
 }
