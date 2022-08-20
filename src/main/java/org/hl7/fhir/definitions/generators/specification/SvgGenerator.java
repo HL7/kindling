@@ -1245,7 +1245,19 @@ public class SvgGenerator extends BaseGenerator {
       }
       xml.text(ls.see(" \u00BB"));
     }
-    
+    if (e.getStatedInvariants().size() > 0) {
+      xml.text(ls.see(" \u00AB "));
+      xml.attribute("id", "n"+(++nc));
+      xml.attribute("style", "padding-left: 3px; padding-right: 3px; border: 1px maroon solid; font-weight: bold; color: #301212; background-color: #fdeeee;");
+      xml.attribute("xlink:href", "conformance-rules.html#constraints");
+      xml.enter("a");
+      xml.attribute("id", "n"+(++nc));
+      xml.element("title", "This element has or is affected by some invariants");
+      xml.text(ls.see("I"));
+      xml.exit("a");      
+      xml.text(ls.see(" \u00BB"));
+
+    }
     xml.exit("text");
   }
 

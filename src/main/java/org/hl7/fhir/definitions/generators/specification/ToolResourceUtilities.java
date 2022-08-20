@@ -5,6 +5,8 @@ import org.hl7.fhir.utilities.Utilities;
 
 public class ToolResourceUtilities {
 
+  public static final String INV_FLAG = "<a style=\"padding-left: 3px; padding-right: 3px; border: 1px maroon solid; font-weight: bold; color: #301212; background-color: #fdeeee;\" href=\"conformance-rules.html#constraints\" title=\"This element has or is affected by some invariants\">I</a>";
+
   public static final String NAME_SPEC_USAGE = "spec.usage";
   public static final String NAME_RES_IG = "spec.vs.ig";
   public static final String NAME_RES_PROFILE = "spec.res.profile";

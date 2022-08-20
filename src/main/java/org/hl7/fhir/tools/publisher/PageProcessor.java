@@ -3840,7 +3840,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
       b.append(invs.get(n));
     }
     if (b.length() > 0)
-      return "<a name=\"invs\"> </a>\r\n<h3>Constraints</h3><table class=\"grid\"><tr><td width=\"60\"><b>id</b></td><td><b>Level</b></td><td><b>Location</b></td><td><b>Description</b></td><td><b><a href=\""+prefix+"fhirpath.html\">Expression</a></b></td></tr>"+b+"</table>";
+      return "<a name=\"invs\"> </a>\r\n<h3>Constraints</h3><div style=\""+ProfileUtilities.CONSTRAINT_STYLE+"\"><table class=\"grid\"><tr><td width=\"60\"><b>id</b></td><td><b>Level</b></td><td><b>Location</b></td><td><b>Description</b></td><td><b><a href=\""+prefix+"fhirpath.html\">Expression</a></b></td></tr>"+b+"</table></div>";
     else
       return "";
   }
@@ -4218,7 +4218,8 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
       pfx = "../../../";
 
     b.append("<ul class=\"nav nav-tabs\">");
-    b.append(makeHeaderTab("Definitionsany ", pfx + "formats.html", mode==null || "base".equals(mode)));
+    b.append(makeHeaderTab("Definitions ", pfx + "formats.html", mode==null || "base".equals(mode)));
+    b.append(makeHeaderTab("Formats", pfx + "resource-formats.html", "formats".equals(mode)));
     b.append(makeHeaderTab("XML", pfx + "xml.html", "xml".equals(mode)));
     b.append(makeHeaderTab("JSON", pfx + "json.html", "json".equals(mode)));
     b.append(makeHeaderTab("ND-JSON", pfx + "nd-json.html", "ndjson".equals(mode)));

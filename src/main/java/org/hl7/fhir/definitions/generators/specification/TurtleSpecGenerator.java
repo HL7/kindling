@@ -11,6 +11,7 @@ import java.util.List;
 import org.hl7.fhir.definitions.model.BindingSpecification;
 import org.hl7.fhir.definitions.model.Definitions;
 import org.hl7.fhir.definitions.model.ElementDefn;
+import org.hl7.fhir.definitions.model.Invariant;
 import org.hl7.fhir.definitions.model.ProfiledType;
 import org.hl7.fhir.definitions.model.TypeRef;
 import org.hl7.fhir.r5.model.StructureDefinition;
@@ -134,6 +135,7 @@ public class TurtleSpecGenerator extends OutputStreamWriter {
       writeElementName(elem, path, en);
       write(": ");
       write(elem.describeCardinality());
+      writeInvariants(elem);
       write(" <span style=\"color: navy\">");
       write(Utilities.escapeXml(elem.getShortDefn()));
       write("</span>");
@@ -154,6 +156,7 @@ public class TurtleSpecGenerator extends OutputStreamWriter {
 	    else
 	      write("; # ");
 	    write(elem.describeCardinality());
+      writeInvariants(elem);
       write(" <span style=\"color: navy\">");
       write(Utilities.escapeXml(elem.getShortDefn()));
       write("</span>\r\n");
@@ -164,6 +167,7 @@ public class TurtleSpecGenerator extends OutputStreamWriter {
 
       write("[ # ");
       write(elem.describeCardinality());
+      writeInvariants(elem);
       write(" <span style=\"color: navy\">");
       write(Utilities.escapeXml(elem.getShortDefn()));
       write("</span>\r\n");
@@ -178,6 +182,26 @@ public class TurtleSpecGenerator extends OutputStreamWriter {
 		}
 	}
 
+  private void writeInvariants(ElementDefn elem) throws IOException {
+    if (elem.getStatedInvariants().size() > 0)
+      write(" <span style=\"color: brown\" title=\""+Utilities.escapeXml(getInvariants(elem))+ "\">"+ToolResourceUtilities.INV_FLAG+"</span>"); 
+  }
+
+
+
+  private String getInvariants(ElementDefn elem) {
+    StringBuilder b = new StringBuilder();
+    boolean first = true;
+    for (Invariant i : elem.getStatedInvariants()) {
+      if (!first)
+        b.append("; ");
+      first = false;
+      b.append(i.getId()+": "+i.getEnglish());
+    }
+
+    return b.toString();
+  }
+  
   private List<TypeRef> getTypes(ElementDefn elem) {
     if (elem.getTypes().size() == 1 && elem.getTypes().get(0).isWildcardType()) {
       List<TypeRef> res = new ArrayList<TypeRef>();

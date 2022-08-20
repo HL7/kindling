@@ -793,7 +793,7 @@ public class JsonSpecGenerator extends OutputStreamWriter {
 
   private void writeCardinality(ElementDefn elem) throws IOException {
     if (elem.getStatedInvariants().size() > 0)
-      write(" <span style=\"color: brown\" title=\""+Utilities.escapeXml(getInvariants(elem))+ "\"><b>C?</b></span>"); 
+      write(" <span style=\"color: brown\" title=\""+Utilities.escapeXml(getInvariants(elem))+ "\">"+ToolResourceUtilities.INV_FLAG+"</span>"); 
     if (elem.getMinCardinality() > 0)
       write(" <span style=\"color: brown\" title=\"This element is required\"><b>R!</b></span> ");
   }
@@ -801,7 +801,7 @@ public class JsonSpecGenerator extends OutputStreamWriter {
   private void writeCardinality(ElementDefinition elem) throws IOException {
     if (elem.getConstraint().size() > 0)
       write(" <span style=\"color: brown\" title=\""
-          + Utilities.escapeXml(getInvariants(elem)) + "\"><b>C?</b></span>");
+          + Utilities.escapeXml(getInvariants(elem)) + "\">"+ToolResourceUtilities.INV_FLAG+"</span>");
     if (elem.getMin() > 0)
       write(" <span style=\"color: brown\" title=\"This element is required\"><b>R!</b></span> ");
   }

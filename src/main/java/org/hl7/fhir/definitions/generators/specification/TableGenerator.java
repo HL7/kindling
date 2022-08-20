@@ -11,6 +11,7 @@ import org.hl7.fhir.definitions.model.ElementDefn;
 import org.hl7.fhir.definitions.model.Invariant;
 import org.hl7.fhir.definitions.model.ProfiledType;
 import org.hl7.fhir.definitions.model.TypeRef;
+import org.hl7.fhir.r5.conformance.ProfileUtilities;
 import org.hl7.fhir.r5.model.Enumerations.FHIRVersion;
 import org.hl7.fhir.r5.model.ValueSet;
 import org.hl7.fhir.tools.publisher.PageProcessor;
@@ -19,6 +20,7 @@ import org.hl7.fhir.utilities.Utilities;
 import org.hl7.fhir.utilities.VersionUtilities;
 import org.hl7.fhir.utilities.xhtml.HierarchicalTableGenerator;
 import org.hl7.fhir.utilities.xhtml.HierarchicalTableGenerator.Cell;
+import org.hl7.fhir.utilities.xhtml.HierarchicalTableGenerator.Piece;
 import org.hl7.fhir.utilities.xhtml.HierarchicalTableGenerator.Row;
 
 public class TableGenerator extends BaseGenerator {
@@ -66,7 +68,10 @@ public class TableGenerator extends BaseGenerator {
       gc.addStyledText("This element is included in summaries", "\u03A3", null, null, prefix+"elementdefinition-definitions.html#ElementDefinition.isSummary", false);
     }
     if (!isRoot && (!e.getInvariants().isEmpty() || !e.getStatedInvariants().isEmpty())) { 
-      gc.addStyledText("This element has or is affected by some invariants", "I", null, null, prefix+"conformance-rules.html#constraints", false);
+      Piece p = gc.addText("I");
+      p.setHint("This element has or is affected by some invariants");
+      p.addStyle(ProfileUtilities.CONSTRAINT_STYLE);
+      p.setReference(prefix+"conformance-rules.html#constraints");      
     }
     if (isInterface) {
       gc.addStyledText("This is an interface resource", "«I»", null, null, VersionUtilities.isR4BVer(page.getVersion().toCode()) ? null : prefix+"uml.html#interface", false);

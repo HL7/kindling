@@ -62,7 +62,7 @@ import org.hl7.fhir.utilities.Utilities;
 
 public class XmlSpecGenerator extends OutputStreamWriter {
 
-	private String defPage;
+  private String defPage;
 	private String dtRoot;
 	private Definitions definitions;
   private PageProcessor page;
@@ -828,7 +828,7 @@ public class XmlSpecGenerator extends OutputStreamWriter {
 	private void writeCardinality(ElementDefn elem) throws IOException {
 		if (elem.getStatedInvariants().size() > 0)
 			write(" <span style=\"color: brown\" title=\""
-					+ Utilities.escapeXml(getInvariants(elem)) + "\"><b><img alt=\"??\" src=\"lock.png\"/> "
+					+ Utilities.escapeXml(getInvariants(elem)) + "\"><b>"+ToolResourceUtilities.INV_FLAG+" "
 					+ elem.describeCardinality() + "</b></span>");
 		else
 			write(" <span style=\"color: brown\"><b>"
@@ -838,7 +838,7 @@ public class XmlSpecGenerator extends OutputStreamWriter {
   private void writeCardinality(ElementDefinition elem) throws IOException {
     if (elem.getConstraint().size() > 0)
       write(" <span style=\"color: brown\" title=\""
-          + Utilities.escapeXml(getInvariants(elem)) + "\"><b><img alt=\"??\" src=\"lock.png\"/> "
+          + Utilities.escapeXml(getInvariants(elem)) + "\"><b>"+ToolResourceUtilities.INV_FLAG+" "
           + describeCardinality(elem) + "</b></span>");
     else
       write(" <span style=\"color: brown\"><b>"
