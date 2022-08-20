@@ -4485,7 +4485,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     }
     Collections.sort(namespaces);
     for (String n : namespaces)
-      generateVSforNS(s, n, definitions.getValuesets(), false, null);
+      generateVSforNS(s, n, definitions.getValuesets(), null);
     s.append("</table>\r\n");
     return s.toString();
   }
@@ -4493,7 +4493,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
   private String genValueSetsTable(ImplementationGuideDefn ig) throws Exception {
     StringBuilder s = new StringBuilder();
     s.append("<table class=\"codes\">\r\n");
-    s.append(" <tr><td><b>Name</b></td><td><b>Definition</b></td><td><b>Source</b></td><td><b>Id</b></td></tr>\r\n");
+    s.append(" <tr><td><b>Name</b></td><td><b>Definition</b></td><td><b>Source</b></td></tr>\r\n");
     List<String> namespaces = new ArrayList<String>();
     CanonicalResourceManager<ValueSet> vslist = new CanonicalResourceManager<ValueSet>(false);
     for (String sn : definitions.getValuesets().keys()) {
@@ -4510,9 +4510,9 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
       vslist.see(vs, packageInfo());
     }
     Collections.sort(namespaces);
-    generateVSforNS(s, "http://hl7.org/fhir/ValueSet", vslist, true, ig);
+    generateVSforNS(s, "http://hl7.org/fhir/ValueSet", vslist, ig);
     for (String n : namespaces)
-      generateVSforNS(s, n, definitions.getValuesets(), true, ig);
+      generateVSforNS(s, n, definitions.getValuesets(), ig);
     s.append("</table>\r\n");
     return s.toString();
   }
@@ -4521,7 +4521,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     return !cr.hasUserData("external.url"); // && (!cr.hasUrl() || !(cr.getUrl().startsWith("http://terminology.hl7.org") || cr.getUrl().contains("dicom.nema.org")));
   }
 
-  private void generateVSforNS(StringBuilder s, String ns, CanonicalResourceManager<ValueSet> vslist, boolean hasId, ImplementationGuideDefn ig) throws FHIRException {
+  private void generateVSforNS(StringBuilder s, String ns, CanonicalResourceManager<ValueSet> vslist, ImplementationGuideDefn ig) throws FHIRException {
     List<String> sorts = new ArrayList<String>();
     for (ValueSet vs : vslist.getList()) {
       ImplementationGuideDefn vig = (ImplementationGuideDefn) vs.getUserData(ToolResourceUtilities.NAME_RES_IG);
@@ -4544,8 +4544,6 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
           if (StandardsStatus.NORMATIVE == ToolingExtensions.getStandardsStatus(vs))
             s.append(" <a href=\"versions.html#std-process\" title=\"Normative Content\" class=\"normative-flag\">N</a>");
           s.append("</td><td>"+Utilities.escapeXml(vs.getDescription())+"</td><td>"+sourceSummary(vs)+"</td>");
-          if (hasId)
-            s.append("<td>"+Utilities.oidTail(ValueSetUtilities.getOID(ae))+"</td>");
           s.append("</tr>\r\n");
         }
       }
