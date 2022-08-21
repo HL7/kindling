@@ -1052,17 +1052,21 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
           src = s1 + ((CodeSystem) resource).getName() + s3;
         else
           src = s1 + ((ValueSet) resource).getName() + s3;
-      else if (com[0].equals("vstitle"))
+      else if (com[0].equals("vsstatus")) {
+        CanonicalResource cr = (CanonicalResource) resource;
+        if (cr.hasStatus())
+          src = s1 + cr.getStatus().toCode() + s3;
+        else
+          src = s1 + "??" + s3;
+      } else if (com[0].equals("vstitle"))
         if (resource instanceof CodeSystem)
           src = s1 + checkTitle(((CodeSystem) resource).getTitle()) + s3;
         else
           src = s1 + checkTitle(((ValueSet) resource).getTitle()) + s3;
-      else if (com[0].equals("vsver"))
-        if (resource instanceof CodeSystem)
-          src = s1 + ((CodeSystem) resource).getVersion() + s3;
-        else
-          src = s1 + ((ValueSet) resource).getVersion() + s3;
-      else if (com[0].equals("vsref")) {
+      else if (com[0].equals("vsver") || com[0].equals("ext-ver"))  {
+        CanonicalResource cr = (CanonicalResource) resource;
+        src = s1 + cr.getVersion() + s3;
+      } else if (com[0].equals("vsref")) {
         src = s1 + Utilities.fileTitle((String) resource.getUserData("filename")) + s3;
       } else if (com[0].equals("vsdesc"))
         src = s1 + (resource != null ? new XhtmlComposer(XhtmlComposer.HTML).compose(((ValueSet) resource).getText().getDiv()) :  generateVSDesc(Utilities.fileTitle(file))) + s3;
@@ -5400,12 +5404,15 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
           src = s1 + checkTitle(((CodeSystem) resource).getTitle()) + s3;
         else
           src = s1 + checkTitle(((ValueSet) resource).getTitle()) + s3;
-      else if (com[0].equals("vsver"))
+      else if (com[0].equals("vsstatus"))
         if (resource instanceof CodeSystem)
-          src = s1 + ((CodeSystem) resource).getVersion() + s3;
+          src = s1 + checkTitle(((CodeSystem) resource).getStatus().toCode()) + s3;
         else
-          src = s1 + ((ValueSet) resource).getVersion() + s3;
-      else if (com[0].equals("vsref")) {
+          src = s1 + checkTitle(((ValueSet) resource).getStatus().toCode()) + s3;
+      else if (com[0].equals("vsver") || com[0].equals("ext-ver"))  {
+        CanonicalResource cr = (CanonicalResource) resource;
+        src = s1 + cr.getVersion() + s3;
+      } else if (com[0].equals("vsref")) {
         src = s1 + Utilities.fileTitle((String) resource.getUserData("filename")) + s3;
       } else if (com[0].equals("vsdesc"))
         src = s1 + (resource != null ? Utilities.escapeXml(((ValueSet) resource).getDescription()) :  generateVSDesc(Utilities.fileTitle(file))) + s3;
@@ -5536,6 +5543,8 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
         src = s1+listSpecialParameters()+s3;
       } else if (com[0].equals("patterns-analysis")) { 
         src = s1+patternFinder.generateReport()+s3;
+      } else if (com[0].equals("contained-resource-examples")) { 
+        src = s1+listContainedExamples()+s3;        
       } else if (com[0].equals("res-type-count")) { 
         src = s1+definitions.getResources().size()+s3;        
       } else if (macros.containsKey(com[0])) {
@@ -8767,7 +8776,21 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
       } else if (com[0].equals("profile-context")) {
         src = s1+getProfileContext(ed, genlevel(level))+s3;
       } else if (com[0].equals("res-type-count")) { 
-        src = s1+definitions.getResources().size()+s3;        
+        src = s1+definitions.getResources().size()+s3;
+      } else if (com[0].equals("ext-ver"))  {
+        src = s1 + ed.getVersion() + s3;
+      } else if (com[0].equals("ext-def"))  {
+        src = s1 + Utilities.escapeXml(ed.getDescription()) + s3;
+      } else if (com[0].equals("ext-title"))  {
+        src = s1 + ed.getTitle() + s3;
+      } else if (com[0].equals("ext-committee"))  {
+        WorkGroup wg = definitions.getWorkgroups().get(ToolingExtensions.readStringExtension(ed, ToolingExtensions.EXT_WORKGROUP));
+        String s = wg == null ? "??" : "<a _target=\"blank\" href=\""+wg.getUrl()+"\">"+wg.getName()+"</a> Work Group";
+        src = s1 + s + s3;
+      } else if (com[0].equals("ext-name"))  {
+        src = s1 + ed.getName() + s3;
+      } else if (com[0].equals("ext-status"))  {
+        src = s1 + ed.getStatus().toCode() + s3;
       } else if (macros.containsKey(com[0])) {
         src = s1+macros.get(com[0])+s3;
       } else

@@ -18,6 +18,7 @@ import org.hl7.fhir.r5.model.ContactDetail;
 import org.hl7.fhir.r5.model.ContactPoint;
 import org.hl7.fhir.r5.model.DateTimeType;
 import org.hl7.fhir.r5.model.Enumerations.ConceptMapRelationship;
+import org.hl7.fhir.r5.model.Enumerations.PublicationStatus;
 import org.hl7.fhir.r5.model.Factory;
 import org.hl7.fhir.r5.model.ValueSet;
 import org.hl7.fhir.r5.model.ValueSet.ConceptReferenceComponent;
@@ -75,6 +76,9 @@ public class CodeListToValueSetParser {
       cs.setVersion(version);
       cs.setCaseSensitive(true);
       cs.setContent(CodeSystemContentMode.COMPLETE);
+      if (!cs.hasStatus()) {
+        cs.setStatus(PublicationStatus.DRAFT);
+      }
       codeSystems.see(cs, packageInfo);
 
       for (int row = 0; row < sheet.rows.size(); row++) {

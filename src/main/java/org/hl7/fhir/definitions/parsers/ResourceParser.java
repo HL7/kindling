@@ -810,6 +810,9 @@ public class ResourceParser {
         cs.setCaseSensitive(true);
         save = true;
       }
+      if (!cs.hasStatus()) {
+        cs.setStatus(PublicationStatus.DRAFT);
+      }
       if (!CodeSystemUtilities.hasOID(cs)) {
         CodeSystemUtilities.setOID(cs, "urn:oid:"+BindingSpecification.DEFAULT_OID_CS + registry.idForUri(cs.getUrl()));
         save = true;

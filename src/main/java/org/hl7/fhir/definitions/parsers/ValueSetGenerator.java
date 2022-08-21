@@ -96,6 +96,9 @@ public class ValueSetGenerator {
     cs.setVersion(version);
     cs.setCaseSensitive(true);
     cs.setContent(CodeSystemContentMode.COMPLETE);
+    if (!cs.hasStatus()) {
+      cs.setStatus(PublicationStatus.DRAFT);
+    }
     definitions.getCodeSystems().see(cs, packageInfo);
 
     List<String> codes = new ArrayList<String>();
@@ -170,6 +173,9 @@ public class ValueSetGenerator {
     cs.setCaseSensitive(true);    
     cs.setHierarchyMeaning(CodeSystemHierarchyMeaning.ISA);
     cs.setContent(CodeSystemContentMode.COMPLETE);
+    if (!cs.hasStatus()) {
+      cs.setStatus(PublicationStatus.DRAFT);
+    }
     definitions.getCodeSystems().see(cs, packageInfo);
         
     Map<String, ConceptDefinitionComponent> codes = new HashMap<String, ConceptDefinitionComponent>();
@@ -242,6 +248,9 @@ public class ValueSetGenerator {
     cs.setVersion(version);
     cs.setCaseSensitive(true);    
     cs.setContent(CodeSystemContentMode.COMPLETE);
+    if (!cs.hasStatus()) {
+      cs.setStatus(PublicationStatus.DRAFT);
+    }
     definitions.getCodeSystems().see(cs, packageInfo);
 
     cs.addConcept().setCode("Type").setDisplay("Type").setDefinition("A place holder that means any kind of data type");
@@ -290,6 +299,9 @@ public class ValueSetGenerator {
     cs.setVersion(version);
     cs.setCaseSensitive(true);
     cs.setContent(CodeSystemContentMode.COMPLETE);
+    if (!cs.hasStatus()) {
+      cs.setStatus(PublicationStatus.DRAFT);
+    }
     definitions.getCodeSystems().see(cs, packageInfo);
 
     List<String> codes = new ArrayList<String>();
@@ -409,6 +421,9 @@ public class ValueSetGenerator {
     cs.setVersion(version);
     cs.setCaseSensitive(true);
     cs.setContent(CodeSystemContentMode.COMPLETE);
+    if (!cs.hasStatus()) {
+      cs.setStatus(PublicationStatus.DRAFT);
+    }
     definitions.getCodeSystems().see(cs, packageInfo);
   }
 

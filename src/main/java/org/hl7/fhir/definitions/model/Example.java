@@ -248,6 +248,9 @@ public class Example {
 
 
   public boolean hasContained() {
+    if (xml == null) {
+      return false;
+    }
     Node n = xml.getDocumentElement().getFirstChild();
     while (n != null && !"contained".equals(n.getNodeName())) {
       n = n.getNextSibling();      
