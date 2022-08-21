@@ -10012,8 +10012,9 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
   }
 
   private String linkToPath(String n) {
-    if (n.contains(".")) {
-      return "<a href=\""+n.substring(0, n.indexOf(".")).toLowerCase()+"-definitions.html#"+n+"\">"+n+"</a>";
+    if (n.contains(".")) { 
+      String t = n.substring(0, n.indexOf("."));
+      return "<a href=\""+definitions.getSrcFile(t)+"-definitions.html#"+n+"\">"+n+"</a>";
     }
     return n;
   }
