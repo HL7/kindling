@@ -68,7 +68,7 @@ public class TableGenerator extends BaseGenerator {
       gc.addStyledText("This element is included in summaries", "\u03A3", null, null, prefix+"elementdefinition-definitions.html#ElementDefinition.isSummary", false);
     }
     if (!isRoot && (!e.getInvariants().isEmpty() || !e.getStatedInvariants().isEmpty())) { 
-      Piece p = gc.addText("I");
+      Piece p = gc.addText(ProfileUtilities.CONSTRAINT_CHAR);
       p.setHint("This element has or is affected by some invariants");
       p.addStyle(ProfileUtilities.CONSTRAINT_STYLE);
       p.setReference(prefix+"conformance-rules.html#constraints");      
