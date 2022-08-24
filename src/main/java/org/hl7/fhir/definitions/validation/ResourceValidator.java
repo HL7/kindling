@@ -727,6 +727,18 @@ public class ResourceValidator extends BaseValidator {
         types.add(base);
       }
     }
+    for (TypeRef tr : e.getTypes()) {
+      if ("Reference".equals(tr.getName()) || "CodeableReference".equals(tr.getName()) ) {
+        for (String p : tr.getParams()) {
+          rule(errors, IssueType.STRUCTURE, path, "Any".equals(p) || definitions.hasResource(p), "Reference to invalid resource "+p);
+        }
+      }
+      if ("canonical".equals(tr.getName())) {
+        for (String p : tr.getParams()) {
+          rule(errors, IssueType.STRUCTURE, path, Utilities.existsInList(p, "Any", "Definition") || definitions.hasCanonicalResource(p), "Reference to invalid canonical resource "+p);
+        }
+      }
+    }
 
     if (e.hasBinding()) {
       boolean ok = false;

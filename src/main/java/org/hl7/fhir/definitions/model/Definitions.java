@@ -308,6 +308,17 @@ public class Definitions {
 		return resources.containsKey(name) || baseResources.containsKey(name);
 	}
 	
+  public boolean hasCanonicalResource(String name) {
+    ResourceDefn rd = hasResource(name) ? getResourceByName(name) : null;
+    while (rd != null) {
+      if (rd.getName().equals("CanonicalResource")) {
+        return true;
+      }
+      rd = hasResource(rd.getRoot().typeCode()) ? getResourceByName(rd.getRoot().typeCode()) : null;
+    }
+    return false;
+  }
+  
 	
 	// List of all names of Resources (as code), including "future" resources
 	// (but not special resources, as these aren't resources)
