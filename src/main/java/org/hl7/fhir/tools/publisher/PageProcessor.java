@@ -6720,7 +6720,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     if (mixed)
       b.append(opStandardsStatusNotice(n, op.getStandardsStatus(), resStatus, np, prefix)+"\r\n");
     b.append(processMarkdown(n, op.getDoco(), prefix, true)+"\r\n");
-    b.append("<p>The official URL for this operation definition is</p>\r\n<pre> http://hl7.org/fhir/OperationDefinition/"+n+"-"+op.getName()+"</pre>\r\n");
+    b.append("<p>The canonical URL for this operation definition is</p>\r\n<pre> http://hl7.org/fhir/OperationDefinition/"+n+"-"+op.getName()+"</pre>\r\n");
     b.append("<p><a href=\"operation-"+id+"-"+op.getName().toLowerCase()+".html\">Formal Definition</a> (as a <a href=\""+prefix+"operationdefinition.html\">OperationDefinition</a>).</p>\r\n");
     if (op.isSystem())
       b.append("<p>URL: [base]/$").append(op.getName()).append("</p>\r\n");

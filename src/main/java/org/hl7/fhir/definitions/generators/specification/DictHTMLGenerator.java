@@ -190,6 +190,7 @@ public class DictHTMLGenerator  extends OutputStreamWriter {
   private void generateElementInner(StructureDefinition profile, ElementDefinition d, int mode, ElementDefinition value) throws Exception {
     tableRow("Element Id", null, d.getId());
     tableRowNE("Definition", null, page.processMarkdown(profile.getName(), d.getDefinition(), prefix));
+    tableRow("Short Display", null, d.getShort());
     tableRowNE("Note", null, businessIdWarning(profile.getName(), tail(d.getPath())));
     tableRow("Cardinality", "conformance-rules.html#cardinality", describeCardinality(d) + summariseConditions(d.getCondition()));
     tableRowNE("Terminology Binding", "terminologies.html", describeBinding(d));
@@ -511,6 +512,7 @@ public class DictHTMLGenerator  extends OutputStreamWriter {
       tableRowStyled("Standards Status", "versions.html#std-process", getStandardsStatusNote(e.getStandardsStatus(), root), getStandardsStatusStyle(e.getStandardsStatus()));
     tableRow("Element Id", null, e.getPath());
     tableRowNE("Definition", null, page.processMarkdown(path, e.getDefinition(), prefix));
+    tableRow("Short Display", null, e.getShortDefn());
     tableRowNE("Note", null, businessIdWarning(resourceName, e.getName()));
 		tableRow("Cardinality", "conformance-rules.html#cardinality", cardinality);
 		tableRowNE("Terminology Binding", "terminologies.html", describeBinding(path, e));
