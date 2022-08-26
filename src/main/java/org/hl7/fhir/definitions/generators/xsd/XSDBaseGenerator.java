@@ -537,6 +537,9 @@ public class XSDBaseGenerator  extends XSDRootGenerator {
   
 
   private void generateEnum(BindingSpecification bs) throws IOException {
+    if (bs.getValueSet() == null) {
+      throw new Error("Missing value set "+bs.getName());
+    }
     String en = namify(bs.getValueSet().getName());
     if (genEnums.contains(en))
       return;

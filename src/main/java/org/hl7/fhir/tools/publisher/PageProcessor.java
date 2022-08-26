@@ -4624,7 +4624,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
           if ("http://snomed.info/sct".equals(uri)) n = "SNOMED CT";
           if ("http://loinc.org".equals(uri)) n = "LOINC";
           if ("http://dicom.nema.org/resources/ontology/DCM".equals(uri)) n = "DICOM";
-          if ("http://hl7.org/fhir/resource-types".equals(uri)) n = "FHIR";
+          if ("http://hl7.org/fhir/fhir-types".equals(uri)) n = "FHIR";
           if ("http://hl7.org/fhir/restful-interaction".equals(uri)) n = "FHIR";
           if ("http://unitsofmeasure.org".equals(uri)) n = "FHIR";
           if (uri.startsWith("http://terminology.hl7.org/CodeSystem/v3-"))  n = "V3";
@@ -10941,6 +10941,7 @@ private int countContains(List<ValueSetExpansionContainsComponent> list) {
     rc = new RenderingContext(workerContext, processor, ValidationOptions.defaults(), "", "", null, ResourceRendererMode.TECHNICAL);    
     rc.setParser(this);
     rc.setResolver(this);
+    rc.setShowComments(true);
     rc.setDestDir(folders.dstDir);
   }
 

@@ -262,6 +262,20 @@ public class ResourceValidator extends BaseValidator {
     //    if (isInterface(rd.getRoot().typeCode())) {
     //      checkInterface(errors, rd, definitions.getBaseResources().get(rd.getRoot().typeCode()));
     //    }
+    if (!Utilities.noString(rd.getEnteredInErrorStatus())) {
+      if (hasEnteredInErrorInStatus(rd)) {
+        rule(errors, IssueType.STRUCTURE, rd.getName(), rd.getEnteredInErrorStatus().contains("entered-in-error"), "If a resource has an entered-in-error statys, then this must be mentioned in the entered in error status");
+      }
+    }
+  }
+
+  private boolean hasEnteredInErrorInStatus(ResourceDefn rd) {
+    for (ElementDefn ed : rd.getRoot().getElements()) {
+      if (ed.getName().equals("status")) {
+        return ed.getShortDefn().contains("entered-in-error");
+      }
+    }
+    return false;
   }
 
   private int checkInterface(List<ValidationMessage> errors, ResourceDefn self, ResourceDefn iface) {

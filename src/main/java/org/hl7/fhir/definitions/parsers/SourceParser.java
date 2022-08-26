@@ -189,7 +189,7 @@ public class SourceParser {
     dtDir = srcDir + "datatypes" + sl;
     imgDir = root + sl + "images" + sl;
     rootDir = root + sl;
-    vsGen = new ValueSetGenerator(definitions, version.toCode(), genDate, context.translator(), page.packageInfo());
+    vsGen = new ValueSetGenerator(definitions, version.toCode(), genDate, context.translator(), page.packageInfo(), context);
     this.exceptionIfExcelNotNormalised = exceptionIfExcelNotNormalised;
   }
 
@@ -1132,8 +1132,6 @@ public class SourceParser {
       DataTypeTableGenerator dtg = new DataTypeTableGenerator(dstDir, page, t.getName(), true, version);
       t.getProfile().getText().setDiv(new XhtmlNode(NodeType.Element, "div"));
       t.getProfile().getText().getDiv().getChildNodes().add(dtg.generate(t, null, false));
-      if (context.hasResource(StructureDefinition.class, t.getProfile().getUrl()))
-        throw new Exception("Duplicate Profile "+t.getProfile().getUrl());
       context.cacheResource(t.getProfile());
     } catch (Exception e) {
       throw new Exception("Error generating profile for '"+t.getName()+"': "+e.getMessage(), e);

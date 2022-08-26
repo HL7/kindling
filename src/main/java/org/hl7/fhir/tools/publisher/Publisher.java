@@ -147,6 +147,7 @@ import org.hl7.fhir.r5.formats.IParser.OutputStyle;
 import org.hl7.fhir.r5.formats.JsonParser;
 import org.hl7.fhir.r5.formats.RdfParser;
 import org.hl7.fhir.r5.formats.XmlParser;
+import org.hl7.fhir.r5.model.BooleanType;
 import org.hl7.fhir.r5.model.Bundle;
 import org.hl7.fhir.r5.model.Bundle.BundleEntryComponent;
 import org.hl7.fhir.r5.model.Bundle.BundleType;
@@ -211,6 +212,7 @@ import org.hl7.fhir.r5.model.StructureDefinition.StructureDefinitionKind;
 import org.hl7.fhir.r5.model.StructureDefinition.TypeDerivationRule;
 import org.hl7.fhir.r5.model.UriType;
 import org.hl7.fhir.r5.model.ValueSet;
+import org.hl7.fhir.r5.model.ValueSet.ConceptSetComponent;
 import org.hl7.fhir.r5.renderers.RendererFactory;
 import org.hl7.fhir.r5.renderers.ResourceRenderer;
 import org.hl7.fhir.r5.renderers.spreadsheets.StructureDefinitionSpreadsheetGenerator;
@@ -936,8 +938,6 @@ public class Publisher implements URIResolver, SectionNumberer {
 
     if (ae instanceof StructureDefinition)  {
       StructureDefinition sd = (StructureDefinition) ae;
-      if (page.getProfiles().has(sd.getUrl()))
-        throw new Exception("Duplicate Profile URL "+sd.getUrl());
       page.getProfiles().see(sd, page.packageInfo());
     }
   }
@@ -963,8 +963,6 @@ public class Publisher implements URIResolver, SectionNumberer {
     for (ResourceDefn r : page.getDefinitions().getBaseResources().values()) {
         r.setConformancePack(makeConformancePack(r));
         r.setProfile(new ProfileGenerator(page.getDefinitions(), page.getWorkerContext(), page, page.getGenDate(), page.getVersion(), dataElements, fpUsages, page.getFolders().rootDir, page.getUml(), page.getRc()).generate(r.getConformancePack(), r, "core", false));
-        if (page.getProfiles().has(r.getProfile().getUrl()))
-          throw new Exception("Duplicate Profile URL "+r.getProfile().getUrl());
         page.getProfiles().see(r.getProfile(), page.packageInfo());
         ResourceTableGenerator rtg = new ResourceTableGenerator(page.getFolders().dstDir, page, null, true, page.getVersion());
         r.getProfile().getText().setDiv(new XhtmlNode(NodeType.Element, "div"));
@@ -975,8 +973,6 @@ public class Publisher implements URIResolver, SectionNumberer {
       ResourceDefn r = page.getDefinitions().getResourceByName(rn);
       r.setConformancePack(makeConformancePack(r));
       r.setProfile(new ProfileGenerator(page.getDefinitions(), page.getWorkerContext(), page, page.getGenDate(), page.getVersion(), dataElements, fpUsages, page.getFolders().rootDir, page.getUml(), page.getRc()).generate(r.getConformancePack(), r, "core", false));
-      if (page.getProfiles().has(r.getProfile().getUrl()))
-        throw new Exception("Duplicate Profile URL "+r.getProfile().getUrl());
       page.getProfiles().see(r.getProfile(), page.packageInfo());
       ResourceTableGenerator rtg = new ResourceTableGenerator(page.getFolders().dstDir, page, null, true, page.getVersion());
       r.getProfile().getText().setDiv(new XhtmlNode(NodeType.Element, "div"));
@@ -989,8 +985,6 @@ public class Publisher implements URIResolver, SectionNumberer {
       ResourceTableGenerator rtg = new ResourceTableGenerator(page.getFolders().dstDir, page, null, true, page.getVersion());
       r.getProfile().getText().setDiv(new XhtmlNode(NodeType.Element, "div"));
       r.getProfile().getText().getDiv().getChildNodes().add(rtg.generate(r, "", true));
-      if (page.getProfiles().has(r.getProfile().getUrl()))
-        throw new Exception("Duplicate Profile URL "+r.getProfile().getUrl());
       page.getProfiles().see(r.getProfile(), page.packageInfo());
     }
     
@@ -1098,8 +1092,6 @@ public class Publisher implements URIResolver, SectionNumberer {
 
   private void genProfiledTypeProfile(ProfiledType pt) throws Exception {
     StructureDefinition profile = new ProfileGenerator(page.getDefinitions(), page.getWorkerContext(), page, page.getGenDate(), page.getVersion(), dataElements, fpUsages, page.getFolders().rootDir, page.getUml(), page.getRc()).generate(pt, page.getValidationErrors());
-    if (page.getProfiles().has(profile.getUrl()))
-      throw new Exception("Duplicate Profile URL "+profile.getUrl());
     page.getProfiles().see(profile, page.packageInfo());
     pt.setProfile(profile);
     // todo: what to do in the narrative?
@@ -1107,8 +1099,6 @@ public class Publisher implements URIResolver, SectionNumberer {
 
   private void genXhtmlProfile() throws Exception {
     StructureDefinition profile = new ProfileGenerator(page.getDefinitions(), page.getWorkerContext(), page, page.getGenDate(), page.getVersion(), dataElements, fpUsages, page.getFolders().rootDir, page.getUml(), page.getRc()).generateXhtml();
-    if (page.getProfiles().has(profile.getUrl()))
-      throw new Exception("Duplicate Profile URL "+profile.getUrl());
     page.getProfiles().see(profile, page.packageInfo());
 
     //    DataTypeTableGenerator dtg = new DataTypeTableGenerator(page.getFolders().dstDir, page, t.getCode(), true);
@@ -1119,8 +1109,6 @@ public class Publisher implements URIResolver, SectionNumberer {
 
   private void genPrimitiveTypeProfile(PrimitiveType t) throws Exception {
     StructureDefinition profile = new ProfileGenerator(page.getDefinitions(), page.getWorkerContext(), page, page.getGenDate(), page.getVersion(), dataElements, fpUsages, page.getFolders().rootDir, page.getUml(), page.getRc()).generate(t);
-    if (page.getProfiles().has(profile.getUrl()))
-      throw new Exception("Duplicate Profile URL "+profile.getUrl());
     page.getProfiles().see(profile, page.packageInfo());
     t.setProfile(profile);
 
@@ -1133,8 +1121,6 @@ public class Publisher implements URIResolver, SectionNumberer {
 
   private void genPrimitiveTypeProfile(DefinedStringPattern t) throws Exception {
     StructureDefinition profile = new ProfileGenerator(page.getDefinitions(), page.getWorkerContext(), page, page.getGenDate(), page.getVersion(), dataElements, fpUsages, page.getFolders().rootDir, page.getUml(), page.getRc()).generate(t);
-    if (page.getProfiles().has(profile.getUrl()))
-      throw new Exception("Duplicate Profile URL "+profile.getUrl());
     page.getProfiles().see(profile, page.packageInfo());
     t.setProfile(profile);
     //    DataTypeTableGenerator dtg = new DataTypeTableGenerator(page.getFolders().dstDir, page, t.getCode(), true);
@@ -1172,8 +1158,6 @@ public class Publisher implements URIResolver, SectionNumberer {
       if (profile.getResourceInfo() != null) {
         profile.getResourceInfo().setUserData(ToolResourceUtilities.RES_ACTUAL_RESOURCE, p);
       }
-      if (page.getProfiles().has(p.getUrl()))
-        throw new Exception("Duplicate Profile URL "+p.getUrl());
       page.getProfiles().see(p, page.packageInfo());
     } else {
       profile.getResource().setUserData("pack", ap);
@@ -1191,8 +1175,6 @@ public class Publisher implements URIResolver, SectionNumberer {
         StructureDefinition base = getSnapShotForProfile(profile.getResource().getBaseDefinition());
         new ProfileUtilities(page.getWorkerContext(), page.getValidationErrors(), page).generateSnapshot(base, profile.getResource(), profile.getResource().getBaseDefinition().split("#")[0], null, profile.getResource().getName());
       }
-      if (page.getProfiles().has(profile.getResource().getUrl()))
-        throw new Exception("Duplicate Profile URL "+profile.getResource().getUrl());
       System.out.println("register "+profile.getResource().getUrl());
       page.getProfiles().see(profile.getResource(), page.packageInfo());
     }
@@ -1265,8 +1247,6 @@ public class Publisher implements URIResolver, SectionNumberer {
       if (base == null)
         base = new ProfileUtilities(page.getWorkerContext(), page.getValidationErrors(), page).getProfile(null, ae.getBaseDefinition());
       new ProfileUtilities(page.getWorkerContext(), page.getValidationErrors(), page).generateSnapshot(base, ae, ae.getBaseDefinition().split("#")[0], "http://hl7.org/fhir", ae.getName());
-      if (page.getProfiles().has(ae.getUrl()))
-        throw new Exception("Duplicate Profile URL "+ae.getUrl());
       page.getProfiles().see(ae, page.packageInfo());
     }
   }
@@ -1370,6 +1350,111 @@ public class Publisher implements URIResolver, SectionNumberer {
           throw new Exception("unable to resolve value set "+ref);
         cd.setValueSet(vs);
       }
+    }
+  }
+
+  private void populateFHIRTypesCodeSystem() {
+    CodeSystem cs = page.getWorkerContext().fetchCodeSystem("http://hl7.org/fhir/fhir-types");
+    List<StructureDefinition> types = page.getWorkerContext().allStructures();
+    addTypes(cs, page.getWorkerContext().fetchTypeDefinition("Base"), cs.getConcept(), types);
+    CodeSystemUtilities.sortAllCodes(cs);
+    
+    // we're also going to fill out the value sets
+    ValueSet vs = page.getWorkerContext().fetchResource(ValueSet.class, "http://hl7.org/fhir/ValueSet/resource-types");
+    listConcreteResources(vs.getCompose().getIncludeFirstRep());
+    ValueSetUtilities.sortInclude(vs.getCompose().getIncludeFirstRep());
+    
+    vs = page.getWorkerContext().fetchResource(ValueSet.class, "http://hl7.org/fhir/ValueSet/all-resource-types");
+    listAllResources(vs.getCompose().getIncludeFirstRep());
+    ValueSetUtilities.sortInclude(vs.getCompose().getIncludeFirstRep());
+    
+    vs = page.getWorkerContext().fetchResource(ValueSet.class, "http://hl7.org/fhir/ValueSet/concrete-fhir-types");
+    listConcreteTypes(vs.getCompose().getIncludeFirstRep());
+    ValueSetUtilities.sortInclude(vs.getCompose().getIncludeFirstRep());
+
+    vs = page.getWorkerContext().fetchResource(ValueSet.class, "http://hl7.org/fhir/ValueSet/event-resource-types");
+    listPatternTypes(vs.getCompose().getIncludeFirstRep(), "Event");
+    ValueSetUtilities.sortInclude(vs.getCompose().getIncludeFirstRep());
+
+    vs = page.getWorkerContext().fetchResource(ValueSet.class, "http://hl7.org/fhir/ValueSet/definition-resource-types");
+    listPatternTypes(vs.getCompose().getIncludeFirstRep(), "Definition");
+    ValueSetUtilities.sortInclude(vs.getCompose().getIncludeFirstRep());
+
+    vs = page.getWorkerContext().fetchResource(ValueSet.class, "http://hl7.org/fhir/ValueSet/participant-resource-types");
+    listPatternTypes(vs.getCompose().getIncludeFirstRep(), "Participant");
+    ValueSetUtilities.sortInclude(vs.getCompose().getIncludeFirstRep());
+
+    vs = page.getWorkerContext().fetchResource(ValueSet.class, "http://hl7.org/fhir/ValueSet/request-resource-types");
+    listPatternTypes(vs.getCompose().getIncludeFirstRep(), "Request");
+    ValueSetUtilities.sortInclude(vs.getCompose().getIncludeFirstRep());    
+  }
+  
+  private void listPatternTypes(ConceptSetComponent inc, String name) {
+    if (!page.getDefinitions().hasLogicalModel(name))
+     throw new Error("Unable to find Logical Model "+name);
+    for (String s : page.getDefinitions().getLogicalModel(name).getImplementations()) {
+      inc.addConcept().setCode(s);
+    }
+  }
+
+  private void listAllResources(ConceptSetComponent inc) {
+    for (StructureDefinition sd : page.getWorkerContext().allStructures()) {
+      if (sd.getDerivation() == TypeDerivationRule.SPECIALIZATION && sd.getKind() == StructureDefinitionKind.RESOURCE) {
+        inc.addConcept().setCode(sd.getType());
+      }
+    }    
+  }
+
+  private void listConcreteResources(ConceptSetComponent inc) {
+    for (StructureDefinition sd : page.getWorkerContext().allStructures()) {
+      if (sd.getDerivation() == TypeDerivationRule.SPECIALIZATION && !sd.getAbstract() && sd.getKind() == StructureDefinitionKind.RESOURCE) {
+        inc.addConcept().setCode(sd.getType());
+      }
+    }    
+  }
+
+  private void listConcreteTypes(ConceptSetComponent inc) {
+    for (StructureDefinition sd : page.getWorkerContext().allStructures()) {
+      if (sd.getDerivation() == TypeDerivationRule.SPECIALIZATION && !sd.getAbstract() && sd.getKind() != StructureDefinitionKind.LOGICAL) {
+        inc.addConcept().setCode(sd.getType());
+      }
+    }    
+  }
+
+  private void addTypes(CodeSystem cs, StructureDefinition sd, List<ConceptDefinitionComponent> list, List<StructureDefinition> types) {
+    ConceptDefinitionComponent cd = new ConceptDefinitionComponent();
+    cd.setCode(sd.getType());
+    cd.setDisplay(sd.getType());
+    cd.setDefinition(sd.getDescription());
+    if (!sd.getType().equals("Base")) {
+      CodeSystemUtilities.setProperty(cs, cd, "kind", new CodeType(codeForKind(sd)));
+    }
+    if (sd.getAbstract()) {
+      CodeSystemUtilities.setProperty(cs, cd, "abstract-type", new BooleanType(true));
+    }
+    if (sd.hasExtension(ToolingExtensions.EXT_RESOURCE_INTERFACE)) {
+      CodeSystemUtilities.setProperty(cs, cd, "interface", new BooleanType(true));
+    }
+    list.add(cd);
+    for (StructureDefinition t : types) {
+      if (t.getName().equals("Definition")) {
+        System.out.println("Definition");
+      }
+      if (t.hasBaseDefinition() && t.getBaseDefinition().equals(sd.getUrl()) && t.getDerivation() == TypeDerivationRule.SPECIALIZATION) {
+        addTypes(cs, t, cd.getConcept(), types);
+      }
+    }
+    
+  }
+
+  private String codeForKind(StructureDefinition sd) {
+    switch (sd.getKind()) {
+    case COMPLEXTYPE: return "datatype";
+    case LOGICAL: return "logical";
+    case PRIMITIVETYPE: return "primitive";
+    case RESOURCE: return "resource";
+    default:
+      return "??";    
     }
   }
 
@@ -2272,6 +2357,8 @@ public class Publisher implements URIResolver, SectionNumberer {
 
 
   private void produceSpecification() throws Exception {
+    populateFHIRTypesCodeSystem();
+
     processCDA();
     page.log("Generate RDF", LogMessageType.Process);
     processRDF();

@@ -254,7 +254,7 @@ public class ValueSetValidator extends BaseValidator {
           warning(errors, IssueType.BUSINESSRULE, getWg(vs)+":ValueSet["+vs.getId()+"].compose.include["+Integer.toString(i)+"]", isValidCode(cc.getCode(), inc.getSystem(), inc.getVersion()), 
               "The code '"+cc.getCode()+"' is not valid in the system "+inc.getSystem()+" (1)",
               "<a href=\""+vs.getUserString("path")+"\">Value set "+nameForErrors+" ("+vs.getName()+")</a>: The code '"+cc.getCode()+"' is not valid in the system "+inc.getSystem()+" (1a)");             
-        else if (!isValidCode(cc.getCode(), inc.getSystem(), inc.getVersion()))
+        else if (!isValidCode(cc.getCode(), inc.getSystem(), inc.getVersion()) && !inc.getSystem().equals("http://hl7.org/fhir/fhir-types")) // http://hl7.org/fhir/fhir-types isn't filled ou yet
           rule(errors, IssueType.BUSINESSRULE, getWg(vs)+":ValueSet["+vs.getId()+"].compose.include["+Integer.toString(i)+"]", false, 
             "The code '"+cc.getCode()+"' is not valid in the system "+inc.getSystem()+" (2)");
         
@@ -363,7 +363,7 @@ public class ValueSetValidator extends BaseValidator {
     } 
     
     // todo: why do these need to be listed here?
-    if (system.equals("http://hl7.org/fhir/data-types") ||
+    if (system.equals("http://hl7.org/fhir/fhir-types") ||
         system.equals("http://hl7.org/fhir/restful-interaction") ||
         system.equals("http://dicom.nema.org/resources/ontology/DCM") ||
         system.equals("http://unstats.un.org/unsd/methods/m49/m49.htm") ||

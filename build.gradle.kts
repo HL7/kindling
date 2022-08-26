@@ -6,7 +6,7 @@ plugins {
 }
 
 group = "org.hl7.fhir"
-version = "1.0.15-SNAPSHOT"
+version = "1.0.16-SNAPSHOT"
 
 java {
     withJavadocJar()

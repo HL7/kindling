@@ -1141,7 +1141,7 @@ public class OldSpreadsheetParser {
       String bindingName = sheet.getColumn(row, "Binding Name");
     }
 
-		ValueSetGenerator vsGen = new ValueSetGenerator(definitions, version.toCode(), genDate, context.translator(), packageInfo);
+		ValueSetGenerator vsGen = new ValueSetGenerator(definitions, version.toCode(), genDate, context.translator(), packageInfo, context);
 
 		for (int row = 0; row < sheet.rows.size(); row++) {
 		  String bindingName = sheet.getColumn(row, "Binding Name");
@@ -1199,7 +1199,7 @@ public class OldSpreadsheetParser {
           cd.setValueSet(loadValueSet(ref));
       } else if (cd.getBinding() == BindingMethod.Special) {
         if ("#operation-outcome".equals(sheet.getColumn(row, "Reference")))
-          new ValueSetGenerator(definitions, version.toCode(), genDate, context.translator(), packageInfo).loadOperationOutcomeValueSet(cd);
+          new ValueSetGenerator(definitions, version.toCode(), genDate, context.translator(), packageInfo, context).loadOperationOutcomeValueSet(cd);
         else
           throw new Exception("Special bindings are only allowed in bindings.xml");
       } 

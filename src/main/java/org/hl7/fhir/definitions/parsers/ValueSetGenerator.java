@@ -18,6 +18,7 @@ import org.hl7.fhir.definitions.model.Definitions;
 import org.hl7.fhir.definitions.model.EventDefn;
 import org.hl7.fhir.definitions.model.ResourceDefn;
 import org.hl7.fhir.definitions.model.TypeRef;
+import org.hl7.fhir.r5.context.IWorkerContext;
 import org.hl7.fhir.r5.context.IWorkerContext.PackageVersion;
 import org.hl7.fhir.r5.model.CodeSystem;
 import org.hl7.fhir.r5.model.CodeSystem.CodeSystemContentMode;
@@ -25,11 +26,12 @@ import org.hl7.fhir.r5.model.CodeSystem.CodeSystemHierarchyMeaning;
 import org.hl7.fhir.r5.model.CodeSystem.ConceptDefinitionComponent;
 import org.hl7.fhir.r5.model.CodeSystem.ConceptDefinitionDesignationComponent;
 import org.hl7.fhir.r5.model.CodeType;
-import org.hl7.fhir.r5.model.Constants;
 import org.hl7.fhir.r5.model.ContactDetail;
 import org.hl7.fhir.r5.model.ContactPoint.ContactPointSystem;
 import org.hl7.fhir.r5.model.Enumerations.PublicationStatus;
+import org.hl7.fhir.r5.model.StructureDefinition.TypeDerivationRule;
 import org.hl7.fhir.r5.model.Factory;
+import org.hl7.fhir.r5.model.StructureDefinition;
 import org.hl7.fhir.r5.model.ValueSet;
 import org.hl7.fhir.r5.model.ValueSet.ValueSetComposeComponent;
 import org.hl7.fhir.r5.terminologies.CodeSystemUtilities;
@@ -47,33 +49,37 @@ public class ValueSetGenerator {
   private Calendar genDate;
   private TranslationServices translator;
   private PackageVersion packageInfo; 
+  private IWorkerContext context;
   
 
-  public ValueSetGenerator(Definitions definitions, String version, Calendar genDate, TranslationServices translator, PackageVersion packageInfo) throws ParserConfigurationException, SAXException, IOException {
+  public ValueSetGenerator(Definitions definitions, String version, Calendar genDate, TranslationServices translator, PackageVersion packageInfo, IWorkerContext context) throws ParserConfigurationException, SAXException, IOException {
     super();
     this.definitions = definitions;
     this.version = version;
     this.genDate = genDate;
     this.translator = translator;
     this.packageInfo = packageInfo;
+    this.context = context;
   }
 
   public void check(ValueSet vs) throws Exception {
     if (!vs.hasUrl())
       throw new Exception("Value set with no URL!");
 
-    if (vs.getId().equals("data-types"))
-      genDataTypes(vs);
-    else if (vs.getId().equals("defined-types"))
-      genDefinedTypes(vs, false);
-    else if (vs.getId().equals("all-types"))
-      genDefinedTypes(vs, true);
-    else if (vs.getId().equals("message-events"))
+//    if (vs.getId().equals("data-types"))
+//      genDataTypes(vs);
+//    else if (vs.getId().equals("defined-types"))
+//      genDefinedTypes(vs, false);
+//    else if (vs.getId().equals("all-types"))
+//      genDefinedTypes(vs, true);
+//    else if (vs.getId().equals("fhir-types"))
+//      genFhirTypes(vs);
+    if (vs.getId().equals("message-events"))
       genMessageEvents(vs);
-    else if (vs.getId().equals("resource-types"))
-      genResourceTypes(vs);
-    else if (vs.getId().equals("abstract-types"))
-      genAbstractTypes(vs);
+//    else if (vs.getId().equals("resource-types"))
+//      genResourceTypes(vs);
+//    else if (vs.getId().equals("abstract-types"))
+//      genAbstractTypes(vs);
   }
 
   private void genDataTypes(ValueSet vs) throws Exception {
@@ -256,6 +262,36 @@ public class ValueSetGenerator {
     cs.addConcept().setCode("Type").setDisplay("Type").setDefinition("A place holder that means any kind of data type");
     cs.addConcept().setCode("Any").setDisplay("Any").setDefinition("A place holder that means any kind of resource");
     markSpecialStatus(vs, cs, true);
+  }
+
+  private void genFhirTypes(ValueSet vs) {
+    if (!vs.hasCompose())
+      vs.setCompose(new ValueSetComposeComponent());
+    vs.getCompose().addInclude().setSystem("http://hl7.org/fhir/fhir-types");
+    vs.setUserData("filename", "valueset-"+vs.getId());
+    if (!vs.hasExtension(ToolingExtensions.EXT_WORKGROUP)) {
+      vs.addExtension().setUrl(ToolingExtensions.EXT_WORKGROUP).setValue(new CodeType("fhir"));
+    } else {
+      String ec = ToolingExtensions.readStringExtension(vs, ToolingExtensions.EXT_WORKGROUP);
+      if (!ec.equals("fhir"))
+        System.out.println("ValueSet "+vs.getUrl()+" WG mismatch 8: is "+ec+", want to set to "+"fhir");
+    }     
+    vs.setUserData("path", "valueset-"+vs.getId()+".html");
+    
+    CodeSystem cs = new CodeSystem();
+    cs.setUserData("filename", vs.getUserString("filename").replace("valueset-", "codesystem-"));
+    cs.setUserData("path", vs.getUserString("path").replace("valueset-", "codesystem-"));
+    CodeSystemConvertor.populate(cs, vs);
+    cs.setUrl("http://hl7.org/fhir/fhir-types");
+    cs.setVersion(version);
+    cs.setCaseSensitive(true);    
+    cs.setContent(CodeSystemContentMode.COMPLETE);
+    if (!cs.hasStatus()) {
+      cs.setStatus(PublicationStatus.DRAFT);
+    }
+    definitions.getCodeSystems().see(cs, packageInfo);
+    markSpecialStatus(vs, cs, true);
+
   }
 
   private void genDefinedTypes(ValueSet vs, boolean doAbstract) throws Exception {

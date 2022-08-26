@@ -301,7 +301,7 @@ public class ProfileGenerator {
     p.setName(type.getCode());
     p.setPublisher("HL7 FHIR Standard");
     p.addContact().getTelecom().add(Factory.newContactPoint(ContactPointSystem.URL, "http://hl7.org/fhir"));
-    p.setDescription("Base StructureDefinition for "+type.getCode()+" Type: "+type.getDefinition());
+    p.setDescription(type.getCode()+" Type: "+type.getDefinition());
     p.setDate(genDate.getTime());
     p.setStatus(PublicationStatus.fromCode("active")); // normative now
 
@@ -399,6 +399,7 @@ public class ProfileGenerator {
     p.getText().setStatus(NarrativeStatus.GENERATED);
     p.getText().setDiv(div);
     checkHasTypes(p);
+    context.cacheResource(p);
     return p;
   }
 
@@ -515,7 +516,7 @@ public class ProfileGenerator {
     p.setName("xhtml");
     p.setPublisher("HL7 FHIR Standard");
     p.addContact().getTelecom().add(Factory.newContactPoint(ContactPointSystem.URL, "http://hl7.org/fhir"));
-    p.setDescription("Base StructureDefinition for xhtml Type");
+    p.setDescription("xhtml Type definition");
     p.setDate(genDate.getTime());
     p.setStatus(PublicationStatus.fromCode("active")); 
 
@@ -611,6 +612,8 @@ public class ProfileGenerator {
     p.getText().setStatus(NarrativeStatus.GENERATED);
     p.getText().setDiv(div);
     checkHasTypes(p);
+    context.cacheResource(p);
+
     return p;
   }
 
@@ -643,7 +646,7 @@ public class ProfileGenerator {
     p.setName(type.getCode());
     p.setPublisher("HL7 FHIR Standard");
     p.addContact().getTelecom().add(Factory.newContactPoint(ContactPointSystem.URL, "http://hl7.org/fhir"));
-    p.setDescription("Base StructureDefinition for "+type.getCode()+" type: "+type.getDefinition());
+    p.setDescription(type.getCode()+" type: "+type.getDefinition());
     p.setDate(genDate.getTime());
     p.setStatus(PublicationStatus.fromCode("active")); 
 
@@ -741,6 +744,8 @@ public class ProfileGenerator {
     p.getText().setStatus(NarrativeStatus.GENERATED);
     p.getText().setDiv(div);
     checkHasTypes(p);
+    context.cacheResource(p);
+
     return p;
   }
 
@@ -769,7 +774,7 @@ public class ProfileGenerator {
     p.setName(t.getName());
     p.setPublisher("HL7 FHIR Standard");
     p.addContact().getTelecom().add(Factory.newContactPoint(ContactPointSystem.URL, "http://hl7.org/fhir"));
-    p.setDescription("Base StructureDefinition for "+t.getName()+" Type: "+t.getDefinition());
+    p.setDescription(t.getName()+" Type: "+t.getDefinition());
     p.setPurpose(t.getRequirements());
     p.setDate(genDate.getTime());
     p.setStatus(t.getStandardsStatus() == StandardsStatus.NORMATIVE ?  PublicationStatus.fromCode("active") : PublicationStatus.fromCode("draft")); 
@@ -803,6 +808,8 @@ public class ProfileGenerator {
     p.getText().setStatus(NarrativeStatus.GENERATED);
     p.getText().setDiv(div);
     checkHasTypes(p);
+    context.cacheResource(p);
+
     return p;
   }
 
@@ -888,7 +895,7 @@ public class ProfileGenerator {
     p.setName(pt.getName());
     p.setPublisher("HL7 FHIR Standard");
     p.addContact().getTelecom().add(Factory.newContactPoint(ContactPointSystem.URL, "http://hl7.org/fhir"));
-    p.setDescription("Base StructureDefinition for Type "+pt.getName()+": "+pt.getDefinition());
+    p.setDescription(pt.getName()+" Type: "+pt.getDefinition());
     p.setDescription(pt.getDefinition());
     p.setDate(genDate.getTime());
 
@@ -973,6 +980,8 @@ public class ProfileGenerator {
 
     new ProfileUtilities(context, issues, pkp).setIds(p, false);
     checkHasTypes(p);
+    context.cacheResource(p);
+
     return p;
   }
 
@@ -1108,6 +1117,8 @@ public class ProfileGenerator {
     p.getText().setStatus(NarrativeStatus.GENERATED);
     p.getText().setDiv(div);
     checkHasTypes(p);
+    context.cacheResource(p);
+
     return p;
   }
 
@@ -1236,6 +1247,8 @@ public class ProfileGenerator {
     p.getText().setDiv(div);
     new ProfileUtilities(context, issues, pkp).setIds(p, false);
     checkHasTypes(p);
+    context.cacheResource(p);
+
     return p;
   }
 
@@ -1389,6 +1402,7 @@ public class ProfileGenerator {
           sp.addTarget(target);
       }
     }
+    context.cacheResource(sp);
 
     return sp;
   }
