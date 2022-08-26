@@ -4465,7 +4465,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
       if (!urls.contains(ae.getUrl())) {
         urls.add(ae.getUrl());
         ConceptMap cm = ae;
-        s.append(" <tr><td><a href=\"").append(ae.getUserData("path")).append("\">").append(cm.getName()).append("</a></td>")
+        s.append(" <tr><td><a href=\"").append(ae.getUserData("path")).append("\">").append(cm.getId()).append("</a></td><td>").append(cm.getName()).append("</td>")
                 .append("<td><a href=\"").append(getValueSetRef("", cm.hasSourceScopeCanonicalType() ? (cm.getSourceScopeCanonicalType()).getValue() : cm.getSourceScopeUriType().asStringValue())).append("\">").append(describeValueSetByRef(cm.getSourceScope())).append("</a></td>")
                 .append("<td><a href=\"").append(getValueSetRef("", cm.hasTargetScopeCanonicalType() ? (cm.getTargetScopeCanonicalType()).getValue() : cm.getTargetScopeUriType().asStringValue())).append("\">").append(describeValueSetByRef(cm.getTargetScope())).append("</a></td></tr>\r\n");
       }
