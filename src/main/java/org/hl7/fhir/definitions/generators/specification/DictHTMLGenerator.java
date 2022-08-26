@@ -216,8 +216,9 @@ public class DictHTMLGenerator  extends OutputStreamWriter {
     tableRowNE("Pattern Value", null, encodeValue(d.getPattern()));
     tableRowNE("Example", null, encodeValues(d.getExample()));
     tableRowNE("Invariants", null, invariants(d.getConstraint(), profile));
-    tableRow("LOINC Code", null, getMapping(profile, d, Definitions.LOINC_MAPPING));
-    tableRow("SNOMED-CT Code", null, getMapping(profile, d, Definitions.SNOMED_MAPPING));
+// see task FHIR-20502    
+//    tableRow("LOINC Code", null, getMapping(profile, d, Definitions.LOINC_MAPPING));
+//    tableRow("SNOMED-CT Code", null, getMapping(profile, d, Definitions.SNOMED_MAPPING));
    }
 
   private String encodeValues(List<ElementDefinitionExampleComponent> examples) throws Exception {
