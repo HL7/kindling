@@ -499,6 +499,10 @@ public class ResourceDefn  {
   public void setPattern(boolean pattern) {
     this.pattern = pattern;
   }
+
+  public String present() {
+    return root.getName();
+  }
   
   
 }
