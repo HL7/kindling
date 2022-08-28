@@ -13,6 +13,8 @@ import org.hl7.fhir.r5.model.CodeSystem.ConceptDefinitionComponent;
 import org.hl7.fhir.r5.model.Enumerations.BindingStrength;
 import org.hl7.fhir.r5.model.ValueSet;
 import org.hl7.fhir.r5.model.ValueSet.ConceptSetComponent;
+import org.hl7.fhir.r5.renderers.RendererFactory;
+import org.hl7.fhir.r5.renderers.ResourceRenderer;
 import org.hl7.fhir.r5.terminologies.ValueSetUtilities;
 import org.hl7.fhir.r5.utils.Translations;
 import org.hl7.fhir.utilities.StandardsStatus;
@@ -148,7 +150,8 @@ public class ResourceValidator extends BaseValidator {
     if ((isWorkflowPattern(rd, "Event") || isWorkflowPattern(rd, "Request")) && hasPatient(rd)) {
       rule(errors, IssueType.STRUCTURE, rd.getName(), rd.getSearchParams().containsKey("patient"), "An 'event' or 'request' resource must have a search parameter 'patient'");
     }
-
+    rule(errors, IssueType.STRUCTURE, rd.getName(), !rd.hasLiquid() || !RendererFactory.hasSpecificRenderer(rd.getName()), "Cannot provide a liquid template for "+rd.getName());
+    
     if (suppressedwarning(errors, IssueType.REQUIRED, rd.getName(), hasW5Mappings(rd) || rd.getName().equals("Binary") || rd.getName().equals("OperationOutcome") || rd.getName().equals("Parameters"), "A resource must have w5 mappings")) {
       String w5Order = listW5Elements(rd);
       String w5CorrectOrder = listW5Correct(rd);
@@ -1107,6 +1110,8 @@ public class ResourceValidator extends BaseValidator {
         warning(errors, IssueType.STRUCTURE, "Binding @ " + path, !Utilities.noString(c.getDefinition()), "Code " + d + " must have a definition");
       rule(errors, IssueType.STRUCTURE, "Binding @ " + path, !(Utilities.noString(c.getId()) && Utilities.noString(c.getSystem())), "Code " + d + " must have a id or a system");
     }
+    
+    rule(errors, IssueType.STRUCTURE, "Binding @ " + path, !e.typeCode().equals("code") || cd.getStrength() != BindingStrength.EXAMPLE, "Code elements can't have example bindings");
 
     // trigger processing into a Heirachical set if necessary
     //    rule(errors, IssueType.STRUCTURE, "Binding @ "+path, !cd.isHeirachical() || (cd.getChildCodes().size() < cd.getCodes().size()), "Logic error processing Hirachical code set");
