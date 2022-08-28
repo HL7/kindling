@@ -1,4 +1,5 @@
 package org.hl7.fhir.definitions.model;
+import java.io.ByteArrayInputStream;
 /*
 Copyright (c) 2011+, HL7, Inc
 All rights reserved.
@@ -38,8 +39,11 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 
 import org.hl7.fhir.r5.elementmodel.Element;
+import org.hl7.fhir.tools.publisher.PageProcessor;
+import org.hl7.fhir.utilities.CSFile;
 import org.hl7.fhir.utilities.CSFileInputStream;
 import org.hl7.fhir.utilities.CSVProcessor;
+import org.hl7.fhir.utilities.TextFile;
 import org.hl7.fhir.utilities.Utilities;
 import org.hl7.fhir.utilities.validation.ValidationMessage;
 import org.hl7.fhir.utilities.xhtml.XhtmlNode;
@@ -116,7 +120,9 @@ public class Example {
       factory.setNamespaceAware(true);
       try {
         DocumentBuilder builder = factory.newDocumentBuilder();
-        xml = builder.parse(new CSFileInputStream(path.getAbsolutePath()));
+        String xs = TextFile.fileToString(new CSFile(path.getAbsolutePath()));
+        xs = xs.replace("<%test-server%>", PageProcessor.TEST_SERVER_URL);
+        xml = builder.parse(new ByteArrayInputStream(xs.getBytes()));
         resourceName = xml.getDocumentElement().getNodeName();
       } catch (Exception e) {
         throw new Exception("unable to read "+path.getAbsolutePath()+": "+e.getMessage(), e);
