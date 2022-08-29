@@ -119,6 +119,8 @@ public class ResourceParser {
     parseOperations(r, n, t);
     parsePacks(r, n, t);
 
+    parseLiquid(r);
+
 //    private List<Profile> conformancePackages = new ArrayList<Profile>();
 //    private Profile conformancePack;
 
@@ -136,6 +138,17 @@ public class ResourceParser {
 //    
     
     return r;
+  }
+
+  private void parseLiquid(ResourceDefn r) throws IOException, FileNotFoundException {
+    File lt = new CSFile(Utilities.path(this.folder, r.getName()+".liquid"));
+    if (lt.exists()) {
+      r.setLiquid(TextFile.fileToString(lt));
+    }
+    lt = new CSFile(Utilities.path(this.folder, r.getName()+".liquid.md"));
+    if (lt.exists()) {
+      r.setLiquidNotes(TextFile.fileToString(lt));
+    }
   }
 
   private void parsePacks(ResourceDefn r, String n, String t) throws Exception {

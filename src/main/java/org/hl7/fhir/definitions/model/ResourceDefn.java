@@ -179,6 +179,8 @@ public class ResourceDefn  {
   private List<String> hints = new ArrayList<String>();
   private Map<String, PointSpec> layout = new HashMap<String, PointSpec>();
   private SecurityCategorization securityCategorization;
+  private String liquid;
+  private String liquidNotes;
 
   private long timestamp;
   
@@ -502,6 +504,30 @@ public class ResourceDefn  {
 
   public String present() {
     return root.getName();
+  }
+
+  public boolean hasLiquid() {
+    return liquid != null;
+  }
+
+  public String getLiquid() {
+    return liquid;
+  }
+
+  public void setLiquid(String liquid) {
+    this.liquid = liquid;
+  }
+
+  public boolean hasLiquidNotes() {
+    return liquidNotes != null;
+  }
+
+  public String getLiquidNotes() {
+    return liquidNotes;
+  }
+  
+  public void setLiquidNotes(String liquidNotes) {
+    this.liquidNotes = liquidNotes;
   }
   
   
