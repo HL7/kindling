@@ -518,7 +518,8 @@ public class Publisher implements URIResolver, SectionNumberer {
         processGitHubUrl(srcRepo);
         page.getFolders().ghBranch = srcBranch;
         page.getFolders().ciDir = ciBranch;
-        System.out.println("This is a GitHub Repository: https://github.com/"+page.getFolders().ghOrg+"/"+page.getFolders().ghRepo+"/"+page.getFolders().ghBranch);
+        System.out.println("This is a CI build from GitHub Repository: https://github.com/"+page.getFolders().ghOrg+"/"+page.getFolders().ghRepo+"/"+page.getFolders().ghBranch);
+        System.out.println("Using CI_BRANCH_DIRECTORY " + ciBranch);
         return;
       }
     }
