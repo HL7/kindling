@@ -513,13 +513,13 @@ public class Publisher implements URIResolver, SectionNumberer {
     String srcRepo = System.getenv("SYSTEM_PULLREQUEST_SOURCEREPOSITORYURI");
     String srcBranch = System.getenv("SYSTEM_PULLREQUEST_SOURCEBRANCH");
     String ciBranch = System.getenv("CI_BRANCH_DIRECTORY");
+    System.out.println("CI_BRANCH_DIRECTORY=" + ciBranch);
     if (srcRepo != null && srcBranch != null && ciBranch != null) {
       if (srcRepo.contains("github.com")) {
         processGitHubUrl(srcRepo);
         page.getFolders().ghBranch = srcBranch;
         page.getFolders().ciDir = ciBranch;
         System.out.println("This is a CI build from GitHub Repository: https://github.com/"+page.getFolders().ghOrg+"/"+page.getFolders().ghRepo+"/"+page.getFolders().ghBranch);
-        System.out.println("Using CI_BRANCH_DIRECTORY " + ciBranch);
         return;
       }
     }
