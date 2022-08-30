@@ -512,11 +512,14 @@ public class Publisher implements URIResolver, SectionNumberer {
     // this is how we find out about the git info on the CI-build
     String srcRepo = System.getenv("SYSTEM_PULLREQUEST_SOURCEREPOSITORYURI");
     String srcBranch = System.getenv("SYSTEM_PULLREQUEST_SOURCEBRANCH");
-    if (srcRepo != null && srcBranch != null) {
+    String ciBranch = System.getenv("CI_BRANCH_DIRECTORY");
+    System.out.println("CI_BRANCH_DIRECTORY=" + ciBranch);
+    if (srcRepo != null && srcBranch != null && ciBranch != null) {
       if (srcRepo.contains("github.com")) {
         processGitHubUrl(srcRepo);
         page.getFolders().ghBranch = srcBranch;
-        System.out.println("This is a GitHub Repository: https://github.com/"+page.getFolders().ghOrg+"/"+page.getFolders().ghRepo+"/"+page.getFolders().ghBranch);
+        page.getFolders().ciDir = ciBranch;
+        System.out.println("This is a CI build from GitHub Repository: https://github.com/"+page.getFolders().ghOrg+"/"+page.getFolders().ghRepo+"/"+page.getFolders().ghBranch);
         return;
       }
     }
@@ -531,6 +534,8 @@ public class Publisher implements URIResolver, SectionNumberer {
             List<Ref> branches = git.branchList().call();
             for (Ref ref : branches) {
               page.getFolders().ghBranch = ref.getName().substring(ref.getName().lastIndexOf("/") + 1, ref.getName().length());
+              // We won't have an explicit CI dir, so set this to ghBranch
+              page.getFolders().ciDir = page.getFolders().ghBranch;
               System.out.println("This is a GitHub Repository: https://github.com/"+page.getFolders().ghOrg+"/"+page.getFolders().ghRepo+"/"+page.getFolders().ghBranch);
               return;
             }          
