@@ -93,6 +93,12 @@ public class FolderManager {
   public String ghRepo;
   public String ghBranch;
 
+  /**
+   * A target directory name for use in CI builds. This is set by the CI
+   * pipeline, and is normally derived from the github branch (special
+   * characters removed, etc)
+   */
+  public String ciDir;
   
   public String implDir(String name) {
     return rootDir+"implementations"+sl+name+sl;
@@ -116,6 +122,10 @@ public class FolderManager {
             ",\n tmpDir='" + tmpDir + '\'' +
             ",\n javaDir='" + javaDir + '\'' +
             ",\n archiveDir='" + archiveDir + '\'' +
+            ",\n ghOrg='" + ghOrg + '\'' +
+            ",\n ghRepo='" + ghRepo + '\'' +
+            ",\n ghBranch='" + ghBranch + '\'' +
+            ",\n ciDir='" + ciDir + '\'' +
             '}';
   }
 }
