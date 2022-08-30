@@ -9334,7 +9334,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
       client = null;
     }
 
-    tcm = new TerminologyCacheManager(client.getServerVersion(), folders.rootDir, folders.ghOrg, folders.ghRepo, folders.ghBranch);
+    tcm = new TerminologyCacheManager(client.getServerVersion(), folders.rootDir, folders.ghOrg, folders.ghRepo, folders.ciDir);
     log("Load Terminology Cache from "+tcm.getFolder(), LogMessageType.Process);
     tcm.initialize();
 
