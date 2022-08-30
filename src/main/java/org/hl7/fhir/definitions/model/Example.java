@@ -31,6 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -51,6 +52,8 @@ import org.hl7.fhir.utilities.xhtml.XhtmlNode;
 import org.hl7.fhir.utilities.xml.XMLUtil;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
+
+import com.google.common.base.Charsets;
 
 public class Example {
   private String name;
@@ -123,7 +126,7 @@ public class Example {
         DocumentBuilder builder = factory.newDocumentBuilder();
         String xs = TextFile.fileToString(new CSFile(path.getAbsolutePath()));
         xs = xs.replace("<%test-server%>", PageProcessor.TEST_SERVER_URL);
-        xml = builder.parse(new ByteArrayInputStream(xs.getBytes()));
+        xml = builder.parse(new ByteArrayInputStream(xs.getBytes(Charsets.UTF_8)));
         resourceName = xml.getDocumentElement().getNodeName();
       } catch (Exception e) {
         throw new Exception("unable to read "+path.getAbsolutePath()+": "+e.getMessage(), e);
