@@ -628,6 +628,8 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     boolean even = false;
     String name = file.substring(0,file.lastIndexOf("."));
     String searchAdditions = "";
+    Map<String, Integer> resDesc = new HashMap<>();
+
 
     while (src.contains("<%") || src.contains("[%"))
     {
@@ -736,7 +738,13 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
         even = !even;
         src = s1+resItem(com[1], even)+s3;
       } else if (com[0].equals("resdesc")) {
+        if (!resDesc.containsKey(com[1])) {
+          resDesc.put(com[1], 0);
+        }
+        resDesc.put(com[1], resDesc.get(com[1]) + 1);
         src = s1+resDesc(com[1])+s3;
+      } else if (com[0].equals("resdesc-check")) {
+        src = s1+resDescCheck(com[1], resDesc)+s3;
       } else if (com[0].equals("rescat")) {
         src = s1+resCat(com.length == 1 ? null : s2.substring(7))+s3;
       } else if (com[0].equals("svg"))
@@ -1295,7 +1303,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
       else  if (com[0].equals("canonical-resources")) 
         src = s1+listCanonicalResources()+s3;
       else  if (com[0].equals("metadata-resources")) 
-        src = s1+listCanonicalResources()+s3;
+        src = s1+listMetadataResources()+s3;
       else if (com[0].equals("special-search-parameters")) { 
         src = s1+listSpecialParameters()+s3;
       } else if (com[0].equals("diff-links-all")) { 
@@ -4276,11 +4284,11 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     b.append("<ul class=\"nav nav-tabs\">");
     b.append(makeHeaderTab("Definitions ", pfx + "formats.html", mode==null || "base".equals(mode)));
     b.append(makeHeaderTab("Formats", pfx + "resource-formats.html", "formats".equals(mode)));
+    b.append(makeHeaderTab("UML", pfx + "uml.html", "uml".equals(mode)));
     b.append(makeHeaderTab("XML", pfx + "xml.html", "xml".equals(mode)));
     b.append(makeHeaderTab("JSON", pfx + "json.html", "json".equals(mode)));
     b.append(makeHeaderTab("ND-JSON", pfx + "nd-json.html", "ndjson".equals(mode)));
     b.append(makeHeaderTab("RDF", pfx + "rdf.html", "rdf".equals(mode)));
-    b.append(makeHeaderTab("UML", pfx + "uml.html", "uml".equals(mode)));
     b.append("</ul>\r\n");
     return b.toString();
   }
@@ -4814,7 +4822,8 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
   String processPageIncludesForPrinting(String file, String src, Resource resource, ImplementationGuideDefn ig) throws Exception {
     boolean even = false;
     List<String> tabs = new ArrayList<String>();
-
+    Map<String, Integer> resDesc = new HashMap<>();
+    
     while (src.contains("<%") || src.contains("[%"))
 	  {
 		  int i1 = src.indexOf("<%");
@@ -4875,7 +4884,13 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
         even = !even;
         src = s1+resItem(com[1], even)+s3;
       } else if (com[0].equals("resdesc")) {
+        if (!resDesc.containsKey(com[1])) {
+          resDesc.put(com[1], 0);
+        }
+        resDesc.put(com[1], resDesc.get(com[1]) + 1);
         src = s1+resDesc(com[1])+s3;
+      } else if (com[0].equals("resdesc-check")) {
+        src = s1+resDescCheck(com[1], resDesc)+s3;
       } else if (com[0].equals("rescat")) {
         src = s1+resCat(com.length == 1 ? null : s2.substring(7))+s3;
       } else if (com[0].equals("w5"))
@@ -5014,6 +5029,21 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
         throw new Exception("Instruction <%"+s2+"%> not understood parsing page "+file);
     }
     return src;
+  }
+
+  private String resDescCheck(String num, Map<String, Integer> resDesc) {
+    int n = Integer.parseInt(num);
+    StringBuilder b = new StringBuilder();
+    b.append("<ul>\r\n");
+    for (String rn : definitions.sortedResourceNames()) {
+      if (!resDesc.containsKey(rn)) {
+        b.append("<li>Not listed: "+rn+"</li>\r\n");
+      } else if (resDesc.get(rn) < n) {
+        b.append("<li>Not listed enough: "+rn+" = "+resDesc.get(rn)+"</li>\r\n");
+      }
+    }
+    b.append("</ul>\r\n");
+    return b.toString();
   }
 
   private String genOtherTabs(String mode, List<String> tabs) {
@@ -5197,6 +5227,8 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     int level = 0;
     boolean even = false;
     List<String> tabs = new ArrayList<String>();
+    Map<String, Integer> resDesc = new HashMap<>();
+
 
     while (src.contains("<%") || src.contains("[%"))
 	  {
@@ -5298,7 +5330,13 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
         even = !even;
         src = s1+resItem(com[1], even)+s3;
       } else if (com[0].equals("resdesc")) {
+        if (!resDesc.containsKey(com[1])) {
+          resDesc.put(com[1], 0);
+        }
+        resDesc.put(com[1], resDesc.get(com[1]) + 1);
         src = s1+resDesc(com[1])+s3;
+      } else if (com[0].equals("resdesc-check")) {
+        src = s1+resDescCheck(com[1], resDesc)+s3;
       } else if (com[0].equals("rescat")) {
         src = s1+resCat(com.length == 1 ? null : s2.substring(7))+s3;
       } else if (com[0].equals("sidebar"))
@@ -11003,6 +11041,17 @@ private int countContains(List<ValueSetExpansionContainsComponent> list) {
     b.append("<ul style=\"column-count: 3\">\r\n");
     for (String rn : definitions.sortedResourceNames()) {
      if (definitions.getResourceByName(rn).getTemplate() != null)
+        b.append("<li><a href=\""+rn.toLowerCase()+".html\">"+rn+"</a></li>\r\n");
+    }
+    b.append("</ul>\r\n");
+    return b.toString();
+  }
+  
+  private String listMetadataResources() throws FHIRException {
+    StringBuilder b = new StringBuilder();
+    b.append("<ul style=\"column-count: 3\">\r\n");
+    for (String rn : definitions.sortedResourceNames()) {
+     if (definitions.getResourceByName(rn).getTemplate() != null && definitions.getResourceByName(rn).getTemplate().getName().equals("MetadataResource"))
         b.append("<li><a href=\""+rn.toLowerCase()+".html\">"+rn+"</a></li>\r\n");
     }
     b.append("</ul>\r\n");
