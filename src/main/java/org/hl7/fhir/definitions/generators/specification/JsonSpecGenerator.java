@@ -349,10 +349,20 @@ public class JsonSpecGenerator extends OutputStreamWriter {
     } else if (type.isXhtml()) {
       // element contains xhtml
       write("\"(Escaped XHTML)\"");
-    } else if (definitions.getPrimitives().containsKey(type.getName()) && !type.hasParams()) {
+    } else if (definitions.getPrimitives().containsKey(type.getName())) {
       if (!(type.getName().equals("integer") || type.getName().equals("boolean") || type.getName().equals("decimal")))
         write("\"");
-      write("&lt;<span style=\"color: darkgreen\"><a href=\"" + prefix+(dtRoot + definitions.getSrcFile(type.getName())+ ".html#" + type.getName()) + "\">" + type.getName()+ "</a></span>&gt;");
+      write("&lt;<span style=\"color: darkgreen\"><a href=\"" + prefix+(dtRoot + definitions.getSrcFile(type.getName())+ ".html#" + type.getName()) + "\">" + type.getName()+ "</a></span>");
+      if (type.hasParams()) {
+        write("(");
+        boolean first = true;
+        for (String p : type.getParams()) {
+          if (first) first = false; else write("|");
+          write("<a href=\"" + prefix+(dtRoot + definitions.getSrcFile(p)+ ".html#" + p) + "\">" + p+ "</a>");
+        }
+        write(")");        
+      }
+      write("&gt;");
       if (!(type.getName().equals("integer") || type.getName().equals("boolean") || type.getName().equals("decimal")))
         write("\"");
     } else {
