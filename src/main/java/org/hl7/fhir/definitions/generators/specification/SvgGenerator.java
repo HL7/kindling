@@ -1022,6 +1022,8 @@ public class SvgGenerator extends BaseGenerator {
       return "Reference";
     } else if (allSame && t.equals("canonical")) {
       return "canonical";
+    } else if (allSame && t.equals("CodeableReference")) {
+      return "CodeableReference";
     }  else {
       boolean allPrimitive = true;
       for (TypeRef tr : tl) {
