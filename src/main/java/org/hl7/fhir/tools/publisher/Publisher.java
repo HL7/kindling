@@ -1860,53 +1860,55 @@ public class Publisher implements URIResolver, SectionNumberer {
       genConfInteraction(cpbs, rest, SystemRestfulInteraction.HISTORYSYSTEM, "Implemented per the specification (or Insert other doco here)");
       genConfInteraction(cpbs, rest, SystemRestfulInteraction.SEARCHSYSTEM, "Implemented per the specification (or Insert other doco here)");
 
+      Set<String> spids = new HashSet<>();
       for (ResourceDefn rd : page.getDefinitions().getBaseResources().values()) {
-        Set<String> spids = new HashSet<>();
-        for (SearchParameterDefn i : rd.getSearchParams().values()) {
-          if (!spids.contains(i.getCode())) {
-            rest.getSearchParam().add(makeSearchParam(rd.getName(), i, spids));
+        if (!rd.isInterface()) {
+          for (SearchParameterDefn i : rd.getSearchParams().values()) {
+            if (!spids.contains(i.getCode())) {
+              rest.getSearchParam().add(makeSearchParam(rd.getName(), i, spids));
+            }
           }
-        }
-        if (!spids.contains("_id")) {
-          rest.getSearchParam().add(makeSearchParam("_id", SearchParamType.STRING, "id", "some doco", spids));
-        }
+          if (!spids.contains("_id")) {
+            rest.getSearchParam().add(makeSearchParam("_id", SearchParamType.STRING, "id", "some doco", spids));
+          }
 
-        if (!spids.contains("_list")) {
-          rest.getSearchParam().add(makeSearchParam("_list", SearchParamType.TOKEN, "Resource-list", "Retrieval of resources that are referenced by a List resource", spids));
+          if (!spids.contains("_list")) {
+            rest.getSearchParam().add(makeSearchParam("_list", SearchParamType.TOKEN, "Resource-list", "Retrieval of resources that are referenced by a List resource", spids));
+          }
+          if (!spids.contains("_has")) {
+            rest.getSearchParam().add(makeSearchParam("_has", SearchParamType.COMPOSITE, "Resource-has", "Provides support for reverse chaining", spids));
+          }
+          if (!spids.contains("_type")) {
+            rest.getSearchParam().add(makeSearchParam("_type", SearchParamType.TOKEN, "Resource-type", "Type of resource (when doing cross-resource search", spids));
+          }
+          if (!spids.contains("_sort")) {
+            rest.getSearchParam().add(makeSearchParam("_sort", SearchParamType.TOKEN, "Resource-source", "How to sort the resources when returning", spids));
+          }
+          if (!spids.contains("_count")) {
+            rest.getSearchParam().add(makeSearchParam("_count", SearchParamType.NUMBER, "Resource-count", "How many resources to return", spids));
+          }
+          if (!spids.contains("_include")) {
+            rest.getSearchParam().add(makeSearchParam("_include", SearchParamType.TOKEN, "Resource-include", "Control over returning additional resources (see spec)", spids));
+          }
+          if (!spids.contains("_revinclude")) {
+            rest.getSearchParam().add(makeSearchParam("_revinclude", SearchParamType.TOKEN, "Resource-revinclude", "Control over returning additional resources (see spec)", spids));
+          }
+          if (!spids.contains("_summary")) {
+            rest.getSearchParam().add(makeSearchParam("_summary", SearchParamType.TOKEN, "Resource-summary", "What kind of information to return", spids));
+          }
+          if (!spids.contains("_elements")) {
+            rest.getSearchParam().add(makeSearchParam("_elements", SearchParamType.STRING, "Resource-elements", "What kind of information to return", spids));
+          }
+          if (!spids.contains("_contained")) {
+            rest.getSearchParam().add(makeSearchParam("_contained", SearchParamType.TOKEN, "Resource-contained", "Managing search into contained resources", spids));
+          }
+          if (!spids.contains("_containedType")) {
+            rest.getSearchParam().add(makeSearchParam("_containedType", SearchParamType.TOKEN, "Resource-containedType", "Managing search into contained resources", spids));
+          }
+
+          for (Operation op : rd.getOperations())
+            rest.addOperation().setName(op.getName()).setDefinition("http://hl7.org/fhir/OperationDefinition/"+rd.getName().toLowerCase()+"-"+op.getName());
         }
-        if (!spids.contains("_has")) {
-          rest.getSearchParam().add(makeSearchParam("_has", SearchParamType.COMPOSITE, "Resource-has", "Provides support for reverse chaining", spids));
-        }
-        if (!spids.contains("_type")) {
-          rest.getSearchParam().add(makeSearchParam("_type", SearchParamType.TOKEN, "Resource-type", "Type of resource (when doing cross-resource search", spids));
-        }
-        if (!spids.contains("_sort")) {
-          rest.getSearchParam().add(makeSearchParam("_sort", SearchParamType.TOKEN, "Resource-source", "How to sort the resources when returning", spids));
-        }
-        if (!spids.contains("_count")) {
-          rest.getSearchParam().add(makeSearchParam("_count", SearchParamType.NUMBER, "Resource-count", "How many resources to return", spids));
-        }
-        if (!spids.contains("_include")) {
-          rest.getSearchParam().add(makeSearchParam("_include", SearchParamType.TOKEN, "Resource-include", "Control over returning additional resources (see spec)", spids));
-        }
-        if (!spids.contains("_revinclude")) {
-          rest.getSearchParam().add(makeSearchParam("_revinclude", SearchParamType.TOKEN, "Resource-revinclude", "Control over returning additional resources (see spec)", spids));
-        }
-        if (!spids.contains("_summary")) {
-          rest.getSearchParam().add(makeSearchParam("_summary", SearchParamType.TOKEN, "Resource-summary", "What kind of information to return", spids));
-        }
-        if (!spids.contains("_elements")) {
-          rest.getSearchParam().add(makeSearchParam("_elements", SearchParamType.STRING, "Resource-elements", "What kind of information to return", spids));
-        }
-        if (!spids.contains("_contained")) {
-          rest.getSearchParam().add(makeSearchParam("_contained", SearchParamType.TOKEN, "Resource-contained", "Managing search into contained resources", spids));
-        }
-        if (!spids.contains("_containedType")) {
-          rest.getSearchParam().add(makeSearchParam("_containedType", SearchParamType.TOKEN, "Resource-containedType", "Managing search into contained resources", spids));
-        }
-        
-        for (Operation op : rd.getOperations())
-          rest.addOperation().setName(op.getName()).setDefinition("http://hl7.org/fhir/OperationDefinition/"+rd.getName().toLowerCase()+"-"+op.getName());
       }
       for (String rn : page.getDefinitions().sortedResourceNames()) {
         ResourceDefn r = page.getDefinitions().getResourceByName(rn);
