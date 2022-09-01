@@ -5728,7 +5728,13 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
         for (ConceptSetComponent cc : vs.getCompose().getInclude())
           if (cc.hasSystem() && cc.getSystem().equals("http://snomed.info/sct")) {
             for (ConceptReferenceComponent c : cc.getConcept()) {
-              String d = c.hasDisplay() ? c.getDisplay() : workerContext.getCodeDefinition("http://snomed.info/sct", c.getCode()).getDisplay();
+              String d = null;
+              if (c.hasDisplay()) {
+                d = c.getDisplay(); 
+              } else {
+                ConceptDefinitionComponent cd = workerContext.getCodeDefinition("http://snomed.info/sct", c.getCode());
+                d = cd == null ? "??" : cd.getDisplay();
+              }
               if (concepts.containsKey(c.getCode()))
                 concepts.get(c.getCode()).update(d, vs);
               else

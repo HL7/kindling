@@ -971,23 +971,29 @@ public class SvgGenerator extends BaseGenerator {
 
   private String baseUrl(String path) throws Exception {
     String root = path.contains(".") ? path.substring(0, path.indexOf(".")) : path;
-    if (definitions.hasResource(root) || definitions.hasLogicalModel(root))
-      return root.toLowerCase()+"-definitions.html#";
-    else if ("Narrative".equals(root))
-      return "narrative-definitions.html#";
-    else if ("Reference".equals(root))
-      return "references-definitions.html#";
-    else if ("Extension".equals(root))
-      return "extensibility-definitions.html#";
-    else if (definitions.hasType(root))
-      return "datatypes-definitions.html#";
-    if (definitions.getBaseResources().containsKey(root))
-      return root.toLowerCase()+"-definitions.html#";
-    else if (root.equals("Type")) {
-      return "datatypes-definitions.html#";
-    } else {
-      throw new Exception(root+" not handled yet");
-    }
+    return  definitions.getSrcFile(root)+"-definitions.html#";
+//    String r = null;
+//    if (definitions.hasResource(root) || definitions.hasLogicalModel(root))
+//      r = root.toLowerCase()+"-definitions.html#";
+//    else if ("Narrative".equals(root))
+//      r = "narrative-definitions.html#";
+//    else if ("Reference".equals(root))
+//      r = "references-definitions.html#";
+//    else if ("Extension".equals(root))
+//      r = "extensibility-definitions.html#";
+//    else if (definitions.hasType(root))
+//      r = "datatypes-definitions.html#";
+//    else if (definitions.getBaseResources().containsKey(root))
+//      r = root.toLowerCase()+"-definitions.html#";
+//    else if (root.equals("Type")) {
+//      r = "datatypes-definitions.html#";
+//    } else {
+//      throw new Exception(root+" not handled yet");
+//    }
+//    if (!s.equals(r)) {
+//      throw new Error("mismatch for "+path+": "+s+" vs "+r);
+//    }
+//    return r;
   } 
 
   private ClassItem getItemForPath(ResourceDefn resource, String path) throws Exception {
@@ -1382,9 +1388,9 @@ public class SvgGenerator extends BaseGenerator {
   }
 
   private String makeRel(String link) {
-    if (isDatatypes && link.startsWith(prefix+"datatypes.html#"))
-      return link.substring(link.indexOf("#"));
-    else
+//    if (isDatatypes && link.startsWith(prefix+"datatypes.html#"))
+//      return link.substring(link.indexOf("#"));
+//    else
       return link;
   }
 
