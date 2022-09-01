@@ -202,7 +202,6 @@ public class ExampleInspector implements IValidatorResourceFetcher, IValidationP
     this.definitions = definitions;
     this.version = version;
     hostServices = new ExampleHostServices();
-    jsonLdDefns = (JsonObject) new com.google.gson.JsonParser().parse(TextFile.fileToString(Utilities.path(rootDir, "fhir.jsonld")));
   }
 
   private XmlValidator xml;
@@ -227,6 +226,11 @@ public class ExampleInspector implements IValidatorResourceFetcher, IValidationP
     validator.setAllowExamples(true);
     validator.setDebug(false);
 
+    fpe = new FHIRPathEngine(context);
+  }
+
+  public void prepare2() throws Exception {
+    jsonLdDefns = (JsonObject) new com.google.gson.JsonParser().parse(TextFile.fileToString(Utilities.path(rootDir, "fhir.jsonld")));
     xml = new XmlValidator(errorsInt, loadSchemas(), loadTransforms());
 
     if (VALIDATE_BY_JSON_SCHEMA) {
@@ -237,11 +241,9 @@ public class ExampleInspector implements IValidatorResourceFetcher, IValidationP
     if (VALIDATE_RDF) {
       shex = new ShExValidator(Utilities.path(rootDir, "fhir.shex"));
     }
+    checkJsonLd();    
     
-    fpe = new FHIRPathEngine(context);
-    checkJsonLd();
   }
-
   
   private void checkJsonLd() throws IOException {
     String s1 = "{\r\n"+
