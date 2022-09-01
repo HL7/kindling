@@ -1089,7 +1089,19 @@ public class ElementDefn {
     this.abstractType = abstractType;
   }
   
+  public Invariant findInvariant(String key) {
+    if (getInvariants().containsKey(key)) {
+      return getInvariants().get(key);
+    }
+    for (ElementDefn e : getElements()) {
+      Invariant inv = e.findInvariant(key);
+      if (inv != null) {
+        return inv;
+      }
+    }
+    return null;
+  }
 
-  
+
 }
 

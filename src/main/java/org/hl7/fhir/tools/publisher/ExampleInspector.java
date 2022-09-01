@@ -28,6 +28,7 @@ import org.everit.json.schema.ValidationException;
 import org.everit.json.schema.loader.SchemaLoader;
 import org.hl7.fhir.definitions.model.Definitions;
 import org.hl7.fhir.definitions.model.Example;
+import org.hl7.fhir.definitions.model.Invariant;
 import org.hl7.fhir.definitions.model.ResourceDefn;
 import org.hl7.fhir.definitions.model.SearchParameterDefn;
 import org.hl7.fhir.definitions.validation.XmlValidator;
@@ -35,6 +36,7 @@ import org.hl7.fhir.exceptions.DefinitionException;
 import org.hl7.fhir.exceptions.FHIRException;
 import org.hl7.fhir.exceptions.FHIRFormatError;
 import org.hl7.fhir.exceptions.PathEngineException;
+import org.hl7.fhir.r5.conformance.ProfileUtilities;
 import org.hl7.fhir.r5.context.IWorkerContext;
 import org.hl7.fhir.r5.elementmodel.Element;
 import org.hl7.fhir.r5.elementmodel.Element.SpecialElement;
@@ -47,6 +49,7 @@ import org.hl7.fhir.r5.model.CanonicalResource;
 import org.hl7.fhir.r5.model.CodeSystem;
 import org.hl7.fhir.r5.model.Constants;
 import org.hl7.fhir.r5.model.ElementDefinition;
+import org.hl7.fhir.r5.model.ElementDefinition.ElementDefinitionConstraintComponent;
 import org.hl7.fhir.r5.model.Enumerations.FHIRVersion;
 import org.hl7.fhir.r5.model.OperationDefinition;
 import org.hl7.fhir.r5.model.SearchParameter;
@@ -684,7 +687,39 @@ public class ExampleInspector implements IValidatorResourceFetcher, IValidationP
   }
 
 
+  public void testInvariants(String srcDir, ResourceDefn rd) throws IOException {
+    File testsDir = new File(Utilities.path(srcDir, rd.getName().toLowerCase(), "invariant-tests"));
+    if (testsDir.exists()) {
+      for (File f : testsDir.listFiles()) {
+        if (f.getName().endsWith(".json")) {
+          testInvariant(rd, f);
+        }
+      }
+    }
+  }
 
 
-  
- }
+  private void testInvariant(ResourceDefn rd, File f) throws FHIRException, FileNotFoundException {
+    String inv = f.getName();
+    inv = inv.substring(0, inv.indexOf("."));
+    Invariant con = rd.findInvariant(inv);
+
+    if (con != null) {
+      List<ValidationMessage> errs = new ArrayList<>();
+      validator.validate(null, errs, new FileInputStream(f), FhirFormat.JSON);
+
+      boolean fail = false;
+      for (ValidationMessage vm : errs) {
+        if (vm.getMessage().contains(inv)) {
+          fail = true;
+        }
+      }
+      con.setTestOutcome(fail);
+    } else {
+      System.out.println("Didn't find invariant for "+f.getName());
+    }
+  }
+
+}
+
+

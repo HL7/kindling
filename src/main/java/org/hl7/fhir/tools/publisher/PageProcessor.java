@@ -3892,7 +3892,8 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
       b.append(invs.get(n));
     }
     if (b.length() > 0)
-      return "<a name=\"invs\"> </a>\r\n<h3>Constraints</h3><div style=\""+ProfileUtilities.CONSTRAINT_STYLE+"\"><table class=\"grid\"><tr><td width=\"60\"><b>id</b></td><td><b>Level</b></td><td><b>Location</b></td><td><b>Description</b></td><td><b><a href=\""+prefix+"fhirpath.html\">Expression</a></b></td></tr>"+b+"</table></div><br/>";
+      return "<a name=\"invs\"> </a>\r\n<h3>Constraints</h3><div>"+
+       "<table class=\"grid\"><tr><td width=\"60\"><b>UniqueKey</b></td><td><b>Level</b></td><td><b>Location</b></td><td><b>Description</b></td><td><b><a href=\""+prefix+"fhirpath.html\">Expression</a></b></td></tr>"+b+"</table></div><br/>";
     else
       return "";
   }
@@ -3976,9 +3977,9 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     for (Invariant inv : e.getInvariants().values()) {
       String s = "";
       if (base)
-        s = "<tr><td><b title=\"Formal Invariant Identifier\">"+inv.getId()+"</b></td><td>"+presentLevel(inv)+"</td><td>(base)</td><td>"+Utilities.escapeXml(inv.getEnglish())+"</td><td><span style=\"font-family: Courier New, monospace\">"+Utilities.escapeXml(inv.getExpression())+"</span>";
+        s = "<tr><td><b title=\"Formal Invariant Identifier\">"+getStatusIcon(inv)+inv.getId()+"</b></td><td>"+presentLevel(inv)+"</td><td>(base)</td><td>"+Utilities.escapeXml(inv.getEnglish())+"</td><td><span style=\"font-family: Courier New, monospace\">"+Utilities.escapeXml(inv.getExpression())+"</span>";
       else
-        s = "<tr><td><b title=\"Formal Invariant Identifier\">"+inv.getId()+"</b></td><td>"+presentLevel(inv)+"</td><td>"+path+"</td><td>"+Utilities.escapeXml(inv.getEnglish())+"</td><td><span style=\"font-family: Courier New, monospace\">"+Utilities.escapeXml(inv.getExpression())+"</span>";
+        s = "<tr><td><b title=\"Formal Invariant Identifier\">"+getStatusIcon(inv)+inv.getId()+"</b></td><td>"+presentLevel(inv)+"</td><td>"+path+"</td><td>"+Utilities.escapeXml(inv.getEnglish())+"</td><td><span style=\"font-family: Courier New, monospace\">"+Utilities.escapeXml(inv.getExpression())+"</span>";
       if (!Utilities.noString(inv.getExplanation())) 
         s = s + "<br/>This is (only) a best practice guideline because: <blockquote>"+processMarkdown("best practice guideline", inv.getExplanation(), prefix)+"</blockquote>";
       s = s + "</td></tr>";
@@ -3986,6 +3987,17 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     }
     for (ElementDefn c : e.getElements()) {
       generateConstraintsTable(path + "." + c.getName(), c, invs, false, prefix);
+    }
+  }
+
+  private String getStatusIcon(Invariant inv) {
+    Boolean b = inv.getTestOutcome();
+    if (b == null) {
+      return "<img src=\"assets/images/test-null.png\"/>&nbsp;";
+    } else if (b) {
+      return "<img src=\"assets/images/test-ok.png\"/>&nbsp;";
+    } else {
+      return "<img src=\"assets/images/test-fail.png\"/>&nbsp;";
     }
   }
 

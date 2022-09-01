@@ -711,6 +711,7 @@ public class Publisher implements URIResolver, SectionNumberer {
       validate();
       processProfiles();
       checkAllOk();
+      startValidation();
 
       if (isGenerate) {
         produceSpecification();
@@ -795,6 +796,16 @@ public class Publisher implements URIResolver, SectionNumberer {
       e.printStackTrace();
       TextFile.stringToFile(StringUtils.defaultString(e.getMessage()), Utilities.path(outputdir, "simple-error.txt"));
       System.exit(1);
+    }
+  }
+
+  private void startValidation() throws FileNotFoundException, IOException, Exception {
+    page.log(".. Set up Validator", LogMessageType.Process);
+    ei = new ExampleInspector(page.getWorkerContext(), page, page.getFolders().dstDir, Utilities.path(page.getFolders().rootDir, "tools", "schematron"), page.getValidationErrors(), page.getDefinitions(), page.getVersion());
+    ei.prepare();
+
+    for (String rname : page.getDefinitions().sortedResourceNames()) {
+      ei.testInvariants(page.getFolders().srcDir, page.getDefinitions().getResourceByName(rname));
     }
   }
 
@@ -4466,6 +4477,8 @@ public class Publisher implements URIResolver, SectionNumberer {
 
   private boolean validateBundles;
 
+  private ExampleInspector ei;
+
   
   private void processExample(Example e, ResourceDefn resn, StructureDefinition profile, Profile pack, ImplementationGuideDefn ig) throws Exception {
     if (e.getType() == ExampleType.Tool)
@@ -5825,10 +5838,7 @@ public class Publisher implements URIResolver, SectionNumberer {
 
     if (!isPostPR) {
       page.log("Validating Examples", LogMessageType.Process);
-      ExampleInspector ei = new ExampleInspector(page.getWorkerContext(), page, page.getFolders().dstDir, Utilities.path(page.getFolders().rootDir, "tools", "schematron"), page.getValidationErrors(), page.getDefinitions(), page.getVersion());
-      page.log(".. Loading", LogMessageType.Process);
-      ei.prepare();
-
+      
       for (String rname : page.getDefinitions().sortedResourceNames()) {
         ResourceDefn r = page.getDefinitions().getResources().get(rname);
         if (wantBuild(rname)) {

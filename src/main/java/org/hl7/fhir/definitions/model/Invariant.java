@@ -43,6 +43,7 @@ public class Invariant {
   private String requirements;
   private String expression;
   private String explanation;
+  private Boolean testOutcome;
   
   public Invariant(Invariant inv, String oname, String name, String templateTitle, String abb) {
     context = inv.context.replace(oname, name);
@@ -155,6 +156,16 @@ public class Invariant {
     this.explanation = explanation;
   }
 
-  
-  
+  public void setTestOutcome(boolean outcome) {
+    if (testOutcome == null) {
+      testOutcome = outcome;
+    } else if (!outcome) {
+      testOutcome = outcome;
+    }
+  }
+
+  public Boolean getTestOutcome() {
+    return testOutcome;
+  }
+
 }
