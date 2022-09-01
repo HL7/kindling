@@ -5733,7 +5733,12 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
                 d = c.getDisplay(); 
               } else {
                 ConceptDefinitionComponent cd = workerContext.getCodeDefinition("http://snomed.info/sct", c.getCode());
-                d = cd == null ? "??" : cd.getDisplay();
+                if (cd == null) {                  
+                  d = "??";
+                  System.out.println("Unknown SCT code "+c.getCode());
+                } else {
+                  d = cd.getDisplay();
+                }
               }
               if (concepts.containsKey(c.getCode()))
                 concepts.get(c.getCode()).update(d, vs);
