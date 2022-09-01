@@ -714,7 +714,7 @@ public class ExampleInspector implements IValidatorResourceFetcher, IValidationP
           fail = true;
         }
       }
-      con.setTestOutcome(fail);
+      con.setTestOutcome(f.getName().contains(".pass") ? !fail : fail);
     } else {
       System.out.println("Didn't find invariant for "+f.getName());
     }
