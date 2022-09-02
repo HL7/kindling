@@ -1354,7 +1354,7 @@ public class Publisher implements URIResolver, SectionNumberer {
         ValueSet vs = page.getWorkerContext().fetchResource(ValueSet.class, ref);
         if (vs != null)
           cd.setValueSet(vs);
-        else if (!ref.startsWith("http://loinc.org/vs/LL"))
+        else if (!ref.startsWith("http://loinc.org/vs"))
           System.out.println("Unresolved value set reference: "+ref);
       }
     }

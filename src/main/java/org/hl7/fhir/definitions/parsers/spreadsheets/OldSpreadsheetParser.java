@@ -1205,6 +1205,15 @@ public class OldSpreadsheetParser {
       } 
       cd.setReference(sheet.getColumn(row, "Reference")); // do this anyway in the short term
 
+      if (cd.getReference() != null && cd.getValueSet() == null) {
+        if (definitions.getBoundValueSets().containsKey(cd.getReference())) {
+          cd.setValueSet(definitions.getBoundValueSets().get(cd.getReference()));
+        } else if (definitions.getValuesets().has(cd.getReference())) {
+          cd.setValueSet(definitions.getValuesets().get(cd.getReference()));
+        } else if (definitions.getBoundValueSets().containsKey(cd.getReference())) {
+          cd.setValueSet(definitions.getBoundValueSets().get(cd.getReference()));
+        }
+      }
       if (cd.getValueSet() != null) {
         ValueSet vs = cd.getValueSet();
         ValueSetUtilities.makeShareable(vs);

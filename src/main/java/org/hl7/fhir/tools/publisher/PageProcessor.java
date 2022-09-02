@@ -7176,7 +7176,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     }
     b.append("</td><td>");
     if (p.getBs() != null && p.getBs().getBinding() != BindingMethod.Unbound) {
-      b.append("<a href=\""+BaseGenerator.getBindingLink(prefix, p.getBs())+"\">"+(p.getBs().getValueSet() != null ? p.getBs().getValueSet().present() : p.getBs().getName())+"</a>");
+      b.append("<a href=\""+BaseGenerator.getBindingLink(prefix, p.getBs(), this)+"\">"+(p.getBs().getValueSet() != null ? p.getBs().getValueSet().present() : p.getBs().getName())+"</a>");
       if (p.getBs().hasMax())
         throw new Error("Max binding not handled yet");
 
@@ -9746,6 +9746,8 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
       ValueSet vs = definitions.getValuesets().get(ref);
       if (vs == null)
         vs = definitions.getExtraValuesets().get(ref);
+      if (vs == null)
+        vs = definitions.getBoundValueSets().get(ref);
       if (vs != null) {
         br.url = vs.getUserString("path");
         if (Utilities.noString(br.url))

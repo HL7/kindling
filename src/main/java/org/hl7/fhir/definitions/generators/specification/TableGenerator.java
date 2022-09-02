@@ -12,6 +12,7 @@ import org.hl7.fhir.definitions.model.Invariant;
 import org.hl7.fhir.definitions.model.ProfiledType;
 import org.hl7.fhir.definitions.model.TypeRef;
 import org.hl7.fhir.r5.conformance.ProfileUtilities;
+import org.hl7.fhir.r5.context.IWorkerContext;
 import org.hl7.fhir.r5.model.Enumerations.FHIRVersion;
 import org.hl7.fhir.r5.model.ValueSet;
 import org.hl7.fhir.tools.publisher.PageProcessor;
@@ -45,6 +46,7 @@ public class TableGenerator extends BaseGenerator {
     this.pageName = pageName;
     this.inlineGraphics = inlineGraphics; 
     this.version = version;
+
   }
   
   protected boolean dictLinks() {
@@ -173,7 +175,7 @@ public class TableGenerator extends BaseGenerator {
     if (e.hasBinding() && e.getBinding() != null && e.getBinding().getBinding() != BindingMethod.Unbound) {
       if (cc.getPieces().size() == 1)
         cc.addPiece(gen.new Piece("br"));
-      cc.getPieces().add(gen.new Piece(getBindingLink(prefix, e), e.getBinding().getValueSet() != null ? e.getBinding().getValueSet().present() : e.getBinding().getName(), 
+      cc.getPieces().add(gen.new Piece(getBindingLink(prefix, e, page), e.getBinding().getValueSet() != null ? e.getBinding().getValueSet().present() : e.getBinding().getName(), 
             e.getBinding().getDefinition()));
       cc.getPieces().add(gen.new Piece(null, " (", null));
       BindingSpecification b = e.getBinding();
