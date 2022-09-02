@@ -628,6 +628,8 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     boolean even = false;
     String name = file.substring(0,file.lastIndexOf("."));
     String searchAdditions = "";
+    Map<String, Integer> resDesc = new HashMap<>();
+
 
     while (src.contains("<%") || src.contains("[%"))
     {
@@ -736,7 +738,13 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
         even = !even;
         src = s1+resItem(com[1], even)+s3;
       } else if (com[0].equals("resdesc")) {
+        if (!resDesc.containsKey(com[1])) {
+          resDesc.put(com[1], 0);
+        }
+        resDesc.put(com[1], resDesc.get(com[1]) + 1);
         src = s1+resDesc(com[1])+s3;
+      } else if (com[0].equals("resdesc-check")) {
+        src = s1+resDescCheck(com[1], resDesc)+s3;
       } else if (com[0].equals("rescat")) {
         src = s1+resCat(com.length == 1 ? null : s2.substring(7))+s3;
       } else if (com[0].equals("svg"))
@@ -1295,7 +1303,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
       else  if (com[0].equals("canonical-resources")) 
         src = s1+listCanonicalResources()+s3;
       else  if (com[0].equals("metadata-resources")) 
-        src = s1+listCanonicalResources()+s3;
+        src = s1+listMetadataResources()+s3;
       else if (com[0].equals("special-search-parameters")) { 
         src = s1+listSpecialParameters()+s3;
       } else if (com[0].equals("diff-links-all")) { 
@@ -3884,7 +3892,8 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
       b.append(invs.get(n));
     }
     if (b.length() > 0)
-      return "<a name=\"invs\"> </a>\r\n<h3>Constraints</h3><div style=\""+ProfileUtilities.CONSTRAINT_STYLE+"\"><table class=\"grid\"><tr><td width=\"60\"><b>id</b></td><td><b>Level</b></td><td><b>Location</b></td><td><b>Description</b></td><td><b><a href=\""+prefix+"fhirpath.html\">Expression</a></b></td></tr>"+b+"</table></div><br/>";
+      return "<a name=\"invs\"> </a>\r\n<h3>Constraints</h3><div>"+
+       "<table class=\"grid\"><tr><td width=\"60\"><b>UniqueKey</b></td><td><b>Level</b></td><td><b>Location</b></td><td><b>Description</b></td><td><b><a href=\""+prefix+"fhirpath.html\">Expression</a></b></td></tr>"+b+"</table></div><br/>";
     else
       return "";
   }
@@ -3968,9 +3977,9 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     for (Invariant inv : e.getInvariants().values()) {
       String s = "";
       if (base)
-        s = "<tr><td><b title=\"Formal Invariant Identifier\">"+inv.getId()+"</b></td><td>"+presentLevel(inv)+"</td><td>(base)</td><td>"+Utilities.escapeXml(inv.getEnglish())+"</td><td><span style=\"font-family: Courier New, monospace\">"+Utilities.escapeXml(inv.getExpression())+"</span>";
+        s = "<tr><td><b title=\"Formal Invariant Identifier\">"+getStatusIcon(inv)+inv.getId()+"</b></td><td>"+presentLevel(inv)+"</td><td>(base)</td><td>"+Utilities.escapeXml(inv.getEnglish())+"</td><td><span style=\"font-family: Courier New, monospace\">"+Utilities.escapeXml(inv.getExpression())+"</span>";
       else
-        s = "<tr><td><b title=\"Formal Invariant Identifier\">"+inv.getId()+"</b></td><td>"+presentLevel(inv)+"</td><td>"+path+"</td><td>"+Utilities.escapeXml(inv.getEnglish())+"</td><td><span style=\"font-family: Courier New, monospace\">"+Utilities.escapeXml(inv.getExpression())+"</span>";
+        s = "<tr><td><b title=\"Formal Invariant Identifier\">"+getStatusIcon(inv)+inv.getId()+"</b></td><td>"+presentLevel(inv)+"</td><td>"+path+"</td><td>"+Utilities.escapeXml(inv.getEnglish())+"</td><td><span style=\"font-family: Courier New, monospace\">"+Utilities.escapeXml(inv.getExpression())+"</span>";
       if (!Utilities.noString(inv.getExplanation())) 
         s = s + "<br/>This is (only) a best practice guideline because: <blockquote>"+processMarkdown("best practice guideline", inv.getExplanation(), prefix)+"</blockquote>";
       s = s + "</td></tr>";
@@ -3978,6 +3987,17 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     }
     for (ElementDefn c : e.getElements()) {
       generateConstraintsTable(path + "." + c.getName(), c, invs, false, prefix);
+    }
+  }
+
+  private String getStatusIcon(Invariant inv) {
+    Boolean b = inv.getTestOutcome();
+    if (b == null) {
+      return "<img src=\"assets/images/test-null.png\"/>&nbsp;";
+    } else if (b) {
+      return "<img src=\"assets/images/test-ok.png\"/>&nbsp;";
+    } else {
+      return "<img src=\"assets/images/test-fail.png\"/>&nbsp;";
     }
   }
 
@@ -4276,11 +4296,11 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     b.append("<ul class=\"nav nav-tabs\">");
     b.append(makeHeaderTab("Definitions ", pfx + "formats.html", mode==null || "base".equals(mode)));
     b.append(makeHeaderTab("Formats", pfx + "resource-formats.html", "formats".equals(mode)));
+    b.append(makeHeaderTab("UML", pfx + "uml.html", "uml".equals(mode)));
     b.append(makeHeaderTab("XML", pfx + "xml.html", "xml".equals(mode)));
     b.append(makeHeaderTab("JSON", pfx + "json.html", "json".equals(mode)));
     b.append(makeHeaderTab("ND-JSON", pfx + "nd-json.html", "ndjson".equals(mode)));
     b.append(makeHeaderTab("RDF", pfx + "rdf.html", "rdf".equals(mode)));
-    b.append(makeHeaderTab("UML", pfx + "uml.html", "uml".equals(mode)));
     b.append("</ul>\r\n");
     return b.toString();
   }
@@ -4814,7 +4834,8 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
   String processPageIncludesForPrinting(String file, String src, Resource resource, ImplementationGuideDefn ig) throws Exception {
     boolean even = false;
     List<String> tabs = new ArrayList<String>();
-
+    Map<String, Integer> resDesc = new HashMap<>();
+    
     while (src.contains("<%") || src.contains("[%"))
 	  {
 		  int i1 = src.indexOf("<%");
@@ -4875,7 +4896,13 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
         even = !even;
         src = s1+resItem(com[1], even)+s3;
       } else if (com[0].equals("resdesc")) {
+        if (!resDesc.containsKey(com[1])) {
+          resDesc.put(com[1], 0);
+        }
+        resDesc.put(com[1], resDesc.get(com[1]) + 1);
         src = s1+resDesc(com[1])+s3;
+      } else if (com[0].equals("resdesc-check")) {
+        src = s1+resDescCheck(com[1], resDesc)+s3;
       } else if (com[0].equals("rescat")) {
         src = s1+resCat(com.length == 1 ? null : s2.substring(7))+s3;
       } else if (com[0].equals("w5"))
@@ -5014,6 +5041,21 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
         throw new Exception("Instruction <%"+s2+"%> not understood parsing page "+file);
     }
     return src;
+  }
+
+  private String resDescCheck(String num, Map<String, Integer> resDesc) {
+    int n = Integer.parseInt(num);
+    StringBuilder b = new StringBuilder();
+    b.append("<ul>\r\n");
+    for (String rn : definitions.sortedResourceNames()) {
+      if (!resDesc.containsKey(rn)) {
+        b.append("<li>Not listed: "+rn+"</li>\r\n");
+      } else if (resDesc.get(rn) < n) {
+        b.append("<li>Not listed enough: "+rn+" = "+resDesc.get(rn)+"</li>\r\n");
+      }
+    }
+    b.append("</ul>\r\n");
+    return b.toString();
   }
 
   private String genOtherTabs(String mode, List<String> tabs) {
@@ -5197,6 +5239,8 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     int level = 0;
     boolean even = false;
     List<String> tabs = new ArrayList<String>();
+    Map<String, Integer> resDesc = new HashMap<>();
+
 
     while (src.contains("<%") || src.contains("[%"))
 	  {
@@ -5298,7 +5342,13 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
         even = !even;
         src = s1+resItem(com[1], even)+s3;
       } else if (com[0].equals("resdesc")) {
+        if (!resDesc.containsKey(com[1])) {
+          resDesc.put(com[1], 0);
+        }
+        resDesc.put(com[1], resDesc.get(com[1]) + 1);
         src = s1+resDesc(com[1])+s3;
+      } else if (com[0].equals("resdesc-check")) {
+        src = s1+resDescCheck(com[1], resDesc)+s3;
       } else if (com[0].equals("rescat")) {
         src = s1+resCat(com.length == 1 ? null : s2.substring(7))+s3;
       } else if (com[0].equals("sidebar"))
@@ -5690,7 +5740,18 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
         for (ConceptSetComponent cc : vs.getCompose().getInclude())
           if (cc.hasSystem() && cc.getSystem().equals("http://snomed.info/sct")) {
             for (ConceptReferenceComponent c : cc.getConcept()) {
-              String d = c.hasDisplay() ? c.getDisplay() : workerContext.getCodeDefinition("http://snomed.info/sct", c.getCode()).getDisplay();
+              String d = null;
+              if (c.hasDisplay()) {
+                d = c.getDisplay(); 
+              } else {
+                ConceptDefinitionComponent cd = workerContext.getCodeDefinition("http://snomed.info/sct", c.getCode());
+                if (cd == null) {                  
+                  d = "??";
+                  System.out.println("Unknown SCT code "+c.getCode());
+                } else {
+                  d = cd.getDisplay();
+                }
+              }
               if (concepts.containsKey(c.getCode()))
                 concepts.get(c.getCode()).update(d, vs);
               else
@@ -9296,7 +9357,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
       client = null;
     }
 
-    tcm = new TerminologyCacheManager(client.getServerVersion(), folders.rootDir, folders.ghOrg, folders.ghRepo, folders.ghBranch);
+    tcm = new TerminologyCacheManager(client.getServerVersion(), folders.rootDir, folders.ghOrg, folders.ghRepo, folders.ciDir);
     log("Load Terminology Cache from "+tcm.getFolder(), LogMessageType.Process);
     tcm.initialize();
 
@@ -11003,6 +11064,17 @@ private int countContains(List<ValueSetExpansionContainsComponent> list) {
     b.append("<ul style=\"column-count: 3\">\r\n");
     for (String rn : definitions.sortedResourceNames()) {
      if (definitions.getResourceByName(rn).getTemplate() != null)
+        b.append("<li><a href=\""+rn.toLowerCase()+".html\">"+rn+"</a></li>\r\n");
+    }
+    b.append("</ul>\r\n");
+    return b.toString();
+  }
+  
+  private String listMetadataResources() throws FHIRException {
+    StringBuilder b = new StringBuilder();
+    b.append("<ul style=\"column-count: 3\">\r\n");
+    for (String rn : definitions.sortedResourceNames()) {
+     if (definitions.getResourceByName(rn).getTemplate() != null && definitions.getResourceByName(rn).getTemplate().getName().equals("MetadataResource"))
         b.append("<li><a href=\""+rn.toLowerCase()+".html\">"+rn+"</a></li>\r\n");
     }
     b.append("</ul>\r\n");

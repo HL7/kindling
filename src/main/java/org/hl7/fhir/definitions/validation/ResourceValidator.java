@@ -257,7 +257,7 @@ public class ResourceValidator extends BaseValidator {
         hints++;
     }
     boolean ok = warnings == 0 || "0".equals(rd.getFmmLevel());
-    if (rule(errors, IssueType.STRUCTURE, rd.getName(), ok, "Resource " + rd.getName() + " (FMM=" + rd.getFmmLevel() + ") cannot have an FMM level >1 (" + rd.getFmmLevel() + ") if it has warnings"))
+    if (rule(errors, IssueType.STRUCTURE, rd.getName(), ok, "Resource " + rd.getName() + " (FMM=" + rd.getFmmLevel() + ") cannot have an FMM level > 0 (" + rd.getFmmLevel() + ") if it has warnings"))
       rule(errors, IssueType.STRUCTURE, rd.getName(), vsWarnings == 0 || "0".equals(rd.getFmmLevel()), "Resource " + rd.getName() + " (FMM=" + rd.getFmmLevel() + ") cannot have an FMM level >1 (" + rd.getFmmLevel() + ") if it has linked value set warnings (" + vsWarns.toString() + ")");
     ok = hints == 0 || Integer.parseInt(rd.getFmmLevel()) < 3;
     rule(errors, IssueType.STRUCTURE, rd.getName(), ok, "Resource " + rd.getName() + " (FMM=" + rd.getFmmLevel() + ") cannot have an FMM level >2 (" + rd.getFmmLevel() + ") if it has informational hints");

@@ -529,6 +529,11 @@ public class ResourceDefn  {
   public void setLiquidNotes(String liquidNotes) {
     this.liquidNotes = liquidNotes;
   }
+
+  public Invariant findInvariant(String key) {
+    return root.findInvariant(key);
+
+  }
   
   
 }

@@ -91,18 +91,24 @@ public class JsonSpecGenerator extends OutputStreamWriter {
     
     int c = 0;
     int l = lastChild(children);
-    for (ElementDefinition child : children)
-      if (child.hasSlicing())
-        generateCoreElemSliced(ed.getSnapshot().getElement(), child, children, 2, rn, false, child.getType().get(0), ++c == l, complex);
-      else if (wasSliced(child, children))
+    for (ElementDefinition child : children) {
+      c++;
+       if (child.hasSlicing())
+        generateCoreElemSliced(ed.getSnapshot().getElement(), child, children, 2, rn, false, child.getType().get(0), c == l, complex);
+      else if (wasSliced(child, children)) {
         ; // nothing
-      else if (child.getType().size() == 1)
-        generateCoreElem(ed.getSnapshot().getElement(), child, 2, rn, false, child.getType().get(0), ++c == l, complex);
+      } if (child.prohibited()) {
+        write("<span style=\"color: Gray\">  // "+child.getName()+": <span style=\"color: navy; opacity: 0.8\">" +Utilities.escapeXml(child.getShort()) + "</span>: Prohibited</span>\r\n");
+      } else if (child.getType().size() == 1)
+        generateCoreElem(ed.getSnapshot().getElement(), child, 2, rn, false, child.getType().get(0), c == l, complex);
       else {
-        write("<span style=\"color: Gray\">// value[x]: <span style=\"color: navy; opacity: 0.8\">" +Utilities.escapeXml(child.getShort()) + "</span>. One of these "+Integer.toString(child.getType().size())+":</span>\r\n");
-        for (TypeRefComponent t : child.getType())
-          generateCoreElem(ed.getSnapshot().getElement(), child, 2, rn, false, t, ++c == l, false);
+        write("<span style=\"color: Gray\">  // value[x]: <span style=\"color: navy; opacity: 0.8\">" +Utilities.escapeXml(child.getShort()) + "</span>. One of these "+Integer.toString(child.getType().size())+":</span>\r\n");
+        int ct = 0;
+        for (TypeRefComponent t : child.getType()) {
+          generateCoreElem(ed.getSnapshot().getElement(), child, 2, rn, false, t, c == l && ++ct == child.getType().size(), false);
+        }
       }
+    }
     write("  }\r\n");
   }
 
@@ -136,9 +142,12 @@ public class JsonSpecGenerator extends OutputStreamWriter {
       else if (child.getType().size() == 1)
         generateCoreElem(ed.getSnapshot().getElement(), child, 2, rn, false, child.getType().get(0), ++c == l, complex);
       else {
-        write("<span style=\"color: Gray\">// value[x]: <span style=\"color: navy; opacity: 0.8\">" +Utilities.escapeXml(child.getShort()) + "</span>. One of these "+Integer.toString(child.getType().size())+":</span>\r\n");
-        for (TypeRefComponent t : child.getType())
-          generateCoreElem(ed.getSnapshot().getElement(), child, 2, rn, false, t, ++c == l, false);
+        write("<span style=\"color: Gray\">  // value[x]: <span style=\"color: navy; opacity: 0.8\">" +Utilities.escapeXml(child.getShort()) + "</span>. One of these "+Integer.toString(child.getType().size())+":</span>\r\n");
+        int ct = 0;
+        c++;
+        for (TypeRefComponent t : child.getType()) {
+          generateCoreElem(ed.getSnapshot().getElement(), child, 2, rn, false, t, c == l && ++ct == child.getType().size(), false);
+        }
       }
     write("  }\r\n");
   }
@@ -255,13 +264,19 @@ public class JsonSpecGenerator extends OutputStreamWriter {
       }
       if (elem.getTypes().size() > 1) { 	  
         write("<span style=\"color: Gray\">// "+en+": <span style=\"color: navy; opacity: 0.8\">" + docPrefix(width, indent, elem)+Utilities.escapeXml(elem.getShortDefn()) + "</span>. One of these "+Integer.toString(elem.getTypes().size())+":</span>\r\n");
-        for (TypeRef t : elem.getTypes())
-          generateCoreElemDetails(elem, indent, rootName, pathName, backbone, last, width, en.replace("[x]", nameForType(t.getName())), t, false);
+        int c = 0;
+        for (TypeRef t : elem.getTypes()) {
+          c++;
+          generateCoreElemDetails(elem, indent, rootName, pathName, backbone, last && c == elem.getTypes().size(), width, en.replace("[x]", nameForType(t.getName())), t, false);
+        } 
       } else {
         List<WildcardInformation> tr = TypesUtilities.wildcards(version);
         write("<span style=\"color: Gray\">// "+en+": <span style=\"color: navy; opacity: 0.8\">" + docPrefix(width, indent, elem)+Utilities.escapeXml(elem.getShortDefn()) + "</span>. One of these "+Integer.toString(tr.size())+":</span>\r\n");
-        for (WildcardInformation t : tr)
-          generateCoreElemDetails(elem, indent, rootName, pathName, backbone, last, width, en.replace("[x]", upFirst(t.getTypeName())), toTypeRef(t), false);	      
+        int c = 0;
+        for (WildcardInformation t : tr) {
+          c++;
+          generateCoreElemDetails(elem, indent, rootName, pathName, backbone, last && c == elem.getTypes().size(), width, en.replace("[x]", upFirst(t.getTypeName())), toTypeRef(t), false);
+        }
       }
     } else {
       generateCoreElemDetails(elem, indent, rootName, pathName, backbone, last, width, en, elem.getTypes().isEmpty() ? null : elem.getTypes().get(0), true);
@@ -334,10 +349,20 @@ public class JsonSpecGenerator extends OutputStreamWriter {
     } else if (type.isXhtml()) {
       // element contains xhtml
       write("\"(Escaped XHTML)\"");
-    } else if (definitions.getPrimitives().containsKey(type.getName()) && !type.hasParams()) {
+    } else if (definitions.getPrimitives().containsKey(type.getName())) {
       if (!(type.getName().equals("integer") || type.getName().equals("boolean") || type.getName().equals("decimal")))
         write("\"");
-      write("&lt;<span style=\"color: darkgreen\"><a href=\"" + prefix+(dtRoot + definitions.getSrcFile(type.getName())+ ".html#" + type.getName()) + "\">" + type.getName()+ "</a></span>&gt;");
+      write("&lt;<span style=\"color: darkgreen\"><a href=\"" + prefix+(dtRoot + definitions.getSrcFile(type.getName())+ ".html#" + type.getName()) + "\">" + type.getName()+ "</a></span>");
+      if (type.hasParams()) {
+        write("(");
+        boolean first = true;
+        for (String p : type.getParams()) {
+          if (first) first = false; else write("|");
+          write("<a href=\"" + prefix+(dtRoot + definitions.getSrcFile(p)+ ".html#" + p) + "\">" + p+ "</a>");
+        }
+        write(")");        
+      }
+      write("&gt;");
       if (!(type.getName().equals("integer") || type.getName().equals("boolean") || type.getName().equals("decimal")))
         write("\"");
     } else {
@@ -435,7 +460,7 @@ public class JsonSpecGenerator extends OutputStreamWriter {
       
       int cc = 0;
       int l = lastChild(extchildren);
-      for (ElementDefinition child : extchildren)
+      for (ElementDefinition child : extchildren) {
         if (child.hasSlicing())
           generateCoreElemSliced(elements, child, children, indent+2, pathName+"."+en, false, child.getType().get(0), ++cc == l, extcomplex);
         else if (wasSliced(child, children))
@@ -444,9 +469,13 @@ public class JsonSpecGenerator extends OutputStreamWriter {
           generateCoreElem(elements, child, indent+2, pathName+"."+en, false, child.getType().get(0), ++cc == l, extcomplex);
         else {
           write("<span style=\"color: Gray\">// value[x]: <span style=\"color: navy; opacity: 0.8\">" +Utilities.escapeXml(child.getShort()) + "</span>. One of these "+Integer.toString(child.getType().size())+":</span>\r\n");
-          for (TypeRefComponent t : child.getType())
-            generateCoreElem(elements, child, indent+2, pathName+"."+en, false, t, ++cc == l, false);
+          c++;
+          int ct = 0;
+          for (TypeRefComponent t : child.getType()) {
+            generateCoreElem(elements, child, indent+2, pathName+"."+en, false, t, cc == l && ++ct == child.getType().size(), false);
+          }
         }
+      }
       c++;
       write(indentS);
       if (c == slices.size())
@@ -601,8 +630,11 @@ public class JsonSpecGenerator extends OutputStreamWriter {
           generateCoreElem(elements, child, indent + 1, pathName + "." + name, false, child.getType().get(0), ++c == children.size(), false);
         else {
           write("<span style=\"color: Gray\">// value[x]: <span style=\"color: navy; opacity: 0.8\">" +Utilities.escapeXml(child.getShort()) + "</span>. One of these "+Integer.toString(child.getType().size())+":</span>\r\n");
-          for (TypeRefComponent t : child.getType())
-            generateCoreElem(elements, child, indent + 1, pathName + "." + name, false, t, ++c == children.size(), false);
+          c++;
+          int ct = 0;
+          for (TypeRefComponent t : child.getType()) {
+            generateCoreElem(elements, child, indent + 1, pathName + "." + name, false, t, c == children.size() && ++ct == child.getType().size() , false);
+          }
         }
       }
       write("}]");
