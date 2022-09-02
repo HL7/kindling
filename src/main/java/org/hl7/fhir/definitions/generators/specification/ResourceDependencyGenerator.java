@@ -287,7 +287,7 @@ public class ResourceDependencyGenerator  extends BaseGenerator {
     } else if ("Any".equals(type)) {
       tgtFMM = "1";
       tgtSS = StandardsStatus.TRIAL_USE;
-    } else if (definitions.hasPrimitiveType(type)) {
+    } else if (definitions.hasPrimitiveType(type) || type.equals("xhtml")) {
       tgtFMM = "5";
       tgtSS = StandardsStatus.NORMATIVE;
     } else if ("*".equals(type)) {

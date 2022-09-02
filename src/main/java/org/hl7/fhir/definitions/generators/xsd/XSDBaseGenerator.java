@@ -354,6 +354,20 @@ public class XSDBaseGenerator  extends XSDRootGenerator {
         write("  </xs:complexType>\r\n");
       }
     }
+    // xhtml isn't listed as a primitive, so we have to process it manually.  (It's also handled differently from other primitives.)
+    write("  <xs:complexType name=\"xhtml\">\r\n");
+    write("    <xs:annotation>\r\n");
+    write("      <xs:documentation xml:lang=\"en\">Direct XHTML content</xs:documentation>\r\n");
+    write("      <xs:documentation xml:lang=\"en\">If the element is present, it must have either a @value, an @id referenced from the Narrative, or extensions</xs:documentation>\r\n");
+    write("    </xs:annotation>\r\n");
+    write("    <xs:complexContent>\r\n");
+    write("      <xs:extension base=\"Element\">\r\n");
+    write("        <xs:sequence>\r\n");
+    write("          <xs:element ref=\"xhtml:div\"/>\r\n");
+    write("        </xs:sequence>\r\n");
+    write("      </xs:extension>\r\n");
+    write("    </xs:complexContent>\r\n");
+    write("  </xs:complexType>\r\n");
   }
 
   private void genInfrastructure(ElementDefn elem) throws Exception {
