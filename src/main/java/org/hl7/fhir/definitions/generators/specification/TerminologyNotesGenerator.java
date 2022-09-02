@@ -203,7 +203,7 @@ public class TerminologyNotesGenerator extends OutputStreamWriter {
           else if (name.equals("ResourceType"))
             write("<a href=\""+prefix+"valueset-resource-types.html\">Resource Types</a>");
           else if (name.equals("DataType"))
-            write("<a href=\""+prefix+"valueset-data-types.html\">Data Types</a>");
+            write("<a href=\""+prefix+"valueset-data-types.html\">Datatypes</a>");
           else if (name.equals("FHIRDefinedType"))
             write("<a href=\""+prefix+"valueset-defined-types.html\">Defined Types</a>");
           else if (name.equals("FHIRAllTypes"))
@@ -313,11 +313,11 @@ public class TerminologyNotesGenerator extends OutputStreamWriter {
       else if (cd.getValueSet().getName().equals("ResourceType"))
         return "<a href=\""+prefix+"valueset-resource-types.html\">Any defined Resource Type name</a>";
       else if (cd.getValueSet().getName().equals("DataType"))
-        return "<a href=\""+prefix+"valueset-data-types.html\">Any defined Data Type name</a>";
+        return "<a href=\""+prefix+"valueset-data-types.html\">Any defined Datatype name</a>";
       else if (cd.getValueSet().getName().equals("FHIRDefinedType"))
-        return "<a href=\""+prefix+"valueset-defined-types.html\">Any defined Resource or Data Type name</a>";
+        return "<a href=\""+prefix+"valueset-defined-types.html\">Any defined Resource or Datatype name</a>";
       else if (cd.getValueSet().getName().equals("FHIRAllTypes"))
-        return "<a href=\""+prefix+"valueset-all-types.html\">Any defined Resource or Data Type name (including \"Any\" and \"Type\")</a>";
+        return "<a href=\""+prefix+"valueset-all-types.html\">Any defined Resource or Datatype name (including \"Any\" and \"Type\")</a>";
       else 
         throw new Exception("Unknown special type "+cd.getValueSet().getName());
     }
@@ -403,9 +403,9 @@ public class TerminologyNotesGenerator extends OutputStreamWriter {
       else if (cd.getValueSet().getName().equals("ResourceType"))
         write("  <li>"+path+" of <a href=\"terminologies.html#ResourceType\"> any defined Resource Type name</a></li>\r\n");
       else if (cd.getValueSet().getName().equals("FHIRContentType"))
-        write("  <li>"+path+" of <a href=\"terminologies.html#fhircontenttypes\"> any defined Resource or Data Type name</a></li>\r\n");
+        write("  <li>"+path+" of <a href=\"terminologies.html#fhircontenttypes\"> any defined Resource or Datatype name</a></li>\r\n");
       else 
-        write("  <li>"+path+" of <a href=\"datatypes.html\"> any defined data Type name</a> (including <a href=\"resource.html#Resource\">Resource</a>)</li>\r\n");
+        write("  <li>"+path+" of <a href=\"datatypes.html\"> any defined datatype name</a> (including <a href=\"resource.html#Resource\">Resource</a>)</li>\r\n");
       
     } else {
       String bs = "<a href=\"terminologies.html#"+cd.getStrength().toCode()+"\">"+cd.getStrength().getDisplay()+"</a>";

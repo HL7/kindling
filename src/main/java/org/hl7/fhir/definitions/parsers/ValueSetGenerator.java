@@ -126,7 +126,7 @@ public class ValueSetGenerator {
           c.setDefinition("...to do...");
       }
     }
-    ToolingExtensions.addCSComment(cs.addConcept().setCode("xhtml").setDisplay("XHTML").setDefinition("XHTML format, as defined by W3C, but restricted usage (mainly, no active content)"), "Special case: xhtml can only be used in the narrative Data Type");
+    ToolingExtensions.addCSComment(cs.addConcept().setCode("xhtml").setDisplay("XHTML").setDefinition("XHTML format, as defined by W3C, but restricted usage (mainly, no active content)"), "Special case: xhtml can only be used in the narrative Datatype");
     markSpecialStatus(vs, cs, true);
   }
 
@@ -259,7 +259,7 @@ public class ValueSetGenerator {
     }
     definitions.getCodeSystems().see(cs, packageInfo);
 
-    cs.addConcept().setCode("Type").setDisplay("Type").setDefinition("A place holder that means any kind of data type");
+    cs.addConcept().setCode("Type").setDisplay("Type").setDefinition("A place holder that means any kind of data ype");
     cs.addConcept().setCode("Any").setDisplay("Any").setDefinition("A place holder that means any kind of resource");
     markSpecialStatus(vs, cs, true);
   }

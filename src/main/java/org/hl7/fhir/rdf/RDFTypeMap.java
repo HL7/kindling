@@ -9,7 +9,7 @@ import java.util.Map;
 
 public class RDFTypeMap {
     /**
-     * FHIR to XSD data type map.
+     * FHIR to XSD datatype map.
      */
     static public final Map<String, Resource> ptMap = new HashMap<String, Resource>();
     static public final Map<Resource, Resource> owlTypeMap = new HashMap<Resource, Resource>();

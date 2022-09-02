@@ -589,7 +589,7 @@ public class ResourceParser {
     for (IdType cnd : focus.getCondition()) {
       Invariant inv = invariants.get(cnd.primitiveValue());
       if (inv == null) {
-        System.out.println("Unable to find invariant "+cnd.primitiveValue());
+        System.out.println("Unable to find invariant "+cnd.primitiveValue()+" at "+focus.getName());
       } else {
         ed.getStatedInvariants().add(inv);
       }
@@ -817,7 +817,7 @@ public class ResourceParser {
       } else {
         String ec = ToolingExtensions.readStringExtension(cs, ToolingExtensions.EXT_WORKGROUP);
         if (!ec.equals(committee.getCode()))
-          System.out.println("CodeSystem "+cs.getUrl()+" WG mismatch 4: is "+ec+", want to set to "+committee.getCode());
+          System.out.println("CodeSystem "+cs.getUrl()+" WG mismatch 4a: is "+ec+", want to set to "+committee.getCode());
       } 
       if (ext && !cs.hasCaseSensitive()) {
         cs.setCaseSensitive(true);
@@ -891,7 +891,7 @@ public class ResourceParser {
       } else {
         String ec = ToolingExtensions.readStringExtension(vs, ToolingExtensions.EXT_WORKGROUP);
         if (!ec.equals(committee.getCode()))
-          System.out.println("ValueSet "+vs.getUrl()+" WG mismatch 4: is "+ec+", want to set to "+committee.getCode());
+          System.out.println("ValueSet "+vs.getUrl()+" WG mismatch 4b: is "+ec+", want to set to "+committee.getCode());
       } 
       vs.setUserData("path", "valueset-"+vs.getId()+".html");
       if (!ValueSetUtilities.hasOID(vs)) {

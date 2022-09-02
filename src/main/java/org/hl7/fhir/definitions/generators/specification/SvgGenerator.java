@@ -1336,7 +1336,7 @@ public class SvgGenerator extends BaseGenerator {
     xml.attribute("id", "n"+(++nc));
     xml.enter("tspan");
     xml.attribute("id", "n"+(++nc));
-    xml.element("title", "Actual value attribute of the data type");
+    xml.element("title", "Actual value attribute of the datatype");
     xml.text("value");
     xml.exit("tspan");
     xml.text(" : ");

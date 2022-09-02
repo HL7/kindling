@@ -1150,7 +1150,11 @@ public class SourceParser {
       TypeRef t = ts.get(0);
       File csv = new CSFile(dtDir + t.getName().toLowerCase() + ".xml");
       if (csv.exists()) {
-        OldSpreadsheetParser p = new OldSpreadsheetParser("core", new CSFileInputStream(csv), csv.getName(), csv.getAbsolutePath(), definitions, srcDir, logger, registry, version, context, genDate, isAbstract, page, true, ini, wg("fhir"), definitions.getProfileIds(), fpUsages, page.getConceptMaps(), exceptionIfExcelNotNormalised, page.packageInfo(), page.getRc());
+        String wgc = "fhir";
+        if (ini.hasProperty("workgroups", t.getName().toLowerCase())) {
+          wgc = ini.getStringProperty("workgroups", t.getName().toLowerCase());
+        }
+        OldSpreadsheetParser p = new OldSpreadsheetParser("core", new CSFileInputStream(csv), csv.getName(), csv.getAbsolutePath(), definitions, srcDir, logger, registry, version, context, genDate, isAbstract, page, true, ini, wg(wgc), definitions.getProfileIds(), fpUsages, page.getConceptMaps(), exceptionIfExcelNotNormalised, page.packageInfo(), page.getRc());
         org.hl7.fhir.definitions.model.TypeDefn el = p.parseCompositeType();
         el.setFmmLevel(fmm);
         el.setStandardsStatus(status);
@@ -1216,7 +1220,7 @@ public class SourceParser {
   private StandardsStatus loadStatus(String n) throws FHIRException {
     String ns = ini.getStringProperty("standards-status", n);
     if (Utilities.noString(ns))
-      throw new FHIRException("Data types must be registered in the [standards-status] section of fhir.ini ("+n+")");
+      throw new FHIRException("Datatypes must be registered in the [standards-status] section of fhir.ini ("+n+")");
     return StandardsStatus.fromCode(ns);
   }
 

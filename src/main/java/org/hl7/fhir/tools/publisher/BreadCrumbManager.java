@@ -487,7 +487,7 @@ public class BreadCrumbManager {
             String[] p = ext.getContextFirstRep().getExpression().split("\\.");
             if (definitions.hasType(p[0])) {
               path = map.get("datatypes.html").split("\\.");
-              ttl = "Data Types";
+              ttl = "Datatypes";
               fn = "datatypes";
             } else {
               String rn = p[0];
