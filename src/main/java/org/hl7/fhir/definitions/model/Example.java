@@ -125,7 +125,7 @@ public class Example {
       try {
         DocumentBuilder builder = factory.newDocumentBuilder();
         String xs = TextFile.fileToString(new CSFile(path.getAbsolutePath()));
-        xs = xs.replace("<%test-server%>", PageProcessor.TEST_SERVER_URL);
+        xs = xs.replace("[%test-server%]", PageProcessor.TEST_SERVER_URL);
         xml = builder.parse(new ByteArrayInputStream(xs.getBytes(Charsets.UTF_8)));
         resourceName = xml.getDocumentElement().getNodeName();
       } catch (Exception e) {
