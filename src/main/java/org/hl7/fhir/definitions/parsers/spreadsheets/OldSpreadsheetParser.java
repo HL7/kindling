@@ -1175,9 +1175,19 @@ public class OldSpreadsheetParser {
           cd.getValueSet().addExtension().setUrl(ToolingExtensions.EXT_WORKGROUP).setValue(new CodeType(committee.getCode()));
         } else {
           String ec = ToolingExtensions.readStringExtension(cd.getValueSet(), ToolingExtensions.EXT_WORKGROUP);
-          if (!ec.equals(committee))
+          if (!ec.equals(committee.getCode()))
             System.out.println("ValueSet "+cd.getValueSet().getUrl()+" WG mismatch 3: is "+ec+", want to set to "+committee.getCode());
         } 
+        String oid = registry.getOID(cd.getValueSet().getUrl());
+        if (oid != null) {
+          ValueSetUtilities.setOID(cd.getValueSet(), oid);
+        }
+        if (cd.getMaxValueSet() != null) {
+           oid = registry.getOID(cd.getMaxValueSet().getUrl());
+           if (oid != null) {
+             ValueSetUtilities.setOID(cd.getMaxValueSet(), oid);
+           }          
+        }
         if (ig != null) {
           cd.getValueSet().setUserDataINN(ToolResourceUtilities.NAME_RES_IG, ig);
           cd.getValueSet().setUserData("path", "valueset-"+cd.getValueSet().getId()+".html");
@@ -1191,7 +1201,7 @@ public class OldSpreadsheetParser {
         if (cs == null)
           throw new Exception("Error parsing binding "+cd.getName()+": code list reference '"+ref+"' not resolved");
         vsGen.updateHeader(cd, cd.getValueSet());
-        new CodeListToValueSetParser(cs, ref.substring(1), cd.getValueSet(), version.toCode(), codeSystems, maps, packageInfo).execute(sheet.getColumn(row, "v2"), checkV3Mapping(sheet.getColumn(row, "v3")), getIsUtg(bindingName));
+        new CodeListToValueSetParser(cs, ref.substring(1), cd.getValueSet(), version.toCode(), codeSystems, maps, packageInfo, registry).execute(sheet.getColumn(row, "v2"), checkV3Mapping(sheet.getColumn(row, "v3")), getIsUtg(bindingName));
       } else if (cd.getBinding() == BindingMethod.ValueSet) {
         if (ref.startsWith("http:"))
           cd.setReference(sheet.getColumn(row, "Reference")); // will sort this out later
@@ -1231,12 +1241,6 @@ public class OldSpreadsheetParser {
           vs.setUserData("path", ig.getCode()+"/valueset-"+vs.getId()+".html");
         } else
           vs.setUserData("path", "valueset-"+vs.getId()+".html");
-        if (!ValueSetUtilities.hasOID(vs))
-          ValueSetUtilities.setOID(vs, "urn:oid:"+BindingSpecification.DEFAULT_OID_VS +registry.idForUri(vs.getUrl()));
-        if (vs.getUserData("cs") != null) {
-          if (!CodeSystemUtilities.hasOID((CodeSystem) vs.getUserData("cs")))
-            CodeSystemUtilities.setOID((CodeSystem) vs.getUserData("cs"), "urn:oid:"+BindingSpecification.DEFAULT_OID_CS + registry.idForUri(((CodeSystem) vs.getUserData("cs")).getUrl()));
-        }
         if (definitions != null)
           definitions.getBoundValueSets().put(vs.getUrl(), vs);
         else
@@ -1353,8 +1357,12 @@ public class OldSpreadsheetParser {
         if (!ec.equals(committee.getCode()))
           System.out.println("ValueSet "+result.getUrl()+" WG mismatch 5: is "+ec+", want to set to "+committee.getCode());
       } 
+      String oid = registry.getOID(result.getUrl());
+      if (oid != null) {
+        ValueSetUtilities.setOID(result, oid);
+      }
 
-      new CodeSystemConvertor(codeSystems).convert(p, result, filename, packageInfo);
+      new CodeSystemConvertor(codeSystems, registry).convert(p, result, filename, packageInfo);
       valuesets.add(result);
 	    return result;
 	}

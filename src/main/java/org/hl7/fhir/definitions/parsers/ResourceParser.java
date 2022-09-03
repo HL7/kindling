@@ -75,6 +75,7 @@ import org.hl7.fhir.r5.model.StructureDefinition;
 import org.hl7.fhir.r5.model.StructureDefinition.StructureDefinitionMappingComponent;
 import org.hl7.fhir.r5.model.ValueSet;
 import org.hl7.fhir.r5.terminologies.CodeSystemUtilities;
+import org.hl7.fhir.r5.terminologies.ConceptMapUtilities;
 import org.hl7.fhir.r5.terminologies.ValueSetUtilities;
 import org.hl7.fhir.r5.utils.BuildExtensions;
 import org.hl7.fhir.r5.utils.ToolingExtensions;
@@ -827,8 +828,11 @@ public class ResourceParser {
         cs.setStatus(PublicationStatus.DRAFT);
       }
       if (!CodeSystemUtilities.hasOID(cs)) {
-        CodeSystemUtilities.setOID(cs, "urn:oid:"+BindingSpecification.DEFAULT_OID_CS + registry.idForUri(cs.getUrl()));
-        save = true;
+        String oid = registry.getOID(cs.getUrl());
+        if (oid != null) {
+          save = true;
+          CodeSystemUtilities.setOID(cs, "urn:oid:"+oid);
+        }
       }
       if (save) {
         saveXml(cs, "codesystem-"+id+".xml");
@@ -857,6 +861,12 @@ public class ResourceParser {
         cm.setUserData("filename", cmid);
         cm.setUserData("path", cmid+".html");
         cm.setUserData("generate", "true");
+        if (!ConceptMapUtilities.hasOID(cm)) {
+          String oid = registry.getOID(cm.getUrl());
+          if (oid != null) {
+            ConceptMapUtilities.setOID(cm, "urn:oid:"+oid);
+          }
+        }
         maps.see(cm, null);
       }
     }
@@ -895,8 +905,11 @@ public class ResourceParser {
       } 
       vs.setUserData("path", "valueset-"+vs.getId()+".html");
       if (!ValueSetUtilities.hasOID(vs)) {
-        save = true;
-        ValueSetUtilities.setOID(vs, "urn:oid:"+BindingSpecification.DEFAULT_OID_VS +registry.idForUri(vs.getUrl()));
+        String oid = registry.getOID(vs.getUrl());
+        if (oid != null) {
+          save = true;
+          ValueSetUtilities.setOID(vs, "urn:oid:"+oid);
+        }
       }
       if (save) {
         saveXml(vs, "valueset-"+id+".xml");

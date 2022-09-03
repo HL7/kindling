@@ -173,7 +173,7 @@ public class SourceParser {
   public SourceParser(Logger logger, String root, Definitions definitions, boolean forPublication, FHIRVersion version, BuildWorkerContext context, Calendar genDate, PageProcessor page, List<FHIRPathUsage> fpUsages, boolean exceptionIfExcelNotNormalised) throws IOException, ParserConfigurationException, SAXException {
     this.logger = logger;
     this.forPublication = forPublication;
-    this.registry = new OIDRegistry(root, forPublication);
+    this.registry = new OIDRegistry(root);
     this.definitions = definitions;
     this.version = version;
     this.context = context;
@@ -356,8 +356,7 @@ public class SourceParser {
         }
       }        
     }
-    closeTemplates();
-       
+    closeTemplates();    
   }
 
   private void findValueSets(ElementDefn ed) {
@@ -924,7 +923,7 @@ public class SourceParser {
   private void loadValueSet(String n) throws FileNotFoundException, Exception {
     XmlParser xml = new XmlParser();
     ValueSet vs = (ValueSet) xml.parse(new CSFileInputStream(srcDir+ini.getStringProperty("valuesets", n).replace('\\', File.separatorChar)));
-    new CodeSystemConvertor(definitions.getCodeSystems()).convert(xml, vs, srcDir+ini.getStringProperty("valuesets", n).replace('\\', File.separatorChar), page.packageInfo());
+    new CodeSystemConvertor(definitions.getCodeSystems(), registry).convert(xml, vs, srcDir+ini.getStringProperty("valuesets", n).replace('\\', File.separatorChar), page.packageInfo());
     vs.setId(FormatUtilities.makeId(n));
     vs.setUrl("http://hl7.org/fhir/ValueSet/"+vs.getId());
     if (!vs.hasVersion() || vs.getUrl().startsWith("http://hl7.org/fhir"))

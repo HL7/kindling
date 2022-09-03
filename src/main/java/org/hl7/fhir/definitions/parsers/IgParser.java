@@ -199,7 +199,7 @@ return null;
               System.out.println("ValueSet "+vs.getUrl()+" WG mismatch 2: is "+ec+", want to set to "+committee);
           } 
           }
-          new CodeSystemConvertor(codeSystems).convert(new XmlParser(), vs, fn.getAbsolutePath(), packageInfo);
+          new CodeSystemConvertor(codeSystems, registry).convert(new XmlParser(), vs, fn.getAbsolutePath(), packageInfo);
 //          if (id.contains(File.separator))
           igd.getValueSets().add(vs);
           if (!r.hasName())
