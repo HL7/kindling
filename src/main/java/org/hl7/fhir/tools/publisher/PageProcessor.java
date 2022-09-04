@@ -843,8 +843,8 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
         String[] parts = com[1].split("\\/");
         Example e = findExample(parts[0], parts[1]);
         src = s1+genExample(e, com.length > 2 ? Integer.parseInt(com[2]) : 0, genlevel(level))+s3;
-      } else if (com[0].equals("r3r4transform")) {
-        src = s1+dtR3R4Transform(com[1])+s3;
+      } else if (com[0].equals("r4r5transform")) {
+        src = s1+dtR4R5Transform(com[1])+s3;
       } else if (com[0].equals("fmm-style")) {
         String fmm = resource == null ? "N/A" :  ToolingExtensions.readStringExtension((DomainResource) resource, ToolingExtensions.EXT_FMM_LEVEL);
         StandardsStatus ss = ToolingExtensions.getStandardsStatus((DomainResource) resource);
@@ -1322,6 +1322,8 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
         src = s1+TEST_SERVER_URL+s3;
       } else if (com[0].equals("example-cross-reference")) { 
         src = s1+genExampleXRef(type, name, resource)+s3;
+      } else if (com[0].equals("multi-language-resources")) { 
+        src = s1+getMultiLanguageResourceList()+s3;        
       } else if (macros.containsKey(com[0])) {
         src = s1+macros.get(com[0])+s3;
       } else
@@ -1956,11 +1958,11 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     return definitions.getWorkgroups().get(code);
   }
 
-  private String dtR3R4Transform(String name) throws Exception {
+  private String dtR4R5Transform(String name) throws Exception {
 
     File f = new File(Utilities.path(folders.rootDir, "implementations", "r3maps", "R4toR3", name+".map"));
     if (!f.exists()) {
-       return "No R3/R4 map exists for "+name;
+       return "No R4/R5 map exists for "+name;
     }
     String n = name.toLowerCase();
     String status = r3r4StatusForResource(name);
@@ -1978,9 +1980,9 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     } catch (FHIRException e) {
       bcksStatus = "<p style=\"background-color: #ffb3b3; border:1px solid maroon; padding: 5px;\">This script does not compile: "+e.getMessage()+"</p>\r\n";
     }
-    return "<p>Functional status for this map: "+status+" (based on R2 -> R3 -> R2 round tripping)</p>\r\n"+
+    return "<p>Functional status for this map: "+status+" (based on R4 -> R5 -> R4 round tripping)</p>\r\n"+
     "\r\n"+
-    "<h4>R3 to R4</h4>\r\n"+
+    "<h4>R4 to R5</h4>\r\n"+
     "\r\n"+
     "<div class=\"mapping\">\r\n"+
     "<pre>\r\n"+
@@ -1990,7 +1992,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     "\r\n"+
     fwdsStatus+"\r\n"+
     "\r\n"+
-    "<h4>R4 to R3</h4>\r\n"+
+    "<h4>R5 to R4</h4>\r\n"+
     "\r\n"+
     "<div class=\"mapping\">\r\n"+
     "<pre>\r\n"+
@@ -5425,8 +5427,8 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
       } else if (com[0].equals("setlevel")) {
         level = Integer.parseInt(com[1]);
         src = s1+s3;
-      } else if (com[0].equals("r3r4transform")) {
-        src = s1+dtR3R4Transform(com[1])+s3;
+      } else if (com[0].equals("r4r5transform")) {
+        src = s1+dtR4R5Transform(com[1])+s3;
       } else if (com[0].equals("normative-pages")) {
         src = s1+getNormativeList(genlevel(level), com[1])+s3;
       } else if (com[0].equals("tx")) {
@@ -5708,6 +5710,8 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
         src = s1+genOidsList()+s3;        
       } else if (com[0].equals("test-server")) { 
         src = s1+TEST_SERVER_URL+s3;        
+      } else if (com[0].equals("multi-language-resources")) { 
+        src = s1+getMultiLanguageResourceList()+s3;        
       } else if (macros.containsKey(com[0])) {
         src = s1+macros.get(com[0])+s3;
       } else
@@ -6146,7 +6150,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
         else
           src = s1+"<a href=\"versions.html#maturity\">Maturity Level</a>: "+resource.getFmmLevel()+""+s3;
       else if (com[0].equals("sec-cat"))
-        src = s1+(resource.getSecurityCategorization() == null ? "" : "<a href=\"security.html#SecPrivConsiderations\">Security Category</a>: "+resource.getSecurityCategorization().toDisplay())+s3;
+        src = s1+(resource.getSecurityCategorization() == null ? "<a href=\"security.html#SecPrivConsiderations\">Security Category</a>: N/A" : "<a href=\"security.html#SecPrivConsiderations\">Security Category</a>: "+resource.getSecurityCategorization().toDisplay())+s3;
       else if (com[0].equals("sstatus")) 
         src = s1+getStandardsStatus(resource.getName())+s3;
       else if (com[0].equals("example-list"))
@@ -6250,7 +6254,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
         src = s1+searchHeader(level)+s3;
       else if (com[0].equals("diff-analysis"))
         src = s1+diffEngine.getDiffAsHtml(this, resource.getProfile())+s3;
-      else if (com[0].equals("r3r4transforms"))
+      else if (com[0].equals("r4r5transforms"))
         src = s1+getR3r4transformNote(resource.getName())+s3;
       else if (com[0].equals("fmm-style"))
         src = s1+fmmBarColorStyle(resource)+s3;
@@ -11190,8 +11194,86 @@ private int countContains(List<ValueSetExpansionContainsComponent> list) {
     return VersionUtilities.isR4BVer(version.toCode()) ? "hl7.fhir.r4b" : "hl7.fhir.r5";
   }
 
-
+  private String getMultiLanguageResourceList() {
+    StringBuilder b = new StringBuilder();
+    Map<String, CanonicalResource> list = new HashMap<>();
+    for (CodeSystem cs : definitions.getCodeSystems().getList()) {
+      if (hasMultiLanguageDesignations(cs) && isLocalResource(cs)) {
+        list.put(cs.getUrl(), cs);
+      }
+    }
+    for (ValueSet vs : definitions.getBoundValueSets().values()) {
+      if (hasMultiLanguageDesignations(vs) && isLocalResource(vs)) {
+        list.put(vs.getUrl(), vs);
+      }
+    }
+    for (ValueSet vs : definitions.getExtraValuesets().values()) {
+      if (hasMultiLanguageDesignations(vs) && isLocalResource(vs)) {
+        list.put(vs.getUrl(), vs);
+      }
+    }
+    for (ValueSet vs : definitions.getValuesets().getList()) {
+      if (hasMultiLanguageDesignations(vs) && isLocalResource(vs)) {
+        list.put(vs.getUrl(), vs);
+      }
+    }
+    for (CanonicalResource cr : workerContext.allConformanceResources()) {
+      if (cr instanceof CodeSystem) {
+        if (hasMultiLanguageDesignations((CodeSystem) cr) && isLocalResource(cr)) {
+          list.put(cr.getUrl(), cr);
+        }
+      }
+      if (cr instanceof ValueSet) {
+        if (hasMultiLanguageDesignations((ValueSet) cr) && isLocalResource(cr)) {
+          list.put(cr.getUrl(), cr);
+        }        
+      }
+    }
+    for (String url : Utilities.sorted(list.keySet())) {
+      CanonicalResource cr = list.get(url);
+      b.append("  <li><a href=\""+cr.getUserString("path")+"\">"+cr.fhirType()+": "+Utilities.escapeXml(cr.present())+"</a></li>\r\n");
+    }
+    return b.toString();
+  }
   
+  private boolean hasMultiLanguageDesignations(ValueSet vs) {
+    for (ConceptSetComponent inc : vs.getCompose().getInclude()) {
+      for (ConceptReferenceComponent cc : inc.getConcept()) {
+        for (ConceptReferenceDesignationComponent d : cc.getDesignation()) {
+          if (d.hasLanguage()) {
+            return true;
+          }
+        }        
+      }
+    }
+    for (ValueSetExpansionContainsComponent cc : vs.getExpansion().getContains()) {
+      for (ConceptReferenceDesignationComponent d : cc.getDesignation()) {
+        if (d.hasLanguage()) {
+          return true;
+        }
+      }        
+    }
+    return false;
+  }
+
+  private boolean hasMultiLanguageDesignations(CodeSystem cs) {
+    return hasMultiLanguageDesignations(cs.getConcept());
+  }
+
+  private boolean hasMultiLanguageDesignations(List<ConceptDefinitionComponent> concept) {
+    for (ConceptDefinitionComponent cd : concept) {
+      for (ConceptDefinitionDesignationComponent d : cd.getDesignation()) {
+        if (d.hasLanguage()) {
+          return true;
+        }
+      }
+      if (hasMultiLanguageDesignations(cd.getConcept())) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   public RenderingContext getRc() {
     return rc;
   }

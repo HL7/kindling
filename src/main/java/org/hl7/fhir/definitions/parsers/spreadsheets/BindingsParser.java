@@ -248,7 +248,7 @@ public class BindingsParser {
     vs.setStatus(PublicationStatus.DRAFT);
     if (!vs.hasCompose())
       vs.setCompose(new ValueSetComposeComponent());
-    vs.getCompose().addInclude().setSystem("http://terminology.hl7.org/CodeSystem/operation-outcome");
+    vs.getCompose().addInclude().setSystem("http://hl7.org/fhir/operation-outcome");
 
     CodeSystem cs = new CodeSystem();
     cs.setHierarchyMeaning(CodeSystemHierarchyMeaning.ISA);
@@ -269,7 +269,7 @@ public class BindingsParser {
       }
     }
     CodeSystemConvertor.populate(cs, vs);
-    cs.setUrl("http://terminology.hl7.org/CodeSystem/operation-outcome");
+    cs.setUrl("http://hl7.org/fhir/operation-outcome");
     cs.setVersion(version);
     cs.setCaseSensitive(true);
     cs.setContent(CodeSystemContentMode.COMPLETE);
