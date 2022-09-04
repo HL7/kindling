@@ -5,6 +5,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import org.hl7.fhir.tools.publisher.Publisher;
 import org.hl7.fhir.utilities.IniFile;
 import org.hl7.fhir.utilities.Utilities;
 /*
@@ -97,7 +98,7 @@ public class OIDRegistry {
   }
 
   public String getOID(String url) {
-    if (!urls.containsKey(url)) {
+    if (!urls.containsKey(url) && Publisher.WANT_REQUIRE_OIDS) {
       System.out.println("Url '"+url+"' has no assigned OID");
     }
     return urls.get(url);

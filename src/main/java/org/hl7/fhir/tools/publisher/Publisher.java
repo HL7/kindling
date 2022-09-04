@@ -289,6 +289,7 @@ import com.google.gson.JsonObject;
 public class Publisher implements URIResolver, SectionNumberer {
 
   public static final String CANONICAL_BASE = "http://build.fhir.org/";
+  public static final boolean WANT_REQUIRE_OIDS = false;
   
   public class DocumentHolder {
     public XhtmlDocument doc;
@@ -408,6 +409,7 @@ public class Publisher implements URIResolver, SectionNumberer {
   private static final String HTTP_separator = "/";
 
   private static final long GB_12 = 12 * 1024 * 1024 * 1024;
+
 
   private Calendar execTime = Calendar.getInstance();
   private String outputdir;
@@ -1501,9 +1503,6 @@ public class Publisher implements URIResolver, SectionNumberer {
     }
     list.add(cd);
     for (StructureDefinition t : types) {
-      if (t.getName().equals("Definition")) {
-        System.out.println("Definition");
-      }
       if (t.hasBaseDefinition() && t.getBaseDefinition().equals(sd.getUrl()) && t.getDerivation() == TypeDerivationRule.SPECIALIZATION) {
         addTypes(cs, t, cd.getConcept(), types);
       }
@@ -6296,9 +6295,10 @@ private String csCounter() {
         vs.getText().setDiv(new XhtmlNode(NodeType.Element));
         vs.getText().getDiv().setName("div");
       }
-      if (ValueSetUtilities.getOID(vs) == null)
-        throw new Exception("No OID on value set "+vs.getUrl());
-
+      if (WANT_REQUIRE_OIDS) {
+        if (ValueSetUtilities.getOID(vs) == null)
+          throw new Exception("No OID on value set "+vs.getUrl());
+      }
       page.getValueSets().see(vs, page.packageInfo());
       page.getDefinitions().getValuesets().see(vs, page.packageInfo());
     }
