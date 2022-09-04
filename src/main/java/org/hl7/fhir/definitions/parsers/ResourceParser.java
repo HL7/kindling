@@ -75,6 +75,7 @@ import org.hl7.fhir.r5.model.StructureDefinition;
 import org.hl7.fhir.r5.model.StructureDefinition.StructureDefinitionMappingComponent;
 import org.hl7.fhir.r5.model.ValueSet;
 import org.hl7.fhir.r5.terminologies.CodeSystemUtilities;
+import org.hl7.fhir.r5.terminologies.ConceptMapUtilities;
 import org.hl7.fhir.r5.terminologies.ValueSetUtilities;
 import org.hl7.fhir.r5.utils.BuildExtensions;
 import org.hl7.fhir.r5.utils.ToolingExtensions;
@@ -589,7 +590,7 @@ public class ResourceParser {
     for (IdType cnd : focus.getCondition()) {
       Invariant inv = invariants.get(cnd.primitiveValue());
       if (inv == null) {
-        System.out.println("Unable to find invariant "+cnd.primitiveValue());
+        System.out.println("Unable to find invariant "+cnd.primitiveValue()+" at "+focus.getName());
       } else {
         ed.getStatedInvariants().add(inv);
       }
@@ -707,12 +708,6 @@ public class ResourceParser {
     if (binding.hasExtension(BuildExtensions.EXT_COPYRIGHT)) {
       bs.setCopyright(binding.getExtensionString(BuildExtensions.EXT_COPYRIGHT));
     }      
-    if (binding.hasExtension(BuildExtensions.EXT_CS_OID)) {
-      bs.setCsOid(binding.getExtensionString(BuildExtensions.EXT_CS_OID));
-    }      
-    if (binding.hasExtension(BuildExtensions.EXT_VS_OID)) {
-      bs.setVsOid(binding.getExtensionString(BuildExtensions.EXT_VS_OID));
-    }
     if (binding.hasExtension(BuildExtensions.EXT_STATUS)) {
       bs.setStatus(PublicationStatus.fromCode(binding.getExtensionString(BuildExtensions.EXT_STATUS)));
     }
@@ -755,12 +750,6 @@ public class ResourceParser {
     if (binding.hasExtension(BuildExtensions.EXT_COPYRIGHT)) {
       bs.setCopyright(binding.getExtensionString(BuildExtensions.EXT_COPYRIGHT));
     }      
-    if (binding.hasExtension(BuildExtensions.EXT_CS_OID)) {
-      bs.setCsOid(binding.getExtensionString(BuildExtensions.EXT_CS_OID));
-    }      
-    if (binding.hasExtension(BuildExtensions.EXT_VS_OID)) {
-      bs.setVsOid(binding.getExtensionString(BuildExtensions.EXT_VS_OID));
-    }
     if (binding.hasExtension(BuildExtensions.EXT_STATUS)) {
       bs.setStatus(PublicationStatus.fromCode(binding.getExtensionString(BuildExtensions.EXT_STATUS)));
     }
@@ -817,7 +806,7 @@ public class ResourceParser {
       } else {
         String ec = ToolingExtensions.readStringExtension(cs, ToolingExtensions.EXT_WORKGROUP);
         if (!ec.equals(committee.getCode()))
-          System.out.println("CodeSystem "+cs.getUrl()+" WG mismatch 4: is "+ec+", want to set to "+committee.getCode());
+          System.out.println("CodeSystem "+cs.getUrl()+" WG mismatch 4a: is "+ec+", want to set to "+committee.getCode());
       } 
       if (ext && !cs.hasCaseSensitive()) {
         cs.setCaseSensitive(true);
@@ -827,8 +816,11 @@ public class ResourceParser {
         cs.setStatus(PublicationStatus.DRAFT);
       }
       if (!CodeSystemUtilities.hasOID(cs)) {
-        CodeSystemUtilities.setOID(cs, "urn:oid:"+BindingSpecification.DEFAULT_OID_CS + registry.idForUri(cs.getUrl()));
-        save = true;
+        String oid = registry.getOID(cs.getUrl());
+        if (oid != null) {
+          save = true;
+          CodeSystemUtilities.setOID(cs, "urn:oid:"+oid);
+        }
       }
       if (save) {
         saveXml(cs, "codesystem-"+id+".xml");
@@ -857,6 +849,12 @@ public class ResourceParser {
         cm.setUserData("filename", cmid);
         cm.setUserData("path", cmid+".html");
         cm.setUserData("generate", "true");
+        if (!ConceptMapUtilities.hasOID(cm)) {
+          String oid = registry.getOID(cm.getUrl());
+          if (oid != null) {
+            ConceptMapUtilities.setOID(cm, "urn:oid:"+oid);
+          }
+        }
         maps.see(cm, null);
       }
     }
@@ -891,12 +889,15 @@ public class ResourceParser {
       } else {
         String ec = ToolingExtensions.readStringExtension(vs, ToolingExtensions.EXT_WORKGROUP);
         if (!ec.equals(committee.getCode()))
-          System.out.println("ValueSet "+vs.getUrl()+" WG mismatch 4: is "+ec+", want to set to "+committee.getCode());
+          System.out.println("ValueSet "+vs.getUrl()+" WG mismatch 4b: is "+ec+", want to set to "+committee.getCode());
       } 
       vs.setUserData("path", "valueset-"+vs.getId()+".html");
       if (!ValueSetUtilities.hasOID(vs)) {
-        save = true;
-        ValueSetUtilities.setOID(vs, "urn:oid:"+BindingSpecification.DEFAULT_OID_VS +registry.idForUri(vs.getUrl()));
+        String oid = registry.getOID(vs.getUrl());
+        if (oid != null) {
+          save = true;
+          ValueSetUtilities.setOID(vs, "urn:oid:"+oid);
+        }
       }
       if (save) {
         saveXml(vs, "valueset-"+id+".xml");

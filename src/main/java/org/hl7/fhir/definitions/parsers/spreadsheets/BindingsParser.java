@@ -116,7 +116,7 @@ public class BindingsParser {
     xls = new XLSXmlParser(file, filename);
     new XLSXmlNormaliser(filename, exceptionIfExcelNotNormalised).go();
     Sheet sheet = xls.getSheets().get("Bindings");
-        
+
     for (int row = 0; row < sheet.rows.size(); row++) {
       processLine(results, sheet, row);
     }		
@@ -139,7 +139,7 @@ public class BindingsParser {
         cd.getValueSet().setId(ref.substring(1));
         cd.getValueSet().setUrl("http://hl7.org/fhir/ValueSet/"+ref.substring(1));
         cd.getValueSet().setVersion(version);
-        
+
         if (!Utilities.noString(sheet.getColumn(row, "Committee"))) {
           cd.getValueSet().addExtension().setUrl(ToolingExtensions.EXT_WORKGROUP).setValue(new CodeType(sheet.getColumn(row, "Committee").toLowerCase()));
         }
@@ -157,7 +157,17 @@ public class BindingsParser {
         Sheet cs = xls.getSheets().get(ref.substring(1));
         if (cs == null)
           throw new Exception("Error parsing binding "+cd.getName()+": code list reference '"+ref+"' not resolved");
-        new CodeListToValueSetParser(cs, ref.substring(1), cd.getValueSet(), version, codeSystems, maps, packageInfo).execute(sheet.getColumn(row, "v2"), sheet.getColumn(row, "v3"), utg);
+        String oid = registry.getOID(cd.getValueSet().getUrl());
+        if (oid != null) {
+          ValueSetUtilities.setOID(cd.getValueSet(), oid);
+        }
+        if (cd.getMaxValueSet() != null) {
+          oid = registry.getOID(cd.getMaxValueSet().getUrl());
+          if (oid != null) {
+            ValueSetUtilities.setOID(cd.getMaxValueSet(), oid);
+          }          
+        }
+        new CodeListToValueSetParser(cs, ref.substring(1), cd.getValueSet(), version, codeSystems, maps, packageInfo, registry).execute(sheet.getColumn(row, "v2"), sheet.getColumn(row, "v3"), utg);
       } else if (cd.getBinding() == BindingMethod.ValueSet) {
         if (ref.startsWith("http:")) {
           cd.setReference(sheet.getColumn(row, "Reference")); // will sort this out later
@@ -183,7 +193,7 @@ public class BindingsParser {
       }
       cd.setReference(sheet.getColumn(row, "Reference")); // do this anyway in the short term
 
-      
+
       if (cd.getValueSet() != null) {
         touchVS(cd.getValueSet());
         ValueSetUtilities.markStatus(cd.getValueSet(), Utilities.noString(sheet.getColumn(row, "Committee")) ? "vocab" : sheet.getColumn(row, "Committee").toLowerCase(), null, null, Utilities.noString(sheet.getColumn(row, "FMM")) ? null : sheet.getColumn(row, "FMM"), null, Utilities.noString(sheet.getColumn(row, "Normative-Version")) ? null : sheet.getColumn(row, "Normative-Version"));
@@ -192,14 +202,11 @@ public class BindingsParser {
         touchVS(cd.getMaxValueSet());
         ValueSetUtilities.markStatus(cd.getMaxValueSet(), Utilities.noString(sheet.getColumn(row, "Committee")) ? "vocab" : sheet.getColumn(row, "Committee").toLowerCase(), null, null, Utilities.noString(sheet.getColumn(row, "FMM")) ? null : sheet.getColumn(row, "FMM"), null, Utilities.noString(sheet.getColumn(row, "Max-Normative-Version")) ? null : sheet.getColumn(row, "Max-Normative-Version"));
       }
-      
+
       cd.setDescription(sheet.getColumn(row, "Description"));
       cd.setSource(filename);
       cd.setUri(sheet.getColumn(row, "Uri"));
       cd.setStrength(readBindingStrength(sheet.getColumn(row, "Conformance")));
-      String oid = sheet.getColumn(row, "Oid");
-      if (!Utilities.noString(oid))
-        cd.setVsOid(oid); // no cs oid in this case
       cd.setWebSite(sheet.getColumn(row, "Website"));
       cd.setStatus(PublicationStatus.fromCode(sheet.getColumn(row, "Status")));
       cd.setEmail(sheet.getColumn(row, "Email"));
@@ -233,7 +240,7 @@ public class BindingsParser {
         System.out.println("ValueSet "+vs.getUrl()+" WG mismatch 11: is "+ec+", want to set to "+"fhir");
     }     
     vs.setUserData("path", "valueset-"+vs.getId()+".html");
-    
+
     ContactDetail c = vs.addContact();
     c.addTelecom().setSystem(ContactPointSystem.URL).setValue("http://hl7.org/fhir");
     c.addTelecom().setSystem(ContactPointSystem.EMAIL).setValue("fhir@lists.hl7.org");
@@ -274,12 +281,22 @@ public class BindingsParser {
 
   private void touchVS(ValueSet vs) throws FHIRFormatError, URISyntaxException {
     ValueSetUtilities.makeShareable(vs);
-    if (!ValueSetUtilities.hasOID(vs))
-      ValueSetUtilities.setOID(vs, "urn:oid:"+BindingSpecification.DEFAULT_OID_VS +registry.idForUri(vs.getUrl()));
+    if (!ValueSetUtilities.hasOID(vs)) {
+      String oid = registry.getOID(vs.getUrl());
+      if (oid != null) {
+        ValueSetUtilities.setOID(vs, oid);
+      }
+    }
 
-    if (vs.getUserData("cs") != null)
-      if (!CodeSystemUtilities.hasOID((CodeSystem) vs.getUserData("cs")))
-        CodeSystemUtilities.setOID((CodeSystem) vs.getUserData("cs"), "urn:oid:"+BindingSpecification.DEFAULT_OID_CS + registry.idForUri(((CodeSystem) vs.getUserData("cs")).getUrl()));
+    if (vs.getUserData("cs") != null) {
+      CodeSystem cs = (CodeSystem) vs.getUserData("cs");
+      if (!CodeSystemUtilities.hasOID(cs)) {
+        String oid = registry.getOID(cs.getUrl());
+        if (oid != null) {
+          CodeSystemUtilities.setOID((CodeSystem) vs.getUserData("cs"), "urn:oid:"+oid);
+        }
+      }
+    }
   }
 
   private ValueSet loadValueSet(String ref, String committee) throws Exception {
@@ -302,26 +319,28 @@ public class BindingsParser {
       result.setId(ref.substring(9));
       if (!result.hasExperimental())
         result.setExperimental(false);
-//    if (!result.hasUrl())
-        result.setUrl("http://hl7.org/fhir/ValueSet/"+ref.substring(9));
+      //    if (!result.hasUrl())
+      result.setUrl("http://hl7.org/fhir/ValueSet/"+ref.substring(9));
 
       if (!result.hasVersion() || result.getUrl().startsWith("http://hl7.org/fhir"))
         result.setVersion(version);
 
-        
-        if (!Utilities.noString(committee)) {
-          if (!result.hasExtension(ToolingExtensions.EXT_WORKGROUP)) {
-            result.addExtension().setUrl(ToolingExtensions.EXT_WORKGROUP).setValue(new CodeType(committee));
-          } else {
-            String ec = ToolingExtensions.readStringExtension(result, ToolingExtensions.EXT_WORKGROUP);
-            if (!ec.equals(committee))
-              System.out.println("ValueSet "+result.getUrl()+" WG mismatch 1: is "+ec+", want to set to "+committee);
-          } 
-        }
-        result.setUserData("filename", "valueset-"+ref.substring(9));
-        result.setUserData("path", "valueset-"+ref.substring(9)+".html");
-        
-        new CodeSystemConvertor(codeSystems).convert(p, result, srcName, packageInfo);
+      if (!Utilities.noString(committee)) {
+        if (!result.hasExtension(ToolingExtensions.EXT_WORKGROUP)) {
+          result.addExtension().setUrl(ToolingExtensions.EXT_WORKGROUP).setValue(new CodeType(committee));
+        } else {
+          String ec = ToolingExtensions.readStringExtension(result, ToolingExtensions.EXT_WORKGROUP);
+          if (!ec.equals(committee))
+            System.out.println("ValueSet "+result.getUrl()+" WG mismatch 1: is "+ec+", want to set to "+committee);
+        } 
+      }
+      result.setUserData("filename", "valueset-"+ref.substring(9));
+      result.setUserData("path", "valueset-"+ref.substring(9)+".html");
+      String oid = registry.getOID(result.getUrl());
+      if (oid != null) {
+        ValueSetUtilities.setOID(result, oid);
+      }
+      new CodeSystemConvertor(codeSystems, registry).convert(p, result, srcName, packageInfo);
       return result;
     } finally {
       IOUtils.closeQuietly(input);

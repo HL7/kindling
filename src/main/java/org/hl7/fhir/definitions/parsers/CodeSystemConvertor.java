@@ -33,15 +33,18 @@ import org.hl7.fhir.r5.model.ContactPoint;
 import org.hl7.fhir.r5.model.UsageContext;
 import org.hl7.fhir.r5.model.ValueSet;
 import org.hl7.fhir.r5.terminologies.CodeSystemUtilities;
+import org.hl7.fhir.r5.terminologies.ValueSetUtilities;
 import org.hl7.fhir.utilities.Utilities;
 
 public class CodeSystemConvertor {
 
   private CanonicalResourceManager<CodeSystem> codeSystems;
+  private OIDRegistry registry;
 
-  public CodeSystemConvertor(CanonicalResourceManager<CodeSystem> codeSystems) {
+  public CodeSystemConvertor(CanonicalResourceManager<CodeSystem> codeSystems, OIDRegistry registry) {
     super();
     this.codeSystems = codeSystems;
+    this.registry = registry;
   }
 
   public void convert(IParser p, ValueSet vs, String name, PackageVersion packageInfo) throws Exception {
@@ -56,7 +59,13 @@ public class CodeSystemConvertor {
 
       populate(cs, vs);
 //      if (codeSystems.containsKey(cs.getUrl())) 
-//        throw new Exception("Duplicate Code System: "+cs.getUrl());
+      //        throw new Exception("Duplicate Code System: "+cs.getUrl());
+      if (!CodeSystemUtilities.hasOID(cs)) {
+        String oid = registry.getOID(cs.getUrl());
+        if (oid != null) {
+          CodeSystemUtilities.setOID(cs, oid);
+        }
+      }
       codeSystems.see(cs, packageInfo);
     }    
   }

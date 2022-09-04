@@ -579,7 +579,7 @@ public class ProfileGenerator {
     TypeRefComponent tr = ec2.addType();
     t.getFormatCommentsPre().add("Note: special primitive values have a FHIRPath system type. e.g. this is compiler magic (e)");
     tr.setCode(Constants.NS_SYSTEM_TYPE+ "String"); 
-    ToolingExtensions.addUrlExtension(t, ToolingExtensions.EXT_FHIR_TYPE, "string");
+    ToolingExtensions.addUrlExtension(tr, ToolingExtensions.EXT_FHIR_TYPE, "string");
     generateElementDefinition(p, ec2, ec1);
     ec2.makeBase("Element.id", 0, "1");
 
@@ -967,7 +967,7 @@ public class ProfileGenerator {
     p.getDifferential().getElement().get(0).getType().clear();
     p.getSnapshot().getElement().get(0).getType().clear();
     XhtmlNode div = new XhtmlNode(NodeType.Element, "div");
-    div.addTag("h2").addText("Data type "+pt.getName());
+    div.addTag("h2").addText("Datatype "+pt.getName());
     div.addTag("p").addText(pt.getDefinition());
     div.addTag("h3").addText("Rule");
     div.addTag("p").addText(pt.getInvariant().getEnglish());
@@ -1583,7 +1583,7 @@ public class ProfileGenerator {
   }
 
   /**
-   * note: snapshot implies that we are generating a resource or a data type; for other profiles, the snapshot is generated elsewhere
+   * note: snapshot implies that we are generating a resource or a datatype; for other profiles, the snapshot is generated elsewhere
    * @param isInterface 
    */
   private ElementDefinition defineElement(Profile ap, StructureDefinition p, List<ElementDefinition> elements, ElementDefn e, String path, Set<String> slices, List<SliceHandle> parentSlices, SnapShotMode snapshot, boolean root, String defType, String inheritedType, boolean defaults) throws Exception 

@@ -38,8 +38,10 @@ public class CodeListToValueSetParser {
   private CanonicalResourceManager<CodeSystem> codeSystems;
   private CanonicalResourceManager<ConceptMap> maps;
   private PackageVersion packageInfo;
+  private OIDRegistry registry;
 
-  public CodeListToValueSetParser(Sheet sheet, String sheetName, ValueSet valueSet, String version, CanonicalResourceManager<CodeSystem> codeSystems, CanonicalResourceManager<ConceptMap> maps, PackageVersion packageInfo) throws Exception {
+  public CodeListToValueSetParser(Sheet sheet, String sheetName, ValueSet valueSet, String version, CanonicalResourceManager<CodeSystem> codeSystems, CanonicalResourceManager<ConceptMap> maps, PackageVersion packageInfo,
+      OIDRegistry registry) throws Exception {
     super();
     this.sheet = sheet;
     this.sheetName = sheetName;
@@ -48,6 +50,7 @@ public class CodeListToValueSetParser {
     this.codeSystems = codeSystems;
     this.maps = maps;
     this.packageInfo = packageInfo;
+    this.registry = registry;
   }
 
   public void execute(String v2map, String v3map, boolean utg) throws Exception {
@@ -78,6 +81,10 @@ public class CodeListToValueSetParser {
       cs.setContent(CodeSystemContentMode.COMPLETE);
       if (!cs.hasStatus()) {
         cs.setStatus(PublicationStatus.DRAFT);
+      }
+      String oid = registry.getOID(cs.getUrl());
+      if (oid != null) {
+        CodeSystemUtilities.setOID(cs, oid);
       }
       codeSystems.see(cs, packageInfo);
 

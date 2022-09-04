@@ -342,12 +342,7 @@ public class Regenerator {
     if (!Utilities.noString(ed.getBinding().getCopyright())) {
       defn.getBinding().addExtension(BuildExtensions.EXT_COPYRIGHT, new StringType(ed.getBinding().getCopyright()));
     }
-    if (!Utilities.noString(ed.getBinding().getCsOid())) {
-      defn.getBinding().addExtension(BuildExtensions.EXT_CS_OID, new StringType(ed.getBinding().getCsOid()));
-    }
-    if (!Utilities.noString(ed.getBinding().getVsOid())) {
-      defn.getBinding().addExtension(BuildExtensions.EXT_VS_OID, new StringType(ed.getBinding().getVsOid()));
-    }
+    
     if (ed.getBinding().getStatus() != null) {
       defn.getBinding().addExtension(BuildExtensions.EXT_STATUS, new StringType(ed.getBinding().getStatus().toCode()));
     }

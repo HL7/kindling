@@ -1182,7 +1182,7 @@ public class SvgGenerator extends BaseGenerator {
           name = name.substring(0, name.length()-5);
         if (name.length() > 30)
           name = name.substring(0, 29)+"...";
-        String link = getBindingLink(prefix, e);
+        String link = getBindingLink(prefix, e, page);
         if (b.getStrength() == BindingStrength.EXAMPLE) {
           if (link != null) {
             xml.attribute("xlink:href", link);
@@ -1336,7 +1336,7 @@ public class SvgGenerator extends BaseGenerator {
     xml.attribute("id", "n"+(++nc));
     xml.enter("tspan");
     xml.attribute("id", "n"+(++nc));
-    xml.element("title", "Actual value attribute of the data type");
+    xml.element("title", "Actual value attribute of the datatype");
     xml.text("value");
     xml.exit("tspan");
     xml.text(" : ");

@@ -679,7 +679,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
       else if (com[0].equals("mmheader"))
         src = s1+mmHeader(com.length > 1 ? com[1] : null)+s3;
       else if (com[0].equals("exheader"))
-        src = s1+exHeader(com.length > 1 ? com[1] : null, file.substring(0, file.indexOf(".")))+s3;
+        src = s1+exHeader(com.length > 1 ? com[1] : null, file)+s3;
       else if (com[0].equals("narrheader"))
         src = s1+narrHeader(com.length > 1 ? com[1] : null)+s3;
       else if (com[0].equals("profilesheader"))
@@ -3331,7 +3331,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
       StringBuilder b = new StringBuilder();
       b.append("<table class=\"grid\">\r\n");
       b.append("<tr>");
-      b.append("<td><b>Data Type</b></td>");
+      b.append("<td><b>Datatype</b></td>");
       b.append("<td><b>V2</b></td>");
       b.append("<td><b>RIM</b></td>");
       b.append("</tr>");
@@ -3642,21 +3642,21 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     }
 
     for (ResourceDefn r : definitions.getBaseResources().values()) {
-      scanForUsage(items, vs, r.getRoot(), r.getName().toLowerCase()+"-definitions.html", prefix);
+      scanForUsage(items, vs, r.getRoot(), r.getName().toLowerCase()+"-definitions.html", prefix, r.isInterface() ? "Interface" : "Resource");
       scanForOperationUsage(items, vs, r, r.getName().toLowerCase()+"-operation-", prefix);
       scanForProfileUsage(items, vs, r, prefix);
     }
     for (ResourceDefn r : definitions.getResources().values()) {
-      scanForUsage(items, vs, r.getRoot(), r.getName().toLowerCase()+"-definitions.html", prefix);
+      scanForUsage(items, vs, r.getRoot(), r.getName().toLowerCase()+"-definitions.html", prefix, "Resource");
       scanForOperationUsage(items, vs, r, r.getName().toLowerCase()+"-operation-", prefix);
       scanForProfileUsage(items, vs, r, prefix);
     }
     for (ElementDefn e : definitions.getInfrastructure().values()) {
-        scanForUsage(items, vs, e, definitions.getSrcFile(e.getName())+"-definitions.html", prefix);
+        scanForUsage(items, vs, e, definitions.getSrcFile(e.getName())+"-definitions.html", prefix, "Datatype");
     }
     for (ElementDefn e : definitions.getTypes().values()) {
       if (!definitions.dataTypeIsSharedInfo(e.getName())) {
-        scanForUsage(items, vs, e, definitions.getSrcFile(e.getName())+"-definitions.html", prefix);
+        scanForUsage(items, vs, e, definitions.getSrcFile(e.getName())+"-definitions.html", prefix, "Datatype");
       }
     }
 
@@ -3766,21 +3766,21 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
       return "(<a href=\""+prefix+"terminologies.html#"+binding.getStrength().toCode()+"\">"+binding.getStrength().getDisplay()+"</a>)";
   }
 
-  private void scanForUsage(List<String> items, ValueSet vs, ElementDefn e, String ref, String prefix) {
-    scanForUsage(items, vs, e, "", ref, prefix);
+  private void scanForUsage(List<String> items, ValueSet vs, ElementDefn e, String ref, String prefix, String type) {
+    scanForUsage(items, vs, e, "", ref, prefix, type);
 
   }
 
-  private void scanForUsage(List<String> items, ValueSet vs, ElementDefn e, String path, String ref, String prefix) {
+  private void scanForUsage(List<String> items, ValueSet vs, ElementDefn e, String path, String ref, String prefix, String type) {
     path = path.equals("") ? e.getName() : path+"."+e.getName();
     if (e.hasBinding() && e.getBinding().getValueSet() == vs) {
-      addItem(items, "<li>Resource: <a href=\""+prefix+ref+"#"+path+"\">"+path+"</a> "+getBSTypeDesc(e, e.getBinding(), prefix)+"</li>\r\n");
+      addItem(items, "<li>"+type+": <a href=\""+prefix+ref+"#"+path+"\">"+path+"</a> "+getBSTypeDesc(e, e.getBinding(), prefix)+"</li>\r\n");
     }
     if (e.hasBinding() && e.getBinding().getMaxValueSet() == vs) {
-      addItem(items, "<li>Max ValueSet: <a href=\""+prefix+ref+"#"+path+"\">"+path+"</a> "+getBSTypeDesc(e, e.getBinding(), prefix)+"</li>\r\n");
+      addItem(items, "<li>"+type+": <a href=\""+prefix+ref+"#"+path+"\">"+path+"</a> <a href=\"extension-elementdefinition-maxvalueset.html\">Max ValueSet</a></li>\r\n");
     }
     for (ElementDefn c : e.getElements()) {
-      scanForUsage(items, vs, c, path, ref, prefix);
+      scanForUsage(items, vs, c, path, ref, prefix, type);
     }
   }
 
@@ -3868,7 +3868,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
       }
     }
     if (b.length() > 0)
-      return "<p>Constraints</p><ul>"+b+"</ul>";
+      return "<p><b>Constraints</b></p><ul>"+b+"</ul>";
     else
       return "";
   }
@@ -4036,7 +4036,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
   private String dtHeader(String mode) {
     StringBuilder b = new StringBuilder();
     b.append("<ul class=\"nav nav-tabs\">");
-    b.append(makeHeaderTab("Data Types", "datatypes.html", mode==null || "base".equals(mode)));
+    b.append(makeHeaderTab("Datatypes", "datatypes.html", mode==null || "base".equals(mode)));
     b.append(makeHeaderTab("Examples", "datatypes-examples.html", mode==null || "examples".equals(mode)));
     b.append(makeHeaderTab("Detailed Descriptions", "datatypes-definitions.html", mode==null || "definitions".equals(mode)));
     b.append(makeHeaderTab("Mappings", "datatypes-mappings.html", mode==null || "mappings".equals(mode)));
@@ -4061,7 +4061,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
   private String mdtHeader(String mode) {
     StringBuilder b = new StringBuilder();
     b.append("<ul class=\"nav nav-tabs\">");
-    b.append(makeHeaderTab("MetaData Types", "metadatatypes.html", mode==null || "base".equals(mode)));
+    b.append(makeHeaderTab("MetaDatatypes", "metadatatypes.html", mode==null || "base".equals(mode)));
     b.append(makeHeaderTab("Examples", "metadatatypes-examples.html", mode==null || "examples".equals(mode)));
     b.append(makeHeaderTab("Detailed Descriptions", "metadatatypes-definitions.html", mode==null || "definitions".equals(mode)));
     b.append(makeHeaderTab("Mappings", "metadatatypes-mappings.html", mode==null || "mappings".equals(mode)));
@@ -4081,9 +4081,23 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
   }
 
   private String exHeader(String mode, String base) {
+    if (base.endsWith(".xml.html")) {
+      base = base.substring(0, base.length()-9);
+    } else if (base.endsWith(".json.html")) {
+      base = base.substring(0, base.length()-10);
+    } else if (base.endsWith(".ttl.html")) {
+      base = base.substring(0, base.length()-9);
+    } else if (base.endsWith(".html")) {
+      base = base.substring(0, base.length()-5);
+    }
     StringBuilder b = new StringBuilder();
     b.append("<ul class=\"nav nav-tabs\">");
-    b.append(makeHeaderTab("Narrative", base+".html", mode==null || "narrative".equals(mode)));
+    if (base.endsWith(".profile")) {
+      String t = definitions.getCorrectCaseForType(base.substring(0, base.indexOf(".")));
+      b.append(makeHeaderTab("Narrative", definitions.getSrcFile(t)+".html#"+t, mode==null || "narrative".equals(mode)));
+    } else {
+      b.append(makeHeaderTab("Narrative", base+".html", mode==null || "narrative".equals(mode)));
+    }
     b.append(makeHeaderTab("XML", base+".xml.html", mode==null || "xml".equals(mode)));
     b.append(makeHeaderTab("JSON", base+".json.html", mode==null || "json".equals(mode)));
     b.append(makeHeaderTab("TTL", base+".ttl.html", mode==null || "ttl".equals(mode)));
@@ -4550,7 +4564,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     b.append("</table>\r\n");
     if (duplOids.size() > 0) {      
       for (String oid : duplOids) {
-        System.out.println(oid);
+        System.out.println("Duplicate OID: "+oid);
       }
       // throw new Error("Duplicate Oids found ("+duplOids.size()+")");
     }
@@ -7162,7 +7176,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     }
     b.append("</td><td>");
     if (p.getBs() != null && p.getBs().getBinding() != BindingMethod.Unbound) {
-      b.append("<a href=\""+BaseGenerator.getBindingLink(prefix, p.getBs())+"\">"+(p.getBs().getValueSet() != null ? p.getBs().getValueSet().present() : p.getBs().getName())+"</a>");
+      b.append("<a href=\""+BaseGenerator.getBindingLink(prefix, p.getBs(), this)+"\">"+(p.getBs().getValueSet() != null ? p.getBs().getValueSet().present() : p.getBs().getName())+"</a>");
       if (p.getBs().hasMax())
         throw new Error("Max binding not handled yet");
 
@@ -7318,13 +7332,18 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
         b.append("<p>Search parameter list for this resource. The <a href=\"search.html#all\">common parameters</a> also apply. See <a href=\"search.html\">Searching</a> for more information about searching in REST, messaging, and services.</p>\r\n");
       b.append("<table class=\"grid\" width=\"60%\">\r\n");
 //      b.append("<tr><td><b>Name</b></td><td><b>Type</b></td><td><b>Description</b></td><td><b>Expression</b></td><td><b>In Common</b></td></tr>\r\n");
-      List<String> names = new ArrayList<String>();
-      names.addAll(resource.getSearchParams().keySet());
-      Collections.sort(names);
-      for (String name : names)  {
-        SearchParameterDefn p = resource.getSearchParams().get(name);
-        SearchParameter pp = p.getResource();
-
+      Map<String, SearchParameter> spmap = new HashMap<>();
+      for (String n : resource.getSearchParams().keySet()) {
+        spmap.put(n, resource.getSearchParams().get(n).getResource());
+      }
+      for (Profile cp : getDefinitions().getPackList()) {
+        addSearchParams(spmap, cp, resource.getName());
+      }
+      for (Profile cp : resource.getConformancePackages()) {
+        addSearchParams(spmap, cp, resource.getName());
+      }
+      for (String name : Utilities.sorted(spmap.keySet()))  {
+        SearchParameter pp = spmap.get(name);
 
         b.append("<tr>");
         b.append("<td style=\"border-top: 1px black solid\"><code>"+pp.getUrl()+"</code></td>");
@@ -7831,6 +7850,35 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
 
     return b.toString();
   }
+  
+  public String produceExtensionsSearch(StructureDefinition sd) {
+    int count = 0;
+    Map<String, SearchParameter> map = new HashMap<String, SearchParameter>();
+
+    for (Profile cp : getDefinitions().getPackList()) {
+      addExtSearchParams(map, cp, sd.getUrl());
+    }
+    for (ResourceDefn rd : definitions.getResources().values()) {
+      for (Profile cp : rd.getConformancePackages()) {
+        addExtSearchParams(map, cp, sd.getUrl());
+      }
+    }
+
+    StringBuilder b = new StringBuilder();
+    for (String s : sorted(map.keySet())) {
+      SearchParameter sp = map.get(s);
+      count++;
+      b.append("<tr>"+
+        "<td>"+sp.getCode()+"</td>"+
+        "<td><a href=\"search.html#"+sp.getType().toCode()+"\">"+sp.getType().toCode()+"</a></td>"+
+        "<td>"+Utilities.escapeXml(sp.getDescription())+"<br/>"+
+        "<b>Expression:</b> "+Utilities.escapeXml(sp.getExpression())+"</td></tr>\r\n");
+    }
+    if (count == 0)
+      b.append("<tr><td>No Search Extensions defined for this resource</td></tr>");
+
+    return b.toString();
+  }
 
   private boolean isExtension(ConstraintStructure item, String name) {
     if (item.getDefn() != null && item.getDefn().getName().equals("Extension"))
@@ -7959,7 +8007,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
       genStructureExample(s, "datatypes.html#"+dc.getCode(), dc.getCode().toLowerCase()+".profile", dc.getCode().toLowerCase(), dc.getCode());
     }
 
-    genStructureExampleCategory(s, "Data Types", "3");
+    genStructureExampleCategory(s, "Datatypes", "3");
     names.clear();
     names.addAll(definitions.getTypes().keySet());
     names.addAll(definitions.getInfrastructure().keySet());
@@ -8796,7 +8844,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
   }
 
   public String processExtensionIncludes(String filename, StructureDefinition ed, String xml, String json, String ttl, String tx, String src, 
-      String pagePath, ImplementationGuideDefn ig, String usages) throws Exception {
+      String pagePath, ImplementationGuideDefn ig, String usages, String searches) throws Exception {
     String workingTitle = null;
     int level = ig.isCore() ? 0 : 1;
 
@@ -8933,6 +8981,8 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
         src = s1+Utilities.escapeXml(ed.getName())+s3;
       else if (com[0].equals("extension-example-references"))
         src = s1+usages+s3;      
+      else if (com[0].equals("extension-search-references"))
+        src = s1+searches+s3;      
       else if (com[0].equals("search-footer"))
         src = s1+searchFooter(level)+s3;
       else if (com[0].equals("search-header"))
@@ -9696,6 +9746,8 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
       ValueSet vs = definitions.getValuesets().get(ref);
       if (vs == null)
         vs = definitions.getExtraValuesets().get(ref);
+      if (vs == null)
+        vs = definitions.getBoundValueSets().get(ref);
       if (vs != null) {
         br.url = vs.getUserString("path");
         if (Utilities.noString(br.url))
@@ -10377,7 +10429,7 @@ private int countContains(List<ValueSetExpansionContainsComponent> list) {
     if (searchTypeUsage.contains(param+":token"))
       used = true;
     if (used)
-      throw new Error("data type "+param+" is used in search after all");
+      throw new Error("datatype "+param+" is used in search after all");
     return "";
   }
 
@@ -10486,7 +10538,7 @@ private int countContains(List<ValueSetExpansionContainsComponent> list) {
     b.append("<p>Redirects on this page:</p>\r\n");
     b.append("<ul>\r\n");
     b.append(" <li>Resources</li>\r\n");
-    b.append(" <li>Data Types</li>\r\n");
+    b.append(" <li>Datatypes</li>\r\n");
     b.append(" <li>Code Systems</li>\r\n");
     b.append(" <li>Value Sets</li>\r\n");
     b.append(" <li>Extensions</li>\r\n");
@@ -10506,13 +10558,13 @@ private int countContains(List<ValueSetExpansionContainsComponent> list) {
     for (String n : definitions.sortedResourceNames())
       definitions.addNs("http://hl7.org/fhir/"+n, n+" Resource", n.toLowerCase()+".html");
     for (String n : definitions.getTypes().keySet())
-      definitions.addNs("http://hl7.org/fhir/"+n, "Data Type "+n, definitions.getSrcFile(n)+".html#"+n);
+      definitions.addNs("http://hl7.org/fhir/"+n, "Datatype "+n, definitions.getSrcFile(n)+".html#"+n);
     for (String n : definitions.getPrimitives().keySet())
-      definitions.addNs("http://hl7.org/fhir/"+n, "Primitive Data Type "+n, definitions.getSrcFile(n)+".html#"+n);
+      definitions.addNs("http://hl7.org/fhir/"+n, "Primitive Datatype "+n, definitions.getSrcFile(n)+".html#"+n);
     for (String n : definitions.getConstraints().keySet())
-      definitions.addNs("http://hl7.org/fhir/"+n, "Data Type Profile "+n, definitions.getSrcFile(n)+".html#"+n);
+      definitions.addNs("http://hl7.org/fhir/"+n, "Datatype Profile "+n, definitions.getSrcFile(n)+".html#"+n);
     for (String n : definitions.getInfrastructure().keySet())
-      definitions.addNs("http://hl7.org/fhir/"+n, "Data Type "+n, definitions.getSrcFile(n)+".html#"+n);
+      definitions.addNs("http://hl7.org/fhir/"+n, "Datatype "+n, definitions.getSrcFile(n)+".html#"+n);
     for (CodeSystem cs : getCodeSystems().getList())
       if (cs != null && cs.getUrl().startsWith("http://hl7.org/fhir"))
         definitions.addNs(cs.getUrl(), "CodeSystem "+cs.getName(), cs.getUserString("path"));
@@ -10753,6 +10805,15 @@ private int countContains(List<ValueSetExpansionContainsComponent> list) {
       for (CodeType c : sp.getBase()) {
         ok = ok || rn.equals(c.getValue());
       }
+      if (ok) {
+        spmap.put(sp.getId(), sp);
+      }
+    }
+  }
+
+  private void addExtSearchParams(Map<String, SearchParameter> spmap, Profile conformancePack, String url) {
+    for (SearchParameter sp : conformancePack.getSearchParameters()) {
+      boolean ok = sp.getExpression().contains("extension('"+url+"')");
       if (ok) {
         spmap.put(sp.getId(), sp);
       }

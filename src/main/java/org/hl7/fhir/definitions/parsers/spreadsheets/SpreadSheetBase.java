@@ -92,7 +92,6 @@ public class SpreadSheetBase {
   protected static final String CN_V2 = "v2";
   protected static final String CN_WEBSITE_EMAIL = "Website/Email";
   protected static final String CN_URI = "URI";
-  protected static final String CN_OID = "OID";
   protected static final String CN_DESCRIPTION = "Description";
   protected static final String CN_VALUE_SET = "ValueSet";
   protected static final String CN_STRENGTH = "Strength";

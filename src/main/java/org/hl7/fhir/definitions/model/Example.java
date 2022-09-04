@@ -27,7 +27,7 @@ WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWIS
 ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE 
 POSSIBILITY OF SUCH DAMAGE.
 
-*/
+ */
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
@@ -70,16 +70,16 @@ public class Example {
   private String exampleFor;
   private Element element;
   private List<ValidationMessage> errors = new ArrayList<>();
-  
-  
+
+
   public enum ExampleType {
     Container,
     XmlFile,
     CsvFile,
     Tool
   }
-  
-  
+
+
   public Example(String name, String id, String title, String description, boolean registered, ExampleType type, Document doc) throws Exception {
     this.name = name;
     this.id = id;
@@ -87,7 +87,7 @@ public class Example {
     this.type = type;
     this.registered = registered;
     this.title = title;
-    
+
     xml = doc;
     resourceName = xml.getDocumentElement().getNodeName();
     if (XMLUtil.getNamedChild(xml.getDocumentElement(), "id") == null)
@@ -97,18 +97,18 @@ public class Example {
       throw new Exception("misidentified resource example "+id+" expected '"+id+"' found '"+xid+"'");
     }
   }
-  
-  
+
+
   public Example(String name, String id, String description, File path, boolean registered, ExampleType type, boolean noId) throws Exception {
     super();
     this.name = name;
     this.id = id;
     this.description = description;
-//    this.path = path;
+    //    this.path = path;
     this.type = type;
     this.registered = registered;
     this.title = getFileTitle(path);
-    
+
     if( type == ExampleType.CsvFile ) {
       CSVProcessor csv = new CSVProcessor();
       csv.setSource(new CSFileInputStream(path));
@@ -118,14 +118,14 @@ public class Example {
       csv.process();
       path = tmp;
     }
-    
+
     if (type == ExampleType.XmlFile || type == ExampleType.CsvFile || type == ExampleType.Container) {
       DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
       factory.setNamespaceAware(true);
       try {
         DocumentBuilder builder = factory.newDocumentBuilder();
         String xs = TextFile.fileToString(new CSFile(path.getAbsolutePath()));
-        xs = xs.replace("<%test-server%>", PageProcessor.TEST_SERVER_URL);
+        xs = xs.replace("[%test-server%]", PageProcessor.TEST_SERVER_URL);
         xml = builder.parse(new ByteArrayInputStream(xs.getBytes(Charsets.UTF_8)));
         resourceName = xml.getDocumentElement().getNodeName();
       } catch (Exception e) {
@@ -143,12 +143,12 @@ public class Example {
       }
     }
   }
-  
+
   private String getFileTitle(File path) {
     String s = path.getName();
     return s.substring(0, s.lastIndexOf("."));
   }
-  
+
   public String getName() {
     return name;
   }
@@ -161,19 +161,19 @@ public class Example {
   public void setDescription(String description) {
     this.description = description;
   }
-//  public File getPath() {
-//    return path;
-//  }
-//  public void setPath(File path) {
-//    this.path = path;
-//  }
-//  public String getFileTitle() {
-//    String s = path.getName();
-//    return s.substring(0, s.indexOf("."));
-//  }
+  //  public File getPath() {
+  //    return path;
+  //  }
+  //  public void setPath(File path) {
+  //    this.path = path;
+  //  }
+  //  public String getFileTitle() {
+  //    String s = path.getName();
+  //    return s.substring(0, s.indexOf("."));
+  //  }
   public void setXhtm(String content) {
-   xhtm = content;
-    
+    xhtm = content;
+
   }
   public String getXhtm() {
     return xhtm;
@@ -228,7 +228,7 @@ public class Example {
 
   public void setExampleFor(String value) {
     this.exampleFor = value;
-    
+
   }
 
 
@@ -268,5 +268,25 @@ public class Example {
     return n != null;
   }
 
-  
+
+  public String getURL() {
+    return xml != null ? XMLUtil.getNamedChildValue(xml.getDocumentElement(), "url") : null;
+  }
+
+
+  public String getOID() {
+    if (xml == null) {
+      return null;
+    }
+    for (org.w3c.dom.Element id : XMLUtil.getNamedChildren(xml.getDocumentElement(), "identifier")) {
+      String system = XMLUtil.getNamedChildValue(id, "system");
+      String value = XMLUtil.getNamedChildValue(id, "value");
+      if ("urn:ietf:rfc:3986".equals(system) && value != null && value.startsWith("urn:oid:")) {
+        return value.substring(8);
+      }
+    }
+    return null;
+  }
+
+
 }

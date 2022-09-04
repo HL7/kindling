@@ -54,10 +54,7 @@ import org.hl7.fhir.r5.utils.ToolingExtensions;
  *
  */
 public class BindingSpecification {
-  
-  public static final String DEFAULT_OID_CS = "2.16.840.1.113883.4.642.1.";
-  public static final String DEFAULT_OID_VS = "2.16.840.1.113883.4.642.3.";
-  
+    
   public enum BindingMethod {
     Unbound,
     CodeList, 
@@ -98,8 +95,6 @@ public class BindingSpecification {
   private String email;
   private String copyright;
 //  private List<DefinedCode> codes = new ArrayList<DefinedCode>();
-  private String csOid;
-  private String vsOid;
 //  private List<DefinedCode> childCodes;
   private PublicationStatus status;
   private List<DefinedCode> allCodes;
@@ -327,24 +322,6 @@ public class BindingSpecification {
     this.v3Map = v3Map;
   }
 
-  public String getCsOid() {
-    return csOid;
-  }
-
-  public void setCsOid(String csOid) {
-    this.csOid = csOid;
-  }
-
-  public String getVsOid() {
-    return vsOid;
-  }
-
-  public void setVsOid(String vsOid) {
-    this.vsOid = vsOid;
-    if (!Utilities.noString(vsOid) && valueSet != null) 
-      ValueSetUtilities.setOID(valueSet, vsOid);
-  }
-
   public PublicationStatus getStatus() {
     return status;
   }
@@ -361,8 +338,6 @@ public class BindingSpecification {
     this.valueSet = valueSet;
     if (valueSet != null) {
       ToolResourceUtilities.updateUsage(valueSet, usageContext);
-      if (!Utilities.noString(vsOid)) 
-        ValueSetUtilities.setOID(valueSet, vsOid);
       if (shared) {
         valueSet.setUserData("build.shared", "true");
       }

@@ -940,4 +940,46 @@ public class Definitions {
     return rd != null && rd.isInterface();
   }
 
+  public String getCorrectCaseForType(String tn) {
+    for (String s : getBaseResources().keySet()) {
+      if (s.equalsIgnoreCase(tn)) {
+        return s;
+      }
+    }
+    for (String s : getResources().keySet()) {
+      if (s.equalsIgnoreCase(tn)) {
+        return s;
+      }
+    }
+    for (String s : getInfrastructure().keySet()) {
+      if (s.equalsIgnoreCase(tn)) {
+        return s;
+      }
+    }
+    for (String s : getTypes().keySet()) {
+      if (s.equalsIgnoreCase(tn)) {
+        return s;
+      }
+    }
+    for (String s : getPrimitives().keySet()) {
+      if (s.equalsIgnoreCase(tn)) {
+        return s;
+      }
+    }
+    for (TypeRef tr : getKnownTypes()) {
+      if (tr.getName().equalsIgnoreCase(tn)) {
+        return tr.getName();
+      }
+    }
+    for (String s : getAllTypeNames()) {
+      if (s.equalsIgnoreCase(tn)) {
+        return s;
+      }
+    }
+    if (Utilities.existsInList(tn, "xhtml")) {
+      return tn;
+    }
+    throw new Error("Unknown type "+tn);
+  }
+
 }

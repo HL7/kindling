@@ -167,7 +167,6 @@ public class SpreadSheetCreator extends SpreadSheetBase {
     addCellHeading(CN_STRENGTH, row, sheet, columnCount++, 10);
     addCellHeading(CN_VALUE_SET, row, sheet, columnCount++, 30);
     addCellHeading(CN_DESCRIPTION, row, sheet, columnCount++, 30);
-    addCellHeading(CN_OID, row, sheet, columnCount++, 10);
     addCellHeading(CN_URI, row, sheet, columnCount++, 30);
     addCellHeading(CN_WEBSITE_EMAIL, row, sheet, columnCount++, 30);
     addCellHeading(CN_V2, row, sheet, columnCount++, 10);
@@ -359,7 +358,6 @@ public class SpreadSheetCreator extends SpreadSheetBase {
       addCell(bs.getStrength().toCode(), row, columnCount++);
       addCell(bs.getValueSet(), row, columnCount++);
       addCell(null, row, columnCount++);
-      addCell(ext(bs, BuildExtensions.EXT_VS_OID), row, columnCount++);
       addCell(ext(bs, BuildExtensions.EXT_URI), row, columnCount++);
       addCell(ext(bs, BuildExtensions.EXT_WEBSITE), row, columnCount++);
       addCell(ext(bs, BuildExtensions.EXT_V2_MAP), row, columnCount++);
@@ -393,7 +391,6 @@ public class SpreadSheetCreator extends SpreadSheetBase {
       addCell(bs.getStrength().toCode(), row, columnCount++);
       addCell(bs.getValueSet(), row, columnCount++);
       addCell(bs.getDescription(), row, columnCount++);
-      addCell(ext(bs, BuildExtensions.EXT_VS_OID), row, columnCount++);
       addCell(ext(bs, BuildExtensions.EXT_URI), row, columnCount++);
       addCell(ext(bs, BuildExtensions.EXT_WEBSITE), row, columnCount++);
       addCell(ext(bs, BuildExtensions.EXT_V2_MAP), row, columnCount++);

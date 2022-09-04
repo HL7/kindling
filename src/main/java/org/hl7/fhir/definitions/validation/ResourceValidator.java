@@ -90,7 +90,7 @@ public class ResourceValidator extends BaseValidator {
       l = Math.max(l, n.length());
     maxElementLength = (60 - 7) - l;
     this.suppressedMessages = suppressedMessages;
-    System.out.println("\n###########################\nDumping Resource Validator ::\n" + this.toString() + "\n\n###########################\n\n");
+//    System.out.println("\n###########################\nDumping Resource Validator ::\n" + this.toString() + "\n\n###########################\n\n");
   }
 
   public void checkStucture(List<ValidationMessage> errors, String name, ElementDefn structure) throws Exception {
@@ -762,7 +762,7 @@ public class ResourceValidator extends BaseValidator {
       for (TypeRef tr : e.getTypes()) {
         ok = ok || Utilities.existsInList(tr.getName(), "code", "id", "Coding", "CodeableConcept", "uri", "Quantity", "CodeableReference");
       }
-      rule(errors, IssueType.STRUCTURE, path, ok, "Can only specify bindings for coded data types (not (" + e.typeCode() + ")");
+      rule(errors, IssueType.STRUCTURE, path, ok, "Can only specify bindings for coded datatypes (not (" + e.typeCode() + ")");
       if (e.getBinding().getValueSet() != null && e.getBinding().getValueSet().getName() == null)
         throw new Error("unnamed value set on " + e.getBinding().getName());
       BindingSpecification cd = e.getBinding();
@@ -1050,7 +1050,7 @@ public class ResourceValidator extends BaseValidator {
       rule(errors, IssueType.STRUCTURE, path, path.contains("."), "Must have a type on a base element");
       rule(errors, IssueType.STRUCTURE, path, e.getName().equals("extension") || e.getElements().size() > 0, "Must have a type unless sub-elements exist");
     } else {
-      rule(errors, IssueType.STRUCTURE, path, e.getTypes().size() == 1 || e.getName().endsWith("[x]"), "If an element has a choice of data types, its name must end with [x]");
+      rule(errors, IssueType.STRUCTURE, path, e.getTypes().size() == 1 || e.getName().endsWith("[x]"), "If an element has a choice of datatypes, its name must end with [x]");
       if (definitions.dataTypeIsSharedInfo(e.typeCode())) {
         try {
           e.getElements().addAll(definitions.getElementDefn(e.typeCode()).getElements());
@@ -1199,7 +1199,7 @@ public class ResourceValidator extends BaseValidator {
       ValueSet vs = cd.getValueSet();
       if (warning(errors, IssueType.REQUIRED, path, vs != null || cd.hasReference(), "Unable to resolve value set on 'code' Binding")) {
         if (vs != null) {
-          hint(errors, IssueType.REQUIRED, path, noExternals(vs), "Bindings for code data types should only use internally defined codes (" + vs.getUrl() + ")");
+          hint(errors, IssueType.REQUIRED, path, noExternals(vs), "Bindings for code datatypes should only use internally defined codes (" + vs.getUrl() + ")");
           // don't disable this without discussion on Zulip
         }
       }
@@ -1255,7 +1255,7 @@ public class ResourceValidator extends BaseValidator {
         throw new Error("not handled yet");
       if (inc.getSystem().startsWith("http://terminology.hl7.org/CodeSystem/v2-") || inc.getSystem().startsWith("http://terminology.hl7.org/CodeSystem/v3-"))
         return false;
-      if (!Utilities.existsInList(inc.getSystem(), "urn:iso:std:iso:4217", "http://unitsofmeasure.org") && !inc.getSystem().startsWith("http://hl7.org/fhir/"))
+      if (!Utilities.existsInList(inc.getSystem(), "urn:iso:std:iso:4217", "urn:ietf:bcp:13", "http://unitsofmeasure.org") && !inc.getSystem().startsWith("http://hl7.org/fhir/"))
         return false;
     }
     return true;

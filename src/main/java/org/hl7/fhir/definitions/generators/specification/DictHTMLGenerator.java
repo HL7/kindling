@@ -199,7 +199,7 @@ public class DictHTMLGenerator  extends OutputStreamWriter {
     else
       tableRowNE("Type", "datatypes.html", describeTypes(d.getType()) + processSecondary(mode, value));
     if (d.getPath().endsWith("[x]"))
-      tableRowNE("[x] Note", null, "See <a href=\""+prefix+"formats.html#choice\">Choice of Data Types</a> for further information about how to use [x]");
+      tableRowNE("[x] Note", null, "See <a href=\""+prefix+"formats.html#choice\">Choice of Datatypes</a> for further information about how to use [x]");
     if (d.getIsModifier())
       tableRow("Is Modifier", "conformance-rules.html#ismodifier", displayBoolean(d.getIsModifier()) + " (Reason: "+d.getIsModifierReason()+")");
     else
@@ -530,7 +530,7 @@ public class DictHTMLGenerator  extends OutputStreamWriter {
 		if (e.hasHierarchy())
 	    tableRow("Hierarchy", "references.html#circular", e.getHierarchy() ? "This reference is part of a strict Hierarchy" : "This reference may point back to the same instance (including transitively)");
     if (path.endsWith("[x]"))
-      tableRowNE("[x] Note", null, "See <a href=\""+prefix+"formats.html#choice\">Choice of Data Types</a> for further information about how to use [x]");
+      tableRowNE("[x] Note", null, "See <a href=\""+prefix+"formats.html#choice\">Choice of Datatypes</a> for further information about how to use [x]");
     if (e.isModifier())
       tableRow("Is Modifier", "conformance-rules.html#ismodifier", displayBoolean(e.isModifier()) + " (Reason: "+e.getModifierReason()+")");
     else
