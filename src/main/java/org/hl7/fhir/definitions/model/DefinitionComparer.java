@@ -1016,17 +1016,6 @@ public class DefinitionComparer {
       System.out.println("Definitions differ @"+path+": copyright = "+left.getCopyright()+" vs "+right.getCopyright());
     }
     
-    if (!stringsMatch(left.getCsOid(), right.getCsOid())) {
-      res = false;
-      System.out.println("Definitions differ @"+path+": csOid = "+left.getCsOid()+" vs "+right.getCsOid());
-    }
-
-    if (!stringsMatch(left.getVsOid(), right.getVsOid())) {
-      res = false;
-      System.out.println("Definitions differ @"+path+": vsOid = "+left.getVsOid()+" vs "+right.getVsOid());
-    }
-
-    
     if (left.getStrength() != right.getStrength()) {
       res = false;
       System.out.println("Definitions differ @"+path+": strength = "+left.getStrength().toCode()+" vs "+right.getStrength().toCode());

@@ -80,7 +80,13 @@ public class OIDRegistry {
     if (list != null) {
       for (String s : list) {
         String oid = ini.getStringProperty(section, s);
+        if (oids.containsKey(oid)) {
+          throw new Error("duplicate OID "+oid);
+        }
         oids.put(oid, s);
+        if (oids.containsKey(s)) {
+          throw new Error("duplicate url "+s);
+        }
         urls.put(s, oid);
       }
     }
@@ -92,8 +98,7 @@ public class OIDRegistry {
 
   public String getOID(String url) {
     if (!urls.containsKey(url)) {
-      System.out.println("Unknown url: "+url);
-      System.out.println("--: "+url);
+      System.out.println("Url '"+url+"' has no assigned OID");
     }
     return urls.get(url);
   }

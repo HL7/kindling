@@ -708,12 +708,6 @@ public class ResourceParser {
     if (binding.hasExtension(BuildExtensions.EXT_COPYRIGHT)) {
       bs.setCopyright(binding.getExtensionString(BuildExtensions.EXT_COPYRIGHT));
     }      
-    if (binding.hasExtension(BuildExtensions.EXT_CS_OID)) {
-      bs.setCsOid(binding.getExtensionString(BuildExtensions.EXT_CS_OID));
-    }      
-    if (binding.hasExtension(BuildExtensions.EXT_VS_OID)) {
-      bs.setVsOid(binding.getExtensionString(BuildExtensions.EXT_VS_OID));
-    }
     if (binding.hasExtension(BuildExtensions.EXT_STATUS)) {
       bs.setStatus(PublicationStatus.fromCode(binding.getExtensionString(BuildExtensions.EXT_STATUS)));
     }
@@ -756,12 +750,6 @@ public class ResourceParser {
     if (binding.hasExtension(BuildExtensions.EXT_COPYRIGHT)) {
       bs.setCopyright(binding.getExtensionString(BuildExtensions.EXT_COPYRIGHT));
     }      
-    if (binding.hasExtension(BuildExtensions.EXT_CS_OID)) {
-      bs.setCsOid(binding.getExtensionString(BuildExtensions.EXT_CS_OID));
-    }      
-    if (binding.hasExtension(BuildExtensions.EXT_VS_OID)) {
-      bs.setVsOid(binding.getExtensionString(BuildExtensions.EXT_VS_OID));
-    }
     if (binding.hasExtension(BuildExtensions.EXT_STATUS)) {
       bs.setStatus(PublicationStatus.fromCode(binding.getExtensionString(BuildExtensions.EXT_STATUS)));
     }

@@ -207,9 +207,6 @@ public class BindingsParser {
       cd.setSource(filename);
       cd.setUri(sheet.getColumn(row, "Uri"));
       cd.setStrength(readBindingStrength(sheet.getColumn(row, "Conformance")));
-      String oid = sheet.getColumn(row, "Oid");
-      if (!Utilities.noString(oid))
-        cd.setVsOid(oid); // no cs oid in this case
       cd.setWebSite(sheet.getColumn(row, "Website"));
       cd.setStatus(PublicationStatus.fromCode(sheet.getColumn(row, "Status")));
       cd.setEmail(sheet.getColumn(row, "Email"));

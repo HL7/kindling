@@ -714,7 +714,6 @@ public class Publisher implements URIResolver, SectionNumberer {
 
       if (isGenerate) {
         produceSpecification();
-        checkOids();
         checkAllOk();
       } 
 
@@ -800,11 +799,12 @@ public class Publisher implements URIResolver, SectionNumberer {
   }
 
   private void checkOids() {
+    boolean allGood = true;
     for (CanonicalResource cr : page.getWorkerContext().allConformanceResources()) {
       if (page.isLocalResource(cr)) {
         String oid = cr.getOid();
         if (oid != null) {
-          checkOid(cr.getUrl(), oid);
+          allGood = checkOid(cr.getUrl(), oid) && allGood;
         }
       }
     }
@@ -814,25 +814,30 @@ public class Publisher implements URIResolver, SectionNumberer {
         if (url != null) {
           String oid = ex.getOID();
           if (oid != null) {
-            checkOid(url, oid);            
+            allGood = checkOid(url, oid) && allGood;            
           }
         }
       }
+    }  
+    if (!allGood) {
+      throw new Error("Erroneous use of OIDs");
     }
   }
 
-  private void checkOid(String url, String oid) throws Error {
+  private boolean checkOid(String url, String oid) throws Error {
     String u = page.getRegistry().checkOid(oid);
     if (u == null) {
-      System.out.println("The resource "+url+" has an OID assigned to it that is not an agreed OID.");
+      System.out.println("The resource "+url+" has the OID "+oid+" assigned to it that is not an agreed OID.");
       System.out.println("OIDs are assigned at publication time. Remove the OID from "+url+" and you should be OK");
       System.out.println("If you believe that the OID should not be removed, seek help at https://chat.fhir.org/#narrow/stream/179165-committers");
-      throw new Error("Duplicate use of OID "+oid);                     
+      return false;
     } else if (!u.equals(url)) {
-      System.out.println("The resource "+url+" has an OID assigned to it that is already used by "+u);
+      System.out.println("The resource "+url+" has the OID "+oid+" assigned to it that is already used by "+u);
       System.out.println("The usual cause of this is copying and pasting. Remove the OID from "+url+" and an OID will be assigned at publication time");
       System.out.println("if this is not the case, seek help at https://chat.fhir.org/#narrow/stream/179165-committers");
-      throw new Error("Duplicate use of OID "+oid);                     
+      return false;
+    } else {
+      return true;
     }
   }
 
@@ -2749,7 +2754,8 @@ public class Publisher implements URIResolver, SectionNumberer {
       addSearchParams(uris, searchParamsFeed, cp);
     }
     checkBundleURLs(searchParamsFeed);
-
+    checkOids();
+    
     for (String n : page.getIni().getPropertyNames("pages")) {
       if (buildFlags.get("all") || buildFlags.get("page-" + n.toLowerCase())) {
         page.log(" ...page " + n, LogMessageType.Process);

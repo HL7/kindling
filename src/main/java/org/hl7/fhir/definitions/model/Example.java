@@ -270,11 +270,14 @@ public class Example {
 
 
   public String getURL() {
-    return XMLUtil.getNamedChildValue(xml.getDocumentElement(), "url");
+    return xml != null ? XMLUtil.getNamedChildValue(xml.getDocumentElement(), "url") : null;
   }
 
 
   public String getOID() {
+    if (xml == null) {
+      return null;
+    }
     for (org.w3c.dom.Element id : XMLUtil.getNamedChildren(xml.getDocumentElement(), "identifier")) {
       String system = XMLUtil.getNamedChildValue(id, "system");
       String value = XMLUtil.getNamedChildValue(id, "value");
