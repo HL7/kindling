@@ -44,7 +44,7 @@ public class OIDRegistry {
   private Map<String, String> urls = new HashMap<>();
 
   public OIDRegistry(String srcDir) throws IOException {
-    ini = new IniFile(Utilities.path(srcDir, "Source", "oids.ini"));
+    ini = new IniFile(Utilities.path(srcDir, "source", "oids.ini"));
     for (String s : ini.getPropertyNames("Key")) {
       loadIniSection(s);
     }
