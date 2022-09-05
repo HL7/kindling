@@ -750,7 +750,6 @@ public class SpreadSheetCreator extends SpreadSheetBase {
     addCellHeading(CN_PATH, row, sheet, columnCount++, 30);
     addCellHeading(CN_EXPRESSION, row, sheet, columnCount++, 30);
     addCellHeading(CN_DESCRIPTION, row, sheet, columnCount++, 30);
-    addCellHeading(CN_X_PATH, row, sheet, columnCount++, 30);
     addCellHeading(CN_COMMITTEE_NOTES, row, sheet, columnCount++, 30);   
     sheet.createFreezePane(1, 1);
   }

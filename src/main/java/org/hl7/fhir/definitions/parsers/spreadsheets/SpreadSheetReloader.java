@@ -192,7 +192,7 @@ public class SpreadSheetReloader extends SpreadSheetBase {
     inv.setSeverity(ConstraintSeverity.fromCode(getValue(row, cols, CN_SEVERITY)));
     inv.setHuman(getValue(row, cols, CN_ENGLISH));
     inv.setExpression(getValue(row, cols, CN_EXPRESSION));
-    inv.setXpath(getValue(row, cols, CN_X_PATH));
+//    inv.setXpath(getValue(row, cols, CN_X_PATH));
   }
 
   private ElementDefinitionConstraintComponent getInv(List<ElementDefinitionConstraintComponent> list, String n) {
@@ -532,7 +532,7 @@ public class SpreadSheetReloader extends SpreadSheetBase {
     sp.setType(SearchParamType.fromCode(getValue(row, cols, CN_TYPE)));
     sp.setExpression(getValue(row, cols, CN_EXPRESSION));
     sp.setDescription(getValue(row, cols, CN_DESCRIPTION));
-    sp.setXpath(getValue(row, cols, CN_X_PATH));
+//    sp.setXpath(getValue(row, cols, CN_X_PATH));
     sp.getTarget().clear();
     for (String s : splitValue(row, cols, CN_TARGET_TYPES, "\\|")) {
       sp.getTarget().add(new CodeType(s));

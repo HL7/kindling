@@ -1344,7 +1344,7 @@ public class ProfileGenerator {
       if (xpath != null) {
         if (xpath.contains("[x]"))
           xpath = convertToXpath(xpath);
-        sp.setXpath(xpath);
+//        sp.setXpath(xpath);
         sp.setXpathUsage(spd.getxPathUsage());
       }
       if (sp.getType() == SearchParamType.COMPOSITE) {
@@ -1368,15 +1368,15 @@ public class ProfileGenerator {
 //      ext.addExtension("description", new MarkdownType(spd.getDescription()));
       if (!Utilities.noString(spd.getExpression()) && !sp.getExpression().contains(spd.getExpression())) 
         sp.setExpression(sp.getExpression()+" | "+spd.getExpression());
-      String xpath = new XPathQueryGenerator(this.definitions, null, null).generateXpath(spd.getPaths(), rn);
-      if (xpath != null) {
-        if (xpath.contains("[x]"))
-          xpath = convertToXpath(xpath);
-        if (sp.getXpath() != null && !sp.getXpath().contains(xpath)) 
-          sp.setXpath(sp.getXpath()+" | " +xpath);
-        if (sp.getXpathUsage() != spd.getxPathUsage()) 
-          throw new FHIRException("Usage mismatch on common parameter: expected "+sp.getXpathUsage().toCode()+" but found "+spd.getxPathUsage().toCode());
-      }
+//      String xpath = new XPathQueryGenerator(this.definitions, null, null).generateXpath(spd.getPaths(), rn);
+//      if (xpath != null) {
+//        if (xpath.contains("[x]"))
+//          xpath = convertToXpath(xpath);
+//        if (sp.getXpath() != null && !sp.getXpath().contains(xpath)) 
+//          sp.setXpath(sp.getXpath()+" | " +xpath);
+//        if (sp.getXpathUsage() != spd.getxPathUsage()) 
+//          throw new FHIRException("Usage mismatch on common parameter: expected "+sp.getXpathUsage().toCode()+" but found "+spd.getxPathUsage().toCode());
+//      }
       boolean found = false;
       for (CodeType ct : sp.getBase())
         found = found || p.getType().equals(ct.asStringValue());

@@ -3555,7 +3555,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
 //          } else {            
             cell.addPiece(gen.new Piece(null, " ", null));
             if (t.getStatus() != null) {
-              cell.addPiece(gen.new Piece("versions.html#std-process", "("+t.getStatus().toCode()+")", null).addStyle("color: "+t.getStatus().getColor()));
+              cell.addPiece(gen.new Piece("versions.html#std-process", "("+t.getStatus().toCode()+")", null).addStyle("padding: 3px; border: 1px lightgrey solid; color: #000000; background-color: "+t.getStatus().getColor()));
             }
 //          }
           if (stack.isEmpty())
