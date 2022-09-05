@@ -3518,18 +3518,18 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
 
     for (String s : entries) {
       TocEntry t = toc.get(s);
-      if (!t.isIg() && !s.startsWith("?")) {
+      if (!s.startsWith("?")) {
         String nd = s;
         while (nd.endsWith(".0"))
           nd = nd.substring(0, nd.length()-2);
         int d = Utilities.charCount(nd, '.');
         if (d < 4 && !pages.contains(t.getLink())) {
-          String np = getNormativePackageForPage(t.getLink());
+          String np = null; // getNormativePackageForPage(t.getLink());
           pages.add(t.getLink());
           while (!stack.isEmpty() && stack.getFirst().depth >= d)
             stack.pop();
           Row row = gen.new Row();
-          row.setIcon("icon_page.gif", null);
+          row.setIcon(t.getIcon(), null);
           String td = t.getText();
           if (!stack.isEmpty()) {
             if (td.startsWith(stack.getFirst().entry.getText()+" - "))
@@ -3539,23 +3539,25 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
           }
           Cell cell = gen.new Cell(null, t.getLink(), nd+" "+td, t.getText()+" ", null);
           row.getCells().add(cell);
-          if (np != null) {
+//          if (np != null) {
+//            cell.addPiece(gen.new Piece(null, " ", null));
+//            cell.addPiece(gen.new Piece("versions.html#std-process", "basic".equals(np) ?  "(Normative)" : "(Normative / "+Utilities.capitalize(np)+")", null).addStyle("color: #008000"));
+//            if (np.equals("infrastructure"))
+//              row.setIcon("icon_page_n_i.gif", null);
+//            else if (np.equals("conformance"))
+//              row.setIcon("icon_page_n_c.gif", null);
+//            else if (np.equals("patient"))
+//              row.setIcon("icon_page_n_p.gif", null);
+//            else if (np.equals("observation"))
+//              row.setIcon("icon_page_n_o.gif", null);
+//            else 
+//              row.setIcon("icon_page_n.gif", null);
+//          } else {            
             cell.addPiece(gen.new Piece(null, " ", null));
-            cell.addPiece(gen.new Piece("versions.html#std-process", "basic".equals(np) ?  "(Normative)" : "(Normative / "+Utilities.capitalize(np)+")", null).addStyle("color: #008000"));
-            if (np.equals("infrastructure"))
-              row.setIcon("icon_page_n_i.gif", null);
-            else if (np.equals("conformance"))
-              row.setIcon("icon_page_n_c.gif", null);
-            else if (np.equals("patient"))
-              row.setIcon("icon_page_n_p.gif", null);
-            else if (np.equals("observation"))
-              row.setIcon("icon_page_n_o.gif", null);
-            else 
-              row.setIcon("icon_page_n.gif", null);
-          } else {            
-            cell.addPiece(gen.new Piece(null, " ", null));
-            cell.addPiece(gen.new Piece("versions.html#std-process", "(Trial Use)", null).addStyle("color: #b3b3b3"));
-          }
+            if (t.getStatus() != null) {
+              cell.addPiece(gen.new Piece("versions.html#std-process", "("+t.getStatus().toCode()+")", null).addStyle("color: "+t.getStatus().getColor()));
+            }
+//          }
           if (stack.isEmpty())
             model.getRows().add(row);
           else

@@ -249,6 +249,7 @@ import org.hl7.fhir.utilities.IniFile;
 import org.hl7.fhir.utilities.Logger.LogMessageType;
 import org.hl7.fhir.utilities.NDJsonWriter;
 import org.hl7.fhir.utilities.SIDUtilities;
+import org.hl7.fhir.utilities.StandardsStatus;
 import org.hl7.fhir.utilities.TextFile;
 import org.hl7.fhir.utilities.Utilities;
 import org.hl7.fhir.utilities.VersionUtilities;
@@ -2815,7 +2816,7 @@ public class Publisher implements URIResolver, SectionNumberer {
 //        if (page.getToc().containsKey("1.1"))
 //          throw new Exception("Duplicate DOC Entry "+"1.1");
 
-        page.getToc().put("1.1", new TocEntry("1.1", "Table Of Contents", "toc.html", false));
+        page.getToc().put("1.1", new TocEntry("1.1", "Table Of Contents", "toc.html", StandardsStatus.INFORMATIVE));
         page.log(" ...page toc.html", LogMessageType.Process);
         producePage("toc.html", null);
       }
@@ -5749,7 +5750,7 @@ public class Publisher implements URIResolver, SectionNumberer {
     try {
       // TextFile.stringToFile(src, Utilities.path("tmp]", "text.html"));
       XhtmlDocument doc = new XhtmlParser().parse(src, "html");
-      insertSectionNumbersInNode(doc, st, link, level, new BooleanHolder(), null);
+      insertSectionNumbersInNode(doc, st, link, level, new BooleanHolder(), null, getPageStatus(src));
       if (doch != null)
         doch.doc = doc;
       return new XhtmlComposer(XhtmlComposer.HTML).compose(doc);
@@ -5760,6 +5761,27 @@ public class Publisher implements URIResolver, SectionNumberer {
 
       throw new Exception("Exception inserting section numbers in " + link + ": " + e.getMessage(), e);
     }
+  }
+
+  private StandardsStatus getPageStatus(String src) {
+    int i = src.indexOf("class=\"cols");
+    if (i == -1) {
+      return null;
+    }
+    String s = src.substring(i+11);
+    if (s.startsWith("tu\"")) {
+      return StandardsStatus.TRIAL_USE;
+    }
+    if (s.startsWith("i\"")) {
+      return StandardsStatus.INFORMATIVE;
+    }
+    if (s.startsWith("n\"")) {
+      return StandardsStatus.NORMATIVE;
+    }
+    if (s.startsWith("d\"")) {
+      return StandardsStatus.DRAFT;
+    }
+    return null;
   }
 
   private XhtmlNode findId(XhtmlNode node, String id) {
@@ -5777,7 +5799,7 @@ public class Publisher implements URIResolver, SectionNumberer {
     private boolean value;
   }
 
-  private void insertSectionNumbersInNode(XhtmlNode node, SectionTracker st, String link, int level, BooleanHolder registered, XhtmlNode parent) throws Exception {
+  private void insertSectionNumbersInNode(XhtmlNode node, SectionTracker st, String link, int level, BooleanHolder registered, XhtmlNode parent, StandardsStatus sstatus) throws Exception {
     // while we're looking, mark external references explicitly
     if (node.getNodeType() == NodeType.Element && node.getName().equals("a") &&
         node.getAttribute("href") != null && node.getAttribute("no-external") == null && (node.getAttribute("href").startsWith("http:") || node.getAttribute("href").startsWith("https:"))) {
@@ -5796,7 +5818,7 @@ public class Publisher implements URIResolver, SectionNumberer {
       String v = st.getIndex(Integer.parseInt(node.getName().substring(1)));
       String sv = v;
       if (!st.isIg() && !registered.value) {
-        TocEntry t = new TocEntry(v, node.allText(), link, st.isIg());
+        TocEntry t = new TocEntry(v, node.allText(), link, sstatus);
         if (t.getText() == null)
           t.setText("(No Title?)");
         if (!page.getToc().containsKey(v)) {
@@ -5834,7 +5856,7 @@ public class Publisher implements URIResolver, SectionNumberer {
     if (node.getNodeType() == NodeType.Document
         || (node.getNodeType() == NodeType.Element && !(node.getName().equals("div") && "sidebar".equals(node.getAttribute("class"))))) {
       for (XhtmlNode n : node.getChildNodes()) {
-        insertSectionNumbersInNode(n, st, link, level, registered, node);
+        insertSectionNumbersInNode(n, st, link, level, registered, node, sstatus);
       }
     }
   }
