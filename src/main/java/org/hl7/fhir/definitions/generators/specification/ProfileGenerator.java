@@ -1340,13 +1340,13 @@ public class ProfileGenerator {
         sp.setExpression(spd.getExpression());
 //      addModifiers(sp);
       addComparators(sp);
-      String xpath = Utilities.noString(spd.getXPath()) ? new XPathQueryGenerator(this.definitions, null, null).generateXpath(spd.getPaths(), rn) : spd.getXPath();
-      if (xpath != null) {
-        if (xpath.contains("[x]"))
-          xpath = convertToXpath(xpath);
-//        sp.setXpath(xpath);
-        sp.setXpathUsage(spd.getxPathUsage());
-      }
+//      String xpath = Utilities.noString(spd.getXPath()) ? new XPathQueryGenerator(this.definitions, null, null).generateXpath(spd.getPaths(), rn) : spd.getXPath();
+//      if (xpath != null) {
+//        if (xpath.contains("[x]"))
+//          xpath = convertToXpath(xpath);
+////        sp.setXpath(xpath);
+//        sp.setXpathUsage(spd.getxPathUsage());
+//      }
       if (sp.getType() == SearchParamType.COMPOSITE) {
         for (CompositeDefinition cs : spd.getComposites()) {
           SearchParameterDefn cspd = findSearchParameter(rd, cs.getDefinition());
@@ -2509,7 +2509,7 @@ public class ProfileGenerator {
       if (trs.size() > 1) {
         if (p.getSearchType() != null)
           pp.setSearchType(SearchParamType.fromCode(p.getSearchType()));
-        pp.setType(Enumerations.FHIRAllTypes.fromCode("Element"));
+        pp.setType(Enumerations.FHIRTypes.fromCode("Element"));
         for (TypeRef tr : trs) {
           pp.addExtension(ToolingExtensions.EXT_ALLOWED_TYPE, new UriType(tr.getName()));
           if (tr.getParams().size() > 0)
@@ -2519,12 +2519,12 @@ public class ProfileGenerator {
         TypeRef tr = trs.get(0);
         if (definitions.getConstraints().containsKey(tr.getName())) {
           ProfiledType pt = definitions.getConstraints().get(tr.getName());
-          pp.setType(Enumerations.FHIRAllTypes.fromCode(pt.getBaseType().equals("*") ? "Type" : pt.getBaseType()));
+          pp.setType(Enumerations.FHIRTypes.fromCode(pt.getBaseType().equals("*") ? "Type" : pt.getBaseType()));
           pp.addTargetProfile("http://hl7.org/fhir/StructureDefinition/"+pt.getName());
         } else { 
           if (p.getSearchType() != null)
             pp.setSearchType(SearchParamType.fromCode(p.getSearchType()));
-          pp.setType(Enumerations.FHIRAllTypes.fromCode(tr.getName().equals("*") ? "Type" : tr.getName()));
+          pp.setType(Enumerations.FHIRTypes.fromCode(tr.getName().equals("*") ? "Type" : tr.getName()));
           if (tr.getParams().size() == 1 && !tr.getParams().get(0).equals("Any"))
             pp.addTargetProfile("http://hl7.org/fhir/StructureDefinition/"+tr.getParams().get(0));
         } 

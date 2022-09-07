@@ -10,6 +10,7 @@ import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 
+import org.hl7.fhir.exceptions.FHIRException;
 import org.hl7.fhir.exceptions.FHIRFormatError;
 import org.hl7.fhir.r5.context.BaseWorkerContext;
 import org.hl7.fhir.r5.formats.IParser.OutputStyle;
@@ -182,22 +183,26 @@ public class SpreadSheetBase {
 //    return resourceName;
 //  }
 
-  protected Resource parseXml(String fn) throws FHIRFormatError, FileNotFoundException, IOException {
-//    String fn = Utilities.path(srcFolder, resourceName.toLowerCase(), name);
-    File f = new CSFile(fn);
-    long d = f.lastModified();
-    if (d == 0) {
-      f.setLastModified(new Date().getTime());
-      d = f.lastModified();
-    }
-    if (useLoadingDates()) {
-      date = Long.max(date, d);
-    }
-    CSFileInputStream fs = new CSFileInputStream(f);
+  protected Resource parseXml(String fn)  {
+    //    String fn = Utilities.path(srcFolder, resourceName.toLowerCase(), name);
     try {
-      return new XmlParser().parse(fs);
-    } finally {
-      fs.close();
+      File f = new CSFile(fn);
+      long d = f.lastModified();
+      if (d == 0) {
+        f.setLastModified(new Date().getTime());
+        d = f.lastModified();
+      }
+      if (useLoadingDates()) {
+        date = Long.max(date, d);
+      }
+      CSFileInputStream fs = new CSFileInputStream(f);
+      try {
+        return new XmlParser().parse(fs);
+      } finally {
+        fs.close();
+      }
+    } catch (Exception e) {
+      throw new FHIRException("Error parsing "+fn+": "+e.getMessage(), e);
     }
   }
 

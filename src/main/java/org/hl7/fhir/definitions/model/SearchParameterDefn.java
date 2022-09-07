@@ -75,7 +75,7 @@ public class SearchParameterDefn {
   private String code;
   private String description;
   private SearchType type;
-  private SearchParameter.XPathUsageType xPathUsage;
+  private SearchParameter.SearchProcessingModeType processingMode;
   private List<String> paths = new ArrayList<String>();
   private String expression;
   private List<CompositeDefinition> composites = new ArrayList<CompositeDefinition>();
@@ -83,7 +83,7 @@ public class SearchParameterDefn {
   private Set<String> manualTargets = new HashSet<String>();
   private SearchParameter resource;
   private ExpressionNode expressionNode;
-  private boolean XPathDone;
+  private boolean tested;
   private List<String> otherResources = new ArrayList<String>();
   private String commonId;
   private boolean hierarchy;
@@ -92,7 +92,6 @@ public class SearchParameterDefn {
   private Set<String> manualTypes = new HashSet<String>();
   
   // operational tracking
-  private String xPath;
   private boolean works; // marked by the testing routines if this search parameter yields results for any of the examples
   private String normativeVersion;
   
@@ -112,12 +111,12 @@ public class SearchParameterDefn {
     return type;
   }
   
-  public SearchParameterDefn(String code, String description, SearchType type, SearchParameter.XPathUsageType xPathUsage, StandardsStatus status) {
+  public SearchParameterDefn(String code, String description, SearchType type, SearchParameter.SearchProcessingModeType processingMode, StandardsStatus status) {
     super();
     this.code = code;
     this.description = description;
     this.type = type;
-    this.xPathUsage = xPathUsage; 
+    this.processingMode = processingMode; 
     this.standardsStatus = status;
   }
     
@@ -126,7 +125,7 @@ public class SearchParameterDefn {
     code = source.code;
     description = source.description.replace("{{title}}", title).replace("{{titles}}", Utilities.pluralize(title, 2));
     type = source.type;
-    xPathUsage = source.xPathUsage;
+    processingMode = source.processingMode;
     for (String s : source.paths)
       paths.add(s.replace(oldName+'.', newName+'.')); 
     if (source.expression != null)
@@ -171,14 +170,6 @@ public class SearchParameterDefn {
 
   public void setWorks(boolean works) {
     this.works = works;
-  }
-
-  public String getXPath() {
-    return xPath;
-  }
-
-  public void setXPath(String xPath) {
-    this.xPath = xPath;
   }
 
   public String getTargetTypesAsText() {
@@ -227,8 +218,8 @@ public class SearchParameterDefn {
       manualTargets.add(s.trim());
   }
 
-  public SearchParameter.XPathUsageType getxPathUsage() {
-    return xPathUsage;
+  public SearchParameter.SearchProcessingModeType getProcessingMode() {
+    return processingMode;
   }
 
   public SearchParameter getResource() {
@@ -247,12 +238,12 @@ public class SearchParameterDefn {
     this.expressionNode = expressionNode;
   }
 
-  public boolean isXPathDone() {
-    return XPathDone;
+  public boolean isTested() {
+    return tested;
   }
 
-  public void setXPathDone(boolean xPathDone) {
-    XPathDone = xPathDone;
+  public void setTested(boolean tested) {
+    this.tested = tested;
   }
 
   public List<String> getOtherResources() {

@@ -494,7 +494,7 @@ public class Regenerator {
       case token: sp.setType(SearchParamType.TOKEN); break;
       case uri: sp.setType(SearchParamType.URI); break;
       }
-      sp.setXpathUsage(spd.getxPathUsage());
+      sp.setProcessingMode(spd.getProcessingMode());
       CommaSeparatedStringBuilder b = new CommaSeparatedStringBuilder(",");
       for (String p : spd.getPaths()) {
         b.append(p);

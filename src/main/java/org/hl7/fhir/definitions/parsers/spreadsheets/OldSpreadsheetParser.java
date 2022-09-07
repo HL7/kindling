@@ -929,7 +929,7 @@ public class OldSpreadsheetParser {
           }
 
 //          sp.setXpath(Utilities.noString(xp) ? new XPathQueryGenerator(definitions, log, null).generateXpath(pn, null) : xp);
-          sp.setXpathUsage(readSearchXPathUsage(sheet.getColumn(row, "Path Usage"), row));
+          sp.setProcessingMode(readSearchXPathUsage(sheet.getColumn(row, "Path Usage"), row));
         }
         sp.setUrl("http://hl7.org/fhir/SearchParameter/"+sp.getId());
         if (definitions != null)
@@ -962,7 +962,7 @@ public class OldSpreadsheetParser {
             throw new Exception("Search Param "+root2.getName()+"/"+n+": duplicate name "+ getLocation(row));
           String d = sheet.getColumn(row, "Description");
           SearchType t = readSearchType(sheet.getColumn(row, "Type"), row);
-          SearchParameter.XPathUsageType pu = readSearchXPathUsage(sheet.getColumn(row, "Path Usage"), row);
+          SearchParameter.SearchProcessingModeType pu = readSearchXPathUsage(sheet.getColumn(row, "Path Usage"), row);
 
           if (Utilities.noString(sheet.getColumn(row, "Path")) && !root2.getName().equals("Resource") && !root2.getName().equals("DomainResource"))
             throw new Exception("Search Param "+root2.getName()+"/"+n+" has no path at "+ getLocation(row));
@@ -1003,7 +1003,6 @@ public class OldSpreadsheetParser {
             sp.getComposites().addAll(pn);
           } else {
             List<String> pn = new ArrayList<String>();
-            String xp = sheet.getColumn(row, "XPath");
             String[] pl = sheet.getColumn(row, "Path").split("\\|");
             boolean hierarchy = false;
             for (String pi : pl) {
@@ -1054,8 +1053,6 @@ public class OldSpreadsheetParser {
               ss = StandardsStatus.fromCode(sheet.getColumn(row, "Standards-Status"));
             sp = new SearchParameterDefn(n, d, t, pu, ss);
             sp.getPaths().addAll(pn);
-            if (!Utilities.noString(xp))
-              sp.setXPath(xp);
             if (!Utilities.noString(sheet.getColumn(row, "Expression")))
               sp.setExpression(sheet.getColumn(row, "Expression"));
             if (!Utilities.noString(sheet.getColumn(row, "Target Types"))) {
@@ -1084,17 +1081,17 @@ public class OldSpreadsheetParser {
     return p;
   }
 
-  private SearchParameter.XPathUsageType readSearchXPathUsage(String s, int row) throws Exception {
+  private SearchParameter.SearchProcessingModeType readSearchXPathUsage(String s, int row) throws Exception {
     if (Utilities.noString(s))
-      return SearchParameter.XPathUsageType.NORMAL;
+      return SearchParameter.SearchProcessingModeType.NORMAL;
     if ("normal".equals(s))
-      return SearchParameter.XPathUsageType.NORMAL;
+      return SearchParameter.SearchProcessingModeType.NORMAL;
     if ("nearby".equals(s))
-      return SearchParameter.XPathUsageType.OTHER;
+      return SearchParameter.SearchProcessingModeType.OTHER;
     if ("distance".equals(s))
-      return SearchParameter.XPathUsageType.OTHER;
+      return SearchParameter.SearchProcessingModeType.OTHER;
     if ("phonetic".equals(s))
-      return SearchParameter.XPathUsageType.PHONETIC;
+      return SearchParameter.SearchProcessingModeType.PHONETIC;
 //    if ("external".equals(s))
 //      return SearchParameter.XPathUsageType.EXTERNAL;
 //    if ("?external".equals(s))

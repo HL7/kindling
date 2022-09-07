@@ -223,10 +223,10 @@ public class ImplementationGuideDefn {
 
   private List<LinkTriple> determinePath(String n, String type, String crumbTitle) throws Exception {
     List<LinkTriple> res = new ArrayList<ImplementationGuideDefn.LinkTriple>();
-    res.add(new LinkTriple(ig.getDefinition().getPage().getNameUrlType().getValue(), ig.getId().toUpperCase(), ig.getName()));
+    res.add(new LinkTriple(ig.getDefinition().getPage().getName(), ig.getId().toUpperCase(), ig.getName()));
 
     if (type.equals("valueSet") && hasVSRegistry()) {
-      findPage(getVSRegistry().getNameUrlType().getValue(), res, ig.getDefinition().getPage().getPage());
+      findPage(getVSRegistry().getName(), res, ig.getDefinition().getPage().getPage());
       res.add(new LinkTriple(null, crumbTitle, null));
     } else if (type.startsWith("extension:")) {
       if (findRegistryPage("StructureDefinition", res, ig.getDefinition().getPage().getPage())) 
@@ -247,7 +247,7 @@ public class ImplementationGuideDefn {
       else if (n.endsWith(".json.html"))
         n = n.substring(0, n.length()-10)+".html";
       
-      if (!n.equals(ig.getDefinition().getPage().getNameUrlType().getValue())) {
+      if (!n.equals(ig.getDefinition().getPage().getName())) {
         if (!findPage(n, res, ig.getDefinition().getPage().getPage()) && !findLogicalPage(n, type, res, ig.getDefinition().getPage().getPage())) {
           // we didn't find it as a simple page. Figure out what 
          
@@ -264,8 +264,9 @@ public class ImplementationGuideDefn {
     String src = Utilities.fileTitle(n)+ ".html";
     for (ImplementationGuideDefinitionResourceComponent r : ig.getDefinition().getResource()) {
       if (src.equals(r.getReference().getReference())) {
-        if (r.hasExampleCanonicalType()) {
-          String psrc = r.getExampleCanonicalType().getValueAsString().substring(r.getExampleCanonicalType().getValueAsString().lastIndexOf("/")+1)+".html";
+        if (r.hasProfile()) {
+          String p = r.getProfile().get(0).getValue();
+          String psrc = p.substring(p.lastIndexOf("/")+1)+".html";
           if (findPage(psrc, res, page)) {
             res.add(new LinkTriple(null, r.getName(), null));
             return true;
@@ -313,11 +314,11 @@ public class ImplementationGuideDefn {
   private boolean findRegistryPage(String n, List<LinkTriple> res, List<ImplementationGuideDefinitionPageComponent> list) throws FHIRException {
     for (ImplementationGuideDefinitionPageComponent page : list) {
       if (IgParser.getKind(page) == GuidePageKind.LIST && isListFor(page, n)) {
-        res.add(new LinkTriple(page.getNameUrlType().getValue(), page.getTitle(), null));
+        res.add(new LinkTriple(page.getName(), page.getTitle(), null));
         return true;
       }
       if (page.hasPage()) {
-        res.add(new LinkTriple(page.getNameUrlType().getValue(), page.getTitle(), null));
+        res.add(new LinkTriple(page.getName(), page.getTitle(), null));
         if (findPage(n, res, page.getPage()))
           return true;
         else {
@@ -339,12 +340,12 @@ public class ImplementationGuideDefn {
 
   private boolean findPage(String n, List<LinkTriple> res, List<ImplementationGuideDefinitionPageComponent> list) throws FHIRException {
     for (ImplementationGuideDefinitionPageComponent page : list) {
-      if (n.equals(page.getNameUrlType().getValue())) {
-        res.add(new LinkTriple(page.getNameUrlType().getValue(), page.getTitle(), null));
+      if (n.equals(page.getName())) {
+        res.add(new LinkTriple(page.getName(), page.getTitle(), null));
         return true;
       }
       if (page.hasPage()) {
-        res.add(new LinkTriple(page.getNameUrlType().getValue(), page.getTitle(), null));
+        res.add(new LinkTriple(page.getName(), page.getTitle(), null));
         if (findPage(n, res, page.getPage()))
           return true;
         else {
@@ -389,7 +390,7 @@ public class ImplementationGuideDefn {
   }
 
   private ImplementationGuideDefinitionPageComponent getPage(String n, ImplementationGuideDefinitionPageComponent node) throws FHIRException {
-    if (n.equals(node.getNameUrlType().getValue()))
+    if (n.equals(node.getName()))
       return node;
     for (ImplementationGuideDefinitionPageComponent page : node.getPage()) {
       ImplementationGuideDefinitionPageComponent p = getPage(n, page);
@@ -450,7 +451,7 @@ public class ImplementationGuideDefn {
       ndx = "";
     else
       ndx = ndx + " ";
-    row.getCells().add(gen.new Cell("", page.getNameUrlType().getValue(), ndx + page.getTitle(), null, null));
+    row.getCells().add(gen.new Cell("", page.getName(), ndx + page.getTitle(), null, null));
     for (ImplementationGuideDefinitionPageComponent p : page.getPage()) {
       addPage(gen, row.getSubRows(), p);
     }
@@ -488,7 +489,7 @@ public class ImplementationGuideDefn {
   }
 
   public String getHomePage() throws FHIRException {
-    return ig == null ? null : code+"/"+ig.getDefinition().getPage().getNameUrlType().getValue();
+    return ig == null ? null : code+"/"+ig.getDefinition().getPage().getName();
   }
 
   public Example getExample(String rn, String id) {

@@ -728,7 +728,6 @@ public class SpreadSheetCreator extends SpreadSheetBase {
     addCell(ext(sp, BuildExtensions.EXT_PATH), row, columnCount++); 
     addCell(sp.getExpression(), row, columnCount++); 
     addCell(sp.getDescription(), row, columnCount++); 
-    addCell(sp.getXpath(), row, columnCount++); 
     addCell(ext(sp, BuildExtensions.EXT_COMMITTEE_NOTES), row, columnCount++);
   }
 

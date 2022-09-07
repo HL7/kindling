@@ -188,7 +188,7 @@ import org.hl7.fhir.r5.model.Enumerations.CompartmentType;
 import org.hl7.fhir.r5.model.Enumerations.ConceptMapRelationship;
 import org.hl7.fhir.r5.model.Enumerations.FHIRVersion;
 import org.hl7.fhir.r5.model.Enumerations.PublicationStatus;
-import org.hl7.fhir.r5.model.Enumerations.RestfulCapabilityMode;
+import org.hl7.fhir.r5.model.CapabilityStatement.RestfulCapabilityMode;
 import org.hl7.fhir.r5.model.Enumerations.SearchParamType;
 import org.hl7.fhir.r5.model.Factory;
 import org.hl7.fhir.r5.model.ImplementationGuide;
@@ -2004,8 +2004,8 @@ public class Publisher implements URIResolver, SectionNumberer {
     result.setDefinition("http://hl7.org/fhir/SearchParameter/"+i.getCommonId());
     result.setType(getSearchParamType(i.getType()));
     result.setDocumentation(i.getDescription());
-    if (Utilities.noString(i.getXPath()))
-      i.setXPath(new XPathQueryGenerator(page.getDefinitions(), page, page.getQa()).generateXpath(i.getPaths(), rn)); // used elsewhere later
+    if (Utilities.noString(i.getExpression()))
+      i.setExpression(String.join(".", i.getPaths())); // used elsewhere later
     return result;
   }
 
@@ -2828,6 +2828,7 @@ public class Publisher implements URIResolver, SectionNumberer {
       com.google.gson.JsonObject diff = new com.google.gson.JsonObject();
       page.getDiffEngine().getDiffAsJson(diff);
       Gson gson = new GsonBuilder().setPrettyPrinting().create();
+      Gson gsonp = new GsonBuilder().create();
       String json = gson.toJson(diff);
       TextFile.stringToFile(json, Utilities.path(page.getFolders().dstDir, "fhir.diff.json"));
 
@@ -3110,8 +3111,17 @@ public class Publisher implements URIResolver, SectionNumberer {
       zip.addFiles(page.getFolders().dstDir + "examples" + File.separator, "", null, "expansions.xml");
       zip.close();
 
+
+      ImplementationGuide exIg = new ImplementationGuide();
+      exIg.addFhirVersion(page.getVersion());
+      exIg.setPackageId(pidRoot()+".examples");
+      exIg.setVersion(page.getVersion().toCode());
+      exIg.setLicense(ImplementationGuide.SPDXLicense.CC01_0);
+      exIg.setTitle("FHIR "+page.getVersion().getDisplay()+" package : Examples");
+      exIg.setDescription("Examples for the "+page.getVersion().getDisplay()+" version of the FHIR standard");
+      npm = new NPMPackageGenerator(Utilities.path(page.getFolders().dstDir, pidRoot()+".examples.tgz"), "http://hl7.org/fhir", "http://hl7.org/fhir", PackageType.EXAMPLES, exIg, page.getGenDate().getTime(), true);
+
       zip = new ZipGenerator(page.getFolders().dstDir + "examples-json.zip");
-      gson = new GsonBuilder().setPrettyPrinting().create();
       File f = new CSFile(page.getFolders().dstDir);
       File[] files = f.listFiles();
       String[] noExt = new String[] {".schema.json", ".canonical.json", ".manifest.json", ".diff.json", "expansions.json", "package.json", "choice-elements.json", "backbone-elements.json", "package-min-ver.json", "xver-paths-5.0.json", "uml.json"};
@@ -3134,7 +3144,13 @@ public class Publisher implements URIResolver, SectionNumberer {
 
               }
               String jrs = gson.toJson(jr);
-              zip.addBytes(files[fi].getName(), jrs.getBytes(Charsets.UTF_8), true);
+              byte[] jb = jrs.getBytes(Charsets.UTF_8);
+              zip.addBytes(files[fi].getName(), jb, true);
+              if (jr.has("id") && jr.has("resourceType")) {
+                jrs = gsonp.toJson(jr);
+                jb = jrs.getBytes(Charsets.UTF_8);
+                npm.addFile(Category.RESOURCE, JsonUtilities.str(jr, "resourceType")+"-"+JsonUtilities.str(jr, "id")+".json", jb);
+              }
             } catch (Exception e) {
               throw new Exception("Error pasing "+files[fi].getAbsolutePath()+": "+e.getMessage(), e);
             }
@@ -3142,6 +3158,7 @@ public class Publisher implements URIResolver, SectionNumberer {
         }
       }
       zip.close();
+      npm.finish();
       
       NDJsonWriter ndjson = new NDJsonWriter(page.getFolders().dstDir + "examples-ndjson.zip", page.getFolders().tmpDir);
       ndjson.addFilesFiltered(page.getFolders().dstDir, ".json", new String[] {".schema.json", ".canonical.json", ".diff.json", "expansions.json", "package.json"});
@@ -4479,7 +4496,7 @@ public class Publisher implements URIResolver, SectionNumberer {
 
   private void processQuestionnaire(ResourceDefn res, StructureDefinition profile, SectionTracker st, boolean isResource, String prefix, ImplementationGuideDefn ig) throws Exception {
 
-    QuestionnaireBuilder qb = new QuestionnaireBuilder(page.getWorkerContext());
+    QuestionnaireBuilder qb = new QuestionnaireBuilder(page.getWorkerContext(), "http://hl7.org/fhir");
     qb.setProfile(profile);
     qb.build();
     Questionnaire q = qb.getQuestionnaire();
@@ -5401,7 +5418,7 @@ public class Publisher implements URIResolver, SectionNumberer {
 
 
   private void produceIgPage(ImplementationGuideDefn ig, ImplementationGuideDefinitionPageComponent p) throws Exception {
-    String actualName = Utilities.path(page.getFolders().rootDir, Utilities.getDirectoryForFile(ig.getSource()), p.getNameUrlType().getValue());
+    String actualName = Utilities.path(page.getFolders().rootDir, Utilities.getDirectoryForFile(ig.getSource()), p.getName());
     String logicalName = Utilities.fileTitle(actualName);
     String src;
     if (IgParser.getKind(p) == GuidePageKind.TOC)

@@ -915,6 +915,10 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
         src = s1+s3;
       } else if (com[0].equals("complinks")) {
         src = s1+(rd == null ? "" : getCompLinks(rd, com.length > 1 ? com[1] : null))+s3;
+      } else if (com[0].equals("stu-note")) {
+        src = s1+getSTUNoteHeader(com[1])+s3;
+      } else if (com[0].equals("ballot-note")) {
+        src = s1+getBallotNoteHeader(com[1])+s3;
       } else if (com[0].equals("diff")) {
         String p = com[1];
         String pd = p.contains("#") ? p.substring(0, p.indexOf("#")) : p;
@@ -1203,7 +1207,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
       else if (com[0].equals("search-param-definition") && resource instanceof SearchParameter)
         src = s1 + ((SearchParameter) resource).getDescription() + s3;
       else if (com[0].equals("search-param-paths") && resource instanceof SearchParameter)
-        src = s1 + (((SearchParameter) resource).hasXpath() ? ((SearchParameter) resource).getXpath() : "") + s3;
+        src = s1 + (((SearchParameter) resource).hasExpression() ? ((SearchParameter) resource).getExpression() : "") + s3;
       else if (com[0].equals("search-param-targets") && resource instanceof SearchParameter) {
         CommaSeparatedStringBuilder b = new CommaSeparatedStringBuilder();
         for (CodeType t : ((SearchParameter) resource).getTarget())
@@ -1330,6 +1334,20 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
         throw new Exception("Instruction <%"+s2+"%> not understood parsing page "+file);
     }
     return src;
+  }
+
+  private String getSTUNoteHeader(String id) {
+    return
+    "<a name=\""+id+"\"></a>\r\n"+
+    "<blockquote class=\"stu-note\">\r\n"+
+    "<p><b>Note to Implementers:</b>\r\n";
+  }
+
+  private String getBallotNoteHeader(String id) {
+    return
+    "<a name=\""+id+"\"></a>\r\n"+
+    "<blockquote class=\"ballot-note\">\r\n"+
+    "<p><b>Note to Balloters:</b>\r\n";
   }
 
   private String genExampleXRef(String type, String name, Resource resource) {
@@ -2103,7 +2121,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
       if (ig.getIg() != null) {
         for (ImplementationGuideDefinitionResourceComponent res : ig.getIg().getDefinition().getResource()) {
           Example e = (Example) res.getUserData(ToolResourceUtilities.NAME_RES_EXAMPLE);
-          if (res.hasExample() && e != null && e.getResourceName().equals(resource.getName()))
+          if (res.getIsExample() && e != null && e.getResourceName().equals(resource.getName()))
             if (id.equals(e.getId()))
               return e;
         }
@@ -2238,13 +2256,13 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
         Map<String, ImplementationGuideDefinitionResourceComponent> map = new HashMap<String, ImplementationGuideDefinitionResourceComponent>();
         for (ImplementationGuideDefinitionResourceComponent r : ig.getIg().getDefinition().getResource()) {
           Resource ar = (Resource) r.getUserData(ToolResourceUtilities.RES_ACTUAL_RESOURCE);
-          if (ar != null && ar.getResourceType().toString().equals(type) && r.hasExample() == example) {
+          if (ar != null && ar.getResourceType().toString().equals(type) && r.getIsExample() == example) {
             String id = ar.getId();
             ids.add(id);
             map.put(id, r);
           }
           Example ex = (Example) r.getUserData(ToolResourceUtilities.NAME_RES_EXAMPLE);
-          if (ex != null && ex.getResourceName().equals(type) && r.hasExample() == example) {
+          if (ex != null && ex.getResourceName().equals(type) && r.getIsExample() == example) {
             String id = ex.getId();
             ids.add(id);
             map.put(id, r);
@@ -5441,6 +5459,10 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
         src = s1+s3;
       } else if (com[0].equals("mixednormative")) {
         src = s1+s3;
+      } else if (com[0].equals("stu-note")) {
+        src = s1+getSTUNoteHeader(com[1])+s3;
+      } else if (com[0].equals("ballot-note")) {
+        src = s1+getBallotNoteHeader(com[1])+s3;
       } else if (com[0].equals("pattern-impls")) {
         src = s1+buildPatternList(com[1])+s3;       
       } else if (com[0].equals("StandardsStatus")) {
@@ -5942,7 +5964,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
             b.append(" | ");
           b.append("<a href=\"");
           b.append(ig.getCode());
-          b.append("/"+p.getNameUrlType().getValue()+"#"+purpose+"\">");
+          b.append("/"+p.getName()+"#"+purpose+"\">");
           b.append(ig.getBrief());
           b.append("</a>");
         }
@@ -6856,7 +6878,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
   }
 
   private String getDraftNote(ResourceDefn resource) {
-    if ("draft".equals(resource.getStatus()))
+    if ("draft".equals(resource.getStatus().toCode()))
       return "<p style=\"background-color: salmon; border:1px solid maroon; padding: 5px;\">This resource is <a href=\"history.html#levels\">marked as a draft</a>.</p>";
     else
       return "";
@@ -7501,7 +7523,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
           if (t.getName().equals(name))
             p = t;
         b.append("<tr><td>").append(p.getName()).append("</td><td><a href=\"search.html#").append(p.getType().toCode()).append("\">").append(p.getType().toCode())
-                .append("</a></td><td>").append(Utilities.escapeXml(p.getDescription())).append("</td><td>").append(p.getXpath() == null ? "" : p.getXpath()).append("</td></tr>\r\n");
+                .append("</a></td><td>").append(Utilities.escapeXml(p.getDescription())).append("</td><td>").append(p.getExpression() == null ? "" : p.getExpression()).append("</td></tr>\r\n");
       }
       b.append("</table>\r\n");
       return b.toString();
@@ -7944,7 +7966,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
         if (ig.getIg() != null) {
           for (ImplementationGuideDefinitionResourceComponent res : ig.getIg().getDefinition().getResource()) {
             Example e = (Example) res.getUserData(ToolResourceUtilities.NAME_RES_EXAMPLE);
-            if (res.hasExample() && e != null && e.getResourceName().equals(resource.getName()))
+            if (res.getIsExample() && e != null && e.getResourceName().equals(resource.getName()))
               produceExampleListEntry(s, res, ig);
           }
         }
@@ -8120,7 +8142,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
       if (ig.getIg() != null) {
         for (ImplementationGuideDefinitionResourceComponent res : ig.getIg().getDefinition().getResource()) {
           Example e = (Example) res.getUserData(ToolResourceUtilities.NAME_RES_EXAMPLE);
-          if (res.hasExample() && e != null && e.getResourceName().equals(resource.getName()))
+          if (res.getIsExample() && e != null && e.getResourceName().equals(resource.getName()))
             produceExampleListEntry(s, res, ig);
         }
       }
@@ -9032,6 +9054,8 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
         src = s1 + s + s3;
       } else if (com[0].equals("ext-name"))  {
         src = s1 + ed.getName() + s3;
+      } else if (com[0].equals("ext-modifier"))  {
+        src = s1 +(extensionIsModifier(ed) ? "This extension is a modifier extension, and only used in <code>modifierExtension</code>" : "This extension is not a modifier extension") + s3;
       } else if (com[0].equals("ext-status"))  {
         src = s1 + ed.getStatus().toCode() + s3;
       } else if (macros.containsKey(com[0])) {
@@ -9040,6 +9064,10 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
         throw new Exception("Instruction <%"+s2+"%> not understood parsing resource "+filename);
     }
     return src;
+  }
+
+  private boolean extensionIsModifier(StructureDefinition ed) {
+    return ed.getSnapshot().getElementFirstRep().getIsModifier();
   }
 
   private String describeExtensionSearchParameters(StructureDefinition ed) {
@@ -10023,7 +10051,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
           if (name.equals(sp.getName()))
             p = sp;
         b.append("<tr><td>"+p.getName()+"</td><td><a href=\""+prefix+"search.html#"+p.getType().toCode()+"\">"+p.getType().toCode()+"</a></td>" +
-            "<td>"+Utilities.escapeXml(p.getDescription())+"</td><td>"+(p.hasXpath() ? p.getXpath() : "")+(p.getType() == SearchParamType.REFERENCE && p.hasTarget() ? asText(p.getTarget()) : "")+"</td>" +
+            "<td>"+Utilities.escapeXml(p.getDescription())+"</td><td>"+(p.hasExpression() ? p.getExpression() : "")+(p.getType() == SearchParamType.REFERENCE && p.hasTarget() ? asText(p.getTarget()) : "")+"</td>" +
             "<td><a href=\""+p.getId()+".xml.html\">XML</a> / <a href=\""+p.getId()+".json.html\">JSON</a></td></tr>\r\n");
       }
       b.append("</table>\r\n");

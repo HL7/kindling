@@ -559,10 +559,7 @@ public class DefinitionComparer {
       res = false;
       System.out.println("Definitions differ @"+path+": url = "+left.getUrl()+" vs "+right.getUrl());
     }
-    if (!stringsMatch(left.getXPath(), right.getXPath()) && (left.getXPath() != null)) {
-      res = false;
-      System.out.println("Definitions differ @"+path+": xPath = "+left.getXPath()+" vs "+right.getXPath());
-    }
+    
     if (!stringsMatch(left.getNormativeVersion(), right.getNormativeVersion())) {
       res = false;
       System.out.println("Definitions differ @"+path+": normativeVersion = "+left.getNormativeVersion()+" vs "+right.getNormativeVersion());
@@ -573,10 +570,10 @@ public class DefinitionComparer {
       System.out.println("Definitions differ @"+path+": type = "+left.getType()+" vs "+right.getType());
     }
     
-    if (left.getxPathUsage() != right.getxPathUsage()) {
-      res = false;
-      System.out.println("Definitions differ @"+path+": xPathUsage = "+left.getxPathUsage()+" vs "+right.getxPathUsage());
-    }
+//    if (left.getxPathUsage() != right.getxPathUsage()) {
+//      res = false;
+//      System.out.println("Definitions differ @"+path+": xPathUsage = "+left.getxPathUsage()+" vs "+right.getxPathUsage());
+//    }
 // often wrong in spreadsheet model    
 //    if (left.getStandardsStatus() != right.getStandardsStatus() && left.getStandardsStatus() != null) {
 //      res = false;
