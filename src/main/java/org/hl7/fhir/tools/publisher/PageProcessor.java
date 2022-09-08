@@ -1109,8 +1109,8 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
         src = s1 + generateValueSetUsage((ValueSet) resource, genlevel(level), true) + s3;
       else if (com[0].equals("csusage"))
         src = s1 + generateCSUsage((CodeSystem) resource, genlevel(level)) + s3;
-      else if (com[0].equals("vssummary"))
-        src = s1 + "todo" + s3;
+//      else if (com[0].equals("vssummary"))
+//        src = s1 + "todo" + s3;
       else if (com[0].equals("compartmentlist"))
         src = s1 + compartmentlist() + s3;
       else if (com[0].equals("qa"))
@@ -5057,8 +5057,8 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
         src = s1 + generateValueSetUsage((ValueSet) resource, genlevel(0), true) + s3;
       else if (com[0].equals("csusage"))
         src = s1 + generateCSUsage((CodeSystem) resource, genlevel(0)) + s3;
-      else if (com[0].equals("vssummary"))
-        src = s1 + "todo" + s3;
+//      else if (com[0].equals("vssummary"))
+//        src = s1 + "todo" + s3;
       else if (com[0].equals("piperesources"))
         src = s1+pipeResources()+s3;
       else if (com[0].equals("pub-type"))
@@ -5607,8 +5607,8 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
         src = s1 + generateCSUsage((CodeSystem) resource, genlevel(level)) + s3;
       else if (com[0].equals("mappings-table"))
         src = s1+genMappingsTable()+s3;
-      else if (com[0].equals("vssummary"))
-        src = s1 + "todo" + s3;
+//      else if (com[0].equals("vssummary"))
+//        src = s1 + "todo" + s3;
       else if (com[0].equals("compartmentlist"))
         src = s1 + compartmentlist() + s3;
       else if (com[0].equals("comp-title"))
@@ -8447,10 +8447,10 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
         src = s1+genProfileConstraints(profile.getResource())+s3;
       else if (com[0].equals("plural"))
         src = s1+Utilities.pluralizeMe(filename)+s3;
-      else if (com[0].equals("notes"))
-        src = s1+"todo" /*Utilities.fileToString(folders.srcDir + filename+File.separatorChar+filename+".html")*/ +s3;
-      else if (com[0].equals("dictionary"))
-        src = s1+"todo"+s3;
+//      else if (com[0].equals("notes"))
+//        src = s1+"todo" /*Utilities.fileToString(folders.srcDir + filename+File.separatorChar+filename+".html")*/ +s3;
+//      else if (com[0].equals("dictionary"))
+//        src = s1+"todo"+s3;
       else if (com[0].equals("breadcrumb"))
         src = s1 + breadCrumbManager.make(filename) + s3;
       else if (com[0].equals("navlist"))
@@ -8960,8 +8960,8 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
         src = s1+genExtensionConstraints(ed)+s3;
       else if (com[0].equals("plural"))
         src = s1+Utilities.pluralizeMe(filename)+s3;
-      else if (com[0].equals("notes"))
-        src = s1+"todo" /*Utilities.fileToString(folders.srcDir + filename+File.separatorChar+filename+".html")*/ +s3;
+//      else if (com[0].equals("notes"))
+//        src = s1+"todo" /*Utilities.fileToString(folders.srcDir + filename+File.separatorChar+filename+".html")*/ +s3;
       else if (com[0].equals("dictionary"))
         src = s1+definitionsProfile(ed, genlevel(level))+s3;
       else if (com[0].equals("breadcrumb"))
@@ -10868,7 +10868,7 @@ private int countContains(List<ValueSetExpansionContainsComponent> list) {
         return new ResourceWithReference(ex.getTitle()+".html", new DOMWrappers.ResourceWrapperElement(context, ex.getXml().getDocumentElement(), definitions.getResourceByName(ex.getResourceName()).getProfile()));
     }
 //    System.out.println("Reference to undefined resource: \""+url+"\"");
-    return new ResourceWithReference("todo.html", null);
+    return new ResourceWithReference("broken-link.html", null);
   }
 
   public SpecDifferenceEvaluator getDiffEngine() {
