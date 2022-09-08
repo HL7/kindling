@@ -1504,7 +1504,7 @@ public class Publisher implements URIResolver, SectionNumberer {
     }
     list.add(cd);
     for (StructureDefinition t : types) {
-      if (t.hasBaseDefinition() && t.getBaseDefinition().equals(sd.getUrl()) && t.getDerivation() == TypeDerivationRule.SPECIALIZATION) {
+      if (t.hasBaseDefinition() && t.getBaseDefinition().equals(sd.getUrl()) && (t.getDerivation() == TypeDerivationRule.SPECIALIZATION || Utilities.existsInList(t.getName(), "SimpleQuantity", "MoneyQuantity"))) {
         addTypes(cs, t, cd.getConcept(), types);
       }
     }
