@@ -4015,11 +4015,11 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
   private String getStatusIcon(Invariant inv) {
     Boolean b = inv.getTestOutcome();
     if (b == null) {
-      return "<img src=\"assets/images/test-null.png\"/>&nbsp;";
+      return "<img src=\"assets/images/test-null.png\" alt=\"img\"/>&nbsp;";
     } else if (b) {
-      return "<img src=\"assets/images/test-ok.png\"/>&nbsp;";
+      return "<img src=\"assets/images/test-ok.png\" alt=\"img\"/>&nbsp;";
     } else {
-      return "<img src=\"assets/images/test-fail.png\"/>&nbsp;";
+      return "<img src=\"assets/images/test-fail.png\" alt=\"img\"/>&nbsp;";
     }
   }
 

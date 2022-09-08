@@ -5825,7 +5825,7 @@ public class Publisher implements URIResolver, SectionNumberer {
       String s = "external.png";
       for (int i = 0; i < level; i++)
         s = "../"+s;
-      img.attribute("src", s);
+      img.attribute("src", s).attribute("alt", "icon");
       img.attribute("style", "vertical-align: baseline");
     }
 

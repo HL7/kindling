@@ -128,7 +128,7 @@ public class WebMaker {
       lvl = lvl + "../";
 
     return "<div id=\"hl7-search\">\r\n"+
-        "  <a href=\""+lvl+"index.html#search\"><img src=\"assets/images/search.png\"/> Search</a>\r\n"+
+        "  <a href=\""+lvl+"index.html#search\"><img src=\"assets/images/search.png\" alt=\"img\"/> Search</a>\r\n"+
 			"</div>";
   }
   
