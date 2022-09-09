@@ -666,6 +666,8 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
         src = s1+dictForDt(com[1])+s3;
       else if (com[0].equals("othertabs"))
         src = s1 + genOtherTabs(com[1], tabs) + s3;
+      else if (com[0].equals("dtref"))
+        src = s1+"<a href=\""+definitions.getSrcFile(com[1])+".html#"+com[1]+"\">"+com[1]+"</a>"+s3;
       else if (com[0].equals("dtheader"))
         src = s1+dtHeader(com.length > 1 ? com[1] : null)+s3;
       else if (com[0].equals("atheader"))
@@ -750,7 +752,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
       } else if (com[0].equals("svg"))
         src = s1+svgs.get(com[1])+s3;
       else if (com[0].equals("diagram"))
-        src = s1+new SvgGenerator(this, genlevel(level), null, false, file.contains("datatypes"), version).generate(folders.srcDir+ com[1], com[2])+s3;
+        src = s1+new SvgGenerator(this, genlevel(level), null, false, fileSuffix(file), version).generate(folders.srcDir+ com[1], com[2])+s3;
       else if (com[0].equals("file")) {
         if (new File(folders.templateDir + com[1]+".html").exists()) {
           src = s1+TextFile.fileToString(folders.templateDir + com[1]+".html")+s3;          
@@ -1334,6 +1336,15 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
         throw new Exception("Instruction <%"+s2+"%> not understood parsing page "+file);
     }
     return src;
+  }
+
+  private String fileSuffix(String file) {
+    file = file.substring(0, file.indexOf("."));
+    if (file.contains("-")) {
+      return file.substring(file.indexOf("-"));
+    } else {
+      return "";
+    }
   }
 
   private String getSTUNoteHeader(String id) {
@@ -2511,7 +2522,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
           "classes="+dt+"\r\n"+
           "element-attributes=true\r\n";
       TextFile.stringToFileNoPrefix(s, tmp.getAbsolutePath());
-      return new SvgGenerator(this, "", null, false, true, version).generate(tmp.getAbsolutePath(), id);
+      return new SvgGenerator(this, "", null, false, "", version).generate(tmp.getAbsolutePath(), id);
     } finally {
       tmp.delete();
     }
@@ -3293,7 +3304,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
   private String r2Json(ValueSet vs) throws Exception {
     ByteArrayOutputStream bytes = new ByteArrayOutputStream();
     IParser json = new JsonParser().setOutputStyle(OutputStyle.PRETTY);
-    json.setSuppressXhtml("Snipped for Brevity");
+//    json.setSuppressXhtml("Snipped for Brevity");
     json.compose(bytes, vs);
     return new String(bytes.toByteArray());
   }
@@ -3301,7 +3312,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
   private String r2Json(CodeSystem vs) throws Exception {
     ByteArrayOutputStream bytes = new ByteArrayOutputStream();
     IParser json = new JsonParser().setOutputStyle(OutputStyle.PRETTY);
-    json.setSuppressXhtml("Snipped for Brevity");
+//    json.setSuppressXhtml("Snipped for Brevity");
     json.compose(bytes, vs);
     return new String(bytes.toByteArray());
   }
@@ -5392,7 +5403,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
       else if (com[0].equals("svg"))
         src = s1+svgs.get(com[1])+s3;
       else if (com[0].equals("diagram"))
-        src = s1+new SvgGenerator(this, genlevel(level), null, false, file.contains("datatypes"), version).generate(folders.srcDir+ com[1], com[2])+s3;
+        src = s1+new SvgGenerator(this, genlevel(level), null, false, fileSuffix(file), version).generate(folders.srcDir+ com[1], com[2])+s3;
       else if (com[0].equals("file"))
         src = s1+/*TextFile.fileToString(folders.srcDir + com[1]+".html")+*/s3;
       else if (com[0].equals("settitle")) {
@@ -5457,6 +5468,8 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
         src = s1+s3;
       } else if (com[0].equals("mostlynormative")) {
         src = s1+s3;
+      } else if (com[0].equals("dtref")) {
+        src = s1+"<a href=\""+definitions.getSrcFile(com[1])+".html#"+com[1]+"\">"+com[1]+"</a>"+s3;
       } else if (com[0].equals("mixednormative")) {
         src = s1+s3;
       } else if (com[0].equals("stu-note")) {
@@ -6096,7 +6109,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
       else if (com[0].equals("othertabs"))
         src = s1 + genOtherTabs(com[1], tabs) + s3;
       else if (com[0].equals("svg"))
-        src = s1+new SvgGenerator(this, genlevel(level), resource.getLayout(), true, false, version).generate(resource, com[1])+s3;
+        src = s1+new SvgGenerator(this, genlevel(level), resource.getLayout(), true, "", version).generate(resource, com[1])+s3;
       else if (com[0].equals("dtextensions")) 
         src = s1+produceDataTypeExtras(com[1], false)+s3;
       else if (com[0].equals("normative")) {

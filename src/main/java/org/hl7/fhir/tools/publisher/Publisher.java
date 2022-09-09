@@ -3949,11 +3949,11 @@ public class Publisher implements URIResolver, SectionNumberer {
     ByteArrayOutputStream bytes = new ByteArrayOutputStream();
     if (VersionUtilities.isR4BVer(page.getVersion().toCode())) {
       org.hl7.fhir.r4.formats.IParser json = new org.hl7.fhir.r4.formats.JsonParser().setOutputStyle(org.hl7.fhir.r4.formats.IParser.OutputStyle.PRETTY);
-      json.setSuppressXhtml("Snipped for Brevity");
+//      json.setSuppressXhtml("Snipped for Brevity");
       json.compose(bytes, VersionConvertorFactory_40_50.convertResource(r));      
     } else {
       IParser json = new JsonParser().setOutputStyle(OutputStyle.PRETTY);
-      json.setSuppressXhtml("Snipped for Brevity");
+//      json.setSuppressXhtml("Snipped for Brevity");
       json.compose(bytes, r);
     }
     bytes.close();
@@ -3964,11 +3964,11 @@ public class Publisher implements URIResolver, SectionNumberer {
     ByteArrayOutputStream bytes = new ByteArrayOutputStream();
     if (VersionUtilities.isR4BVer(page.getVersion().toCode())) {
       org.hl7.fhir.r4.formats.IParser rdf = new org.hl7.fhir.r4.formats.RdfParser().setOutputStyle(org.hl7.fhir.r4.formats.IParser.OutputStyle.PRETTY);
-      rdf.setSuppressXhtml("Snipped for Brevity");
+//      rdf.setSuppressXhtml("Snipped for Brevity");
       rdf.compose(bytes, VersionConvertorFactory_40_50.convertResource(r));
     } else {
       IParser rdf = new RdfParser().setOutputStyle(OutputStyle.PRETTY);
-      rdf.setSuppressXhtml("Snipped for Brevity");
+//      rdf.setSuppressXhtml("Snipped for Brevity");
       rdf.compose(bytes, r);      
     }
     bytes.close();
@@ -4236,7 +4236,7 @@ public class Publisher implements URIResolver, SectionNumberer {
     String mappingsList = mgen.getMappingsList();
 
     if (!logicalOnly) {
-      SvgGenerator svg = new SvgGenerator(page, "", resource.getLayout(), true, false, page.getVersion());
+      SvgGenerator svg = new SvgGenerator(page, "", resource.getLayout(), true, "", page.getVersion());
       svg.generate(resource, page.getFolders().dstDir + n + ".svg", "1");
       svg.generate(resource, Utilities.path(page.getFolders().srcDir, n, n + ".gen.svg"), "1");
   
@@ -5526,7 +5526,7 @@ public class Publisher implements URIResolver, SectionNumberer {
     String mappings = mgen.getMappings();
     String mappingsList = mgen.getMappingsList();
 
-    SvgGenerator svg = new SvgGenerator(page, "", lm.getLayout(), true, false, page.getVersion());
+    SvgGenerator svg = new SvgGenerator(page, "", lm.getLayout(), true, "", page.getVersion());
     String fn = ig.getPrefix()+n;
     if (lm.hasResource())
       svg.generate(lm.getResource(), page.getFolders().dstDir + fn+".svg", "2");
