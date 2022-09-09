@@ -159,16 +159,16 @@ public class SvgGenerator extends BaseGenerator {
   private String prefix;
   private Map<String, PointSpec> layout;
   private boolean makeTargets;
-  private boolean isDatatypes;
+  private String suffix;
   private FHIRVersion version;
 
-  public SvgGenerator(PageProcessor page, String prefix, Map<String, PointSpec> layout, boolean makeTargets, boolean isDatatypes, FHIRVersion version) {
+  public SvgGenerator(PageProcessor page, String prefix, Map<String, PointSpec> layout, boolean makeTargets, String suffix, FHIRVersion version) {
     this.definitions = page.getDefinitions();
     this.page = page;
     this.prefix = prefix;
     this.layout = layout;
     this.makeTargets = makeTargets;
-    this.isDatatypes = isDatatypes;
+    this.suffix = suffix;
     this.version = version;
   }
   
@@ -849,14 +849,14 @@ public class SvgGenerator extends BaseGenerator {
         xml.attribute("style", "font-style: italic");
       }
       xml.enter("text");
-      xml.attribute("xlink:href", makeRel(definitions.getSrcFile(tn)+".html#"+tn));
+      xml.attribute("xlink:href", makeLink(tn));
       xml.attribute("id", "n"+(++nc));
       xml.enter("a");
       xml.text(tn);
       xml.exit("a");
       if (definitions.getBaseResources().containsKey(e.getName()) && definitions.getBaseResources().get(e.getName()).isInterface()) {
         xml.text(" ");
-        xml.attribute("xlink:href", makeRel("uml.html#interface"));
+        xml.attribute("xlink:href", "uml.html#interface");
         xml.enter("a");
         xml.text("«Interface»");
         xml.exit("a");
@@ -876,13 +876,13 @@ public class SvgGenerator extends BaseGenerator {
         xml.enter("tspan");
         if (Utilities.existsInList(e.typeCode(), definitions.getInterfaceNames()) && !Utilities.existsInList(e.getName(), definitions.getInterfaceNames())) {
           xml.text(" (");
-          xml.attribute("xlink:href", prefix+definitions.getSrcFile("DomainResource")+".html#"+"DomainResource");
+          xml.attribute("xlink:href", prefix+makeLink("DomainResource"));
           xml.attribute("class", "diagram-class-reference");
           xml.attribute("id", "n"+(++nc));
           xml.attribute("style", "font-style: italic");
           xml.element("a", "DomainResource");
           xml.text(") +");
-          xml.attribute("xlink:href", prefix+definitions.getSrcFile(e.typeCode())+".html#"+e.typeCode());
+          xml.attribute("xlink:href", prefix+definitions.getSrcFile(e.typeCode())+suffix+".html#"+e.typeCode());
           xml.attribute("class", "diagram-class-reference");
           xml.attribute("id", "n"+(++nc));
           xml.attribute("style", "font-style: italic");
@@ -892,7 +892,7 @@ public class SvgGenerator extends BaseGenerator {
           if ("Logical".equals(e.typeCode())) {
             xml.attribute("xlink:href", prefix+definitions.getBaseLink());
           } else {
-            xml.attribute("xlink:href", prefix+definitions.getSrcFile(e.typeCode())+".html#"+e.typeCode());
+            xml.attribute("xlink:href", prefix+makeLink(e.typeCode()));
           }
           xml.attribute("class", "diagram-class-reference");
           xml.attribute("id", "n"+(++nc));
@@ -908,14 +908,14 @@ public class SvgGenerator extends BaseGenerator {
       }
       if ("Logical".equals(e.typeCode())) {
         xml.text(" ");
-        xml.attribute("xlink:href", makeRel("uml.html#pattern"));
+        xml.attribute("xlink:href", ("uml.html#pattern"));
         xml.enter("a");
         xml.text("«Pattern»");
         xml.exit("a");        
       }
       if (definitions.getBaseResources().containsKey(e.getName()) && definitions.getBaseResources().get(e.getName()).isInterface()) {
         xml.text(" ");
-        xml.attribute("xlink:href", makeRel("uml.html#interface"));
+        xml.attribute("xlink:href", ("uml.html#interface"));
         xml.enter("a");
         xml.text("«Interface»");
         xml.exit("a");
@@ -960,6 +960,52 @@ public class SvgGenerator extends BaseGenerator {
       }
     }
     return item;  
+  }
+
+  private String makeLink(String tn) {
+    String src = definitions.getSrcFile(tn);
+    String sfx = suffix;
+    if (src.equals("metadatatypes")) {
+      if (Utilities.existsInList(sfx, "-extras", "-version-maps")) {
+        sfx = "";
+      }
+    }
+    if (src.equals("types")) {
+      if (Utilities.existsInList(sfx, "-examples", "-version-maps")) {
+        sfx = "";
+      }
+    }
+    if (src.equals("references")) {
+      if (Utilities.existsInList(sfx, "-examples", "-mappings", "-version-maps")) {
+        sfx = "";
+      }
+    }
+    if (src.equals("narrative")) {
+      if (Utilities.existsInList(sfx, "-extras", "-mappings", "-examples", "-version-maps")) {
+        sfx = "";
+      }
+    }
+    if (src.equals("extensibility")) {
+      if (Utilities.existsInList(sfx, "-examples", "-mappings", "-extras", "-version-maps")) {
+        sfx = "";
+      }
+    }
+    if (src.equals("resource")) {
+      if (Utilities.existsInList(sfx, "-examples", "-mappings", "-extras", "-version-maps")) {
+        sfx = "";
+      }
+    }
+    if (src.equals("elementdefinition")) {
+      if (Utilities.existsInList(sfx, "-version-maps")) {
+        sfx = "";
+      }
+    }
+    if (src.equals("dosage")) {
+      if (Utilities.existsInList(sfx, "-version-maps")) {
+        sfx = "";
+      }
+    }
+    return src+sfx+".html#"+tn;
   } 
 
   private String getXsi(DefinedCode primitive) {
@@ -1371,27 +1417,20 @@ public class SvgGenerator extends BaseGenerator {
       return tc.length();
     } else if (definitions.getConstraints().containsKey(tc)) {
       ProfiledType pt = definitions.getConstraints().get(tc);
-      xml.attribute("xlink:href", makeRel(prefix+definitions.getSrcFile(pt.getBaseType()) + ".html#" + pt.getBaseType()));
+      xml.attribute("xlink:href", (prefix+makeLink(pt.getBaseType())));
       xml.attribute("id", "n"+(++nc));
       xml.element("a", ls.see(pt.getBaseType()));
       xml.text(ls.see("("));
-      xml.attribute("xlink:href", makeRel(prefix+definitions.getSrcFile(tc) + ".html#" + tc));
+      xml.attribute("xlink:href", (prefix+makeLink(tc)));
       xml.element("a", ls.see(tc));
       xml.text(ls.see(")"));
       return tc.length()+2+pt.getBaseType().length();
     } else {
-      xml.attribute("xlink:href", makeRel(prefix+definitions.getSrcFile(tc) + ".html#" + tc));
+      xml.attribute("xlink:href", (prefix+makeLink(tc)));
       xml.attribute("id", "n"+(++nc));
       xml.element("a", ls.see(tc));
       return tc.length();
     }
-  }
-
-  private String makeRel(String link) {
-//    if (isDatatypes && link.startsWith(prefix+"datatypes.html#"))
-//      return link.substring(link.indexOf("#"));
-//    else
-      return link;
   }
 
 
