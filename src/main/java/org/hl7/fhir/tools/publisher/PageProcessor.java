@@ -1328,6 +1328,8 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
         src = s1+TEST_SERVER_URL+s3;
       } else if (com[0].equals("example-cross-reference")) { 
         src = s1+genExampleXRef(type, name, resource)+s3;
+      } else if (com[0].equals("jira-link")) { 
+        src = s1+genJiralink(file, null)+s3;
       } else if (com[0].equals("multi-language-resources")) { 
         src = s1+getMultiLanguageResourceList()+s3;        
       } else if (macros.containsKey(com[0])) {
@@ -1336,6 +1338,13 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
         throw new Exception("Instruction <%"+s2+"%> not understood parsing page "+file);
     }
     return src;
+  }
+
+  private String genJiralink(String file, String rn) {
+    String url = Utilities.pathURL(baseURL, file);
+    return "https://jira.hl7.org/secure/CreateIssueDetails!init.jspa?pid=10405&amp;issuetype=10600&amp;customfield_11302=FHIR-core&amp;"+
+        "customfield_11808=R5&amp;customfield_10612="+url/*+(rn = null ? "" : "&amp;customfield_11300="+rn)*/;
+
   }
 
   private String fileSuffix(String file) {
@@ -6324,6 +6333,8 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
         src = s1+definitions.getResources().size()+s3;        
       } else if (macros.containsKey(com[0])) {
         src = s1+macros.get(com[0])+s3;
+      } else if (com[0].equals("jira-link")) { 
+        src = s1+genJiralink(pagePath, resource.getName())+s3;
       } else
         throw new Exception("Instruction <%"+s2+"%> not understood parsing resource "+name);
     }
@@ -8578,6 +8589,8 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
          src = s1+definitions.getResources().size()+s3;        
        } else if (macros.containsKey(com[0])) {
          src = s1+macros.get(com[0])+s3;
+       } else if (com[0].equals("jira-link")) { 
+         src = s1+genJiralink(filename, profile.getDefn() != null ? profile.getDefn().getName() : null)+s3;
        } else
          throw new Exception("Instruction <%"+s2+"%> not understood parsing resource "+filename);
     }
@@ -9073,6 +9086,8 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
         src = s1 + ed.getStatus().toCode() + s3;
       } else if (macros.containsKey(com[0])) {
         src = s1+macros.get(com[0])+s3;
+      } else if (com[0].equals("jira-link")) { 
+        src = s1+genJiralink(filename, "Extension")+s3;
       } else
         throw new Exception("Instruction <%"+s2+"%> not understood parsing resource "+filename);
     }
@@ -9869,7 +9884,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     return null;
   }
 
-  public String processConformancePackageIncludes(Profile pack, String src, String intro, String notes, String resourceName, ImplementationGuideDefn ig) throws Exception {
+  public String processConformancePackageIncludes(Profile pack, String src, String intro, String notes, String resourceName, ImplementationGuideDefn ig, String filename) throws Exception {
     String workingTitle = null;
     int level = (ig == null || ig.isCore()) ? 0 : 1;
     //boolean even = false;
@@ -10015,6 +10030,8 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
           src = s1+ "<a _target=\"blank\" href=\""+definitions.getWorkgroups().get(wg).getUrl()+"\">"+definitions.getWorkgroups().get(wg).getName()+"</a> Work Group"+s3;
       } else if (com[0].equals("res-type-count")) { 
         src = s1+definitions.getResources().size()+s3;        
+      } else if (com[0].equals("jira-link")) { 
+        src = s1+genJiralink(filename, resourceName)+s3;
       } else if (macros.containsKey(com[0])) {
         src = s1+macros.get(com[0])+s3;
       } else

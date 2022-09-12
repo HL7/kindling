@@ -5157,7 +5157,7 @@ public class Publisher implements URIResolver, SectionNumberer {
 
     if (!("profile".equals(pack.metadata("navigation")) && pack.getProfiles().size() == 1)) {
       String src = TextFile.fileToString(page.getFolders().templateDir + "template-conformance-pack.html");
-      src = page.processConformancePackageIncludes(pack, src, intro, notes, resourceName, ig);
+      src = page.processConformancePackageIncludes(pack, src, intro, notes, resourceName, ig, pack.getId().toLowerCase() + ".html");
       if (st != null)
         src = insertSectionNumbers(src, st, pack.getId().toLowerCase() + ".html",  0, null);
       else if (ig != null && !ig.isCore())
