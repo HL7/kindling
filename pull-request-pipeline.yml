@@ -15,15 +15,15 @@ jobs:
           vmImage: ubuntu-latest
           jdkVersion: 1.11
           javaToolOptions: -Dfile.encoding=Cp1252
-        - displayName: ubuntu-latest-java-11
+        - displayName: linux
           vmImage: ubuntu-latest
           jdkVersion: 1.11
           javaToolOptions:
-        - displayName: macos-latest-java-11
+        - displayName: macos
           vmImage: macos-latest
           jdkVersion: 1.11
           javaToolOptions:
-        - displayName: windows-latest-java-11
+        - displayName: windows
           vmImage: windows-latest
           jdkVersion: 1.11
           javaToolOptions:
