@@ -139,7 +139,7 @@ dependencies {
     implementation("com.squareup.okio", "okio", "2.9.0")
     implementation("org.jetbrains.kotlin", "kotlin-stdlib", "1.4.21")
 
-    testImplementation("junit", "junit", "4.12")
+    testImplementation("org.junit.jupiter","junit-jupiter","5.8.2")
 }
 
 configurations {
@@ -215,6 +215,7 @@ signing {
 
 tasks {
     test {
+        useJUnitPlatform()
         testLogging.showExceptions = true
     }
 }
