@@ -4,27 +4,26 @@ trigger: none
 pr:
 - main
 
-# Different users have different machine setups, we run the build three times, on ubuntu, osx, and windows
-strategy:
-  matrix:
-    linux:
-      imageName: "ubuntu-latest"
-    mac:
-      imageName: "macos-latest"
-    windows:
-      imageName: "windows-latest"
-  maxParallel: 3
-
-steps:
-  # Perform a clean and build
-  - task: Gradle@2
-    inputs:
-      workingDirectory: ''
-      gradleWrapperFile: 'gradlew'
-      gradleOptions: '-Xmx3072m'
-      javaHomeOption: 'JDKVersion'
-      jdkVersionOption: '1.11'
-      jdkArchitectureOption: 'x64'
-      publishJUnitResults: true
-      testResultsFiles: '**/TEST-*.xml'
-      tasks: 'clean build'
+# Different users have different machine setups, we run the build three times, on ubuntu, osx, and windows.
+# Azure doesn't always have the same Java versions on each system, so they are enumerated for each system independently.
+jobs:
+  - template: pull-request-pipeline-parameterized.yml
+    parameters:
+      images:
+        # This image is here so that at least one job specifically sets Cp1252 file encodings, which are normally set by the JDK (which Azure can change on each latest image)
+        - displayName: ubuntu-latest-java-17-cp1252
+          vmImage: ubuntu-latest
+          jdkVersion: 1.11
+          javaToolOptions: -Dfile.encoding=Cp1252
+        - displayName: ubuntu-latest-java-11
+          vmImage: ubuntu-latest
+          jdkVersion: 1.11
+          javaToolOptions:
+        - displayName: macos-latest-java-11
+          vmImage: macos-latest
+          jdkVersion: 1.11
+          javaToolOptions:
+        - displayName: windows-latest-java-11
+          vmImage: windows-latest
+          jdkVersion: 1.11
+          javaToolOptions:
