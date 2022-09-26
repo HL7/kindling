@@ -10,7 +10,7 @@ public class TestTest {
     @Test
     public void testTheTests() {
         System.out.println("Testing, 1, 2, 3.");
-        assertTrue(true, "Should be true.");
+        assertTrue(false, "Should be true.");
     }
 
 }
