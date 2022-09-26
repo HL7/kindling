@@ -15,7 +15,6 @@ public class ExampleTest {
         String path = "src/test/resources/examples/observation-unicode-example.xml";
 
         File file = new File(path);
-        String absolutePath = file.getAbsolutePath();
         Example example = new Example("dummyName",
                "dummyId",
                "dummyDescription",
