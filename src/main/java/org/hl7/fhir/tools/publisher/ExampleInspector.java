@@ -331,7 +331,7 @@ public class ExampleInspector implements IValidatorResourceFetcher, IValidationP
       validateJson(Utilities.path(rootDir, n+".json"), profile == null ? null : profile.getId());
       validateRDF(Utilities.path(rootDir, n+".ttl"), Utilities.path(rootDir, n+".jsonld"), rt);
       
-      checkSearchParameters(xe, e);
+      checkSearchParameters(e, e);
     } catch (Exception e) {
       e.printStackTrace();
       errorsInt.add(new ValidationMessage(Source.InstanceValidator, IssueType.STRUCTURE, -1, -1, n, e.getMessage(), IssueSeverity.ERROR));
@@ -435,9 +435,9 @@ public class ExampleInspector implements IValidatorResourceFetcher, IValidationP
   }
 
 
-  private void checkSearchParameters(org.w3c.dom.Element xe, Element e) throws FHIRException {
+  private void checkSearchParameters(Element xe, Element e) throws FHIRException {
     // test the base
-    testSearchParameters(xe, xe.getTagName(), false);
+    testSearchParameters(xe, xe.getName(), false);
     testSearchParameters(e);
     
     if (e.fhirType().equals("Bundle")) {
@@ -481,23 +481,17 @@ public class ExampleInspector implements IValidatorResourceFetcher, IValidationP
     }
   }
   
-  private void testSearchParameters(org.w3c.dom.Element xe, String rn, boolean inBundle) throws FHIRException {
+  private void testSearchParameters(Element xe, String rn, boolean inBundle) throws FHIRException {
     ResourceDefn r = definitions.getResources().get(rn);
     for (SearchParameterDefn sp : r.getSearchParams().values()) {
-      if (!sp.isXPathDone() && !Utilities.noString(sp.getXPath())) {
+      if (!sp.isTested() && !Utilities.noString(sp.getExpression())) {
         try {
-          sp.setXPathDone(true);
-          NamespaceContext context = new NamespaceContextMap("f", "http://hl7.org/fhir", "h", "http://www.w3.org/1999/xhtml");
-          XPathFactory factory = XPathFactory.newInstance();
-          XPath xpath = factory.newXPath();
-          xpath.setNamespaceContext(context);
-          XPathExpression expression;
-          expression = inBundle ? xpath.compile("/f:Bundle/f:entry/f:resource/"+sp.getXPath()) : xpath.compile("/"+sp.getXPath());
-          NodeList resultNodes = (NodeList) expression.evaluate(xe, XPathConstants.NODESET);
-          if (resultNodes.getLength() > 0)
+          sp.setTested(true);
+          List<Base> nodes = fpe.evaluate(xe, sp.getExpression());
+          if (nodes.size() > 0)
             sp.setWorks(true);
         } catch (Exception e1) {
-          throw new FHIRException("Xpath \"" + sp.getXPath() + "\" execution failed: " + e1.getMessage(), e1);
+          throw new FHIRException("Expression \"" + sp.getExpression() + "\" execution failed: " + e1.getMessage(), e1);
         }
       }
     }
@@ -551,7 +545,10 @@ public class ExampleInspector implements IValidatorResourceFetcher, IValidationP
       for (Example e : r.getExamples()) {
         if (e.getElement() == null && e.hasXml()) {
           e.setElement(new org.hl7.fhir.r5.elementmodel.XmlParser(context).parse(e.getXml()));
-          if (e.getElement().getProperty().getStructure().getBaseDefinition().contains("MetadataResource")) {
+          if (e.getElement() != null &&
+              e.getElement().getProperty().getStructure() != null &&
+              e.getElement().getProperty().getStructure().getBaseDefinition() != null &&
+              e.getElement().getProperty().getStructure().getBaseDefinition().contains("MetadataResource")) {
             String urle = e.getElement().getChildValue("url");
             String v = e.getElement().getChildValue("url");
             if (urle != null && urle.startsWith("http://hl7.org/fhir") && !version.toCode().equals(v)) {

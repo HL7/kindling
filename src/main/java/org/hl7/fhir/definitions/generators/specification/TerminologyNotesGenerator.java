@@ -182,7 +182,13 @@ public class TerminologyNotesGenerator extends OutputStreamWriter {
         write(list.get(i).path);          
       }
       write(" </td>");
-      write("<td valign=\"top\">"+Utilities.escapeXml(cd.getDefinition())+"</td>");
+      if (cd.getValueSet() != null) {
+        write("<td valign=\"top\">");
+        write(page.processMarkdown("vs.description", cd.getValueSet().getDescription(), ""));
+        write("</td>");
+      } else {
+        write("<td valign=\"top\">"+Utilities.escapeXml(cd.getDefinition())+"</td>");
+      }
       if (cd.getBinding() == BindingMethod.Unbound)
         write("<td>Unknown</td><td valign=\"top\">No details provided yet</td>");
       else { 

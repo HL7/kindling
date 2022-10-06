@@ -1,0 +1,26 @@
+jobs:
+  - ${{ each image in parameters.images }}:
+      - job:
+
+        displayName: ${{image.displayName}}
+        
+        pool:
+          vmImage: ${{image.vmImage}}
+        
+        variables:
+          currentImage: ${{image.vmImage}}
+          JAVA_TOOL_OPTIONS: ${{image.javaToolOptions}}
+
+        steps:
+          # Runs 'mvn clean install'
+          - task: Gradle@2
+            inputs:
+              workingDirectory: ''
+              gradleWrapperFile: 'gradlew'
+              gradleOptions: '-Xmx3072m'
+              javaHomeOption: 'JDKVersion'
+              jdkVersionOption: '${{image.jdkVersion}}'
+              jdkArchitectureOption: 'x64'
+              publishJUnitResults: true
+              testResultsFiles: '**/TEST-*.xml'
+              tasks: 'clean build'

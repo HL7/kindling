@@ -409,11 +409,10 @@ public class ResourceParser {
       src.setName(src.getCode());
     }
     src.setVersion(version);
-    SearchParameterDefn sp = new SearchParameterDefn(src.getCode(), src.getDescription(), type(src.getType()), src.getXpathUsage(), 
+    SearchParameterDefn sp = new SearchParameterDefn(src.getCode(), src.getDescription(), type(src.getType()), src.getProcessingMode(), 
         StandardsStatus.fromCode(BuildExtensions.readStringExtension(src, "http://hl7.org/fhir/StructureDefinition/structuredefinition-standards-status")));
     r.getSearchParams().put(sp.getCode(), sp);
     sp.setExpression(src.getExpression());
-    sp.setXPath(src.getXpath());
     sp.setResource(src);
     String s = BuildExtensions.readStringExtension(src, BuildExtensions.EXT_PATH);
     if (!Utilities.noString(s)) {

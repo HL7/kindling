@@ -482,7 +482,7 @@ public class Regenerator {
       sp.setUrl("http://hl7.org/fhir/build/SearchParameter/"+sp.getId());
       sp.setCode(spd.getCode());
       sp.setDescription(spd.getDescription());
-      sp.setXpath(spd.getXPath());
+//      sp.setXpath(spd.getXPath());
       switch (spd.getType()) {
       case composite: sp.setType(SearchParamType.COMPOSITE); break;
       case date: sp.setType(SearchParamType.DATE); break;
@@ -494,7 +494,7 @@ public class Regenerator {
       case token: sp.setType(SearchParamType.TOKEN); break;
       case uri: sp.setType(SearchParamType.URI); break;
       }
-      sp.setXpathUsage(spd.getxPathUsage());
+      sp.setProcessingMode(spd.getProcessingMode());
       CommaSeparatedStringBuilder b = new CommaSeparatedStringBuilder(",");
       for (String p : spd.getPaths()) {
         b.append(p);

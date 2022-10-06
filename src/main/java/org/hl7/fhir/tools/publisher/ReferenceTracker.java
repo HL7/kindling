@@ -110,9 +110,9 @@ public class ReferenceTracker {
       build(RefType.INHERITS, "Inherits From", b, name);
       build(RefType.RESOURCE_IMPL, "Implements", b, name);
       build(RefType.PATTERN_IMPL, "Implemented by", b, name);
-      build(RefType.RESOURCE_REF, "Resource References: ", b, name);
-      build(RefType.EXTENSION_REF, "Extension References: ", b, name);
-      build(RefType.PROFILE_REF, "Profile References: ", b, name);
+      build(RefType.RESOURCE_REF, "Resource References", b, name);
+      build(RefType.EXTENSION_REF, "Extension References", b, name);
+      build(RefType.PROFILE_REF, "Profile References", b, name);
       b.append("</ul>");
     }
     return b.toString();    
@@ -126,7 +126,7 @@ public class ReferenceTracker {
       int c = 0;
       for (RefDetails rd : l) {
         String t = rd.getHints().size() > 0 ? "title=\""+String.join(",", rd.getHints())+"\" " : "";
-        
+
         c++;
         if (c == MAX_DEF_SHOW && l.size() > MAX_DEF_SHOW) {
           b.append("<span id=\"rr_"+key+"\" onClick=\"document.getElementById('rr_"+key+"').innerHTML = document.getElementById('rr2_"+key+"').innerHTML\">..."+
@@ -134,8 +134,8 @@ public class ReferenceTracker {
               "Show "+(l.size()-MAX_DEF_SHOW+1)+" more</span></span><span id=\"rr2_"+key+"\" style=\"display: none\">");
 
 
-       }
-        if (c == l.size()) {
+        }
+        if (c == l.size() && c != 1) {
           b.append(" and ");
         } else if (c > 1) {
           b.append(", ");

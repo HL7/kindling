@@ -104,7 +104,7 @@ public class SpecNPMPackageGenerator {
       ManifestResourceComponent r = ig.getManifest().addResource();
       r.setReference(new Reference(e.type+"/"+e.id));
       if (e.conf)
-        r.setExample(new BooleanType(true));
+        r.setIsExample(true);
       r.setRelativePath(spm.getPath(e.canonical, null));  
     }
     for (String k : files.keySet()) {

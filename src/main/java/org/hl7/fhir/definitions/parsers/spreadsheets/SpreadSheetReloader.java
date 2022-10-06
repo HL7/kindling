@@ -35,7 +35,7 @@ import org.hl7.fhir.r5.model.ElementDefinition.ElementDefinitionBindingComponent
 import org.hl7.fhir.r5.model.ElementDefinition.ElementDefinitionConstraintComponent;
 import org.hl7.fhir.r5.model.ElementDefinition.TypeRefComponent;
 import org.hl7.fhir.r5.model.Enumerations.BindingStrength;
-import org.hl7.fhir.r5.model.Enumerations.FHIRAllTypes;
+import org.hl7.fhir.r5.model.Enumerations.FHIRTypes;
 import org.hl7.fhir.r5.model.Enumerations.OperationParameterUse;
 import org.hl7.fhir.r5.model.Enumerations.PublicationStatus;
 import org.hl7.fhir.r5.model.Enumerations.SearchParamType;
@@ -192,7 +192,7 @@ public class SpreadSheetReloader extends SpreadSheetBase {
     inv.setSeverity(ConstraintSeverity.fromCode(getValue(row, cols, CN_SEVERITY)));
     inv.setHuman(getValue(row, cols, CN_ENGLISH));
     inv.setExpression(getValue(row, cols, CN_EXPRESSION));
-    inv.setXpath(getValue(row, cols, CN_X_PATH));
+//    inv.setXpath(getValue(row, cols, CN_X_PATH));
   }
 
   private ElementDefinitionConstraintComponent getInv(List<ElementDefinitionConstraintComponent> list, String n) {
@@ -532,7 +532,7 @@ public class SpreadSheetReloader extends SpreadSheetBase {
     sp.setType(SearchParamType.fromCode(getValue(row, cols, CN_TYPE)));
     sp.setExpression(getValue(row, cols, CN_EXPRESSION));
     sp.setDescription(getValue(row, cols, CN_DESCRIPTION));
-    sp.setXpath(getValue(row, cols, CN_X_PATH));
+//    sp.setXpath(getValue(row, cols, CN_X_PATH));
     sp.getTarget().clear();
     for (String s : splitValue(row, cols, CN_TARGET_TYPES, "\\|")) {
       sp.getTarget().add(new CodeType(s));
@@ -743,7 +743,7 @@ public class SpreadSheetReloader extends SpreadSheetBase {
     String t = getValue(row, cols, CN_TYPE);
     if (!Utilities.noString(t)) {
       if (t.contains(" | ")) {
-        param.setType(FHIRAllTypes.ELEMENT);
+        param.setType(FHIRTypes.ELEMENT);
         for (String s : t.split("\\|")) {
           param.addExtension(BuildExtensions.EXT_ALLOWED_TYPE, new UriType(s.trim()));
         }
@@ -752,7 +752,7 @@ public class SpreadSheetReloader extends SpreadSheetBase {
           param.setSearchType(SearchParamType.fromCode(t.substring(t.lastIndexOf("/")+1).trim()));
           t = t.substring(0, t.indexOf("/")).trim();
         }
-        param.setType(FHIRAllTypes.fromCode(t));
+        param.setType(FHIRTypes.fromCode(t));
       }
     }
 

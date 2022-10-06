@@ -28,19 +28,21 @@ POSSIBILITY OF SUCH DAMAGE.
 */
 package org.hl7.fhir.tools.publisher;
 
+import org.hl7.fhir.utilities.StandardsStatus;
+
 public class TocEntry {
 
   private String value;
   private String text;
   private String link;
-  private boolean isIg;
+  private StandardsStatus status;
   
-  public TocEntry(String value, String text, String link, boolean isIg) {
+  public TocEntry(String value, String text, String link, StandardsStatus status) {
     super();
     this.value = value;
     this.text = text;
     this.link = link;
-    this.isIg = isIg;
+    this.status = status;
   }
   public String getValue() {
     return value;
@@ -51,10 +53,31 @@ public class TocEntry {
   public String getLink() {
     return link;
   }
-  public boolean isIg() {
-    return isIg;
+  public StandardsStatus getStatus() {
+    return status;
   }
   public void setText(String string) {
    text = string;    
+  }
+  public String getIcon() {
+    if (status == null) {
+      return "icon_page_0.gif";
+    }
+    switch (status) {
+    case DEPRECATED:
+      return "icon_page_dep.gif";
+    case DRAFT:
+      return "icon_page_d.gif";
+    case EXTERNAL:
+      return "icon_page.gif";
+    case INFORMATIVE:
+      return "icon_page_i.gif";
+    case NORMATIVE:
+      return "icon_page_n.gif";
+    case TRIAL_USE:
+      return "icon_page_tu.gif";
+    default:
+      return "icon_page_0.gif";
+    }
   }
 }

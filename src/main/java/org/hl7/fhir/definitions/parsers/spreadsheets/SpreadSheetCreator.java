@@ -728,7 +728,6 @@ public class SpreadSheetCreator extends SpreadSheetBase {
     addCell(ext(sp, BuildExtensions.EXT_PATH), row, columnCount++); 
     addCell(sp.getExpression(), row, columnCount++); 
     addCell(sp.getDescription(), row, columnCount++); 
-    addCell(sp.getXpath(), row, columnCount++); 
     addCell(ext(sp, BuildExtensions.EXT_COMMITTEE_NOTES), row, columnCount++);
   }
 
@@ -750,7 +749,6 @@ public class SpreadSheetCreator extends SpreadSheetBase {
     addCellHeading(CN_PATH, row, sheet, columnCount++, 30);
     addCellHeading(CN_EXPRESSION, row, sheet, columnCount++, 30);
     addCellHeading(CN_DESCRIPTION, row, sheet, columnCount++, 30);
-    addCellHeading(CN_X_PATH, row, sheet, columnCount++, 30);
     addCellHeading(CN_COMMITTEE_NOTES, row, sheet, columnCount++, 30);   
     sheet.createFreezePane(1, 1);
   }
