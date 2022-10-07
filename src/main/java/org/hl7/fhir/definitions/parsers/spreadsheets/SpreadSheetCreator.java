@@ -195,7 +195,7 @@ public class SpreadSheetCreator extends SpreadSheetBase {
   private void addElements(XSSFSheet resources, XSSFSheet bindings, XSSFSheet invariants, ElementDefinition ed, int rowCount) throws IOException {
     Row row = resources.createRow(rowCount);    
     int columnCount = 0;
-    ed.removeExtension("http://hl7.org/fhir/StructureDefinition/elementdefinition-heirarchy");
+    ed.removeExtension(ToolingExtensions.EXT_ED_HEIRARCHY);
     addCell(ed.getPath(), row, columnCount++); // Path
     addCell(aliases(ed), row, columnCount++); // Aliases
     addCell(ed.getMin()+".."+ed.getMax(), row, columnCount++); // Card.

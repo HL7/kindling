@@ -1523,7 +1523,7 @@ public class ProfileGenerator {
     } else {
       dst.setStrength(BindingStrength.EXAMPLE);    
     }
-    dst.addExtension().setUrl("http://hl7.org/fhir/StructureDefinition/elementdefinition-bindingName").setValue(new StringType(src.getName()));
+    dst.addExtension().setUrl(ToolingExtensions.EXT_BINDING_NAME).setValue(new StringType(src.getName()));
     if (src.isShared())
       dst.addExtension().setUrl("http://hl7.org/fhir/StructureDefinition/elementdefinition-isCommonBinding").setValue(new BooleanType(true));
     return dst;
@@ -1749,7 +1749,7 @@ public class ProfileGenerator {
           }
           if (t.getPatterns() != null) {
             for (String s : t.getPatterns()) {
-              type.addExtension("http://hl7.org/fhir/StructureDefinition/elementdefinition-pattern", new CanonicalType("http://hl7.org/fhir/StructureDefinition/"+s));
+              type.addExtension(ToolingExtensions.EXT_PATTERN, new CanonicalType("http://hl7.org/fhir/StructureDefinition/"+s));
             }
           }
           if (profile != null) {
@@ -1796,7 +1796,7 @@ public class ProfileGenerator {
     if (w5 != null)
       addMapping(p, ce, "http://hl7.org/fhir/fivews", w5, ap);
     if (e.isTranslatable())
-      ce.addExtension("http://hl7.org/fhir/StructureDefinition/elementdefinition-translatable", new BooleanType(true));
+      ce.addExtension(ToolingExtensions.EXT_TRANSLATABLE, new BooleanType(true));
     if (!Utilities.noString(e.getOrderMeaning()))
         ce.setOrderMeaning(e.getOrderMeaning());
     
@@ -2493,7 +2493,7 @@ public class ProfileGenerator {
         throw new Error("Max binding not handled yet");
       pp.setBinding(new OperationDefinitionParameterBindingComponent().setStrength(p.getBs().getStrength()).setValueSet(buildValueSetReference(p.getBs())));
       if (!Utilities.noString(p.getBinding().getName())) {
-        pp.getBinding().addExtension("http://hl7.org/fhir/StructureDefinition/elementdefinition-bindingName", new StringType(p.getBinding().getName()));
+        pp.getBinding().addExtension(ToolingExtensions.EXT_BINDING_NAME, new StringType(p.getBinding().getName()));
       }
     }
     if (!Utilities.noString(p.getProfile())) {

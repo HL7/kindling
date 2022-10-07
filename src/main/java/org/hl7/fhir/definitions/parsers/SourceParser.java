@@ -241,17 +241,17 @@ public class SourceParser {
     }
 
     for (String n : ini.getPropertyNames("infrastructure")) {
-      loadCompositeType(n, definitions.getInfrastructure(), "5", "abstract".equals(ini.getStringProperty("infrastructure", n)));
+      loadCompositeType(n, definitions.getInfrastructure(), getFmmForType(n, "5"), "abstract".equals(ini.getStringProperty("infrastructure", n)));
     }
 
     for (String n : ini.getPropertyNames("types")) {
-      loadCompositeType(n, definitions.getTypes(), "5", "abstract".equals(ini.getStringProperty("types", n)));
+      loadCompositeType(n, definitions.getTypes(), getFmmForType(n, "5"), "abstract".equals(ini.getStringProperty("types", n)));
     }
 
     String[] shared = ini.getPropertyNames("shared"); 
     if (shared != null) {
       for (String n : shared ) {
-        definitions.getShared().add(loadCompositeType(n, definitions.getTypes(), "2", "abstract".equals(ini.getStringProperty("shared", n))));
+        definitions.getShared().add(loadCompositeType(n, definitions.getTypes(), getFmmForType(n, "2"), "abstract".equals(ini.getStringProperty("shared", n))));
       }
     }
 
@@ -359,6 +359,17 @@ public class SourceParser {
     }
     closeTemplates();    
   }
+
+  private String getFmmForType(String n, String def) {
+    if (ini.hasProperty("fmm-dt", n)) {
+      return ini.getStringProperty("fmm-dt", n);
+    } else {
+      return def;
+    }
+  }
+
+
+
 
   private void findValueSets(ElementDefn ed) {
     if (ed.getBinding() != null) {
@@ -904,7 +915,7 @@ public class SourceParser {
     CodeSystem cs = (CodeSystem) xml.parse(new CSFileInputStream(fn));
     if (!cs.hasId())  
       cs.setId(FormatUtilities.makeId(n));
-    if (cs.getUrl().startsWith("http://hl7.org/fhir"))
+    if (cs.getUrl().startsWith("http://hl7.org/fhir") || !cs.hasVersion())
       cs.setVersion(version.toCode());
     cs.setUserData("path", "codesystem-"+cs.getId()+".html");
     cs.setUserData("filename", "codesystem-"+cs.getId());
