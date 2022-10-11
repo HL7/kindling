@@ -1342,8 +1342,11 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     return src;
   }
 
-  private String buildDTStatus(String tn) {
-    TypeDefn td =  definitions.getTypes().get(tn);
+  private String buildDTStatus(String tn) throws Exception {
+    TypeDefn td =  definitions.getElementDefn(tn);
+    if (td == null) {
+      throw new Error("not found: "+tn);
+    }
     String clss = fmmBarColorStyle(td.getStandardsStatus(), td.getFmmLevel());
     String wgref = "http://www.hl7.org/Special/committees/fiwg/index.cfm";
     String wgn = "FHIR Infrastructure";
