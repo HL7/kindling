@@ -453,6 +453,8 @@ public class Publisher implements URIResolver, SectionNumberer {
   private IniFile apiKeyFile;
 
   public static void main(String[] args) throws Exception {
+    org.hl7.fhir.utilities.FileFormat.checkCharsetAndWarnIfNotUTF8(System.out);
+
     Publisher pub = new Publisher();
     pub.page = new PageProcessor(KindlingConstants.DEF_TS_SERVER);
     pub.isGenerate = !(args.length > 1 && hasParam(args, "-nogen"));
