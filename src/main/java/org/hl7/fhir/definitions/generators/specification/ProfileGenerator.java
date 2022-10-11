@@ -1302,6 +1302,7 @@ public class ProfileGenerator {
     }
     spd.setCommonId(sp.getId());
     if (created) {
+      sp.setUserData("path", p.getName().toLowerCase()+"-search.html#"+sp.getId());        
       sp.setUrl("http://hl7.org/fhir/SearchParameter/"+sp.getId());
       sp.setVersion(version.toCode());
       if (context.getSearchParameter(sp.getUrl()) != null)
@@ -2444,6 +2445,8 @@ public class ProfileGenerator {
     opd.addResource(resourceName);
     opd.setType(op.isType()); 
     opd.setInstance(op.isInstance());
+    opd.setUserData("path", resourceName.toLowerCase()+"-operation-"+op.getName().toLowerCase()+".html");
+
     if (op.getIdempotent() == null) {
       throw new Error("Operation "+opd.getId()+" is not marked as Idempotent or not");
     } else {

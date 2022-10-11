@@ -942,6 +942,8 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
         src = s1+buildOpReferenceList(com[1])+s3;       
       } else if (com[0].equals("pattern-impls")) {
         src = s1+buildPatternList(com[1])+s3;       
+      } else if (com[0].equals("dtstatus")) {
+        src = s1+buildDTStatus(com[1])+s3;       
       } else if (com[0].equals("diff-analysis")) {
         if ("*".equals(com[1])) {
           updateDiffEngineDefinitions();
@@ -1338,6 +1340,16 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
         throw new Exception("Instruction <%"+s2+"%> not understood parsing page "+file);
     }
     return src;
+  }
+
+  private String buildDTStatus(String tn) {
+    TypeDefn td =  definitions.getTypes().get(tn);
+    String clss = fmmBarColorStyle(td.getStandardsStatus(), td.getFmmLevel());
+    String wgref = "http://www.hl7.org/Special/committees/fiwg/index.cfm";
+    String wgn = "FHIR Infrastructure";
+    return "<table class=\""+clss+"\" style=\"margin-bottom: 0px\"><tr><td><a href=\""+wgref+"\">"+wgn+"</a> Work Group</td>"+
+        "<td><a href=\"versions.html#maturity\">Maturity Level</a>: "+td.getFmmLevel()+"</td>"+
+        "<td><a href=\"versions.html#std-process\">Standards Status</a>: <a href=\"versions.html#std-process\" title=\"Standard Status\">"+td.getStandardsStatus().toDisplay()+"</a></td></tr></table>";
   }
 
   private String genJiralink(String file, String rn) {
@@ -4580,7 +4592,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     b.append("<table class=\"grid\">\r\n");
     b.append("<tr><th>OID</th><th>Name</th></tr>\r\n");
     Set<String> duplOids = new HashSet<>();
-    List<CanonicalResource> list = workerContext.allConformanceResources();
+    List<CanonicalResource> list = workerContext.fetchResourcesByType(CanonicalResource.class);
     for (String rn : definitions.sortedResourceNames()) {
       Map<String, CanonicalResource> oids = new HashMap<String, CanonicalResource>();
       for (CanonicalResource cr : list) {
@@ -5486,9 +5498,11 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
       } else if (com[0].equals("ballot-note")) {
         src = s1+getBallotNoteHeader(com[1])+s3;
       } else if (com[0].equals("pattern-impls")) {
-        src = s1+buildPatternList(com[1])+s3;       
+        src = s1+buildPatternList(com[1])+s3;     
       } else if (com[0].equals("StandardsStatus")) {
         src = s1+getStandardsStatusNote(genlevel(level), com[1], com[2], com.length == 4 ? com[3] : null)+s3;
+      } else if (com[0].equals("dtstatus")) {
+        src = s1+buildDTStatus(com[1])+s3;       
       } else if (com[0].equals("dtxheader")) {
           src = s1+dtxHeader(com.length > 1 ? com[1] : null, com.length > 2 ? com[2] : null)+s3;
       } else if (com[0].equals("diff-analysis")) {
@@ -7398,7 +7412,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
         SearchParameter pp = spmap.get(name);
 
         b.append("<tr>");
-        b.append("<td style=\"border-top: 1px black solid\"><code>"+pp.getUrl()+"</code></td>");
+        b.append("<td style=\"border-top: 1px black solid\"><code>"+pp.getUrl()+"</code><a name=\""+pp.getId()+"\"></a></td>");
         b.append("</tr>"); 
         b.append("<tr>");
         b.append("<td style=\"border-bottom: 1px black solid\">");
@@ -11277,7 +11291,7 @@ private int countContains(List<ValueSetExpansionContainsComponent> list) {
         list.put(vs.getUrl(), vs);
       }
     }
-    for (CanonicalResource cr : workerContext.allConformanceResources()) {
+    for (CanonicalResource cr : workerContext.fetchResourcesByType(CanonicalResource.class)) {
       if (cr instanceof CodeSystem) {
         if (hasMultiLanguageDesignations((CodeSystem) cr) && isLocalResource(cr)) {
           list.put(cr.getUrl(), cr);

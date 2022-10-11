@@ -225,7 +225,8 @@ public class ExampleInspector implements IValidatorResourceFetcher, IValidationP
     validator.setFetcher(this);
     validator.setAllowExamples(true);
     validator.setDebug(false);
-
+    validator.setForPublication(true);
+    
     fpe = new FHIRPathEngine(context);
   }
 
@@ -638,7 +639,7 @@ public class ExampleInspector implements IValidatorResourceFetcher, IValidationP
 
   @Override
   public CanonicalResource fetchCanonicalResource(IResourceValidator validator, String url) throws URISyntaxException {
-    for (CanonicalResource t : context.allConformanceResources()) {
+    for (CanonicalResource t : context.fetchResourcesByType(CanonicalResource.class)) {
       if (t.getUrl().equals(url)) {
         return t;
       }
