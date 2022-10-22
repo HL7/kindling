@@ -200,47 +200,9 @@ public class BuildWorkerContext extends BaseWorkerContext implements IWorkerCont
   }
 
   @Override
-  public IParser getParser(ParserType type) {
-    switch (type) {
-    case JSON: return newJsonParser();
-    case XML: return newXmlParser();
-    default:
-      throw new Error("Parser Type "+type.toString()+" not supported");
-    }
-  }
-
-  @Override
-  public IParser getParser(String type) {
-    if (type.equalsIgnoreCase("JSON"))
-      return new JsonParser();
-  if (type.equalsIgnoreCase("XML"))
-    return new XmlParser();
-  throw new Error("Parser Type "+type.toString()+" not supported");
-  }
-
-  @Override
-  public IParser newJsonParser() {
-    return new JsonParser();
-  }
-
-  @Override
-  public IParser newXmlParser() {
-    return new XmlParser();
-  }
-
-  @Override
   public IResourceValidator newValidator() {
     throw new Error("check this");
 //    return new InstanceValidator(this, null);
-  }
-
-  @Override
-  public List<ConceptMap> findMapsForSource(String url) throws FHIRException {
-    List<ConceptMap> res = new ArrayList<ConceptMap>();
-    for (ConceptMap map : listMaps())
-      if (map.getSourceScopeCanonicalType().getValue().equals(url)) 
-        res.add(map);
-    return res;
   }
 
   @Override
@@ -717,69 +679,8 @@ public class BuildWorkerContext extends BaseWorkerContext implements IWorkerCont
     return s.replace("http://hl7.org/fhir/ValueSet/", "").replace("http://", "").replace("/", "_");
   }
 
-  @Override
-  public String getAbbreviation(String name) {
-    String s = definitions.getTLAs().get(name.toLowerCase());
-    if (Utilities.noString(s))
-      return "xxx";
-    else
-      return s;
-  }
-
   public void setDefinitions(Definitions definitions) {
     this.definitions = definitions;    
-  }
-
-  @Override
-  public List<StructureDefinition> allStructures() {
-    List<StructureDefinition> result = new ArrayList<StructureDefinition>();
-    result.addAll(listStructures());
-    return result;
-  }
-
-
-  @Override
-  public String oid2Uri(String oid) {
-    String uri = OIDUtils.getUriForOid(oid);
-    if (uri != null)
-      return uri;
-//    for (NamingSystem ns : systems) {
-//      if (hasOid(ns, oid)) {
-//        uri = getUri(ns);
-//        if (uri != null)
-//          return null;
-//      }
-//    }
-    return null;
-  }
-
-  private String getUri(NamingSystem ns) {
-    for (NamingSystemUniqueIdComponent id : ns.getUniqueId()) {
-      if (id.getType() == NamingSystemIdentifierType.URI)
-        return id.getValue();
-    }
-    return null;
-  }
-
-  private boolean hasOid(NamingSystem ns, String oid) {
-    for (NamingSystemUniqueIdComponent id : ns.getUniqueId()) {
-      if (id.getType() == NamingSystemIdentifierType.OID && id.getValue().equals(oid))
-        return true;
-    }
-    return false;
-  }
-
-  @Override
-  public boolean hasCache() {
-    return true;
-  }
-
-  @Override
-  public List<String> getTypeNames() {
-    List<String> names = new ArrayList<String>();
-    for (TypeRef tr : definitions.getKnownTypes())
-      names.add(tr.getName());
-    return names;
   }
 
   public List<StructureDefinition> getExtensionDefinitions() {
@@ -868,11 +769,6 @@ public class BuildWorkerContext extends BaseWorkerContext implements IWorkerCont
     throw new Error("Not done yet");
   }
 
-  @Override
-  public StructureDefinition fetchRawProfile(String uri) {
-    StructureDefinition r = super.fetchResource(StructureDefinition.class, uri);
-    return r;
-  }
 
   @Override
   public int loadFromPackage(NpmPackage pi, IContextResourceLoader loader, String[] types) throws FileNotFoundException, IOException, FHIRException {

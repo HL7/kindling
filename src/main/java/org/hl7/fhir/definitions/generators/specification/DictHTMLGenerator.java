@@ -63,6 +63,7 @@ import org.hl7.fhir.r5.model.StringType;
 import org.hl7.fhir.r5.model.StructureDefinition;
 import org.hl7.fhir.r5.model.StructureDefinition.StructureDefinitionKind;
 import org.hl7.fhir.r5.model.StructureDefinition.StructureDefinitionMappingComponent;
+import org.hl7.fhir.r5.utils.ToolingExtensions;
 import org.hl7.fhir.tools.publisher.PageProcessor;
 import org.hl7.fhir.utilities.CommaSeparatedStringBuilder;
 import org.hl7.fhir.utilities.StandardsStatus;
@@ -411,7 +412,7 @@ public class DictHTMLGenerator  extends OutputStreamWriter {
     for (String id : ids) {
       ElementDefinitionConstraintComponent inv = getConstraint(constraints, id);
       s.append("<tr><td width=\"60px\"><b title=\"Formal Invariant Identifier\">"+inv.getKey()+"</b></td><td>"+presentLevel(inv)+"</td><td>"+Utilities.escapeXml(inv.getHuman())+"</td><td><span style=\"font-family: Courier New, monospace\">"+Utilities.escapeXml(inv.getExpression())+"</span>");
-      if (inv.hasExtension("http://hl7.org/fhir/StructureDefinition/elementdefinition-bestpractice")) 
+      if (inv.hasExtension(ToolingExtensions.EXT_BEST_PRACTICE)) 
         s.append("<br/>This is (only) a best practice guideline because: <blockquote>"+page.processMarkdown("best practice guideline", inv.getExtensionString("http://hl7.org/fhir/StructureDefinition/elementdefinition-bestpractice-explanation"), prefix)+"</blockquote>");
       s.append("</td></tr>");
     }
@@ -419,7 +420,7 @@ public class DictHTMLGenerator  extends OutputStreamWriter {
   }
 
   private String presentLevel(ElementDefinitionConstraintComponent inv) {
-    if (inv.hasExtension("http://hl7.org/fhir/StructureDefinition/elementdefinition-bestpractice"))
+    if (inv.hasExtension(ToolingExtensions.EXT_BEST_PRACTICE))
       return "<a href=\""+prefix+"conformance-rules.html#best-practice\" style=\"color: DarkGreen\">Guideline</a>";
     if ("warning".equals(inv.getSeverity().toCode()))
       return "<a href=\""+prefix+"conformance-rules.html#warning\" style=\"color: Chocolate\">Warning</a>";
@@ -637,7 +638,7 @@ public class DictHTMLGenerator  extends OutputStreamWriter {
 //  for (String id : ids) {
 //    ElementDefinitionConstraintComponent inv = getConstraint(constraints, id);
 //    s.append("<tr><td><b title=\"Formal Invariant Identifier\">"+inv.getId()+"</b></td><td>"+presentLevel(inv)+"</td><td>(base)</td><td>"+Utilities.escapeXml(inv.getHuman())+"</td><td><span style=\"font-family: Courier New, monospace\">"+Utilities.escapeXml(inv.getExpression())+"</span>");
-//    if (inv.hasExtension("http://hl7.org/fhir/StructureDefinition/elementdefinition-bestpractice")) 
+//    if (inv.hasExtension(ToolingExtensions.EXT_BEST_PRACTICE)) 
 //      s.append("<br/>This is (only) a best practice guideline because: <blockquote>"+page.processMarkdown("best practice guideline", inv.getExtensionString("http://hl7.org/fhir/StructureDefinition/elementdefinition-bestpractice-explanation"), prefix)+"</blockquote>");
 //    s.append("</td></tr>");
 //  }

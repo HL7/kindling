@@ -42,10 +42,15 @@ import org.hl7.fhir.definitions.model.BindingSpecification;
 import org.hl7.fhir.definitions.model.BindingSpecification.BindingMethod;
 import org.hl7.fhir.definitions.model.ConstraintStructure;
 import org.hl7.fhir.definitions.model.ElementDefn;
+import org.hl7.fhir.r5.conformance.ProfileUtilities.ProfileKnowledgeProvider.BindingResolution;
+import org.hl7.fhir.r5.model.CodeSystem;
 import org.hl7.fhir.r5.model.ElementDefinition.ElementDefinitionBindingComponent;
 import org.hl7.fhir.r5.model.Enumerations.BindingStrength;
 import org.hl7.fhir.r5.model.StructureDefinition;
 import org.hl7.fhir.r5.model.ValueSet;
+import org.hl7.fhir.r5.terminologies.CodeSystemUtilities;
+import org.hl7.fhir.r5.terminologies.CodeSystemUtilities.SystemReference;
+import org.hl7.fhir.r5.terminologies.ValueSetUtilities;
 import org.hl7.fhir.tools.publisher.PageProcessor;
 import org.hl7.fhir.utilities.Utilities;
 
@@ -222,6 +227,19 @@ public class TerminologyNotesGenerator extends OutputStreamWriter {
           if (pp == null)
             throw new Exception("unknown path on "+cd.getReference());
           write("<a href=\""+prefix+pp.replace(File.separatorChar, '/')+"\">"+vs.getName()+"</a><!-- b -->");
+          String system = ValueSetUtilities.getAllCodesSystem(vs);
+          if (system != null) {
+            SystemReference sr = CodeSystemUtilities.getSystemReference(system, page.getWorkerContext());
+            if (sr == null) {
+              write(" (a valid code from <code>"+system+"</code>)");
+            } else if (sr.getText() != null && textSame(sr.getText(), vs.getName())) {
+              write(" ");
+            } else if (sr.getLink() == null) {
+              write(" (a valid code from "+sr.getText()+" (<code>"+system+"</code>)");
+            } else {
+              write(" (a valid code from <a href=\""+sr.getLink()+"\">"+sr.getText()+"</a>)");
+            }
+          }
         } else if (cd.getBinding() == BindingSpecification.BindingMethod.ValueSet) {
           if (Utilities.noString(cd.getReference())) 
             write("??");
@@ -262,6 +280,10 @@ public class TerminologyNotesGenerator extends OutputStreamWriter {
     }
     write("</table>\r\n<p> </p>\r\n");		
 	}
+
+  private boolean textSame(String t1, String t2) {
+    return t1.toLowerCase().replace(" ", "").equals(t2.toLowerCase().replace(" ", ""));
+  }
 
   private boolean matchesTypes(String t1, String t2) {
     if (t1.equals(t2)) {

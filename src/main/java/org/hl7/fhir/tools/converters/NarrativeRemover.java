@@ -16,7 +16,6 @@ import org.hl7.fhir.convertors.loaders.loaderR5.ILoaderKnowledgeProviderR5;
 import org.hl7.fhir.convertors.loaders.loaderR5.R4ToR5Loader;
 import org.hl7.fhir.exceptions.FHIRException;
 import org.hl7.fhir.exceptions.FHIRFormatError;
-import org.hl7.fhir.r4b.model.CanonicalResource;
 import org.hl7.fhir.r5.context.IWorkerContext;
 import org.hl7.fhir.r5.context.SimpleWorkerContext;
 import org.hl7.fhir.r5.context.SimpleWorkerContext.SimpleWorkerContextBuilder;
@@ -25,6 +24,7 @@ import org.hl7.fhir.r5.elementmodel.ParserBase;
 import org.hl7.fhir.r5.formats.IParser.OutputStyle;
 import org.hl7.fhir.r5.formats.JsonParser;
 import org.hl7.fhir.r5.formats.XmlParser;
+import org.hl7.fhir.r5.model.CanonicalResource;
 import org.hl7.fhir.r5.model.CodeSystem;
 import org.hl7.fhir.r5.model.Narrative.NarrativeStatus;
 import org.hl7.fhir.tools.converters.NarrativeRemover.TempLoader;
@@ -194,7 +194,7 @@ public class NarrativeRemover {
   }
 
   private String lookupUrl(String url) {
-    for (org.hl7.fhir.r5.model.CanonicalResource cr : ctxt.allConformanceResources()) {
+    for (org.hl7.fhir.r5.model.CanonicalResource cr : ctxt.fetchResourcesByType(CanonicalResource.class)) {
       if (url.equals(cr.getUrl())) {
         return cr.getOid();
       }

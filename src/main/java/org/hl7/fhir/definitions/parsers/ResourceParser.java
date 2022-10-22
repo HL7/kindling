@@ -651,8 +651,8 @@ public class ResourceParser {
     }
 
     String name = parentName + Utilities.capitalize(ed.getName());
-    if (focus.hasExtension("http://hl7.org/fhir/StructureDefinition/structuredefinition-explicit-type-name")) {
-      ed.setStatedType(focus.getExtensionString("http://hl7.org/fhir/StructureDefinition/structuredefinition-explicit-type-name"));
+    if (focus.hasExtension(ToolingExtensions.EXT_EXPLICIT_TYPE)) {
+      ed.setStatedType(focus.getExtensionString(ToolingExtensions.EXT_EXPLICIT_TYPE));
       ed.setDeclaredTypeName(ed.getStatedType());
     } else if (ed.getTypes().isEmpty() && !focus.hasContentReference()) {      
       ed.setDeclaredTypeName(name+"Component");
@@ -681,8 +681,8 @@ public class ResourceParser {
       bs.setValueSet(loadValueSet(bs.getReference(), false));
     }
 
-    if (binding.hasExtension("http://hl7.org/fhir/StructureDefinition/elementdefinition-maxValueSet")) {
-      bs.setMaxReference(binding.getExtensionString("http://hl7.org/fhir/StructureDefinition/elementdefinition-maxValueSet"));
+    if (binding.hasExtension(ToolingExtensions.EXT_MAX_VALUESET)) {
+      bs.setMaxReference(binding.getExtensionString(ToolingExtensions.EXT_MAX_VALUESET));
       bs.setMaxValueSet(loadValueSet(bs.getMaxReference(), false));
     }
 
@@ -723,8 +723,8 @@ public class ResourceParser {
     if (bs.hasReference()) {
       bs.setValueSet(loadValueSet(bs.getReference(), false));
     }
-    if (binding.hasExtension("http://hl7.org/fhir/StructureDefinition/elementdefinition-maxValueSet")) {
-      bs.setMaxReference(binding.getExtensionString("http://hl7.org/fhir/StructureDefinition/elementdefinition-maxValueSet"));
+    if (binding.hasExtension(ToolingExtensions.EXT_MAX_VALUESET)) {
+      bs.setMaxReference(binding.getExtensionString(ToolingExtensions.EXT_MAX_VALUESET));
       bs.setMaxValueSet(loadValueSet(bs.getMaxReference(), false));
     }
 
@@ -797,6 +797,9 @@ public class ResourceParser {
       }
       if (!cs.hasHierarchyMeaningElement() && CodeSystemUtilities.hasHierarchy(cs)) {
         System.out.println("The CodeSystem "+csfn+" doesn't have a hierarchyMeaning element");
+      }
+      if (cs.hasStatus()) {
+        cs.setStatus(PublicationStatus.ACTIVE);
       }
       cs.setVersion(version);
       if (!cs.hasExtension(ToolingExtensions.EXT_WORKGROUP)) {
@@ -881,6 +884,9 @@ public class ResourceParser {
       if (!vs.hasDescription()) {
         vs.setDescription("Description Needed Here");
         save = true;
+      }
+      if (!vs.hasStatus()) {
+        vs.setStatus(PublicationStatus.ACTIVE);
       }
       if (!vs.hasExtension(ToolingExtensions.EXT_WORKGROUP)) {
         vs.addExtension().setUrl(ToolingExtensions.EXT_WORKGROUP).setValue(new CodeType(committee.getCode()));

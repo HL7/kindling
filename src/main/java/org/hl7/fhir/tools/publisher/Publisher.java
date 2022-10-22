@@ -137,6 +137,7 @@ import org.hl7.fhir.exceptions.FHIRException;
 import org.hl7.fhir.r5.conformance.ProfileUtilities;
 import org.hl7.fhir.r5.conformance.ShExGenerator;
 import org.hl7.fhir.r5.conformance.ShExGenerator.HTMLLinkPolicy;
+import org.hl7.fhir.r5.context.ContextUtilities;
 import org.hl7.fhir.r5.elementmodel.Manager;
 import org.hl7.fhir.r5.elementmodel.Manager.FhirFormat;
 import org.hl7.fhir.r5.elementmodel.ParserBase;
@@ -166,6 +167,7 @@ import org.hl7.fhir.r5.model.CapabilityStatement.SystemInteractionComponent;
 import org.hl7.fhir.r5.model.CapabilityStatement.SystemRestfulInteraction;
 import org.hl7.fhir.r5.model.CapabilityStatement.TypeRestfulInteraction;
 import org.hl7.fhir.r5.model.CodeSystem;
+import org.hl7.fhir.r5.model.CodeSystem.CodeSystemContentMode;
 import org.hl7.fhir.r5.model.CodeSystem.ConceptDefinitionComponent;
 import org.hl7.fhir.r5.model.CodeType;
 import org.hl7.fhir.r5.model.CompartmentDefinition;
@@ -247,6 +249,7 @@ import org.hl7.fhir.utilities.CloseProtectedZipInputStream;
 import org.hl7.fhir.utilities.CommaSeparatedStringBuilder;
 import org.hl7.fhir.utilities.IniFile;
 import org.hl7.fhir.utilities.Logger.LogMessageType;
+import org.hl7.fhir.utilities.i18n.I18nConstants;
 import org.hl7.fhir.utilities.NDJsonWriter;
 import org.hl7.fhir.utilities.SIDUtilities;
 import org.hl7.fhir.utilities.StandardsStatus;
@@ -805,7 +808,7 @@ public class Publisher implements URIResolver, SectionNumberer {
 
   private void checkOids() {
     boolean allGood = true;
-    for (CanonicalResource cr : page.getWorkerContext().allConformanceResources()) {
+    for (CanonicalResource cr : page.getWorkerContext().fetchResourcesByType(CanonicalResource.class)) {
       if (page.isLocalResource(cr)) {
         String oid = cr.getOid();
         if (oid != null) {
@@ -1131,7 +1134,7 @@ public class Publisher implements URIResolver, SectionNumberer {
       fixBinding(e, ex.getUrl());
     }
     StructureDefinition bd = page.getDefinitions().getSnapShotForBase(ex.getBaseDefinition());
-    new ProfileUtilities(page.getWorkerContext(), page.getValidationErrors(), page).generateSnapshot(bd, ex, ex.getUrl(), null, ex.getName());
+    new ProfileUtilities(page.getWorkerContext(), page.getValidationErrors(), page).setNewSlicingProcessing(true).generateSnapshot(bd, ex, ex.getUrl(), null, ex.getName());
   }
   
   private void fixBinding(ElementDefinition e, String url) throws Exception {
@@ -1243,7 +1246,7 @@ public class Publisher implements URIResolver, SectionNumberer {
       if (profile.getResource().hasBaseDefinition() && !profile.getResource().hasSnapshot()) {
         // cause it probably doesn't, coming from the profile directly
         StructureDefinition base = getSnapShotForProfile(profile.getResource().getBaseDefinition());
-        new ProfileUtilities(page.getWorkerContext(), page.getValidationErrors(), page).generateSnapshot(base, profile.getResource(), profile.getResource().getBaseDefinition().split("#")[0], null, profile.getResource().getName());
+        new ProfileUtilities(page.getWorkerContext(), page.getValidationErrors(), page).setNewSlicingProcessing(true).generateSnapshot(base, profile.getResource(), profile.getResource().getBaseDefinition().split("#")[0], null, profile.getResource().getName());
       }
       page.getProfiles().see(profile.getResource(), page.packageInfo());
     }
@@ -1315,7 +1318,7 @@ public class Publisher implements URIResolver, SectionNumberer {
       StructureDefinition base = getIgProfile(ae.getBaseDefinition());
       if (base == null)
         base = new ProfileUtilities(page.getWorkerContext(), page.getValidationErrors(), page).getProfile(null, ae.getBaseDefinition());
-      new ProfileUtilities(page.getWorkerContext(), page.getValidationErrors(), page).generateSnapshot(base, ae, ae.getBaseDefinition().split("#")[0], "http://hl7.org/fhir", ae.getName());
+      new ProfileUtilities(page.getWorkerContext(), page.getValidationErrors(), page).setNewSlicingProcessing(true).generateSnapshot(base, ae, ae.getBaseDefinition().split("#")[0], "http://hl7.org/fhir", ae.getName());
       page.getProfiles().see(ae, page.packageInfo());
     }
   }
@@ -1424,7 +1427,7 @@ public class Publisher implements URIResolver, SectionNumberer {
 
   private void populateFHIRTypesCodeSystem() {
     CodeSystem cs = page.getWorkerContext().fetchCodeSystem("http://hl7.org/fhir/fhir-types");
-    List<StructureDefinition> types = page.getWorkerContext().allStructures();
+    List<StructureDefinition> types = new ContextUtilities(page.getWorkerContext()).allStructures();
     addTypes(cs, page.getWorkerContext().fetchTypeDefinition("Base"), cs.getConcept(), types);
     CodeSystemUtilities.sortAllCodes(cs);
     
@@ -1467,7 +1470,7 @@ public class Publisher implements URIResolver, SectionNumberer {
   }
 
   private void listAllResources(ConceptSetComponent inc) {
-    for (StructureDefinition sd : page.getWorkerContext().allStructures()) {
+    for (StructureDefinition sd : new ContextUtilities(page.getWorkerContext()).allStructures()) {
       if (sd.getDerivation() == TypeDerivationRule.SPECIALIZATION && sd.getKind() == StructureDefinitionKind.RESOURCE) {
         inc.addConcept().setCode(sd.getType());
       }
@@ -1475,7 +1478,7 @@ public class Publisher implements URIResolver, SectionNumberer {
   }
 
   private void listConcreteResources(ConceptSetComponent inc) {
-    for (StructureDefinition sd : page.getWorkerContext().allStructures()) {
+    for (StructureDefinition sd : new ContextUtilities(page.getWorkerContext()).allStructures()) {
       if (sd.getDerivation() == TypeDerivationRule.SPECIALIZATION && !sd.getAbstract() && sd.getKind() == StructureDefinitionKind.RESOURCE) {
         inc.addConcept().setCode(sd.getType());
       }
@@ -1483,7 +1486,7 @@ public class Publisher implements URIResolver, SectionNumberer {
   }
 
   private void listConcreteTypes(ConceptSetComponent inc) {
-    for (StructureDefinition sd : page.getWorkerContext().allStructures()) {
+    for (StructureDefinition sd : new ContextUtilities(page.getWorkerContext()).allStructures()) {
       if (sd.getDerivation() == TypeDerivationRule.SPECIALIZATION && !sd.getAbstract() && sd.getKind() != StructureDefinitionKind.LOGICAL) {
         inc.addConcept().setCode(sd.getType());
       }
@@ -2475,7 +2478,7 @@ public class Publisher implements URIResolver, SectionNumberer {
         page.getFolders().srcDir, page.getVersion(), Config.DATE_FORMAT().format(page.getGenDate().getTime()), page.getWorkerContext());
 
     List<StructureDefinition> list = new ArrayList<StructureDefinition>();
-    for (StructureDefinition sd : page.getWorkerContext().allStructures()) {
+    for (StructureDefinition sd : new ContextUtilities(page.getWorkerContext()).allStructures()) {
       if (sd.getDerivation() == TypeDerivationRule.SPECIALIZATION)
         list.add(sd);
     }
@@ -2488,7 +2491,7 @@ public class Publisher implements URIResolver, SectionNumberer {
     GraphQLSchemaGenerator gql = new GraphQLSchemaGenerator(page.getWorkerContext(), page.getVersion().toCode());
     gql.generateTypes(new FileOutputStream(Utilities.path(page.getFolders().dstDir, "types.graphql")));
     Set<String> names = new HashSet<String>();
-    for (StructureDefinition sd : page.getWorkerContext().allStructures()) {
+    for (StructureDefinition sd : new ContextUtilities(page.getWorkerContext()).allStructures()) {
       if (sd.getKind() == StructureDefinitionKind.RESOURCE && sd.getAbstract() == false && sd.getDerivation() == TypeDerivationRule.SPECIALIZATION && !names.contains(sd.getUrl())) {
         String filename = Utilities.path(page.getFolders().dstDir, sd.getName().toLowerCase() + ".graphql");
         names.add(sd.getUrl());
@@ -3278,7 +3281,7 @@ public class Publisher implements URIResolver, SectionNumberer {
   private void produceSpecMap() throws IOException {
     SpecMapManager spm = new SpecMapManager("hl7.fhir.core", page.getVersion().toCode(), page.getVersion().toCode(), page.getBuildId(), page.getGenDate(), CANONICAL_BASE);
         
-    for (StructureDefinition sd : page.getWorkerContext().allStructures()) {
+    for (StructureDefinition sd : new ContextUtilities(page.getWorkerContext()).allStructures()) {
       if (sd.hasUserData("path")) {
         spm.path(sd.getUrl(), sd.getUserString("path").replace("\\", "/"));
         spm.target(sd.getUserString("path").replace("\\", "/"));
@@ -3818,7 +3821,7 @@ public class Publisher implements URIResolver, SectionNumberer {
 
   private String getExtensionExamples(StructureDefinition ed) {
     List<StringPair> refs = new ArrayList<>();
-    for (CanonicalResource cr : page.getWorkerContext().allConformanceResources()) {
+    for (CanonicalResource cr : page.getWorkerContext().fetchResourcesByType(CanonicalResource.class)) {
       if (ToolingExtensions.usesExtension(ed.getUrl(), cr) && page.isLocalResource(cr)) {
         refs.add(new StringPair(cr.present(), cr.getUserString("path")));
       }
@@ -6173,17 +6176,66 @@ public class Publisher implements URIResolver, SectionNumberer {
   }
 
   private void generateCodeSystemsPart2() throws Exception {
-
     Set<String> urls = new HashSet<String>();
 
     for (CodeSystem cs : page.getDefinitions().getCodeSystems().getList()) {
       if (cs != null && page.isLocalResource(cs)) {
-        if (cs.getUserData("example") == null && !cs.getUrl().contains("/v2-") && !cs.getUrl().contains("/v3-"))
+        checkShareableCodeSystem(cs);
+        if (cs.getUserData("example") == null && !cs.getUrl().contains("/v2-") && !cs.getUrl().contains("/v3-")) {
           if (!urls.contains(cs.getUrl())) {
             urls.add(cs.getUrl());
             generateCodeSystemPart2(cs);
           }
+        }
       }
+    }
+  }
+
+  private void checkShareableCodeSystem(CodeSystem cs) {
+    if (!cs.hasUrl()) {
+      throw new Error(page.getWorkerContext().formatMessage(I18nConstants.VALUESET_SHAREABLE_MISSING_HL7, "url")+" ("+cs.getUrl()+")");
+    }
+    if (!cs.hasVersion()) {
+      throw new Error(page.getWorkerContext().formatMessage(I18nConstants.VALUESET_SHAREABLE_MISSING_HL7, "version")+" ("+cs.getUrl()+")");                      
+    }
+    if (!cs.hasName()) {
+      throw new Error(page.getWorkerContext().formatMessage(I18nConstants.VALUESET_SHAREABLE_MISSING_HL7, "name")+" ("+cs.getUrl()+")");                      
+    }
+    if (!cs.hasStatus()) {
+      throw new Error(page.getWorkerContext().formatMessage(I18nConstants.VALUESET_SHAREABLE_MISSING_HL7, "status")+" ("+cs.getUrl()+")");                      
+    }
+    if (!cs.hasExperimental()) {
+      throw new Error(page.getWorkerContext().formatMessage(I18nConstants.VALUESET_SHAREABLE_MISSING_HL7, "experimental")+" ("+cs.getUrl()+")");                      
+    }
+    if (!cs.hasDescription()) {
+      throw new Error(page.getWorkerContext().formatMessage(I18nConstants.VALUESET_SHAREABLE_MISSING_HL7, "description")+" ("+cs.getUrl()+")");                      
+    }
+    if (!cs.hasCaseSensitive() && cs.getContent() != CodeSystemContentMode.SUPPLEMENT) {
+      throw new Error(page.getWorkerContext().formatMessage(I18nConstants.VALUESET_SHAREABLE_MISSING_HL7, "caseSensitive")+" ("+cs.getUrl()+")");                      
+    }
+    if (!cs.hasContent()) {
+      throw new Error(page.getWorkerContext().formatMessage(I18nConstants.VALUESET_SHAREABLE_MISSING_HL7, "content")+" ("+cs.getUrl()+")");                      
+    }
+  }
+
+  private void checkShareableValueSet(ValueSet vs) {
+    if (!vs.hasUrl()) {
+      throw new Error(page.getWorkerContext().formatMessage(I18nConstants.VALUESET_SHAREABLE_MISSING_HL7, "url")+" ("+vs.getUrl()+")");
+    }
+    if (!vs.hasVersion()) {
+      throw new Error(page.getWorkerContext().formatMessage(I18nConstants.VALUESET_SHAREABLE_MISSING_HL7, "version")+" ("+vs.getUrl()+")");                      
+    }
+    if (!vs.hasName()) {
+      throw new Error(page.getWorkerContext().formatMessage(I18nConstants.VALUESET_SHAREABLE_MISSING_HL7, "name")+" ("+vs.getUrl()+")");                      
+    }
+    if (!vs.hasStatus()) {
+      throw new Error(page.getWorkerContext().formatMessage(I18nConstants.VALUESET_SHAREABLE_MISSING_HL7, "status")+" ("+vs.getUrl()+")");                      
+    }
+    if (!vs.hasExperimental()) {
+      throw new Error(page.getWorkerContext().formatMessage(I18nConstants.VALUESET_SHAREABLE_MISSING_HL7, "experimental")+" ("+vs.getUrl()+")");                      
+    }
+    if (!vs.hasDescription()) {
+      throw new Error(page.getWorkerContext().formatMessage(I18nConstants.VALUESET_SHAREABLE_MISSING_HL7, "description")+" ("+vs.getUrl()+")");                      
     }
   }
 
@@ -6202,6 +6254,8 @@ public class Publisher implements URIResolver, SectionNumberer {
 
 
   private void generateValueSetPart2(ValueSet vs) throws Exception {
+    checkShareableValueSet(vs);
+    
     String n = vs.getUserString("filename");
     if (n == null)
       n = "valueset-"+vs.getId();
