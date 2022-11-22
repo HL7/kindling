@@ -17,6 +17,7 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 
+import org.apache.commons.lang3.NotImplementedException;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
@@ -838,5 +839,10 @@ public class BuildWorkerContext extends BaseWorkerContext implements IWorkerCont
   @Override
   public PackageDetails getPackage(PackageVersion pack) {
     return null;
+  }
+
+  @Override
+  public boolean isPrimitiveType(String typeSimple) {
+    throw new NotImplementedException("Not implemented");
   }
 }

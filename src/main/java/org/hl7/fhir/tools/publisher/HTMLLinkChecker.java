@@ -378,9 +378,9 @@ public class HTMLLinkChecker implements FileNotifier {
 
   @Override
   public void copyFile(String src, String dst) {
-    if (dst.startsWith(page.getFolders().dstDir))
+    if (dst.startsWith(page.getFolders().dstDir)) {
       registerFile(dst.substring(page.getFolders().dstDir.length()+1), "Support File", determineType(dst), true);
-    
+    }
   }
 
 

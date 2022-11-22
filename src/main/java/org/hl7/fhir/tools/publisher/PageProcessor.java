@@ -200,6 +200,7 @@ import org.hl7.fhir.r5.renderers.DataRenderer;
 import org.hl7.fhir.r5.renderers.RendererFactory;
 import org.hl7.fhir.r5.renderers.utils.DOMWrappers;
 import org.hl7.fhir.r5.renderers.utils.RenderingContext;
+import org.hl7.fhir.r5.renderers.utils.RenderingContext.GenerationRules;
 import org.hl7.fhir.r5.renderers.utils.RenderingContext.ITypeParser;
 import org.hl7.fhir.r5.renderers.utils.RenderingContext.ResourceRendererMode;
 import org.hl7.fhir.r5.renderers.utils.Resolver.IReferenceResolver;
@@ -2436,7 +2437,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
   private String genCompModel(StructureDefinition sd, String name, String base, String prefix) throws Exception {
     if (sd == null)
       return "<p style=\"color: maroon\">No "+name+" could be generated</p>\r\n";
-    return new XhtmlComposer(XhtmlComposer.HTML).compose(new ProfileUtilities(workerContext, null, this).generateTable("??", sd, false, folders.dstDir, false, base, true, prefix, prefix, false, false, null, true, false, rc.copy().setLang("*")));
+    return new XhtmlComposer(XhtmlComposer.HTML).compose(new ProfileUtilities(workerContext, null, this).generateTable("??", sd, false, folders.dstDir, false, base, true, prefix, prefix, false, false, null, false, rc.copy().setLang("*")));
   }
 
   private String genPCLink(String leftName, String leftLink) {
@@ -9418,7 +9419,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
   private String generateProfileStructureTable(ConstraintStructure profile, boolean diff, String filename, String baseName, String prefix) throws Exception {
     String fn = filename.contains(".") ? filename.substring(0, filename.indexOf('.')) : filename;
     String deffile = fn+"-definitions.html";
-    return new XhtmlComposer(XhtmlComposer.HTML).compose(new ProfileUtilities(workerContext, null, this).generateTable(deffile, profile.getResource(), diff, folders.dstDir, false, baseName, !diff, prefix, prefix, false, false, null, true, false, getRc()));
+    return new XhtmlComposer(XhtmlComposer.HTML).compose(new ProfileUtilities(workerContext, null, this).generateTable(deffile, profile.getResource(), diff, folders.dstDir, false, baseName, !diff, prefix, prefix, false, false, null, false, getRc()));
   }
 
   private boolean isAggregationEndpoint(String name) {
@@ -11356,7 +11357,7 @@ private int countContains(List<ValueSetExpansionContainsComponent> list) {
   }
 
   public void makeRenderingContext() {
-    rc = new RenderingContext(workerContext, processor, ValidationOptions.defaults(), "", "", null, ResourceRendererMode.TECHNICAL);    
+    rc = new RenderingContext(workerContext, processor, ValidationOptions.defaults(), "", "", null, ResourceRendererMode.TECHNICAL, GenerationRules.IG_PUBLISHER);    
     rc.setParser(this);
     rc.setResolver(this);
     rc.setShowComments(true);
@@ -11386,5 +11387,10 @@ private int countContains(List<ValueSetExpansionContainsComponent> list) {
   @Override
   public String urlForContained(RenderingContext context, String containingType, String containingId, String containedType, String containedId) {
     return null;
+  }
+
+  @Override
+  public boolean isPrimitiveType(String typeSimple) {
+    throw new NotImplementedException("Not implemented");
   }
 }
