@@ -5,7 +5,6 @@ import java.util.List;
 import java.util.Map;
 
 import org.hl7.fhir.r5.context.CanonicalResourceManager;
-import org.hl7.fhir.r5.context.IWorkerContext.PackageVersion;
 import org.hl7.fhir.r5.model.CodeSystem;
 import org.hl7.fhir.r5.model.CodeSystem.CodeSystemContentMode;
 import org.hl7.fhir.r5.model.CodeSystem.ConceptDefinitionComponent;
@@ -20,6 +19,7 @@ import org.hl7.fhir.r5.model.DateTimeType;
 import org.hl7.fhir.r5.model.Enumerations.ConceptMapRelationship;
 import org.hl7.fhir.r5.model.Enumerations.PublicationStatus;
 import org.hl7.fhir.r5.model.Factory;
+import org.hl7.fhir.r5.model.PackageInformation;
 import org.hl7.fhir.r5.model.ValueSet;
 import org.hl7.fhir.r5.model.ValueSet.ConceptReferenceComponent;
 import org.hl7.fhir.r5.model.ValueSet.ConceptSetComponent;
@@ -37,10 +37,10 @@ public class CodeListToValueSetParser {
   private String sheetName;
   private CanonicalResourceManager<CodeSystem> codeSystems;
   private CanonicalResourceManager<ConceptMap> maps;
-  private PackageVersion packageInfo;
+  private PackageInformation packageInfo;
   private OIDRegistry registry;
 
-  public CodeListToValueSetParser(Sheet sheet, String sheetName, ValueSet valueSet, String version, CanonicalResourceManager<CodeSystem> codeSystems, CanonicalResourceManager<ConceptMap> maps, PackageVersion packageInfo,
+  public CodeListToValueSetParser(Sheet sheet, String sheetName, ValueSet valueSet, String version, CanonicalResourceManager<CodeSystem> codeSystems, CanonicalResourceManager<ConceptMap> maps, PackageInformation packageInfo,
       OIDRegistry registry) throws Exception {
     super();
     this.sheet = sheet;

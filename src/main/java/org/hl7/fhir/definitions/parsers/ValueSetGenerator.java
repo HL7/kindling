@@ -19,7 +19,6 @@ import org.hl7.fhir.definitions.model.EventDefn;
 import org.hl7.fhir.definitions.model.ResourceDefn;
 import org.hl7.fhir.definitions.model.TypeRef;
 import org.hl7.fhir.r5.context.IWorkerContext;
-import org.hl7.fhir.r5.context.IWorkerContext.PackageVersion;
 import org.hl7.fhir.r5.model.CodeSystem;
 import org.hl7.fhir.r5.model.CodeSystem.CodeSystemContentMode;
 import org.hl7.fhir.r5.model.CodeSystem.CodeSystemHierarchyMeaning;
@@ -31,6 +30,7 @@ import org.hl7.fhir.r5.model.ContactPoint.ContactPointSystem;
 import org.hl7.fhir.r5.model.Enumerations.PublicationStatus;
 import org.hl7.fhir.r5.model.StructureDefinition.TypeDerivationRule;
 import org.hl7.fhir.r5.model.Factory;
+import org.hl7.fhir.r5.model.PackageInformation;
 import org.hl7.fhir.r5.model.StructureDefinition;
 import org.hl7.fhir.r5.model.ValueSet;
 import org.hl7.fhir.r5.model.ValueSet.ValueSetComposeComponent;
@@ -48,11 +48,11 @@ public class ValueSetGenerator {
   private String version;
   private Calendar genDate;
   private TranslationServices translator;
-  private PackageVersion packageInfo; 
+  private PackageInformation packageInfo; 
   private IWorkerContext context;
   
 
-  public ValueSetGenerator(Definitions definitions, String version, Calendar genDate, TranslationServices translator, PackageVersion packageInfo, IWorkerContext context) throws ParserConfigurationException, SAXException, IOException {
+  public ValueSetGenerator(Definitions definitions, String version, Calendar genDate, TranslationServices translator, PackageInformation packageInfo, IWorkerContext context) throws ParserConfigurationException, SAXException, IOException {
     super();
     this.definitions = definitions;
     this.version = version;

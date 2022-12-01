@@ -25,7 +25,6 @@ import org.hl7.fhir.definitions.parsers.spreadsheets.OldSpreadsheetParser;
 import org.hl7.fhir.r5.conformance.ProfileUtilities;
 import org.hl7.fhir.r5.conformance.ProfileUtilities.ProfileKnowledgeProvider;
 import org.hl7.fhir.r5.context.CanonicalResourceManager;
-import org.hl7.fhir.r5.context.IWorkerContext.PackageVersion;
 import org.hl7.fhir.r5.formats.XmlParser;
 import org.hl7.fhir.r5.model.BooleanType;
 import org.hl7.fhir.r5.model.CodeSystem;
@@ -39,6 +38,7 @@ import org.hl7.fhir.r5.model.ImplementationGuide.ImplementationGuideDefinitionGr
 import org.hl7.fhir.r5.model.ImplementationGuide.ImplementationGuideDefinitionPageComponent;
 import org.hl7.fhir.r5.model.ImplementationGuide.ImplementationGuideDefinitionResourceComponent;
 import org.hl7.fhir.r5.model.ImplementationGuide.ImplementationGuideDependsOnComponent;
+import org.hl7.fhir.r5.model.PackageInformation;
 import org.hl7.fhir.r5.model.Reference;
 import org.hl7.fhir.r5.model.Resource;
 import org.hl7.fhir.r5.model.ResourceType;
@@ -91,10 +91,10 @@ return null;
   private CanonicalResourceManager<ConceptMap> maps;
   private Map<String, WorkGroup> workgroups;
   private boolean exceptionIfExcelNotNormalised;
-  private PackageVersion packageInfo;
+  private PackageInformation packageInfo;
 
 
-  public IgParser(Logger logger, BuildWorkerContext context, Calendar genDate, ProfileKnowledgeProvider pkp, Map<String, BindingSpecification> commonBindings, WorkGroup committee, Map<String, MappingSpace> mappings, Map<String, ConstraintStructure> profileIds, CanonicalResourceManager<CodeSystem> codeSystems, OIDRegistry registry, CanonicalResourceManager<ConceptMap> maps, Map<String, WorkGroup> workgroups, boolean exceptionIfExcelNotNormalised, PackageVersion packageInfo) {
+  public IgParser(Logger logger, BuildWorkerContext context, Calendar genDate, ProfileKnowledgeProvider pkp, Map<String, BindingSpecification> commonBindings, WorkGroup committee, Map<String, MappingSpace> mappings, Map<String, ConstraintStructure> profileIds, CanonicalResourceManager<CodeSystem> codeSystems, OIDRegistry registry, CanonicalResourceManager<ConceptMap> maps, Map<String, WorkGroup> workgroups, boolean exceptionIfExcelNotNormalised, PackageInformation packageInfo) {
     super();
     this.logger = logger;
     this.context = context;

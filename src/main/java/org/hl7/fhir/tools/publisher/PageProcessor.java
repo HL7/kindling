@@ -130,7 +130,6 @@ import org.hl7.fhir.r5.conformance.ProfileUtilities;
 import org.hl7.fhir.r5.conformance.ProfileUtilities.ProfileKnowledgeProvider;
 import org.hl7.fhir.r5.context.CanonicalResourceManager;
 import org.hl7.fhir.r5.context.IWorkerContext.ILoggingService;
-import org.hl7.fhir.r5.context.IWorkerContext.PackageVersion;
 import org.hl7.fhir.r5.elementmodel.Element;
 import org.hl7.fhir.r5.formats.FormatUtilities;
 import org.hl7.fhir.r5.formats.IParser;
@@ -180,6 +179,7 @@ import org.hl7.fhir.r5.model.NamingSystem.NamingSystemIdentifierType;
 import org.hl7.fhir.r5.model.NamingSystem.NamingSystemUniqueIdComponent;
 import org.hl7.fhir.r5.model.Narrative;
 import org.hl7.fhir.r5.model.OperationDefinition;
+import org.hl7.fhir.r5.model.PackageInformation;
 import org.hl7.fhir.r5.model.Quantity;
 import org.hl7.fhir.r5.model.Resource;
 import org.hl7.fhir.r5.model.SearchParameter;
@@ -11264,8 +11264,8 @@ private int countContains(List<ValueSetExpansionContainsComponent> list) {
     return uml;
   }
 
-  public PackageVersion packageInfo() {
-    return new PackageVersion(pidRoot()+".core", version.toCode(), new Date());
+  public PackageInformation packageInfo() {
+    return new PackageInformation(pidRoot()+".core", version.toCode(), new Date());
   }
 
   private String pidRoot() {

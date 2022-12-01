@@ -47,7 +47,6 @@ import org.hl7.fhir.definitions.parsers.OIDRegistry;
 import org.hl7.fhir.definitions.parsers.ValueSetGenerator;
 import org.hl7.fhir.exceptions.FHIRFormatError;
 import org.hl7.fhir.r5.context.CanonicalResourceManager;
-import org.hl7.fhir.r5.context.IWorkerContext.PackageVersion;
 import org.hl7.fhir.r5.formats.IParser;
 import org.hl7.fhir.r5.formats.JsonParser;
 import org.hl7.fhir.r5.formats.XmlParser;
@@ -59,6 +58,7 @@ import org.hl7.fhir.r5.model.ContactDetail;
 import org.hl7.fhir.r5.model.DateTimeType;
 import org.hl7.fhir.r5.model.Enumerations.BindingStrength;
 import org.hl7.fhir.r5.model.Enumerations.PublicationStatus;
+import org.hl7.fhir.r5.model.PackageInformation;
 import org.hl7.fhir.r5.model.ValueSet.ValueSetComposeComponent;
 import org.hl7.fhir.r5.model.ValueSet;
 import org.hl7.fhir.r5.model.CodeSystem.CodeSystemContentMode;
@@ -87,11 +87,11 @@ public class BindingsParser {
   private CanonicalResourceManager<ConceptMap> maps;
   private Calendar genDate;
   private boolean exceptionIfExcelNotNormalised;
-  private PackageVersion packageInfo;  
+  private PackageInformation packageInfo;  
   private Definitions definitions;
   private TranslationServices translator;
 
-  public BindingsParser(InputStream file, String filename, String root, OIDRegistry registry, String version, CanonicalResourceManager<CodeSystem> codeSystems, CanonicalResourceManager<ConceptMap> maps, Calendar genDate, boolean exceptionIfExcelNotNormalised, PackageVersion packageInfo, Definitions definitions, TranslationServices translator) {
+  public BindingsParser(InputStream file, String filename, String root, OIDRegistry registry, String version, CanonicalResourceManager<CodeSystem> codeSystems, CanonicalResourceManager<ConceptMap> maps, Calendar genDate, boolean exceptionIfExcelNotNormalised, PackageInformation packageInfo, Definitions definitions, TranslationServices translator) {
     this.file = file;
     this.filename = filename;
     this.root = root;

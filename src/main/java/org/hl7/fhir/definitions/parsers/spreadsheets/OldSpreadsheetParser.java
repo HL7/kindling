@@ -84,7 +84,6 @@ import org.hl7.fhir.exceptions.FHIRException;
 import org.hl7.fhir.r5.conformance.ProfileUtilities;
 import org.hl7.fhir.r5.conformance.ProfileUtilities.ProfileKnowledgeProvider;
 import org.hl7.fhir.r5.context.CanonicalResourceManager;
-import org.hl7.fhir.r5.context.IWorkerContext.PackageVersion;
 import org.hl7.fhir.r5.formats.FormatUtilities;
 import org.hl7.fhir.r5.formats.IParser;
 import org.hl7.fhir.r5.formats.IParser.OutputStyle;
@@ -115,6 +114,7 @@ import org.hl7.fhir.r5.model.InstantType;
 import org.hl7.fhir.r5.model.Integer64Type;
 import org.hl7.fhir.r5.model.IntegerType;
 import org.hl7.fhir.r5.model.OidType;
+import org.hl7.fhir.r5.model.PackageInformation;
 import org.hl7.fhir.r5.model.Period;
 import org.hl7.fhir.r5.model.PositiveIntType;
 import org.hl7.fhir.r5.model.Quantity;
@@ -188,11 +188,11 @@ public class OldSpreadsheetParser {
   private ResourceDefn template;
   private String templateTitle;
   private List<String> errors = new ArrayList<String>();
-  private PackageVersion packageInfo;
+  private PackageInformation packageInfo;
   private RenderingContext rc;
   
 	public OldSpreadsheetParser(String usageContext, InputStream in, String name, String filename, Definitions definitions, String root, Logger log, OIDRegistry registry, FHIRVersion version, BuildWorkerContext context, Calendar genDate, boolean isAbstract, 
-	     ProfileKnowledgeProvider pkp, boolean isType, IniFile ini, WorkGroup committee, Map<String, ConstraintStructure> profileIds, List<FHIRPathUsage> fpUsages, CanonicalResourceManager<ConceptMap> maps, boolean exceptionIfExcelNotNormalised, PackageVersion packageInfo, RenderingContext rc) throws Exception {
+	     ProfileKnowledgeProvider pkp, boolean isType, IniFile ini, WorkGroup committee, Map<String, ConstraintStructure> profileIds, List<FHIRPathUsage> fpUsages, CanonicalResourceManager<ConceptMap> maps, boolean exceptionIfExcelNotNormalised, PackageInformation packageInfo, RenderingContext rc) throws Exception {
 	  this.usageContext = usageContext;
 		this.name = name;
   	xls = new XLSXmlParser(in, filename);

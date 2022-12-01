@@ -39,7 +39,6 @@ import org.hl7.fhir.r5.context.CanonicalResourceManager;
 import org.hl7.fhir.r5.context.HTMLClientLogger;
 import org.hl7.fhir.r5.context.IWorkerContext;
 import org.hl7.fhir.r5.context.IWorkerContext.IContextResourceLoader;
-import org.hl7.fhir.r5.context.IWorkerContext.PackageVersion;
 import org.hl7.fhir.r5.context.SimpleWorkerContext.PackageResourceLoader;
 import org.hl7.fhir.r5.formats.IParser;
 import org.hl7.fhir.r5.formats.JsonParser;
@@ -57,6 +56,7 @@ import org.hl7.fhir.r5.model.NamingSystem;
 import org.hl7.fhir.r5.model.NamingSystem.NamingSystemIdentifierType;
 import org.hl7.fhir.r5.model.NamingSystem.NamingSystemUniqueIdComponent;
 import org.hl7.fhir.r5.model.OperationOutcome;
+import org.hl7.fhir.r5.model.PackageInformation;
 import org.hl7.fhir.r5.model.Parameters;
 import org.hl7.fhir.r5.model.Parameters.ParametersParameterComponent;
 import org.hl7.fhir.r5.model.StringType;
@@ -811,7 +811,7 @@ public class BuildWorkerContext extends BaseWorkerContext implements IWorkerCont
     }
     for (PackageResourceInformation pri : pi.listIndexedResources(types)) {
       try {
-        registerResourceFromPackage(new PackageResourceLoader(pri, loader), new PackageVersion(pi.id(), pi.version(), pi.dateAsDate()));
+        registerResourceFromPackage(new PackageResourceLoader(pri, loader), new PackageInformation(pi.id(), pi.version(), pi.dateAsDate()));
         t++;
       } catch (FHIRException e) {
         throw new FHIRException(formatMessage(I18nConstants.ERROR_READING__FROM_PACKAGE__, pri.getFilename(), pi.name(), pi.version(), e.getMessage()), e);
@@ -827,22 +827,21 @@ public class BuildWorkerContext extends BaseWorkerContext implements IWorkerCont
   }
 
   @Override
-  public void cachePackage(PackageDetails packageDetails, List<PackageVersion> dependencies) {
-
+  public boolean isPrimitiveType(String typeSimple) {
+    throw new NotImplementedException("Not implemented");
   }
 
   @Override
-  public boolean hasPackage(PackageVersion pack) {
+  public void cachePackage(PackageInformation packageInfo) {    
+  }
+
+  @Override
+  public boolean hasPackage(PackageInformation pack) {
     return false;
   }
 
   @Override
-  public PackageDetails getPackage(PackageVersion pack) {
+  public PackageInformation getPackage(String id, String ver) {
     return null;
-  }
-
-  @Override
-  public boolean isPrimitiveType(String typeSimple) {
-    throw new NotImplementedException("Not implemented");
   }
 }
