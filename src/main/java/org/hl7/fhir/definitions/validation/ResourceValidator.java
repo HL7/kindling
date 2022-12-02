@@ -1,10 +1,32 @@
 package org.hl7.fhir.definitions.validation;
 
-import org.hl7.fhir.definitions.model.*;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import org.hl7.fhir.definitions.model.BindingSpecification;
 import org.hl7.fhir.definitions.model.BindingSpecification.BindingMethod;
 import org.hl7.fhir.definitions.model.BindingSpecification.ElementType;
+import org.hl7.fhir.definitions.model.Compartment;
+import org.hl7.fhir.definitions.model.DefinedCode;
+import org.hl7.fhir.definitions.model.DefinedStringPattern;
+import org.hl7.fhir.definitions.model.Definitions;
+import org.hl7.fhir.definitions.model.ElementDefn;
+import org.hl7.fhir.definitions.model.ImplementationGuideDefn;
+import org.hl7.fhir.definitions.model.LogicalModel;
+import org.hl7.fhir.definitions.model.MappingSpace;
+import org.hl7.fhir.definitions.model.Operation;
 import org.hl7.fhir.definitions.model.Operation.OperationExample;
+import org.hl7.fhir.definitions.model.ResourceDefn;
+import org.hl7.fhir.definitions.model.SearchParameterDefn;
 import org.hl7.fhir.definitions.model.SearchParameterDefn.SearchType;
+import org.hl7.fhir.definitions.model.TypeDefn;
+import org.hl7.fhir.definitions.model.TypeRef;
+import org.hl7.fhir.definitions.model.W5Entry;
 import org.hl7.fhir.exceptions.FHIRException;
 import org.hl7.fhir.r5.context.CanonicalResourceManager;
 import org.hl7.fhir.r5.context.IWorkerContext;
@@ -14,7 +36,6 @@ import org.hl7.fhir.r5.model.Enumerations.BindingStrength;
 import org.hl7.fhir.r5.model.ValueSet;
 import org.hl7.fhir.r5.model.ValueSet.ConceptSetComponent;
 import org.hl7.fhir.r5.renderers.RendererFactory;
-import org.hl7.fhir.r5.renderers.ResourceRenderer;
 import org.hl7.fhir.r5.terminologies.ValueSetUtilities;
 import org.hl7.fhir.r5.utils.Translations;
 import org.hl7.fhir.utilities.StandardsStatus;
@@ -24,9 +45,6 @@ import org.hl7.fhir.utilities.validation.ValidationMessage.IssueSeverity;
 import org.hl7.fhir.utilities.validation.ValidationMessage.IssueType;
 import org.hl7.fhir.utilities.validation.ValidationMessage.Source;
 import org.hl7.fhir.validation.BaseValidator;
-
-import java.io.IOException;
-import java.util.*;
 
 
 /**

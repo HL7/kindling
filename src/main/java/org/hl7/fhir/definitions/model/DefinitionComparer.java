@@ -1,19 +1,10 @@
 package org.hl7.fhir.definitions.model;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 import org.hl7.fhir.definitions.model.Operation.OperationExample;
-import org.hl7.fhir.definitions.model.Profile.ConformancePackageSourceType;
 import org.hl7.fhir.definitions.model.ResourceDefn.InheritedMapping;
 import org.hl7.fhir.definitions.model.ResourceDefn.PointSpec;
 import org.hl7.fhir.definitions.model.SearchParameterDefn.CompositeDefinition;
 import org.hl7.fhir.r5.model.Base;
-import org.hl7.fhir.r5.model.SearchParameter;
-import org.hl7.fhir.r5.model.StructureDefinition;
-import org.hl7.fhir.r5.model.ValueSet;
 import org.hl7.fhir.utilities.Utilities;
 
 public class DefinitionComparer {

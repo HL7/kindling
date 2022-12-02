@@ -17,7 +17,6 @@ import org.hl7.fhir.definitions.model.TypeRef;
 import org.hl7.fhir.utilities.TextFile;
 import org.hl7.fhir.utilities.json.JsonTrackingParser;
 
-import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 

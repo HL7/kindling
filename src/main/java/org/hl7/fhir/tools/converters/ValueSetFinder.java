@@ -2,50 +2,15 @@ package org.hl7.fhir.tools.converters;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
-import org.hl7.fhir.definitions.generators.specification.ToolResourceUtilities;
-import org.hl7.fhir.definitions.model.BindingSpecification;
-import org.hl7.fhir.definitions.model.BindingSpecification.BindingMethod;
-import org.hl7.fhir.definitions.parsers.CodeListToValueSetParser;
-import org.hl7.fhir.definitions.parsers.ValueSetGenerator;
-import org.hl7.fhir.definitions.parsers.spreadsheets.BindingsParser;
-import org.hl7.fhir.definitions.parsers.spreadsheets.SpreadSheetBase.ExtensionSorter;
-import org.hl7.fhir.r5.model.ElementDefinition;
-import org.hl7.fhir.r5.model.Extension;
-import org.hl7.fhir.r5.model.ImplementationGuide;
-import org.hl7.fhir.r5.model.ImplementationGuide.ImplementationGuideDefinitionResourceComponent;
-import org.hl7.fhir.exceptions.FHIRException;
 import org.hl7.fhir.r5.formats.IParser.OutputStyle;
 import org.hl7.fhir.r5.formats.XmlParser;
-import org.hl7.fhir.r5.model.Bundle;
-import org.hl7.fhir.r5.model.Bundle.BundleEntryComponent;
-import org.hl7.fhir.r5.model.CodeSystem;
-import org.hl7.fhir.r5.model.CodeType;
-import org.hl7.fhir.r5.model.Constants;
-import org.hl7.fhir.r5.model.DomainResource;
-import org.hl7.fhir.r5.model.Element;
-import org.hl7.fhir.r5.model.ValueSet;
-import org.hl7.fhir.r5.model.CodeSystem.ConceptDefinitionComponent;
-import org.hl7.fhir.r5.model.Enumerations.BindingStrength;
-import org.hl7.fhir.r5.model.Enumerations.PublicationStatus;
+import org.hl7.fhir.r5.model.ImplementationGuide;
 import org.hl7.fhir.r5.model.SearchParameter;
-import org.hl7.fhir.r5.model.StructureDefinition;
-import org.hl7.fhir.r5.terminologies.CodeSystemUtilities;
-import org.hl7.fhir.r5.terminologies.ValueSetUtilities;
-import org.hl7.fhir.r5.utils.ToolingExtensions;
 import org.hl7.fhir.utilities.Utilities;
-import org.hl7.fhir.utilities.xls.XLSXmlParser;
-import org.hl7.fhir.utilities.xls.XLSXmlParser.Sheet;
 
 public class ValueSetFinder {
   
