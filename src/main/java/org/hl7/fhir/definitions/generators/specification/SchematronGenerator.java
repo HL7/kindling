@@ -43,12 +43,6 @@ public class SchematronGenerator {
     for (StructureDefinition exd : page.getWorkerContext().getExtensionDefinitions()) {
       if (exd.getSnapshot().getElement().get(0).hasConstraint() && !processed.contains(exd)) {
         processed.add(exd);
-        Section s = sch.section("Extension: "+exd.getName());
-        Rule r = s.rule("f:"+(exd.getSnapshot().getElementFirstRep().getIsModifier() ? "modifierExtension" : "extension")+"[@url='"+exd.getUrl()+"']");
-        for (ElementDefinitionConstraintComponent inv : exd.getSnapshot().getElement().get(0).getConstraint()) {
-          if (!isGlobal(inv.getKey()))
-            r.assrt(inv.getXpath().replace("\"", "'"), inv.getKey()+": "+inv.getHuman());
-        }
       }
     }
     sch.dump();	 
