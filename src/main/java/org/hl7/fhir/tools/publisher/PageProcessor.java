@@ -171,6 +171,8 @@ import org.hl7.fhir.r5.model.Enumerations.FHIRVersion;
 import org.hl7.fhir.r5.model.Enumerations.SearchParamType;
 import org.hl7.fhir.r5.model.ExpressionNode.CollectionStatus;
 import org.hl7.fhir.r5.model.Extension;
+import org.hl7.fhir.r5.model.Identifier;
+import org.hl7.fhir.r5.model.Identifier.IdentifierUse;
 import org.hl7.fhir.r5.model.ImplementationGuide;
 import org.hl7.fhir.r5.model.ImplementationGuide.ImplementationGuideDefinitionPageComponent;
 import org.hl7.fhir.r5.model.ImplementationGuide.ImplementationGuideDefinitionResourceComponent;
@@ -1067,14 +1069,13 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
           src = s1 + ((CodeSystem) resource).getUrl() + s3;
         else 
           src = s1 + ((ValueSet) resource).getUrl() + s3;
-      } else if (com[0].equals("txdef"))
+      } else if (com[0].equals("txdef")) {
         src = s1 + generateCodeDefinition(Utilities.fileTitle(file)) + s3;
-      else if (com[0].equals("vsdef"))
-        if (resource instanceof CodeSystem)
-          src = s1 + processMarkdown("vsdef", ((CodeSystem) resource).getDescription(), genlevel(level)) + s3;
-        else
-          src = s1 + processMarkdown("vsdef", ((ValueSet) resource).getDescription(), genlevel(level)) + s3;
-      else if (com[0].equals("txoid"))
+      } else if (com[0].equals("vsdef")) {
+        src = s1 + processMarkdown("vsdef", ((ValueSet) resource).getDescription(), genlevel(level)) + s3;
+      } else if (com[0].equals("csdef")) {
+        src = s1 + processMarkdown("vsdef", ((CodeSystem) resource).getDescription(), genlevel(level)) + s3;
+      } else if (com[0].equals("txoid"))
         src = s1 + generateOID((CodeSystem) resource) + s3;
       else if (com[0].equals("vsoid"))
         src = s1 + generateOID((ValueSet) resource) + s3;
@@ -1086,22 +1087,21 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
         else
           src = s1 + ((ValueSet) resource).present() + s3;
       else if (com[0].equals("vsnamed"))
-        if (resource instanceof CodeSystem)
-          src = s1 + ((CodeSystem) resource).getName() + s3;
-        else
-          src = s1 + ((ValueSet) resource).getName() + s3;
-      else if (com[0].equals("vsstatus")) {
-        CanonicalResource cr = (CanonicalResource) resource;
-        if (cr.hasStatus())
-          src = s1 + cr.getStatus().toCode() + s3;
-        else
-          src = s1 + "??" + s3;
-      } else if (com[0].equals("vstitle"))
-        if (resource instanceof CodeSystem)
-          src = s1 + checkTitle(((CodeSystem) resource).getTitle()) + s3;
-        else
+        src = s1 + ((ValueSet) resource).getName() + s3;
+      else if (com[0].equals("csnamed")) {
+        src = s1 + ((CodeSystem) resource).getName() + s3;
+      } else if (com[0].equals("vsstatus")) {
+        src = s1 + checkTitle(((ValueSet) resource).getStatus().toCode()) + s3;
+      } else if (com[0].equals("csstatus")) {
+        src = s1 + checkTitle(((CodeSystem) resource).getStatus().toCode()) + s3;
+      } else if (com[0].equals("vstitle")) {
           src = s1 + checkTitle(((ValueSet) resource).getTitle()) + s3;
-      else if (com[0].equals("vsver") || com[0].equals("ext-ver"))  {
+      } else if (com[0].equals("cstitle")) {
+        src = s1 + checkTitle(((CodeSystem) resource).getTitle()) + s3;
+      } else if (com[0].equals("vsver") || com[0].equals("ext-ver"))  {
+        CanonicalResource cr = (CanonicalResource) resource;
+        src = s1 + cr.getVersion() + s3;
+      } else if (com[0].equals("csver"))  {
         CanonicalResource cr = (CanonicalResource) resource;
         src = s1 + cr.getVersion() + s3;
       } else if (com[0].equals("vsref")) {
@@ -1259,6 +1259,20 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
         src = s1 + "../" + s3;
       else if (com[0].equals("vscommittee"))
         src = s1 + vscommittee(resource) + s3;
+      else if (com[0].equals("cscommittee"))
+        src = s1 + vscommittee(resource) + s3;
+      else if (com[0].equals("csdate"))
+        src = s1 + crDate(resource) + s3;
+      else if (com[0].equals("vsdate"))
+        src = s1 + crDate(resource) + s3;
+      else if (com[0].equals("cscopyright"))
+        src = s1 + csCopyright(resource) + s3;
+      else if (com[0].equals("csflags"))
+        src = s1 + csFlags((CodeSystem) resource) + s3;
+      else if (com[0].equals("vsflags"))
+        src = s1 + vsFlags((ValueSet) resource) + s3;
+      else if (com[0].equals("csoid"))
+        src = s1 + crOids((CanonicalResource) resource) + s3;
       else if (com[0].equals("modifier-list"))
         src = s1 + genModifierList() + s3;
       else if (com[0].equals("missing-element-list"))
@@ -1341,6 +1355,67 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
         throw new Exception("Instruction <%"+s2+"%> not understood parsing page "+file);
     }
     return src;
+  }
+
+  private String crOids(CanonicalResource resource) {
+    CommaSeparatedStringBuilder s = new CommaSeparatedStringBuilder();
+    for (Identifier id : resource.getIdentifier()) {
+      if (id.hasValue() && id.getValue().startsWith("urn:oid:") && id.getUse() != IdentifierUse.OLD) {
+        s.append(id.getValue().substring(8));
+      }
+    }
+    return s.count() == 0 ? "TBD" : s.toString();
+  }
+
+  private String vsFlags(ValueSet vs) {
+    String c = "";
+    if (vs.hasExperimental() || vs.hasImmutable()) {
+      c = c + 
+        Utilities.stringJoin(", ", vs.hasExperimental() && vs.getExperimental() ? "Experimental" : "", 
+        (vs.hasImmutable() && vs.getImmutable() ? "Immutable" : ""));
+    }
+    return c;
+  
+  }
+  
+  private String csFlags(CodeSystem cs) {
+    String c = "";
+    if (cs.hasExperimental() || cs.hasCaseSensitive() || cs.hasCompositional() || cs.hasContent() || cs.hasVersionNeeded()) {
+      c = c + 
+        Utilities.stringJoin(", ", cs.hasExperimental() && cs.getExperimental() ? "Experimental" : "", 
+        (cs.hasCaseSensitive() ?  cs.getCaseSensitive() ? "CaseSensitive" : "Not CaseSensitive" : ""),
+        (cs.hasVersionNeeded() && cs.getVersionNeeded() ? "VersionNeeded" : ""),
+        (cs.hasCompositional() && cs.getCompositional() ? "Compositional" : ""),
+        (cs.hasContent() ? cs.getContent().getDisplay() : ""));
+    }
+    if (cs.hasSupplements()) {
+      c = c + ". Supplements: "+cs.getSupplements();
+    }
+    if (cs.hasValueSet()) {
+      ValueSet vs = definitions.getValuesets().get(cs.getValueSet());
+      if (vs != null) {
+        c = c + ". All codes ValueSet: <a href=\""+vs.getUserString("path")+"\">"+vs.present()+"</a>";
+      } else {
+        c = c + ". All codes ValueSet: "+cs.getValueSet()+"";        
+      }
+    }
+    return c;
+  }
+
+  private String csCopyright(Resource resource) {
+    if (resource instanceof CanonicalResource) {
+      return ((CanonicalResource) resource).getCopyright();
+    } else {
+      return "";
+    }
+  }
+
+  private String crDate(Resource resource) {
+    if (resource instanceof CanonicalResource && ((CanonicalResource) resource).hasDate()) {
+      return new SimpleDateFormat("yyyy-MM-dd").format(((CanonicalResource) resource).getDate());
+    } else {
+      return new SimpleDateFormat("yyyy-MM-dd").format(genDate.getTime());
+    }
   }
 
   private String buildDTStatus(String tn) throws Exception {
@@ -5080,14 +5155,13 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
           src = s1 + ((ValueSet) resource).getUrl() + s3;
       } else if (com[0].equals("txdef"))
         src = s1 + generateCodeDefinition(Utilities.fileTitle(file)) + s3;
-      else if (com[0].equals("vsxref"))
+      else if (com[0].equals("vsxref")) {
         src = s1 + xreferencesForFhir(name) + s3;
-      else if (com[0].equals("vsdef"))
-        if (resource instanceof CodeSystem)
-          src = s1 + Utilities.escapeXml(((CodeSystem) resource).getDescription()) + s3;
-        else
-          src = s1 + Utilities.escapeXml(((ValueSet) resource).getDescription()) + s3;
-      else if (com[0].equals("txusage"))
+      } else if (com[0].equals("vsdef")) {
+        src = s1 + processMarkdown("vsdef", ((ValueSet) resource).getDescription(), genlevel(0)) + s3;
+      } else if (com[0].equals("csdef")) {
+        src = s1 + processMarkdown("vsdef", ((CodeSystem) resource).getDescription(), genlevel(0)) + s3;
+      } else if (com[0].equals("txusage"))
         src = s1 + generateValueSetUsage((ValueSet) resource, genlevel(0), true) + s3;
       else if (com[0].equals("vsusage"))
         src = s1 + generateValueSetUsage((ValueSet) resource, genlevel(0), true) + s3;
@@ -5618,23 +5692,23 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
         else
           src = s1 + ((ValueSet) resource).present() + s3;
       else if (com[0].equals("vsnamed"))
-        if (resource instanceof CodeSystem)
-          src = s1 + ((CodeSystem) resource).getName() + s3;
-        else
-          src = s1 + ((ValueSet) resource).getName() + s3;
-      else if (com[0].equals("vstitle"))
-        if (resource instanceof CodeSystem)
-          src = s1 + checkTitle(((CodeSystem) resource).getTitle()) + s3;
-        else
-          src = s1 + checkTitle(((ValueSet) resource).getTitle()) + s3;
-      else if (com[0].equals("vsstatus"))
-        if (resource instanceof CodeSystem)
-          src = s1 + checkTitle(((CodeSystem) resource).getStatus().toCode()) + s3;
-        else
-          src = s1 + checkTitle(((ValueSet) resource).getStatus().toCode()) + s3;
-      else if (com[0].equals("vsver") || com[0].equals("ext-ver"))  {
+        src = s1 + ((ValueSet) resource).getName() + s3;
+      else if (com[0].equals("csnamed")) {
+        src = s1 + ((CodeSystem) resource).getName() + s3;
+      } else if (com[0].equals("vstitle")) {
+        src = s1 + checkTitle(((ValueSet) resource).getTitle()) + s3;
+      } else if (com[0].equals("cstitle")) {
+        src = s1 + checkTitle(((CodeSystem) resource).getTitle()) + s3;
+      } else if (com[0].equals("vsstatus")) {
+        src = s1 + checkTitle(((ValueSet) resource).getStatus().toCode()) + s3;
+      } else if (com[0].equals("csstatus")) {
+        src = s1 + checkTitle(((CodeSystem) resource).getStatus().toCode()) + s3;
+      } else if (com[0].equals("vsver") || com[0].equals("ext-ver"))  {
         CanonicalResource cr = (CanonicalResource) resource;
         src = s1 + cr.getVersion() + s3;
+      } else if (com[0].equals("csver"))  {
+          CanonicalResource cr = (CanonicalResource) resource;
+          src = s1 + cr.getVersion() + s3;
       } else if (com[0].equals("vsref")) {
         src = s1 + Utilities.fileTitle((String) resource.getUserData("filename")) + s3;
       } else if (com[0].equals("vsdesc"))
