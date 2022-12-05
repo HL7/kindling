@@ -159,20 +159,20 @@ public class SchematronGenerator {
       if (inv.getFixedName() == null || path.endsWith(inv.getFixedName()))
         c++;
     }
-    if (c > 0) {
-      Rule r = section.rule(path);
-      for (Invariant inv : ed.getInvariants().values()) {
-        if (!Utilities.existsInList(inv.getSeverity(), "warning", "best-practice")) {
-          if (inv.getFixedName() == null || path.endsWith(inv.getFixedName())) {
-            if (!isGlobal(inv.getId()) && !Utilities.noString(inv.getXpath())) {
-              if (inv.getXpath().contains("&lt;") || inv.getXpath().contains("&gt;"))
-                throw new Exception("error in xpath - do not escape xml characters in the xpath in the excel spreadsheet");
-              r.assrt(inv.getXpath().replace("\"", "'"), inv.getId()+": "+inv.getEnglish());
-            }
-          }
-        }
-      }
-    }
+//    if (c > 0) {
+//      Rule r = section.rule(path);
+//      for (Invariant inv : ed.getInvariants().values()) {
+//        if (!Utilities.existsInList(inv.getSeverity(), "warning", "best-practice")) {
+//          if (inv.getFixedName() == null || path.endsWith(inv.getFixedName())) {
+//            if (!isGlobal(inv.getId()) && !Utilities.noString(inv.getXpath())) {
+//              if (inv.getXpath().contains("&lt;") || inv.getXpath().contains("&gt;"))
+//                throw new Exception("error in xpath - do not escape xml characters in the xpath in the excel spreadsheet");
+//              r.assrt(inv.getXpath().replace("\"", "'"), inv.getId()+": "+inv.getEnglish());
+//            }
+//          }
+//        }
+//      }
+//    }
   }
 
   private boolean isSpecialType(String tn) {

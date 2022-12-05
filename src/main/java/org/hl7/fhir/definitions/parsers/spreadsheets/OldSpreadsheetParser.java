@@ -320,16 +320,11 @@ public class OldSpreadsheetParser {
 		      if (ed.getName().endsWith("[x]") && !inv.getContext().endsWith("[x]"))
 		        inv.setFixedName(inv.getContext().substring(inv.getContext().lastIndexOf(".")+1));
 		      ed.getInvariants().put(inv.getId(), inv);
-		      if (Utilities.noString(inv.getXpath())) {
-		        throw new Exception("Type "+resource.getRoot().getName()+" Invariant "+inv.getId()+" ("+inv.getEnglish()+") has no XPath statement");
-          }
-		      else if (inv.getXpath().contains("\""))
-		        throw new Exception("Type "+resource.getRoot().getName()+" Invariant "+inv.getId()+" ("+inv.getEnglish()+") contains a \" character");
           if (Utilities.noString(inv.getExpression())) {
 				// This has been disabled for now, per Lloyd McKenzie's request via Skype - jamesagnew
             //throw new Exception("Type "+resource.getRoot().getName()+" Invariant "+inv.getId()+" ("+inv.getEnglish()+") has no Expression statement (in FHIRPath format)");
           } else {
-            fpUsages.add(new FHIRPathUsage(inv.getContext(), isResource ? resource.getName() : "DomainResource", inv.getContext(), null, inv.getExpression(), inv.getXpath()));
+            fpUsages.add(new FHIRPathUsage(inv.getContext(), isResource ? resource.getName() : "DomainResource", inv.getContext(), null, inv.getExpression()));
           }
 		    }
 		  }
@@ -778,7 +773,6 @@ public class OldSpreadsheetParser {
 			  inv.setRequirements(sheet.getColumn(row, "Requirements"));
 			  inv.setContext(sheet.getColumn(row, "Context"));
 			  inv.setEnglish(sheet.getColumn(row, "English"));
-        inv.setXpath(sheet.getColumn(row, "XPath"));
         inv.setExpression(sheet.getColumn(row, "Expression"));
         inv.setExplanation(sheet.getColumn(row, "Explanation"));
         if (Utilities.noString(inv.getExpression()))
@@ -1572,11 +1566,6 @@ public class OldSpreadsheetParser {
 			    if (ed.getName().endsWith("[x]") && !inv.getContext().endsWith("[x]"))
 			      inv.setFixedName(inv.getContext().substring(inv.getContext().lastIndexOf(".")+1));
 			    ed.getInvariants().put(inv.getId(), inv);
-			    if (Utilities.noString(inv.getXpath())) {
-		        throw new Exception("Type "+resource.getRoot().getName()+" Invariant "+inv.getId()+" ("+inv.getEnglish()+") has no XPath statement");
-          }
-			    else if (inv.getXpath().contains("\""))
-	          throw new Exception("Type "+resource.getRoot().getName()+" Invariant "+inv.getId()+" ("+inv.getEnglish()+") contains a \" character");
 //          if (Utilities.noString(inv.getExpression()))
 //            throw new Exception("Type "+resource.getRoot().getName()+" Invariant "+inv.getId()+" ("+inv.getEnglish()+") has no Expression statement (in FHIRPath format)");
 			  }
@@ -2570,11 +2559,6 @@ public class OldSpreadsheetParser {
           if (ed.getName().endsWith("[x]") && !inv.getContext().endsWith("[x]"))
             inv.setFixedName(inv.getContext().substring(inv.getContext().lastIndexOf(".")+1));
           ed.getInvariants().put(inv.getId(), inv);
-          if (Utilities.noString(inv.getXpath())) {
-            throw new Exception("Type "+resource.getRoot().getName()+" Invariant "+inv.getId()+" ("+inv.getEnglish()+") has no XPath statement");
-          }
-          else if (inv.getXpath().contains("\""))
-            throw new Exception("Type "+resource.getRoot().getName()+" Invariant "+inv.getId()+" ("+inv.getEnglish()+") contains a \" character");
 //          if (Utilities.noString(inv.getExpression()))
 //            throw new Exception("Type "+resource.getRoot().getName()+" Invariant "+inv.getId()+" ("+inv.getEnglish()+") has no Expression statement (in FHIRPath format)");
         }

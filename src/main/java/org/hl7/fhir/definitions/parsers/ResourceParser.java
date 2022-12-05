@@ -563,7 +563,6 @@ public class ResourceParser {
       if (cst.hasExtension(BuildExtensions.EXT_OCL)) {
         inv.setOcl(cst.getExtensionString(BuildExtensions.EXT_OCL));        
       }
-      inv.setXpath(cst.getXpath());
       inv.setId(cst.getKey());
       if (cst.hasExtension(BuildExtensions.EXT_FIXED_NAME)) {
         inv.setFixedName(cst.getExtensionString(BuildExtensions.EXT_FIXED_NAME));        

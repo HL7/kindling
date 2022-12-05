@@ -905,10 +905,6 @@ public class DefinitionComparer {
       res = false;
       System.out.println("Definitions differ @"+path+": ocl = "+left.getOcl()+" vs "+right.getOcl());
     }
-    if (!stringsMatch(left.getXpath(), right.getXpath())) {
-      res = false;
-      System.out.println("Definitions differ @"+path+": xpath = "+left.getXpath()+" vs "+right.getXpath());
-    }
     if (!stringsMatch(left.getId(), right.getId())) {
       res = false;
       System.out.println("Definitions differ @"+path+": id = "+left.getId()+" vs "+right.getId());

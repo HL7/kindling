@@ -736,9 +736,6 @@ public class ResourceValidator extends BaseValidator {
       String id = e.getInvariants().get(inv).getId();
       rule(errors, ValidationMessage.NO_RULE_DATE, IssueType.VALUE, path, !invIds.contains(id), "Duplicate constraint id "+id);
       invIds.add(id);
-
-      String xpath = e.getInvariants().get(inv).getXpath();
-      rule(errors, ValidationMessage.NO_RULE_DATE, IssueType.VALUE, path, xpath == null || (!(xpath.contains("&lt;") || xpath.contains("&gt;"))), "error in xpath - do not escape xml characters in the xpath in the excel spreadsheet");
     }
     rule(errors, ValidationMessage.NO_RULE_DATE, IssueType.STRUCTURE, path, !e.getName().startsWith("_"), "Element names cannot start with '_'");
     //TODO: Really? A composite element need not have a definition?

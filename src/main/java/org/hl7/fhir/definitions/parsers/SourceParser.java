@@ -1188,7 +1188,6 @@ public class SourceParser {
             inv.setId(n);
             inv.setEnglish(sheet.getColumn(i,"Rules"));
             inv.setOcl(sheet.getColumn(i, "OCL"));
-            inv.setXpath(sheet.getColumn(i, "XPath"));
             inv.setExpression(sheet.getColumn(i, "Expression"));
             inv.setExplanation(sheet.getColumn(i, "Explanation"));
             inv.setTurtle(sheet.getColumn(i, "RDF"));

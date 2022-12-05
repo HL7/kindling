@@ -920,7 +920,6 @@ public class ProfileGenerator {
       fpUsages.add(new FHIRPathUsage(pt.getName(), pt.getName(), pt.getName(), null, pt.getInvariant().getExpression()));
       inv.setExpression(pt.getInvariant().getExpression());
     }
-    inv.setXpath(pt.getInvariant().getXpath());
     e.getConstraint().add(inv);
     p.setDifferential(new StructureDefinitionDifferentialComponent());
     p.getDifferential().getElement().add(e);
@@ -968,8 +967,8 @@ public class ProfileGenerator {
     div.addTag("p").addText(pt.getDefinition());
     div.addTag("h3").addText("Rule");
     div.addTag("p").addText(pt.getInvariant().getEnglish());
-    div.addTag("p").addText("XPath:");
-    div.addTag("blockquote").addTag("pre").addText(pt.getInvariant().getXpath());
+    div.addTag("p").addText("Expression:");
+    div.addTag("blockquote").addTag("pre").addText(pt.getInvariant().getExpression());
     p.setText(new Narrative());
     p.getText().setStatus(NarrativeStatus.GENERATED);
     p.getText().setDiv(div);    
@@ -1967,7 +1966,6 @@ public class ProfileGenerator {
       } else
         con.setSeverity(ConstraintSeverity.fromCode(inv.getSeverity()));
       con.setHuman(inv.getEnglish());
-      con.setXpath(inv.getXpath());
       if (!Utilities.isAbsoluteUrl(source)) {
         throw new Error("source : "+source);
       }
@@ -2338,7 +2336,6 @@ public class ProfileGenerator {
       else
         con.setSeverity(ConstraintSeverity.fromCode(inv.getSeverity()));
       con.setHuman(inv.getEnglish());
-      con.setXpath(inv.getXpath());
       if (!"n/a".equals(inv.getExpression()))
         con.setExpression(inv.getExpression());
       dst.getConstraint().add(con);
