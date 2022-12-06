@@ -25,6 +25,7 @@ import org.hl7.fhir.r5.model.ValueSet.ConceptSetComponent;
 import org.hl7.fhir.r5.model.ValueSet.ValueSetComposeComponent;
 import org.hl7.fhir.r5.terminologies.CodeSystemUtilities;
 import org.hl7.fhir.r5.utils.ToolingExtensions;
+import org.hl7.fhir.tools.publisher.KindlingUtilities;
 import org.hl7.fhir.utilities.Utilities;
 import org.hl7.fhir.utilities.xls.XLSXmlParser.Sheet;
 
@@ -86,6 +87,7 @@ public class CodeListToValueSetParser {
         CodeSystemUtilities.setOID(cs, oid);
       }
       codeSystems.see(cs, packageInfo);
+      KindlingUtilities.makeUniversal(cs);
 
       for (int row = 0; row < sheet.rows.size(); row++) {
         if (Utilities.noString(sheet.getColumn(row, "System"))) {
@@ -176,6 +178,8 @@ public class CodeListToValueSetParser {
     cm.setName("v2."+vs.getName());
     cm.setTitle("v2 map for " + vs.present());
     cm.setPublisher("HL7 (FHIR Project)");
+    KindlingUtilities.makeUniversal(cm);
+
     for (ContactDetail cc : vs.getContact()) {
       ContactDetail cd = cm.addContact();
       cd.setName(cc.getName());
@@ -270,6 +274,8 @@ public class CodeListToValueSetParser {
     cm.setName("v3." + vs.getName());
     cm.setTitle("v3 map for " + vs.present());
     cm.setPublisher("HL7 (FHIR Project)");
+    KindlingUtilities.makeUniversal(cm);
+
     for (ContactDetail cc : vs.getContact()) {
       ContactDetail cd = cm.addContact();
       cd.setName(cc.getName());

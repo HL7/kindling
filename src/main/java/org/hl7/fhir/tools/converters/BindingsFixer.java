@@ -18,6 +18,7 @@ import org.hl7.fhir.r5.model.ValueSet;
 import org.hl7.fhir.r5.terminologies.CodeSystemUtilities;
 import org.hl7.fhir.r5.terminologies.ValueSetUtilities;
 import org.hl7.fhir.r5.utils.ToolingExtensions;
+import org.hl7.fhir.tools.publisher.KindlingUtilities;
 import org.hl7.fhir.utilities.Utilities;
 import org.hl7.fhir.utilities.xls.XLSXmlParser;
 import org.hl7.fhir.utilities.xls.XLSXmlParser.Sheet;
@@ -73,7 +74,8 @@ public class BindingsFixer {
           vs.setName(bindingName);
           vs.setStatus(PublicationStatus.fromCode(sheet.getColumn(row, "Status")));
           vs.setCopyright(sheet.getColumn(row, "Copyright"));
-          
+          KindlingUtilities.makeUniversal(vs);
+
           Sheet css = xls.getSheets().get(ref.substring(1));
           if (css == null) {
             throw new Exception("Error parsing binding "+bindingName+": code list reference '"+ref+"' not resolved");
@@ -87,7 +89,8 @@ public class BindingsFixer {
           cs.setName(bindingName);
           cs.setStatus(PublicationStatus.fromCode(sheet.getColumn(row, "Status")));
           cs.setCopyright(sheet.getColumn(row, "Copyright"));
-          
+          KindlingUtilities.makeUniversal(cs);
+
           vs.getCompose().addInclude().setSystem(cs.getUrl());
           
           processCodes(cs, css);

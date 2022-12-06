@@ -6864,6 +6864,8 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
       return null;
     
     ConceptMap map = new ConceptMap();
+    KindlingUtilities.makeUniversal(map);
+
     map.setId(logical.getPath()+"2"+resource.getPath());
     map.setUrl("http://hl7.org/fhir/ConceptMap/"+map.getId());
     map.setVersion(version.toCode());

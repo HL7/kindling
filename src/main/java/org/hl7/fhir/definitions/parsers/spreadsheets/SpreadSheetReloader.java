@@ -53,6 +53,7 @@ import org.hl7.fhir.r5.model.UriType;
 import org.hl7.fhir.r5.model.UrlType;
 import org.hl7.fhir.r5.utils.BuildExtensions;
 import org.hl7.fhir.r5.utils.ToolingExtensions;
+import org.hl7.fhir.tools.publisher.KindlingUtilities;
 import org.hl7.fhir.utilities.IniFile;
 import org.hl7.fhir.utilities.Utilities;
 import org.hl7.fhir.utilities.json.JsonTrackingParser;
@@ -651,6 +652,8 @@ public class SpreadSheetReloader extends SpreadSheetBase {
       opd.setName(name);
       opd.setCode(name);
     }
+    KindlingUtilities.makeUniversal(opd);
+    
     opd.setSystem(false);
     opd.setType(false);
     opd.setInstance(false);

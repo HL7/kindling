@@ -135,6 +135,7 @@ import org.hl7.fhir.r5.terminologies.ValueSetUtilities;
 import org.hl7.fhir.r5.utils.ToolingExtensions;
 import org.hl7.fhir.tools.converters.MarkDownPreProcessor;
 import org.hl7.fhir.tools.publisher.BuildWorkerContext;
+import org.hl7.fhir.tools.publisher.KindlingUtilities;
 import org.hl7.fhir.utilities.CSFile;
 import org.hl7.fhir.utilities.CSFileInputStream;
 import org.hl7.fhir.utilities.IniFile;
@@ -811,6 +812,7 @@ public class OldSpreadsheetParser {
         sp.setVersion(version.toCode());
         sp.setName(n);
         sp.setCode(n);
+        KindlingUtilities.makeUniversal(sp);
 
         if (pack.getProfiles().size() > 0 && pack.getProfiles().get(0).getResource() != null) {
           sp.setStatus(pack.getProfiles().get(0).getResource().getStatus());
@@ -1159,6 +1161,8 @@ public class OldSpreadsheetParser {
         cd.getValueSet().setId(igSuffix(ig)+ref.substring(1));
         cd.getValueSet().setUrl("http://hl7.org/fhir/ValueSet/"+igSuffix(ig)+ref.substring(1));
         cd.getValueSet().setUserData("filename", "valueset-"+cd.getValueSet().getId());
+        KindlingUtilities.makeUniversal(cd.getValueSet());
+
         if (!cd.getValueSet().hasExtension(ToolingExtensions.EXT_WORKGROUP)) {
           cd.getValueSet().addExtension().setUrl(ToolingExtensions.EXT_WORKGROUP).setValue(new CodeType(committee.getCode()));
         } else {

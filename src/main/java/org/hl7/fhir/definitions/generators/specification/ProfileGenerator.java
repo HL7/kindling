@@ -78,6 +78,7 @@ import org.hl7.fhir.r5.conformance.ProfileUtilities.ProfileKnowledgeProvider;
 import org.hl7.fhir.r5.formats.FormatUtilities;
 import org.hl7.fhir.r5.model.BooleanType;
 import org.hl7.fhir.r5.model.Bundle;
+import org.hl7.fhir.r5.model.CanonicalResource;
 import org.hl7.fhir.r5.model.Bundle.BundleEntryComponent;
 import org.hl7.fhir.r5.model.CanonicalType;
 import org.hl7.fhir.r5.model.CodeType;
@@ -133,6 +134,7 @@ import org.hl7.fhir.r5.utils.ToolingExtensions;
 import org.hl7.fhir.r5.utils.TypesUtilities;
 import org.hl7.fhir.tools.converters.MarkDownPreProcessor;
 import org.hl7.fhir.tools.publisher.BuildWorkerContext;
+import org.hl7.fhir.tools.publisher.KindlingUtilities;
 import org.hl7.fhir.utilities.IniFile;
 import org.hl7.fhir.utilities.StandardsStatus;
 import org.hl7.fhir.utilities.Utilities;
@@ -238,6 +240,7 @@ public class ProfileGenerator {
       if (dataElements != null)
         dataElements.addEntry().setResource(de).setFullUrl(de.getUrl());
     }
+    KindlingUtilities.makeUniversal(de);
       
     if (!de.hasMeta())
       de.setMeta(new Meta());
@@ -292,6 +295,7 @@ public class ProfileGenerator {
     p.setFhirVersion(version);
     p.setVersion(version.toCode());
     ToolingExtensions.setStandardsStatus(p, StandardsStatus.NORMATIVE, "4.0.0");
+    KindlingUtilities.makeUniversal(p);
 
     
     ToolResourceUtilities.updateUsage(p, "core");
@@ -507,6 +511,7 @@ public class ProfileGenerator {
     p.setFhirVersion(version);
     p.setVersion(version.toCode());
     ToolingExtensions.setStandardsStatus(p, StandardsStatus.NORMATIVE, "4.0.0");
+    KindlingUtilities.makeUniversal(p);
 
     
     ToolResourceUtilities.updateUsage(p, "core");
@@ -638,6 +643,7 @@ public class ProfileGenerator {
     p.setFhirVersion(version);
     p.setVersion(version.toCode());
     ToolingExtensions.setStandardsStatus(p, StandardsStatus.NORMATIVE, "4.0.0");
+    KindlingUtilities.makeUniversal(p);
 
     ToolResourceUtilities.updateUsage(p, "core");
     p.setName(type.getCode());
@@ -766,6 +772,7 @@ public class ProfileGenerator {
     p.setFhirVersion(version);
     p.setVersion(version.toCode());
     ToolingExtensions.setStandardsStatus(p, t.getStandardsStatus(), t.getNormativeVersion());
+    KindlingUtilities.makeUniversal(p);
 
     ToolResourceUtilities.updateUsage(p, "core");
     p.setName(t.getName());
@@ -887,6 +894,7 @@ public class ProfileGenerator {
     p.setVersion(version.toCode());
     ToolingExtensions.setStandardsStatus(p, StandardsStatus.NORMATIVE, "4.0.0");
     p.setStatus(PublicationStatus.fromCode("active")); 
+    KindlingUtilities.makeUniversal(p);
 
     ToolResourceUtilities.updateUsage(p, "core");
     p.setName(pt.getName());
@@ -1048,6 +1056,7 @@ public class ProfileGenerator {
     p.setFhirVersion(version);
     p.setVersion(version.toCode());
     ToolingExtensions.setStandardsStatus(p, r.getStatus(), r.getNormativeVersion());
+    KindlingUtilities.makeUniversal(p);
 
     if (r.getFmmLevel() != null) {
       int fmm = Integer.parseInt(r.getFmmLevel());
@@ -1159,6 +1168,7 @@ public class ProfileGenerator {
     p.setTitle(pack.metadata("display"));
     p.setFhirVersion(version);
     p.setVersion(version.toCode());
+    KindlingUtilities.makeUniversal(p);
 
     if (pack.hasMetadata("summary-"+profile.getTitle()))
       ToolingExtensions.addMarkdownExtension(p, "http://hl7.org/fhir/StructureDefinition/structuredefinition-summary", pack.metadata("summary-"+profile.getTitle()));
@@ -1297,6 +1307,8 @@ public class ProfileGenerator {
       sp.setId(id.replace("[", "").replace("]", ""));
     }
     spd.setCommonId(sp.getId());
+    KindlingUtilities.makeUniversal(sp);
+
     if (created) {
       sp.setUserData("path", p.getName().toLowerCase()+"-search.html#"+sp.getId());        
       sp.setUrl("http://hl7.org/fhir/SearchParameter/"+sp.getId());
@@ -2440,6 +2452,7 @@ public class ProfileGenerator {
     opd.setType(op.isType()); 
     opd.setInstance(op.isInstance());
     opd.setUserData("path", resourceName.toLowerCase()+"-operation-"+op.getName().toLowerCase()+".html");
+    KindlingUtilities.makeUniversal(opd);
 
     if (op.getIdempotent() == null) {
       throw new Error("Operation "+opd.getId()+" is not marked as Idempotent or not");
@@ -2554,6 +2567,7 @@ public class ProfileGenerator {
     p.setVersion(version.toCode());
     p.setType(r.getRoot().getName());
     ToolingExtensions.setStandardsStatus(p, r.getStatus(), null);
+    KindlingUtilities.makeUniversal(p);
 
     p.setBaseDefinition("http://hl7.org/fhir/StructureDefinition/Base");
     

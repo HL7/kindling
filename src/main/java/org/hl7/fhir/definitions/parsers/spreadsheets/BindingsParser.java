@@ -67,6 +67,7 @@ import org.hl7.fhir.r5.model.ValueSet.ValueSetComposeComponent;
 import org.hl7.fhir.r5.terminologies.CodeSystemUtilities;
 import org.hl7.fhir.r5.terminologies.ValueSetUtilities;
 import org.hl7.fhir.r5.utils.ToolingExtensions;
+import org.hl7.fhir.tools.publisher.KindlingUtilities;
 import org.hl7.fhir.utilities.TranslationServices;
 import org.hl7.fhir.utilities.Utilities;
 import org.hl7.fhir.utilities.xls.XLSXmlNormaliser;
@@ -137,6 +138,7 @@ public class BindingsParser {
         cd.getValueSet().setId(ref.substring(1));
         cd.getValueSet().setUrl("http://hl7.org/fhir/ValueSet/"+ref.substring(1));
         cd.getValueSet().setVersion(version);
+        KindlingUtilities.makeUniversal(cd.getValueSet());
 
         if (!Utilities.noString(sheet.getColumn(row, "Committee"))) {
           cd.getValueSet().addExtension().setUrl(ToolingExtensions.EXT_WORKGROUP).setValue(new CodeType(sheet.getColumn(row, "Committee").toLowerCase()));
@@ -186,6 +188,7 @@ public class BindingsParser {
           cd.getValueSet().setUrl("http://hl7.org/fhir/ValueSet/"+ref.substring(1));
           cd.getValueSet().setVersion(version);
           cd.getValueSet().setName(cd.getName());
+          KindlingUtilities.makeUniversal(cd.getValueSet());
         }
         // do nothing more: this will get filled out once all the resources are loaded
       }
@@ -238,6 +241,7 @@ public class BindingsParser {
         System.out.println("ValueSet "+vs.getUrl()+" WG mismatch 11: is "+ec+", want to set to "+"fhir");
     }     
     vs.setUserData("path", "valueset-"+vs.getId()+".html");
+    KindlingUtilities.makeUniversal(vs);
 
     ContactDetail c = vs.addContact();
     c.addTelecom().setSystem(ContactPointSystem.URL).setValue("http://hl7.org/fhir");
@@ -266,6 +270,7 @@ public class BindingsParser {
         }
       }
     }
+    KindlingUtilities.makeUniversal(cs);
     CodeSystemConvertor.populate(cs, vs);
     cs.setUrl("http://hl7.org/fhir/operation-outcome");
     cs.setVersion(version);

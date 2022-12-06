@@ -918,6 +918,8 @@ public class Publisher implements URIResolver, SectionNumberer {
     cm.setDescription("Canonical Mapping for \""+vs.getDescription()+"\"");
     cm.setSourceScope(new CanonicalType(vs.getUrl()));
     cm.setTargetScope(new CanonicalType("http://hl7.org/fhir/ValueSet/resource-status"));
+    KindlingUtilities.makeUniversal(cm);
+
     List<String> canonical = page.getDefinitions().getStatusCodes().get("@code");
     List<String> self = page.getDefinitions().getStatusCodes().get(path);
     ConceptMapGroupComponent grp = cm.addGroup();
@@ -1602,6 +1604,8 @@ public class Publisher implements URIResolver, SectionNumberer {
             ns.setStatus(PublicationStatus.DRAFT);
           ns.setKind(NamingSystemType.CODESYSTEM);
           ns.setPublisher(cs.getPublisher());
+          KindlingUtilities.makeUniversal(ns);
+
           for (ContactDetail c : cs.getContact()) {
             ContactDetail nc = ns.addContact();
             nc.setName(c.getName());
@@ -4357,7 +4361,7 @@ public class Publisher implements URIResolver, SectionNumberer {
     tmp.delete();
 
     StructureDefinitionSpreadsheetGenerator sdr = new StructureDefinitionSpreadsheetGenerator(page.getWorkerContext(), false, false);
-    sdr.renderStructureDefinition(resource.getProfile());
+    sdr.renderStructureDefinition(resource.getProfile(), false);
     sdr.finish(new FileOutputStream(Utilities.path(page.getFolders().dstDir, n + ".xlsx")));
 
     // because we'll pick up a little more information as we process the
@@ -6381,6 +6385,7 @@ private String csCounter() {
   private void generateValueSetsPart1() throws Exception {
     page.log(" ...value sets", LogMessageType.Process);
     for (ValueSet vs : page.getDefinitions().getBoundValueSets().values()) {
+      KindlingUtilities.makeUniversal(vs);
       if (!vs.hasText()) {
         vs.setText(new Narrative());
         vs.getText().setStatus(NarrativeStatus.EMPTY);
@@ -6404,6 +6409,7 @@ private String csCounter() {
   private void generateCodeSystemsPart1() throws Exception {
     page.log(" ...code systems", LogMessageType.Process);
     for (CodeSystem cs : page.getDefinitions().getCodeSystems().getList()) {
+      KindlingUtilities.makeUniversal(cs);
       if (cs != null && page.isLocalResource(cs)) {
         if (!cs.hasText()) {
           cs.setText(new Narrative());
@@ -6423,6 +6429,7 @@ private String csCounter() {
     List<ConceptMap> list = new ArrayList<>();
     page.getConceptMaps().listAll(list);
     for (ConceptMap cm : list) {
+      KindlingUtilities.makeUniversal(cm);
       if (cm.hasUserData("generate")) {
         generateConceptMap(cm);
       }
