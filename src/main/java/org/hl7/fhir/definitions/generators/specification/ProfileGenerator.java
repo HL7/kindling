@@ -181,10 +181,10 @@ public class ProfileGenerator {
     this.pkp = pkp;
     this.genDate = genDate;
     this.version = version;
-    this.dataElements = dataElements;
     this.fpUsages = fpUsages;
     this.rootFolder = rootFolder;
     this.rc = rc;
+    this.dataElements = dataElements;
     if (dataElements != null) {
       for (BundleEntryComponent be : dataElements.getEntry()) {
         if (be.getResource() instanceof StructureDefinition)
