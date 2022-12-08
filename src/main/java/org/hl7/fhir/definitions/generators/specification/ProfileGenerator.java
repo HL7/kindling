@@ -1290,9 +1290,23 @@ public class ProfileGenerator {
     boolean shared;
     boolean created = true;
     SearchParameter sp;
-    if (definitions.getCommonSearchParameters().containsKey(rn+"::"+spd.getCode())) {
+    String name = rn+"::"+spd.getCode();
+    if (!definitions.getCommonSearchParameters().containsKey(name)) {
+      ResourceDefn t = rd;
+      while (t != null) {
+        name = t.getName()+"::"+spd.getCode();
+        if (definitions.getCommonSearchParameters().containsKey(name)) {
+          break;
+        }
+        if ("Base".equals(t.getRoot().typeCode())) {
+          break;
+        }          
+        t = definitions.getResourceByName(t.getRoot().typeCode());
+      }      
+    }
+    if (definitions.getCommonSearchParameters().containsKey(name)) {
       shared = true;
-      CommonSearchParameter csp = definitions.getCommonSearchParameters().get(rn+"::"+spd.getCode());
+      CommonSearchParameter csp = definitions.getCommonSearchParameters().get(name);
       if (csp.getDefinition() == null) {
         sp = new SearchParameter();
         csp.setDefinition(sp);

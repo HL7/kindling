@@ -1305,6 +1305,15 @@ public class SourceParser {
       if (map != null) {
         map.put(rootNew.getName(), rootNew);
       }
+      if (isInterface) {
+        for (SearchParameterDefn spd : rootNew.getSearchParams().values()) {
+          CommonSearchParameter csp = new CommonSearchParameter();
+          csp.setCode(spd.getCode());
+          csp.setId(rootNew.getName()+"-"+spd.getCode());
+          csp.getResources().add(rootNew.getName());
+          definitions.getCommonSearchParameters().put(rootNew.getName()+"::"+spd.getCode(), csp);
+        }
+      }
       return rootNew;
     }
   }

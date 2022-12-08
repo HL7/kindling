@@ -7534,23 +7534,32 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
       b.append("<p>Search parameters for this resource. The <a href=\"search.html#all\">common parameters</a> also apply. See <a href=\"search.html\">Searching</a> for more information about searching in REST, messaging, and services.</p>\r\n");
       b.append("<table class=\"list\">\r\n");
       b.append("<tr><td><b>Name</b></td><td><b>Type</b></td><td><b>Description</b></td><td><b>Expression</b></td><td><b>In Common</b></td></tr>\r\n");
-      List<String> names = new ArrayList<String>();
-      names.addAll(resource.getSearchParams().keySet());
-      Collections.sort(names);
-      for (String name : names)  {
-        SearchParameterDefn p = resource.getSearchParams().get(name);
-        String pp = presentPaths(p.getPaths());
-        String sst = (p.getStandardsStatus() == null || p.getStandardsStatus() == st) ? "" : makeStandardsStatusRef(p.getStandardsStatus());
-        
-        String md = stripSimplePara(processMarkdown("SearchParameter.description", p.getDescription(), ""));
-        
-        b.append("<tr><td><a name=\"sp-").append(p.getCode()).append("\"> </a>").append(p.getCode()).append(sst).append("</td><td><a href=\"search.html#").append(p.getType()).append("\">").append(p.getType()).append("</a></td><td>")
-                .append(md).append("</td><td>").append(p.getType() == SearchType.composite ? getCompositeExpression(p) : Utilities.escapeXml(p.getExpression())).append(p.getType() == SearchType.reference ? p.getTargetTypesAsText() : "")
-                .append("</td><td>").append(presentOthers(p)).append("</td></tr>\r\n");
+      if (resource.getName().equals("MetadataResource")) {        
+        genSearchParams(definitions.getResourceByName("CanonicalResource"), st, b);
+        genSearchParams(resource, st, b);
+      } else {
+        genSearchParams(resource, st, b);
       }
       b.append(searchAdditions);
       b.append("</table>\r\n");
       return b.toString();
+    }
+  }
+
+  private void genSearchParams(ResourceDefn resource, StandardsStatus st, StringBuilder b) throws Exception {
+    List<String> names = new ArrayList<String>();
+    names.addAll(resource.getSearchParams().keySet());
+    Collections.sort(names);
+    for (String name : names)  {
+      SearchParameterDefn p = resource.getSearchParams().get(name);
+      String pp = presentPaths(p.getPaths());
+      String sst = (p.getStandardsStatus() == null || p.getStandardsStatus() == st) ? "" : makeStandardsStatusRef(p.getStandardsStatus());
+      
+      String md = stripSimplePara(processMarkdown("SearchParameter.description", p.getDescription(), ""));
+      
+      b.append("<tr><td><a name=\"sp-").append(p.getCode()).append("\"> </a>").append(p.getCode()).append(sst).append("</td><td><a href=\"search.html#").append(p.getType()).append("\">").append(p.getType()).append("</a></td><td>")
+              .append(md).append("</td><td>").append(p.getType() == SearchType.composite ? getCompositeExpression(p) : Utilities.escapeXml(p.getExpression())).append(p.getType() == SearchType.reference ? p.getTargetTypesAsText() : "")
+              .append("</td><td>").append(presentOthers(p)).append("</td></tr>\r\n");
     }
   }
 
@@ -7604,20 +7613,29 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     else {
       StringBuilder b = new StringBuilder();
       b.append("<h2>Search Parameters</h2>\r\n");
-      b.append("<p>Common search parameters defined by this resource. See <a href=\"search.html\">Searching</a> for more information about searching in REST, messaging, and services.</p>\r\n");
+      b.append("<p>Search parameters defined by this "+(resource.isInterface() ? "interface for all implementations" : "abstract resource for all descendents")+". See <a href=\"search.html\">Searching</a> for more information about searching in REST, messaging, and services.</p>\r\n");
       b.append("<table class=\"list\">\r\n");
       b.append("<tr><td><b>Name</b></td><td><b>Type</b></td><td><b>Description</b></td><td><b>Paths</b></td></tr>\r\n");
-      List<String> names = new ArrayList<String>();
-      names.addAll(resource.getSearchParams().keySet());
-      Collections.sort(names);
-      for (String name : names)  {
-        SearchParameterDefn p = resource.getSearchParams().get(name);
-        b.append("<tr><td>").append(p.getCode()).append("</td><td><a href=\"search.html#").append(p.getType()).append("\">").append(p.getType())
-                .append("</a></td><td>").append(Utilities.escapeXml(p.getDescription())).append("</td><td>").append(presentPaths(p.getPaths())).append(p.getType() == SearchType.reference ? p.getTargetTypesAsText() : "").append("</td></tr>\r\n");
+      if (resource.getName().equals("MetadataResource")) {        
+        genAbstractSearchParams(definitions.getResourceByName("CanonicalResource"), b);
+        genAbstractSearchParams(resource, b);
+      } else {
+        genAbstractSearchParams(resource, b);
       }
       b.append(searchAdditions);
       b.append("</table>\r\n");
       return b.toString();
+    }
+  }
+
+  private void genAbstractSearchParams(ResourceDefn resource, StringBuilder b) {
+    List<String> names = new ArrayList<String>();
+    names.addAll(resource.getSearchParams().keySet());
+    Collections.sort(names);
+    for (String name : names)  {
+      SearchParameterDefn p = resource.getSearchParams().get(name);
+      b.append("<tr><td>").append(p.getCode()).append("</td><td><a href=\"search.html#").append(p.getType()).append("\">").append(p.getType())
+              .append("</a></td><td>").append(Utilities.escapeXml(p.getDescription())).append("</td><td>").append(presentPaths(p.getPaths())).append(p.getType() == SearchType.reference ? p.getTargetTypesAsText() : "").append("</td></tr>\r\n");
     }
   }
 
@@ -10874,7 +10892,9 @@ private int countContains(List<ValueSetExpansionContainsComponent> list) {
     StringBuilder b = new StringBuilder();
     genSearchParams(b, splist, "Resource");
     genSearchParams(b, splist, "DomainResource");
-    genCommonSearchParams(b, splist);
+    genCommonSearchParams(b, splist, "CanonicalResource");
+    genCommonSearchParams(b, splist, "MetadataResource");
+    genCommonSearchParams(b, splist, null);
     for (String n : definitions.sortedResourceNames())
       genSearchParams(b, splist, n);
     return b.toString();
@@ -10920,21 +10940,24 @@ private int countContains(List<ValueSetExpansionContainsComponent> list) {
   }
 
 
-  private void genCommonSearchParams(StringBuilder b, List<SearchParameter> splist) throws Exception {
+  private void genCommonSearchParams(StringBuilder b, List<SearchParameter> splist, String name) throws Exception {
     List<SearchParameter> list = new ArrayList<SearchParameter>();
     for (SearchParameter sp : splist) {
-      if (sp.getBase().size() > 1) {
-        boolean found = false;
-        for (SearchParameter spt : list)
-          if (spt == sp)
-            found = true;
-        if (!found)
-          list.add(sp);
+      if ((name == null && !Utilities.startsWithInList(sp.getId(), "CanonicalResource", "MetadataResource")) || (name != null && sp.getId().startsWith(name+"-"))) {
+        if (sp.getBase().size() > 1) {
+          boolean found = false;
+          for (SearchParameter spt : list)
+            if (spt == sp)
+              found = true;
+          if (!found)
+            list.add(sp);
+        }
       }
     }
     Collections.sort(list, new SearchParameterListSorter());
     if (list.size() > 0) {
-      b.append("<tr><td colspan=\"5\" style=\"background-color: #dddddd\"><b>Common Search Parameters<a name=\"common\"> </a></b></td></tr>\r\n");
+      b.append("<tr><td colspan=\"5\" style=\"background-color: #dddddd\"><b>"+(name == null ? "Common Search Parameters" : 
+        "<b><a href=\""+name.toLowerCase()+".html\">"+name+"</a><a name=\""+name.toLowerCase()+"\"> </a></b>")+"<a name=\"common\"> </a></b></td></tr>\r\n");
       for (SearchParameter sp : list) {
         b.append("<tr><td>"+sp.getCode()+"<a name=\""+sp.getId()+"\"> </a>"+makeStandardsStatusRef(ToolingExtensions.getStandardsStatus(sp))+"</td><td><a href=\"search.html#"+sp.getType().toCode()+"\">"+sp.getType().toCode()+"</a></td><td>"+sp.getId()+"</td><td>"+processMarkdown("allsearchparams", sp.getDescription(), "")+"</td><td>"+Utilities.escapeXml(sp.getExpression()).replace(".", ".&#8203;")+"</td></tr>\r\n");
       }
