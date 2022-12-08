@@ -1052,12 +1052,12 @@ public class OldSpreadsheetParser {
               sp.setManualTypes(sheet.getColumn(row, "Target Types").split("\\,"));
             }
             sp.setHierarchy(hierarchy);
-            CommonSearchParameter csp = definitions.getCommonSearchParameters().get(root2.getName()+"::"+n);
-            if (csp != null)
-              for (String s : csp.getResources()) {
-                if (!root2.getName().equals(s))
-                  sp.getOtherResources().add(s);
-              }
+//            CommonSearchParameter csp = definitions.getCommonSearchParameters().get(root2.getName()+"::"+n);
+//            if (csp != null)
+//              for (String s : csp.getResources()) {
+//                if (!root2.getName().equals(s))
+//                  sp.getOtherResources().add(s);
+//              }
           }
           root2.getSearchParams().put(n, sp);
         }

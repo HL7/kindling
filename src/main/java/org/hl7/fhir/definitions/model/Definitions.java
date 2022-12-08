@@ -980,4 +980,13 @@ public class Definitions {
     throw new Error("Unknown type "+tn);
   }
 
+  public CommonSearchParameter getCommonSearchParameter(String commonId) {
+    for (CommonSearchParameter csp : commonSearchParameters.values()) {
+      if (commonId.equals(csp.getId())) {
+        return csp;
+      }
+    }
+    return null;
+  }
+
 }
