@@ -6,8 +6,10 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.hl7.fhir.r5.formats.IParser.OutputStyle;
 import org.hl7.fhir.r5.formats.XmlParser;
@@ -15,11 +17,14 @@ import org.hl7.fhir.r5.model.Bundle;
 import org.hl7.fhir.r5.model.Bundle.BundleEntryComponent;
 import org.hl7.fhir.r5.model.DomainResource;
 import org.hl7.fhir.r5.model.ElementDefinition;
+import org.hl7.fhir.r5.model.ElementDefinition.TypeRefComponent;
+import org.hl7.fhir.r5.model.Enumerations.SearchParamType;
 import org.hl7.fhir.r5.model.Resource;
 import org.hl7.fhir.r5.model.SearchParameter;
 import org.hl7.fhir.r5.model.StructureDefinition;
 import org.hl7.fhir.r5.utils.ToolingExtensions;
 import org.hl7.fhir.tools.converters.SearchParameterCleanerUpper.ResourceInfo;
+import org.hl7.fhir.utilities.CommaSeparatedStringBuilder;
 import org.hl7.fhir.utilities.IniFile;
 import org.hl7.fhir.utilities.StandardsStatus;
 import org.hl7.fhir.utilities.Utilities;
@@ -85,9 +90,72 @@ public class SearchParameterCleanerUpper {
     }
     // second pass: lift everything to the status of the resource/field
     c = c + liftSearchResources(info.bnd, rstatus, info.sd);
+    c = c + fixSearchResourcesTypeFilters(info.bnd, rstatus, info.sd);
+    
     System.out.println(rn+": "+rstatus.toCode()+". "+c+" search parameters fixed");
     if (c > 0) {
       new XmlParser().setOutputStyle(OutputStyle.PRETTY).compose(new FileOutputStream(info.bndFilename), info.bnd);
+    }
+  }
+
+
+  private int fixSearchResourcesTypeFilters(Bundle bnd, StandardsStatus rstatus, StructureDefinition sd) {
+    int c = 0;
+    for (BundleEntryComponent be : bnd.getEntry()) {
+      if (be.getResource() instanceof SearchParameter) {
+        SearchParameter sp = (SearchParameter) be.getResource();
+        ElementDefinition ed = getED(sd, sp.getExpression());
+        if (ed != null && ed.getType().size() > 1) {
+          if (ed.getPath().equals(sp.getExpression()+"[x]")) {
+            Set<String> types = new HashSet<>();
+            for (TypeRefComponent tr : ed.getType()) {
+              boolean ok = isCompatible(tr.getWorkingCode(), sp.getType());
+              if (ok) {
+                types.add(tr.getWorkingCode());
+              }
+            }
+            if (types.size() == 0) {
+              System.out.println(" !!! ILLEGAL SEARCH PARAMTER "+sp.getId()+": type = "+sp.getType().toCode()+" and types = "+ed.typeSummary());
+            } else {
+              CommaSeparatedStringBuilder b = new CommaSeparatedStringBuilder(" | ");
+              for (String t : types) {
+                b.append(sp.getExpression()+".as("+t+")");
+              }
+              sp.setExpression(b.toString());
+              c++;
+            }
+          } else {
+            System.out.println(" !!! UNPROCESSIBLE SEARCH PARAMTER "+sp.getId()+": type = "+sp.getType().toCode()+" and expression = "+sp.getExpression());            
+          }
+        }
+      }
+    }
+    return c;
+  }
+
+
+  private boolean isCompatible(String t, SearchParamType type) {
+    switch (type) {
+    case COMPOSITE: 
+      return false;
+    case DATE:
+      return Utilities.existsInList(t, "date", "dateTime", "instant", "Period", "Timing");
+    case NUMBER:
+      return Utilities.existsInList(t, "integer", "decimal", "positiveInt", "UnsignedInt");
+    case QUANTITY:
+      return Utilities.existsInList(t, "Quantity", "Age", "Duration", "Money", "Range");
+    case REFERENCE:
+      return Utilities.existsInList(t, "canonical", "uri", "Reference");
+    case SPECIAL:
+      return false; // Utilities.existsInList(t, "Quantity");
+    case STRING:
+      return Utilities.existsInList(t, "string", "Address", "HumanName");
+    case TOKEN:
+      return Utilities.existsInList(t, "booolean", "canonical", "code", "id", "Coding", "CodeableConcept", "Quantity", "ContactPoint", "Identifier");
+    case URI:
+      return Utilities.existsInList(t, "canonical", "oid", "url", "uri", "uuid");
+    default:
+      return false;    
     }
   }
 
@@ -116,7 +184,7 @@ public class SearchParameterCleanerUpper {
       return null;
     }
     for (ElementDefinition ed : sd.getDifferential().getElement()) {
-      if (expression.equals(ed.getPath())) {
+      if (expression.equals(ed.getPath()) || (expression+"[x]").equals(ed.getPath())) {
         return ed;
       }
     }
