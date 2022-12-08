@@ -14,8 +14,10 @@ import org.hl7.fhir.r5.formats.XmlParser;
 import org.hl7.fhir.r5.model.Bundle;
 import org.hl7.fhir.r5.model.Bundle.BundleEntryComponent;
 import org.hl7.fhir.r5.model.DomainResource;
+import org.hl7.fhir.r5.model.ElementDefinition;
 import org.hl7.fhir.r5.model.Resource;
 import org.hl7.fhir.r5.model.SearchParameter;
+import org.hl7.fhir.r5.model.StructureDefinition;
 import org.hl7.fhir.r5.utils.ToolingExtensions;
 import org.hl7.fhir.tools.converters.SearchParameterCleanerUpper.ResourceInfo;
 import org.hl7.fhir.utilities.IniFile;
@@ -27,7 +29,7 @@ public class SearchParameterCleanerUpper {
   public class ResourceInfo {
 
     public String sdFilename;
-    public Resource sd;
+    public StructureDefinition sd;
     public String bndFilename;
     public Bundle bnd;
 
@@ -63,7 +65,7 @@ public class SearchParameterCleanerUpper {
   private ResourceInfo loadResource(String folder, String name, String title) throws IOException {
     ResourceInfo info = new ResourceInfo();
     info.sdFilename = Utilities.path(folder, name, "structuredefinition-"+title+".xml");
-    info.sd = new XmlParser().parse(new FileInputStream(info.sdFilename));
+    info.sd = (StructureDefinition) new XmlParser().parse(new FileInputStream(info.sdFilename));
     info.bndFilename = Utilities.path(folder, name, "bundle-"+title+"-search-params.xml");
     info.bnd = (Bundle) new XmlParser().parse(new FileInputStream(info.bndFilename));
     return info;
@@ -73,6 +75,7 @@ public class SearchParameterCleanerUpper {
   private void processResource(String rn, ResourceInfo info) throws FileNotFoundException, IOException {
     StandardsStatus rstatus = ToolingExtensions.getStandardsStatus((DomainResource) info.sd);
     int c = 0;
+    // first pass: lower everything to the status of the resource 
     if (rstatus == StandardsStatus.NORMATIVE) {
       // nothing
     } else if (rstatus == StandardsStatus.TRIAL_USE) {
@@ -80,9 +83,47 @@ public class SearchParameterCleanerUpper {
     } else if (rstatus == StandardsStatus.INFORMATIVE) {
       c = fixSearchResources(info.bnd, StandardsStatus.INFORMATIVE, StandardsStatus.TRIAL_USE, StandardsStatus.NORMATIVE);
     }
+    // second pass: lift everything to the status of the resource/field
+    c = c + liftSearchResources(info.bnd, rstatus, info.sd);
     System.out.println(rn+": "+rstatus.toCode()+". "+c+" search parameters fixed");
     if (c > 0) {
       new XmlParser().setOutputStyle(OutputStyle.PRETTY).compose(new FileOutputStream(info.bndFilename), info.bnd);
+    }
+  }
+
+
+  private int liftSearchResources(Bundle bnd, StandardsStatus rstatus, StructureDefinition sd) {
+    int c = 0;
+    for (BundleEntryComponent be : bnd.getEntry()) {
+      if (be.getResource() instanceof SearchParameter) {
+        SearchParameter sp = (SearchParameter) be.getResource();
+        ElementDefinition ed = getED(sd, sp.getExpression());
+        StandardsStatus spstatus = ToolingExtensions.getStandardsStatus(sp);
+        StandardsStatus nstatus = ToolingExtensions.getStandardsStatus(ed);
+        nstatus = nstatus == null ? rstatus : nstatus;
+        if (nstatus != null && nstatus != spstatus) {
+          c++;
+          ToolingExtensions.setStandardsStatus(sp, nstatus, null);          
+        }
+      }
+    }
+    return c;
+  }
+
+
+  private ElementDefinition getED(StructureDefinition sd, String expression) {
+    if (expression == null) {
+      return null;
+    }
+    for (ElementDefinition ed : sd.getDifferential().getElement()) {
+      if (expression.equals(ed.getPath())) {
+        return ed;
+      }
+    }
+    if (expression.contains(".")) {
+      return getED(sd, expression.substring(0, expression.lastIndexOf(".")));
+    } else {
+      return null;
     }
   }
 

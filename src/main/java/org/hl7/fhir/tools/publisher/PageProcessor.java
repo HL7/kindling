@@ -7527,7 +7527,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     if (resource.getSearchParams().size() == 0)
       return "";
     else {
-      StandardsStatus st = resource.getStatus();
+       StandardsStatus st = resource.getStatus();
       
       StringBuilder b = new StringBuilder();
       b.append("<h2>Search Parameters</h2>\r\n");

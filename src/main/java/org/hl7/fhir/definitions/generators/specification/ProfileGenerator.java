@@ -1319,9 +1319,11 @@ public class ProfileGenerator {
       spd.setResource(sp);
       definitions.addNs(sp.getUrl(), "Search Parameter: "+sp.getName(), rn.toLowerCase()+".html#search");
       sp.setStatus(spd.getStandardsStatus() == StandardsStatus.NORMATIVE ? PublicationStatus.fromCode("active") : PublicationStatus.fromCode("draft"));
-      StandardsStatus sst = ToolingExtensions.getStandardsStatus(sp);
-      if (sst == null || (spd.getStandardsStatus() == null && spd.getStandardsStatus().isLowerThan(sst)))
+      if (spd.getStandardsStatus() == null) {
+        ToolingExtensions.setStandardsStatus(sp, StandardsStatus.TRIAL_USE, null);
+      } else {
         ToolingExtensions.setStandardsStatus(sp, spd.getStandardsStatus(), spd.getNormativeVersion());
+      }
       sp.setExperimental(p.getExperimental());
       sp.setName(spd.getCode());
       sp.setCode(spd.getCode());
@@ -1386,11 +1388,28 @@ public class ProfileGenerator {
 //        if (sp.getXpathUsage() != spd.getxPathUsage()) 
 //          throw new FHIRException("Usage mismatch on common parameter: expected "+sp.getXpathUsage().toCode()+" but found "+spd.getxPathUsage().toCode());
 //      }
+      StandardsStatus sst = ToolingExtensions.getStandardsStatus(sp);
+      if (sst == null || (spd.getStandardsStatus() == null && spd.getStandardsStatus().isLowerThan(sst))) {
+        for (CodeType ct : sp.getBase()) {
+          if (!ToolingExtensions.hasExtension(ct, ToolingExtensions.EXT_STANDARDS_STATUS)) {
+            ToolingExtensions.setStandardsStatus(ct, sst, null);
+          }
+        }
+        ToolingExtensions.setStandardsStatus(sp, spd.getStandardsStatus(), spd.getNormativeVersion());
+      }
+      sst = ToolingExtensions.getStandardsStatus(sp);
+      
       boolean found = false;
       for (CodeType ct : sp.getBase())
         found = found || p.getType().equals(ct.asStringValue());
-      if (!found)
-        sp.addBase(p.getType());
+
+      if (!found) {
+        CodeType ct = new CodeType(p.getType());
+        if (sst != spd.getStandardsStatus()) {          
+          ToolingExtensions.setStandardsStatus(ct, spd.getStandardsStatus(), null);
+        }
+        sp.getBase().add(ct);
+      }
     }
     spd.setUrl(sp.getUrl());
     for(String target : spd.getWorkingTargets()) {
