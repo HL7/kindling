@@ -105,12 +105,14 @@ import org.hl7.fhir.r5.model.Enumerations.FHIRVersion;
 import org.hl7.fhir.r5.model.Enumerations.PublicationStatus;
 import org.hl7.fhir.r5.model.Enumerations.QuantityComparator;
 import org.hl7.fhir.r5.model.Enumerations.SearchParamType;
+import org.hl7.fhir.r5.model.Extension;
 import org.hl7.fhir.r5.model.Factory;
 import org.hl7.fhir.r5.model.IdType;
 import org.hl7.fhir.r5.model.Identifier;
 import org.hl7.fhir.r5.model.InstantType;
 import org.hl7.fhir.r5.model.Integer64Type;
 import org.hl7.fhir.r5.model.IntegerType;
+import org.hl7.fhir.r5.model.MarkdownType;
 import org.hl7.fhir.r5.model.OidType;
 import org.hl7.fhir.r5.model.PackageInformation;
 import org.hl7.fhir.r5.model.Period;
@@ -1755,6 +1757,7 @@ public class OldSpreadsheetParser {
 		}
 
     e.setStandardsStatus(StandardsStatus.fromCode(sheet.getColumn(row, "Standards-Status")));
+    e.setStandardsStatusReason(sheet.getColumn(row, "Standards-Status-Reason"));
     e.setNormativeVersion(sheet.getColumn(row, "Normative-Version"));
 
 		if (e.getName().startsWith("@")) {
@@ -2165,6 +2168,7 @@ public class OldSpreadsheetParser {
     if (Utilities.noString(fmm))
       fmm = "1"; // default fmm value for extensions
     ToolingExtensions.addIntegerExtension(ex, ToolingExtensions.EXT_FMM_LEVEL, Integer.parseInt(fmm));
+    ToolingExtensions.setStandardsStatus(ex, StandardsStatus.TRIAL_USE, null);
     
     if (ap.hasMetadata("fmm-level"))
       ToolingExtensions.addIntegerExtension(ex, ToolingExtensions.EXT_FMM_LEVEL, Integer.parseInt(ap.getFmmLevel()));
@@ -2223,6 +2227,15 @@ public class OldSpreadsheetParser {
 	        exe.getInvariants().put(inv.getId(), inv);
 	    }
 	  }
+    String sss = sheet.getColumn(row, "standards-status");
+    if (!Utilities.noString(sss)) {
+      ToolingExtensions.setStandardsStatus(ex, StandardsStatus.fromCode(sss), null);
+      sss = sheet.getColumn(row, "standards-status-reason");
+      if (!Utilities.noString(sss)) {
+        Extension ess = ex.getExtensionByUrl(ToolingExtensions.EXT_STANDARDS_STATUS);
+        ess.getValue().addExtension(ToolingExtensions.EXT_STANDARDS_STATUS_REASON, new MarkdownType(sss));
+      }
+    }    
 
     parseExtensionElement(sheet, row, definitions, exe, false);
     String sl = exe.getShortDefn();

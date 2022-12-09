@@ -41,6 +41,7 @@ import org.hl7.fhir.r5.model.ValueSet.ConceptReferenceComponent;
 import org.hl7.fhir.r5.model.ValueSet.ConceptSetComponent;
 import org.hl7.fhir.r5.terminologies.CodeSystemUtilities;
 import org.hl7.fhir.r5.utils.ToolingExtensions;
+import org.hl7.fhir.utilities.StandardsStatus;
 
 /**
  * A concept domain - a use of terminology in FHIR.
@@ -398,6 +399,7 @@ public class BindingSpecification {
     code.setParent(parent);
     code.setSystem(system);
     code.setAbstract(CodeSystemUtilities.isNotSelectable(cs, c));
+    code.setDeprecated(ToolingExtensions.getStandardsStatus(c) == StandardsStatus.DEPRECATED);
     allCodes.add(code);
     for (ConceptDefinitionComponent cc : c.getConcept())
       processCode(cs, cc, system, c.getCode());

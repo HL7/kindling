@@ -2663,19 +2663,35 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     s.append("</table>\r\n");
     return s.toString();
   }
-
+  
   private void genExtensionRow(ImplementationGuideDefn ig, StringBuilder s, StructureDefinition ed) throws Exception {
-    s.append("<tr>");
+    StandardsStatus status = ToolingExtensions.getStandardsStatus(ed);
+    if (status  == StandardsStatus.DEPRECATED) {
+      s.append("<tr style=\"background-color: #ffeeee\">");
+    } else if (status  == StandardsStatus.NORMATIVE) {
+      s.append("<tr style=\"background-color: #f2fff2\">");
+    } else if (status  == StandardsStatus.INFORMATIVE) {
+      s.append("<tr style=\"background-color: #fffff6\">");
+    } else {
+      s.append("<tr>");
+    }
     s.append("<td><a href=\""+ed.getUserString("path")+"\" title=\""+Utilities.escapeXml(ed.getDescription())+"\">"+ed.getId()+"</a></td>");
     s.append("<td>"+displayExtensionCardinality(ed)+"</td>");
     s.append("<td>"+determineExtensionType(ed)+"</td>");
     s.append("<td>");
     boolean first = true;
+    int l = 0;
     for (StructureDefinitionContextComponent ec : ed.getContext()) {
       if (first)
         first = false;
-      else
+      else if (l > 60) {
         s.append(",<br/> ");
+        l = 0;
+      } else {
+        s.append(", ");
+        l++;        
+      }
+      l = l + ec.getExpression().length();
       if (ec.getType() == ExtensionContextType.ELEMENT) {
         String ref = Utilities.oidRoot(ec.getExpression());
         if (ref.startsWith("@"))
@@ -2699,8 +2715,16 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
         throw new Error("Not done yet");
     }
     s.append("</td>");
-    String fmm = ToolingExtensions.readStringExtension(ed, ToolingExtensions.EXT_FMM_LEVEL);
-    s.append("<td>"+(Utilities.noString(fmm) ? "0" : fmm)+"</td>");
+    if (status == StandardsStatus.NORMATIVE) {
+      s.append("<td><a href=\"versions.html#std-process\" title=\"Normative Content\" class=\"normative-flag\">N</a></td>");
+    } else if (status == StandardsStatus.DEPRECATED) {
+      s.append("<td><a href=\"versions.html#std-process\" title=\"Deprecated Content\" class=\"deprecated-flag\">D</a></td>");      
+    } else if (status == StandardsStatus.INFORMATIVE) {
+      s.append("<td><a href=\"versions.html#std-process\" title=\"Informative Content\" class=\"deprecated-flag\">I</a></td>");      
+    } else { 
+      String fmm = ToolingExtensions.readStringExtension(ed, ToolingExtensions.EXT_FMM_LEVEL);
+      s.append("<td>"+(Utilities.noString(fmm) ? "0" : fmm)+"</td>");
+    }
     String uc = ed.hasUserData("usage.count") ? ed.getUserData("usage.count").toString() : "";
     s.append("<td>"+uc+"</td>");
 //    s.append("<td><a href=\"extension-"+ed.getId().toLowerCase()+ ".xml.html\">XML</a></td>");
@@ -6954,6 +6978,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     case NORMATIVE: return "colsn";
     case INFORMATIVE: return "colsi";
     case EXTERNAL: return "colse";
+    case DEPRECATED: return "colsdep";
     default:
       return "colsi";
     }
@@ -9135,7 +9160,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
       else if (com[0].equals("definitions"))
         src = s1+definitionsExtension(ed, "")+s3;
       else if (com[0].equals("pubdetails")) {
-        src = s1+"Extension maintained by: " +Utilities.escapeXml(ed.getPublisher())+s3;
+        src = s1+extPubDetails(ed)+s3;
       } else if (com[0].equals("extref"))
         src = s1+""+s3;
       else if (com[0].equals("context-info"))
@@ -9174,7 +9199,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
         StandardsStatus ss = ToolingExtensions.getStandardsStatus(ed);
         if (ss == null)
           ss = StandardsStatus.INFORMATIVE;
-        src = s1+"<a href=\""+genlevel(level)+"versions.html#std-process\">Informative</a>"+s3;
+        src = s1+"<a href=\""+genlevel(level)+"versions.html#std-process\">"+ss.toDisplay()+"</a>"+s3;
       } else if (com[0].equals("profile-context")) {
         src = s1+getProfileContext(ed, genlevel(level))+s3;
       } else if (com[0].equals("res-type-count")) { 
@@ -9195,6 +9220,14 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
         src = s1 +(extensionIsModifier(ed) ? "This extension is a modifier extension, and only used in <code>modifierExtension</code>" : "This extension is not a modifier extension") + s3;
       } else if (com[0].equals("ext-status"))  {
         src = s1 + ed.getStatus().toCode() + s3;
+      } else if (com[0].equals("ext-present"))  {
+        src = s1 + ed.present() + s3;
+      } else if (com[0].equals("ext-date"))  {
+        src = s1 + crDate(ed) + s3;
+      } else if (com[0].equals("ext-flags"))  {
+        src = s1 + extFlags(ed) + s3;        
+      } else if (com[0].equals("ext-oid"))  {
+        src = s1 + crOids(ed) + s3;        
       } else if (macros.containsKey(com[0])) {
         src = s1+macros.get(com[0])+s3;
       } else if (com[0].equals("jira-link")) { 
@@ -9203,6 +9236,30 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
         throw new Exception("Instruction <%"+s2+"%> not understood parsing resource "+filename);
     }
     return src;
+  }
+
+  private String extPubDetails(StructureDefinition ed) throws FHIRException, Exception {
+    Extension ext = ToolingExtensions.getExtension(ed, ToolingExtensions.EXT_STANDARDS_STATUS);
+    if (ext == null) {
+      return "";
+    }
+    if (ext.getValue().hasExtension(ToolingExtensions.EXT_STANDARDS_STATUS_REASON)) {
+      return "<p><b>"+ToolingExtensions.getStandardsStatus(ed).toDisplay()+" Status Comment:</b></p>\r\n"+processMarkdown("ext-status", ext.getValue().getExtensionString(ToolingExtensions.EXT_STANDARDS_STATUS_REASON), null);
+    } else {
+      return "";
+    }
+  }
+
+  private String extFlags(StructureDefinition ed) {
+    CommaSeparatedStringBuilder b = new CommaSeparatedStringBuilder(" ");
+    b.append(extensionIsModifier(ed) ? "Modifier" : "Non-Modifier");
+    if (ed.getAbstract()) {
+      b.append("Abstract");
+    }
+    if (ed.getExperimental()) {
+      b.append("Experimental");
+    }
+    return b.toString();
   }
 
   private boolean extensionIsModifier(StructureDefinition ed) {
@@ -9277,7 +9334,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
   }
 
   private String describeExtensionContext(StructureDefinition ed) {
-    return "<p>Context of Use: "+ProfileUtilities.describeExtensionContext(ed)+"</p>";
+    return "<p><b>Context of Use</b>: "+ProfileUtilities.describeExtensionContext(ed)+"</p>";
   }
 
   private String generateExtensionTable(StructureDefinition ed, String filename, String full, String prefix) throws Exception {

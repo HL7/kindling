@@ -664,8 +664,10 @@ public class ResourceValidator extends BaseValidator {
     if (status == StandardsStatus.NORMATIVE && e.getStandardsStatus() == null && e.getTypes().size() == 1) {
       if (definitions.hasElementDefn(e.typeCode())) {
         TypeDefn t = definitions.getElementDefn(e.typeCode());
-        if (t != null && t.getStandardsStatus() != StandardsStatus.NORMATIVE)
+        if (t != null && t.getStandardsStatus() != StandardsStatus.NORMATIVE) {
           e.setStandardsStatus(t.getStandardsStatus());
+          e.setStandardsStatusReason(t.getStandardsStatusReason());
+        }
         e.setNormativeVersion(null);
       }
     }
@@ -1169,7 +1171,7 @@ public class ResourceValidator extends BaseValidator {
       }
       StringBuilder b = new StringBuilder();
       for (DefinedCode c : ac) {
-        if (!c.getAbstract())
+        if (!c.getAbstract() && !c.isDeprecated())
           b.append(" | ").append(c.getCode());
       }
       if (sd.equals("*")) {

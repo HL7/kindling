@@ -95,7 +95,8 @@ public class ElementDefn {
 	private boolean noBindingAllowed; // note to validator 
 	private boolean translatable;
 	private String orderMeaning;
-	private StandardsStatus standardsStatus; // defaults to container value
+  private StandardsStatus standardsStatus; // defaults to container value
+  private String standardsStatusReason; // defaults to container value
 	private Boolean hierarchy;
 	private boolean abstractType;
 	
@@ -1035,6 +1036,14 @@ public class ElementDefn {
 
   public void setStandardsStatus(StandardsStatus standardsStatus) {
     this.standardsStatus = standardsStatus;
+  }
+  
+  public String getStandardsStatusReason() {
+    return standardsStatusReason;
+  }
+
+  public void setStandardsStatusReason(String standardsStatusReason) {
+    this.standardsStatusReason = standardsStatusReason;
   }
 
   public String getModifierReason() {

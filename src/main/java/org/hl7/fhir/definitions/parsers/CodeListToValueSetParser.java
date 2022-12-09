@@ -18,6 +18,7 @@ import org.hl7.fhir.r5.model.DateTimeType;
 import org.hl7.fhir.r5.model.Enumerations.ConceptMapRelationship;
 import org.hl7.fhir.r5.model.Enumerations.PublicationStatus;
 import org.hl7.fhir.r5.model.Factory;
+import org.hl7.fhir.r5.model.MarkdownType;
 import org.hl7.fhir.r5.model.PackageInformation;
 import org.hl7.fhir.r5.model.ValueSet;
 import org.hl7.fhir.r5.model.ValueSet.ConceptReferenceComponent;
@@ -26,6 +27,7 @@ import org.hl7.fhir.r5.model.ValueSet.ValueSetComposeComponent;
 import org.hl7.fhir.r5.terminologies.CodeSystemUtilities;
 import org.hl7.fhir.r5.utils.ToolingExtensions;
 import org.hl7.fhir.tools.publisher.KindlingUtilities;
+import org.hl7.fhir.utilities.StandardsStatus;
 import org.hl7.fhir.utilities.Utilities;
 import org.hl7.fhir.utilities.xls.XLSXmlParser.Sheet;
 
@@ -115,6 +117,12 @@ public class CodeListToValueSetParser {
           String deprecated = sheet.getColumn(row, "Deprecated");
           if (!Utilities.noString(deprecated)) {
             CodeSystemUtilities.setDeprecated(cs, cc, new DateTimeType(deprecated));
+            ToolingExtensions.setStandardsStatus(cc, StandardsStatus.DEPRECATED, null);
+            String deprecatedReason = sheet.getColumn(row, "DeprecatedReason");
+            if (!Utilities.noString(deprecatedReason)) {
+              cc.getExtensionByUrl(ToolingExtensions.EXT_STANDARDS_STATUS).getValue()
+                 .addExtension(ToolingExtensions.EXT_STANDARDS_STATUS_REASON, new MarkdownType(deprecatedReason));
+            }
           }
           String parent = sheet.getColumn(row, "Parent");
           if (Utilities.noString(parent))

@@ -999,6 +999,9 @@ public class SourceParser {
           if (Utilities.noString(ed.getBaseDefinition()))
             ed.setBaseDefinition("http://hl7.org/fhir/StructureDefinition/Extension");
           ed.setDerivation(TypeDerivationRule.CONSTRAINT);
+          if (ToolingExtensions.getStandardsStatus(ed) == null) {
+            ToolingExtensions.setStandardsStatus(ed, StandardsStatus.TRIAL_USE, null);
+          }
           if (ToolingExtensions.readStringExtension(ed, ToolingExtensions.EXT_WORKGROUP) == null)
             ToolingExtensions.setCodeExtension(ed, ToolingExtensions.EXT_WORKGROUP, wg.getCode());
           if (!ed.hasUrl())
@@ -1152,6 +1155,7 @@ public class SourceParser {
     definitions.getKnownTypes().addAll(ts);
 
     StandardsStatus status = loadStatus(n);
+    String ssr = loadStatusReason(n);
     String nv = loadNormativeVersion(n);
     
     try {
@@ -1166,6 +1170,7 @@ public class SourceParser {
         org.hl7.fhir.definitions.model.TypeDefn el = p.parseCompositeType();
         el.setFmmLevel(fmm);
         el.setStandardsStatus(status);
+        el.setStandardsStatusReason(ssr);
         el.setNormativeVersion(nv);
         map.put(t.getName(), el);
         genTypeProfile(el);
@@ -1229,6 +1234,11 @@ public class SourceParser {
     if (Utilities.noString(ns))
       throw new FHIRException("Datatypes must be registered in the [standards-status] section of fhir.ini ("+n+")");
     return StandardsStatus.fromCode(ns);
+  }
+
+  private String loadStatusReason(String n) throws FHIRException {
+    String ns = ini.getStringProperty("standards-status-reason", n);
+    return ns;
   }
 
   private ResourceDefn loadResource(String n, Map<String, ResourceDefn> map, boolean isAbstract, boolean isTemplate, String t, boolean isInterface) throws Exception {

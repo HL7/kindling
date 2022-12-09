@@ -552,7 +552,12 @@ public class ResourceParser {
     }
     ed.setOrderMeaning(focus.getOrderMeaning());
     if (BuildExtensions.hasExtension(focus, BuildExtensions.EXT_STANDARDS_STATUS)) {
-      ed.setStandardsStatus(StandardsStatus.fromCode(BuildExtensions.readStringExtension(focus, BuildExtensions.EXT_STANDARDS_STATUS)));
+      Extension sse = BuildExtensions.getExtension(focus, BuildExtensions.EXT_STANDARDS_STATUS);
+      ed.setStandardsStatus(StandardsStatus.fromCode(sse.getValue().primitiveValue()));
+      Extension ssr = sse.getValue().getExtensionByUrl(ToolingExtensions.EXT_STANDARDS_STATUS_REASON);
+      if (ssr != null) {
+        ed.setStandardsStatusReason(ssr.getValue().primitiveValue());
+      }
     }
     if (BuildExtensions.hasExtension(focus, BuildExtensions.EXT_NORMATIVE_VERSION)) {
       ed.setNormativeVersion(BuildExtensions.readStringExtension(focus, BuildExtensions.EXT_NORMATIVE_VERSION));
