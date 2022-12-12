@@ -25,15 +25,14 @@ import java.io.File;
 import java.io.FileInputStream;
 
 import org.hl7.fhir.r5.context.CanonicalResourceManager;
-import org.hl7.fhir.r5.context.IWorkerContext.PackageVersion;
 import org.hl7.fhir.r5.formats.IParser;
 import org.hl7.fhir.r5.model.CodeSystem;
 import org.hl7.fhir.r5.model.ContactDetail;
 import org.hl7.fhir.r5.model.ContactPoint;
+import org.hl7.fhir.r5.model.PackageInformation;
 import org.hl7.fhir.r5.model.UsageContext;
 import org.hl7.fhir.r5.model.ValueSet;
 import org.hl7.fhir.r5.terminologies.CodeSystemUtilities;
-import org.hl7.fhir.r5.terminologies.ValueSetUtilities;
 import org.hl7.fhir.utilities.Utilities;
 
 public class CodeSystemConvertor {
@@ -47,7 +46,7 @@ public class CodeSystemConvertor {
     this.registry = registry;
   }
 
-  public void convert(IParser p, ValueSet vs, String name, PackageVersion packageInfo) throws Exception {
+  public void convert(IParser p, ValueSet vs, String name, PackageInformation packageInfo) throws Exception {
     String nname = name.replace("valueset-", "codesystem-");
     if (nname.equals(name))
       nname = Utilities.changeFileExt(name, "-cs.xml");
@@ -88,31 +87,55 @@ public class CodeSystemConvertor {
       cs.setUserData("committee", vs.getUserData("committee"));
     cs.setId(vs.getId());
     cs.setVersion(vs.getVersion());
-    cs.setName(vs.getName());
-    cs.setTitle(vs.getTitle());
-    cs.setStatus(vs.getStatus());
-    cs.setExperimentalElement(vs.getExperimentalElement());
-    cs.setPublisher(vs.getPublisher());
-    for (ContactDetail csrc : vs.getContact()) {
-      ContactDetail ctgt = cs.addContact();
-      ctgt.setName(csrc.getName());
-      for (ContactPoint cc : csrc.getTelecom())
-        ctgt.addTelecom(cc);
+    if (!cs.hasName()) {
+      cs.setName(vs.getName());
     }
-    cs.setDate(vs.getDate());
-    cs.setDescription(vs.getDescription());
-    cs.getDescriptionElement().getExtension().addAll(vs.getDescriptionElement().getExtension());
-    for (UsageContext cc : vs.getUseContext())
-      cs.addUseContext(cc);
-    cs.setPurpose(vs.getPurpose());
-    cs.setCopyright(vs.getCopyright());
-    if (vs.hasCompose() && vs.getCompose().getInclude().size() == 1 && vs.getCompose().getExclude().size() == 0
-        && vs.getCompose().getInclude().get(0).getSystem().equals(cs.getUrl()) 
-        && !vs.getCompose().getInclude().get(0).hasValueSet()
-        && !vs.getCompose().getInclude().get(0).hasConcept()
-        && !vs.getCompose().getInclude().get(0).hasFilter())
-      cs.setValueSet(vs.getUrl());
-    vs.setImmutable(true);
+    if (!cs.hasTitle()) {
+      cs.setTitle(vs.getTitle());
+    }
+    if (!cs.hasStatus()) {
+      cs.setStatus(vs.getStatus());
+    }
+    if (!cs.hasExperimental()) {
+      cs.setExperimentalElement(vs.getExperimentalElement());
+    }
+    if (!cs.hasPublisher()) {
+      cs.setPublisher(vs.getPublisher());
+    }
+    if (!cs.hasContact()) {
+      for (ContactDetail csrc : vs.getContact()) {
+        ContactDetail ctgt = cs.addContact();
+        ctgt.setName(csrc.getName());
+        for (ContactPoint cc : csrc.getTelecom())
+          ctgt.addTelecom(cc);
+      }
+    }
+    if (!cs.hasDate()) {
+      cs.setDate(vs.getDate());
+    }
+    if (!cs.hasDescription()) {
+      cs.setDescription(vs.getDescription());
+      cs.getDescriptionElement().getExtension().addAll(vs.getDescriptionElement().getExtension());
+    }
+    if (!cs.hasUseContext()) {
+      for (UsageContext cc : vs.getUseContext())
+        cs.addUseContext(cc);
+    }
+    if (!cs.hasPurpose()) {
+      cs.setPurpose(vs.getPurpose());
+    }
+    if (!cs.hasCopyright()) {
+      cs.setCopyright(vs.getCopyright());
+    }
+    if (!cs.hasValueSet()) {
+      if (vs.hasCompose() && vs.getCompose().getInclude().size() == 1 && vs.getCompose().getExclude().size() == 0
+          && vs.getCompose().getInclude().get(0).getSystem().equals(cs.getUrl()) 
+          && !vs.getCompose().getInclude().get(0).hasValueSet()
+          && !vs.getCompose().getInclude().get(0).hasConcept()
+          && !vs.getCompose().getInclude().get(0).hasFilter())
+        cs.setValueSet(vs.getUrl());
+      vs.setImmutable(true);
+    }
   }
 
 }

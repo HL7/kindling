@@ -1,5 +1,12 @@
 package org.hl7.fhir.rdf;
 
+import java.io.IOException;
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
 import org.apache.jena.graph.Node_Blank;
 import org.apache.jena.graph.Node_Literal;
 import org.apache.jena.graph.Node_URI;
@@ -8,13 +15,6 @@ import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Statement;
 import org.apache.jena.rdf.model.StmtIterator;
 import org.hl7.fhir.utilities.Utilities;
-
-import java.io.IOException;
-import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
 
 public class ModelComparer {
 

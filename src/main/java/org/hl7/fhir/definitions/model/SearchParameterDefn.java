@@ -3,10 +3,8 @@ package org.hl7.fhir.definitions.model;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
-import org.hl7.fhir.definitions.model.ResourceDefn.PointSpec;
 import org.hl7.fhir.r5.model.ExpressionNode;
 import org.hl7.fhir.r5.model.SearchParameter;
 import org.hl7.fhir.utilities.StandardsStatus;
@@ -84,7 +82,6 @@ public class SearchParameterDefn {
   private SearchParameter resource;
   private ExpressionNode expressionNode;
   private boolean tested;
-  private List<String> otherResources = new ArrayList<String>();
   private String commonId;
   private boolean hierarchy;
   private StandardsStatus standardsStatus;
@@ -133,7 +130,6 @@ public class SearchParameterDefn {
     composites.addAll(source.composites);
     targets.addAll(source.targets);
     manualTargets.addAll(source.manualTargets);
-    otherResources.addAll(source.otherResources);
     if (type == SearchType.composite && source.getStandardsStatus() != null)
       this.standardsStatus = source.getStandardsStatus();
     else
@@ -244,10 +240,6 @@ public class SearchParameterDefn {
 
   public void setTested(boolean tested) {
     this.tested = tested;
-  }
-
-  public List<String> getOtherResources() {
-    return otherResources;
   }
 
   public String getCommonId() {

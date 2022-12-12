@@ -6,10 +6,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.hl7.fhir.tools.publisher.ReferenceTracker.RefDetails;
-import org.hl7.fhir.tools.publisher.ReferenceTracker.RefDetailsSorter;
-import org.hl7.fhir.tools.publisher.ReferenceTracker.RefType;
-import org.hl7.fhir.utilities.CommaSeparatedStringBuilder;
 import org.hl7.fhir.utilities.Utilities;
 
 public class ReferenceTracker {

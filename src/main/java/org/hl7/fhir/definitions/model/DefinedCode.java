@@ -40,6 +40,7 @@ public class DefinedCode {
 
   private String id;
 	private boolean abstract_;
+	private boolean deprecated;
 	private String code;
 	private String definition;
 	private String comment;
@@ -185,6 +186,14 @@ public class DefinedCode {
 
   public String getRegex() {
     return null;
+  }
+
+  public boolean isDeprecated() {
+    return deprecated;
+  }
+
+  public void setDeprecated(boolean deprecated) {
+    this.deprecated = deprecated;
   }
   
   

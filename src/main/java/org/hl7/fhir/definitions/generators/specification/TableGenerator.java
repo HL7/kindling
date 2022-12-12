@@ -12,9 +12,9 @@ import org.hl7.fhir.definitions.model.Invariant;
 import org.hl7.fhir.definitions.model.ProfiledType;
 import org.hl7.fhir.definitions.model.TypeRef;
 import org.hl7.fhir.r5.conformance.ProfileUtilities;
-import org.hl7.fhir.r5.context.IWorkerContext;
 import org.hl7.fhir.r5.model.Enumerations.FHIRVersion;
 import org.hl7.fhir.r5.model.ValueSet;
+import org.hl7.fhir.r5.utils.ToolingExtensions;
 import org.hl7.fhir.tools.publisher.PageProcessor;
 import org.hl7.fhir.utilities.StandardsStatus;
 import org.hl7.fhir.utilities.Utilities;
@@ -68,6 +68,9 @@ public class TableGenerator extends BaseGenerator {
     }
     if (e.isSummary()) { 
       gc.addStyledText("This element is included in summaries", "\u03A3", null, null, prefix+"elementdefinition-definitions.html#ElementDefinition.isSummary", false);
+    }
+    if (e.isTranslatable()) { 
+      gc.addStyledText("This element is a candidate for being translated", "T", null, null, prefix+"languages.html#translatable", false);
     }
     if (!isRoot && (!e.getInvariants().isEmpty() || !e.getStatedInvariants().isEmpty())) { 
       Piece p = gc.addText(ProfileUtilities.CONSTRAINT_CHAR);

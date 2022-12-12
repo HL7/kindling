@@ -88,6 +88,7 @@ import org.hl7.fhir.definitions.generators.specification.TurtleSpecGenerator;
 import org.hl7.fhir.definitions.generators.specification.XmlSpecGenerator;
 import org.hl7.fhir.definitions.model.BindingSpecification;
 import org.hl7.fhir.definitions.model.BindingSpecification.BindingMethod;
+import org.hl7.fhir.definitions.model.CommonSearchParameter;
 import org.hl7.fhir.definitions.model.Compartment;
 import org.hl7.fhir.definitions.model.ConstraintStructure;
 import org.hl7.fhir.definitions.model.DefinedCode;
@@ -130,7 +131,6 @@ import org.hl7.fhir.r5.conformance.ProfileUtilities;
 import org.hl7.fhir.r5.conformance.ProfileUtilities.ProfileKnowledgeProvider;
 import org.hl7.fhir.r5.context.CanonicalResourceManager;
 import org.hl7.fhir.r5.context.IWorkerContext.ILoggingService;
-import org.hl7.fhir.r5.context.IWorkerContext.PackageVersion;
 import org.hl7.fhir.r5.elementmodel.Element;
 import org.hl7.fhir.r5.formats.FormatUtilities;
 import org.hl7.fhir.r5.formats.IParser;
@@ -172,6 +172,8 @@ import org.hl7.fhir.r5.model.Enumerations.FHIRVersion;
 import org.hl7.fhir.r5.model.Enumerations.SearchParamType;
 import org.hl7.fhir.r5.model.ExpressionNode.CollectionStatus;
 import org.hl7.fhir.r5.model.Extension;
+import org.hl7.fhir.r5.model.Identifier;
+import org.hl7.fhir.r5.model.Identifier.IdentifierUse;
 import org.hl7.fhir.r5.model.ImplementationGuide;
 import org.hl7.fhir.r5.model.ImplementationGuide.ImplementationGuideDefinitionPageComponent;
 import org.hl7.fhir.r5.model.ImplementationGuide.ImplementationGuideDefinitionResourceComponent;
@@ -180,6 +182,7 @@ import org.hl7.fhir.r5.model.NamingSystem.NamingSystemIdentifierType;
 import org.hl7.fhir.r5.model.NamingSystem.NamingSystemUniqueIdComponent;
 import org.hl7.fhir.r5.model.Narrative;
 import org.hl7.fhir.r5.model.OperationDefinition;
+import org.hl7.fhir.r5.model.PackageInformation;
 import org.hl7.fhir.r5.model.Quantity;
 import org.hl7.fhir.r5.model.Resource;
 import org.hl7.fhir.r5.model.SearchParameter;
@@ -1067,14 +1070,13 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
           src = s1 + ((CodeSystem) resource).getUrl() + s3;
         else 
           src = s1 + ((ValueSet) resource).getUrl() + s3;
-      } else if (com[0].equals("txdef"))
+      } else if (com[0].equals("txdef")) {
         src = s1 + generateCodeDefinition(Utilities.fileTitle(file)) + s3;
-      else if (com[0].equals("vsdef"))
-        if (resource instanceof CodeSystem)
-          src = s1 + processMarkdown("vsdef", ((CodeSystem) resource).getDescription(), genlevel(level)) + s3;
-        else
-          src = s1 + processMarkdown("vsdef", ((ValueSet) resource).getDescription(), genlevel(level)) + s3;
-      else if (com[0].equals("txoid"))
+      } else if (com[0].equals("vsdef")) {
+        src = s1 + processMarkdown("vsdef", ((ValueSet) resource).getDescription(), genlevel(level)) + s3;
+      } else if (com[0].equals("csdef")) {
+        src = s1 + processMarkdown("vsdef", ((CodeSystem) resource).getDescription(), genlevel(level)) + s3;
+      } else if (com[0].equals("txoid"))
         src = s1 + generateOID((CodeSystem) resource) + s3;
       else if (com[0].equals("vsoid"))
         src = s1 + generateOID((ValueSet) resource) + s3;
@@ -1086,22 +1088,21 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
         else
           src = s1 + ((ValueSet) resource).present() + s3;
       else if (com[0].equals("vsnamed"))
-        if (resource instanceof CodeSystem)
-          src = s1 + ((CodeSystem) resource).getName() + s3;
-        else
-          src = s1 + ((ValueSet) resource).getName() + s3;
-      else if (com[0].equals("vsstatus")) {
-        CanonicalResource cr = (CanonicalResource) resource;
-        if (cr.hasStatus())
-          src = s1 + cr.getStatus().toCode() + s3;
-        else
-          src = s1 + "??" + s3;
-      } else if (com[0].equals("vstitle"))
-        if (resource instanceof CodeSystem)
-          src = s1 + checkTitle(((CodeSystem) resource).getTitle()) + s3;
-        else
+        src = s1 + ((ValueSet) resource).getName() + s3;
+      else if (com[0].equals("csnamed")) {
+        src = s1 + ((CodeSystem) resource).getName() + s3;
+      } else if (com[0].equals("vsstatus")) {
+        src = s1 + checkTitle(((ValueSet) resource).getStatus().toCode()) + s3;
+      } else if (com[0].equals("csstatus")) {
+        src = s1 + checkTitle(((CodeSystem) resource).getStatus().toCode()) + s3;
+      } else if (com[0].equals("vstitle")) {
           src = s1 + checkTitle(((ValueSet) resource).getTitle()) + s3;
-      else if (com[0].equals("vsver") || com[0].equals("ext-ver"))  {
+      } else if (com[0].equals("cstitle")) {
+        src = s1 + checkTitle(((CodeSystem) resource).getTitle()) + s3;
+      } else if (com[0].equals("vsver") || com[0].equals("ext-ver"))  {
+        CanonicalResource cr = (CanonicalResource) resource;
+        src = s1 + cr.getVersion() + s3;
+      } else if (com[0].equals("csver"))  {
         CanonicalResource cr = (CanonicalResource) resource;
         src = s1 + cr.getVersion() + s3;
       } else if (com[0].equals("vsref")) {
@@ -1259,6 +1260,20 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
         src = s1 + "../" + s3;
       else if (com[0].equals("vscommittee"))
         src = s1 + vscommittee(resource) + s3;
+      else if (com[0].equals("cscommittee"))
+        src = s1 + vscommittee(resource) + s3;
+      else if (com[0].equals("csdate"))
+        src = s1 + crDate(resource) + s3;
+      else if (com[0].equals("vsdate"))
+        src = s1 + crDate(resource) + s3;
+      else if (com[0].equals("cscopyright"))
+        src = s1 + csCopyright(resource) + s3;
+      else if (com[0].equals("csflags"))
+        src = s1 + csFlags((CodeSystem) resource) + s3;
+      else if (com[0].equals("vsflags"))
+        src = s1 + vsFlags((ValueSet) resource) + s3;
+      else if (com[0].equals("csoid"))
+        src = s1 + crOids((CanonicalResource) resource) + s3;
       else if (com[0].equals("modifier-list"))
         src = s1 + genModifierList() + s3;
       else if (com[0].equals("missing-element-list"))
@@ -1341,6 +1356,67 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
         throw new Exception("Instruction <%"+s2+"%> not understood parsing page "+file);
     }
     return src;
+  }
+
+  private String crOids(CanonicalResource resource) {
+    CommaSeparatedStringBuilder s = new CommaSeparatedStringBuilder();
+    for (Identifier id : resource.getIdentifier()) {
+      if (id.hasValue() && id.getValue().startsWith("urn:oid:") && id.getUse() != IdentifierUse.OLD) {
+        s.append(id.getValue().substring(8));
+      }
+    }
+    return s.count() == 0 ? "TBD" : s.toString();
+  }
+
+  private String vsFlags(ValueSet vs) {
+    String c = "";
+    if (vs.hasExperimental() || vs.hasImmutable()) {
+      c = c + 
+        Utilities.stringJoin(", ", vs.hasExperimental() && vs.getExperimental() ? "Experimental" : "", 
+        (vs.hasImmutable() && vs.getImmutable() ? "Immutable" : ""));
+    }
+    return c;
+  
+  }
+  
+  private String csFlags(CodeSystem cs) {
+    String c = "";
+    if (cs.hasExperimental() || cs.hasCaseSensitive() || cs.hasCompositional() || cs.hasContent() || cs.hasVersionNeeded()) {
+      c = c + 
+        Utilities.stringJoin(", ", cs.hasExperimental() && cs.getExperimental() ? "Experimental" : "", 
+        (cs.hasCaseSensitive() ?  cs.getCaseSensitive() ? "CaseSensitive" : "Not CaseSensitive" : ""),
+        (cs.hasVersionNeeded() && cs.getVersionNeeded() ? "VersionNeeded" : ""),
+        (cs.hasCompositional() && cs.getCompositional() ? "Compositional" : ""),
+        (cs.hasContent() ? cs.getContent().getDisplay() : ""));
+    }
+    if (cs.hasSupplements()) {
+      c = c + ". Supplements: "+cs.getSupplements();
+    }
+    if (cs.hasValueSet()) {
+      ValueSet vs = definitions.getValuesets().get(cs.getValueSet());
+      if (vs != null) {
+        c = c + ". All codes ValueSet: <a href=\""+vs.getUserString("path")+"\">"+vs.present()+"</a>";
+      } else {
+        c = c + ". All codes ValueSet: "+cs.getValueSet()+"";        
+      }
+    }
+    return c;
+  }
+
+  private String csCopyright(Resource resource) {
+    if (resource instanceof CanonicalResource) {
+      return ((CanonicalResource) resource).getCopyright();
+    } else {
+      return "";
+    }
+  }
+
+  private String crDate(Resource resource) {
+    if (resource instanceof CanonicalResource && ((CanonicalResource) resource).hasDate()) {
+      return new SimpleDateFormat("yyyy-MM-dd").format(((CanonicalResource) resource).getDate());
+    } else {
+      return new SimpleDateFormat("yyyy-MM-dd").format(genDate.getTime());
+    }
   }
 
   private String buildDTStatus(String tn) throws Exception {
@@ -2587,19 +2663,35 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     s.append("</table>\r\n");
     return s.toString();
   }
-
+  
   private void genExtensionRow(ImplementationGuideDefn ig, StringBuilder s, StructureDefinition ed) throws Exception {
-    s.append("<tr>");
+    StandardsStatus status = ToolingExtensions.getStandardsStatus(ed);
+    if (status  == StandardsStatus.DEPRECATED) {
+      s.append("<tr style=\"background-color: #ffeeee\">");
+    } else if (status  == StandardsStatus.NORMATIVE) {
+      s.append("<tr style=\"background-color: #f2fff2\">");
+    } else if (status  == StandardsStatus.INFORMATIVE) {
+      s.append("<tr style=\"background-color: #fffff6\">");
+    } else {
+      s.append("<tr>");
+    }
     s.append("<td><a href=\""+ed.getUserString("path")+"\" title=\""+Utilities.escapeXml(ed.getDescription())+"\">"+ed.getId()+"</a></td>");
     s.append("<td>"+displayExtensionCardinality(ed)+"</td>");
     s.append("<td>"+determineExtensionType(ed)+"</td>");
     s.append("<td>");
     boolean first = true;
+    int l = 0;
     for (StructureDefinitionContextComponent ec : ed.getContext()) {
       if (first)
         first = false;
-      else
+      else if (l > 60) {
         s.append(",<br/> ");
+        l = 0;
+      } else {
+        s.append(", ");
+        l++;        
+      }
+      l = l + ec.getExpression().length();
       if (ec.getType() == ExtensionContextType.ELEMENT) {
         String ref = Utilities.oidRoot(ec.getExpression());
         if (ref.startsWith("@"))
@@ -2623,8 +2715,16 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
         throw new Error("Not done yet");
     }
     s.append("</td>");
-    String fmm = ToolingExtensions.readStringExtension(ed, ToolingExtensions.EXT_FMM_LEVEL);
-    s.append("<td>"+(Utilities.noString(fmm) ? "0" : fmm)+"</td>");
+    if (status == StandardsStatus.NORMATIVE) {
+      s.append("<td><a href=\"versions.html#std-process\" title=\"Normative Content\" class=\"normative-flag\">N</a></td>");
+    } else if (status == StandardsStatus.DEPRECATED) {
+      s.append("<td><a href=\"versions.html#std-process\" title=\"Deprecated Content\" class=\"deprecated-flag\">D</a></td>");      
+    } else if (status == StandardsStatus.INFORMATIVE) {
+      s.append("<td><a href=\"versions.html#std-process\" title=\"Informative Content\" class=\"deprecated-flag\">I</a></td>");      
+    } else { 
+      String fmm = ToolingExtensions.readStringExtension(ed, ToolingExtensions.EXT_FMM_LEVEL);
+      s.append("<td>"+(Utilities.noString(fmm) ? "0" : fmm)+"</td>");
+    }
     String uc = ed.hasUserData("usage.count") ? ed.getUserData("usage.count").toString() : "";
     s.append("<td>"+uc+"</td>");
 //    s.append("<td><a href=\"extension-"+ed.getId().toLowerCase()+ ".xml.html\">XML</a></td>");
@@ -2683,7 +2783,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     b.append("  <li><a href=\"#tabs-"+name+"-xml\">XML</a></li>\r\n");
     b.append("  <li><a href=\"#tabs-"+name+"-json\">JSON</a></li>\r\n");
     b.append("  <li><a href=\"#tabs-"+name+"-ttl\">Turtle</a></li>\r\n");
-    b.append("  <li><a href=\"#tabs-"+name+"-diff\">R3 Diff</a></li>\r\n");
+    b.append("  <li><a href=\"#tabs-"+name+"-diff\">R4 Diff</a></li>\r\n");
     b.append("  <li><a href=\"#tabs-"+name+"-all\">All</a></li>\r\n");
     b.append(" </ul>\r\n");
     b.append(" <div id=\"tabs-"+name+"-struc\">\r\n");
@@ -2798,7 +2898,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     b.append(" <ul>\r\n");
     b.append("  <li><a href=\"#tabs-"+name+"-struc\">Structure</a></li>\r\n");
     b.append("  <li><a href=\"#tabs-"+name+"-uml\">UML</a></li>\r\n");
-    b.append("  <li><a href=\"#tabs-"+name+"-diff\">R3 Diff</a></li>\r\n");
+    b.append("  <li><a href=\"#tabs-"+name+"-diff\">R4 Diff</a></li>\r\n");
     b.append("  <li><a href=\"#tabs-"+name+"-all\">All</a></li>\r\n");
     b.append(" </ul>\r\n");
     b.append(" <div id=\"tabs-"+name+"-struc\">\r\n");
@@ -4349,6 +4449,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     b.append(makeHeaderTab("Value Sets", pfx + "terminologies-valuesets.html", "valuesets".equals(mode)));
     b.append(makeHeaderTab("Concept Maps", pfx + "terminologies-conceptmaps.html", "conceptmaps".equals(mode)));
     b.append(makeHeaderTab("Identifier Systems", pfx + "identifier-registry.html", "idsystems".equals(mode)));
+    b.append(makeHeaderTab("Terminology Service", pfx + "terminology-service.html", "service".equals(mode)));
     b.append("</ul>\r\n");
     return b.toString();
   }
@@ -5080,14 +5181,13 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
           src = s1 + ((ValueSet) resource).getUrl() + s3;
       } else if (com[0].equals("txdef"))
         src = s1 + generateCodeDefinition(Utilities.fileTitle(file)) + s3;
-      else if (com[0].equals("vsxref"))
+      else if (com[0].equals("vsxref")) {
         src = s1 + xreferencesForFhir(name) + s3;
-      else if (com[0].equals("vsdef"))
-        if (resource instanceof CodeSystem)
-          src = s1 + Utilities.escapeXml(((CodeSystem) resource).getDescription()) + s3;
-        else
-          src = s1 + Utilities.escapeXml(((ValueSet) resource).getDescription()) + s3;
-      else if (com[0].equals("txusage"))
+      } else if (com[0].equals("vsdef")) {
+        src = s1 + processMarkdown("vsdef", ((ValueSet) resource).getDescription(), genlevel(0)) + s3;
+      } else if (com[0].equals("csdef")) {
+        src = s1 + processMarkdown("vsdef", ((CodeSystem) resource).getDescription(), genlevel(0)) + s3;
+      } else if (com[0].equals("txusage"))
         src = s1 + generateValueSetUsage((ValueSet) resource, genlevel(0), true) + s3;
       else if (com[0].equals("vsusage"))
         src = s1 + generateValueSetUsage((ValueSet) resource, genlevel(0), true) + s3;
@@ -5618,23 +5718,23 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
         else
           src = s1 + ((ValueSet) resource).present() + s3;
       else if (com[0].equals("vsnamed"))
-        if (resource instanceof CodeSystem)
-          src = s1 + ((CodeSystem) resource).getName() + s3;
-        else
-          src = s1 + ((ValueSet) resource).getName() + s3;
-      else if (com[0].equals("vstitle"))
-        if (resource instanceof CodeSystem)
-          src = s1 + checkTitle(((CodeSystem) resource).getTitle()) + s3;
-        else
-          src = s1 + checkTitle(((ValueSet) resource).getTitle()) + s3;
-      else if (com[0].equals("vsstatus"))
-        if (resource instanceof CodeSystem)
-          src = s1 + checkTitle(((CodeSystem) resource).getStatus().toCode()) + s3;
-        else
-          src = s1 + checkTitle(((ValueSet) resource).getStatus().toCode()) + s3;
-      else if (com[0].equals("vsver") || com[0].equals("ext-ver"))  {
+        src = s1 + ((ValueSet) resource).getName() + s3;
+      else if (com[0].equals("csnamed")) {
+        src = s1 + ((CodeSystem) resource).getName() + s3;
+      } else if (com[0].equals("vstitle")) {
+        src = s1 + checkTitle(((ValueSet) resource).getTitle()) + s3;
+      } else if (com[0].equals("cstitle")) {
+        src = s1 + checkTitle(((CodeSystem) resource).getTitle()) + s3;
+      } else if (com[0].equals("vsstatus")) {
+        src = s1 + checkTitle(((ValueSet) resource).getStatus().toCode()) + s3;
+      } else if (com[0].equals("csstatus")) {
+        src = s1 + checkTitle(((CodeSystem) resource).getStatus().toCode()) + s3;
+      } else if (com[0].equals("vsver") || com[0].equals("ext-ver"))  {
         CanonicalResource cr = (CanonicalResource) resource;
         src = s1 + cr.getVersion() + s3;
+      } else if (com[0].equals("csver"))  {
+          CanonicalResource cr = (CanonicalResource) resource;
+          src = s1 + cr.getVersion() + s3;
       } else if (com[0].equals("vsref")) {
         src = s1 + Utilities.fileTitle((String) resource.getUserData("filename")) + s3;
       } else if (com[0].equals("vsdesc"))
@@ -6790,6 +6890,8 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
       return null;
     
     ConceptMap map = new ConceptMap();
+    KindlingUtilities.makeUniversal(map);
+
     map.setId(logical.getPath()+"2"+resource.getPath());
     map.setUrl("http://hl7.org/fhir/ConceptMap/"+map.getId());
     map.setVersion(version.toCode());
@@ -6877,6 +6979,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     case NORMATIVE: return "colsn";
     case INFORMATIVE: return "colsi";
     case EXTERNAL: return "colse";
+    case DEPRECATED: return "colsdep";
     default:
       return "colsi";
     }
@@ -7450,33 +7553,39 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     if (resource.getSearchParams().size() == 0)
       return "";
     else {
-      StandardsStatus st = resource.getStatus();
+       StandardsStatus st = resource.getStatus();
       
       StringBuilder b = new StringBuilder();
       b.append("<h2>Search Parameters</h2>\r\n");
-      if (resource.getName().equals("Query"))
-        b.append("<p>Search parameters for this resource. The <a href=\"#all\">common parameters</a> also apply.</p>\r\n");
-      else
-        b.append("<p>Search parameters for this resource. The <a href=\"search.html#all\">common parameters</a> also apply. See <a href=\"search.html\">Searching</a> for more information about searching in REST, messaging, and services.</p>\r\n");
+      b.append("<p>Search parameters for this resource. The <a href=\"search.html#all\">common parameters</a> also apply. See <a href=\"search.html\">Searching</a> for more information about searching in REST, messaging, and services.</p>\r\n");
       b.append("<table class=\"list\">\r\n");
       b.append("<tr><td><b>Name</b></td><td><b>Type</b></td><td><b>Description</b></td><td><b>Expression</b></td><td><b>In Common</b></td></tr>\r\n");
-      List<String> names = new ArrayList<String>();
-      names.addAll(resource.getSearchParams().keySet());
-      Collections.sort(names);
-      for (String name : names)  {
-        SearchParameterDefn p = resource.getSearchParams().get(name);
-        String pp = presentPaths(p.getPaths());
-        String sst = (p.getStandardsStatus() == null || p.getStandardsStatus() == st) ? "" : makeStandardsStatusRef(p.getStandardsStatus());
-        
-        String md = stripSimplePara(processMarkdown("SearchParameter.description", p.getDescription(), ""));
-        
-        b.append("<tr><td><a name=\"sp-").append(p.getCode()).append("\"> </a>").append(p.getCode()).append(sst).append("</td><td><a href=\"search.html#").append(p.getType()).append("\">").append(p.getType()).append("</a></td><td>")
-                .append(md).append("</td><td>").append(p.getType() == SearchType.composite ? getCompositeExpression(p) : Utilities.escapeXml(p.getExpression())).append(p.getType() == SearchType.reference ? p.getTargetTypesAsText() : "")
-                .append("</td><td>").append(presentOthers(p)).append("</td></tr>\r\n");
+      if (resource.getName().equals("MetadataResource")) {        
+        genSearchParams(definitions.getResourceByName("CanonicalResource"), st, b);
+        genSearchParams(resource, st, b);
+      } else {
+        genSearchParams(resource, st, b);
       }
       b.append(searchAdditions);
       b.append("</table>\r\n");
       return b.toString();
+    }
+  }
+
+  private void genSearchParams(ResourceDefn resource, StandardsStatus st, StringBuilder b) throws Exception {
+    List<String> names = new ArrayList<String>();
+    names.addAll(resource.getSearchParams().keySet());
+    Collections.sort(names);
+    for (String name : names)  {
+      SearchParameterDefn p = resource.getSearchParams().get(name);
+      String pp = presentPaths(p.getPaths());
+      String sst = (p.getStandardsStatus() == null || p.getStandardsStatus() == st) ? "" : makeStandardsStatusRef(p.getStandardsStatus());
+      
+      String md = stripSimplePara(processMarkdown("SearchParameter.description", p.getDescription(), ""));
+      
+      b.append("<tr><td><a name=\"sp-").append(p.getCode()).append("\"> </a>").append(p.getCode()).append(sst).append("</td><td><a href=\"search.html#").append(p.getType()).append("\">").append(p.getType()).append("</a></td><td>")
+              .append(md).append("</td><td>").append(p.getType() == SearchType.composite ? getCompositeExpression(p) : Utilities.escapeXml(p.getExpression())).append(p.getType() == SearchType.reference ? p.getTargetTypesAsText() : "")
+              .append("</td><td>").append(presentOthers(p)).append("</td></tr>\r\n");
     }
   }
 
@@ -7516,10 +7625,11 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
   }
 
   private Object presentOthers(SearchParameterDefn p) {
-    if (p.getOtherResources().isEmpty())
+    CommonSearchParameter csp = definitions.getCommonSearchParameter(p.getCommonId());
+    if (csp == null)
       return "";
     StringBuilder b = new StringBuilder();
-    b.append("<a href=\"searchparameter-registry.html#"+p.getCommonId()+"\">"+Integer.toString(p.getOtherResources().size())+" Resources</a>");
+    b.append("<a href=\"searchparameter-registry.html#"+p.getCommonId()+"\">"+Integer.toString(csp.getDefinition().getBase().size())+" Resources</a>");
     return b.toString();
   }
 
@@ -7529,20 +7639,29 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     else {
       StringBuilder b = new StringBuilder();
       b.append("<h2>Search Parameters</h2>\r\n");
-      b.append("<p>Common search parameters defined by this resource. See <a href=\"search.html\">Searching</a> for more information about searching in REST, messaging, and services.</p>\r\n");
+      b.append("<p>Search parameters defined by this "+(resource.isInterface() ? "interface for all implementations" : "abstract resource for all descendents")+". See <a href=\"search.html\">Searching</a> for more information about searching in REST, messaging, and services.</p>\r\n");
       b.append("<table class=\"list\">\r\n");
       b.append("<tr><td><b>Name</b></td><td><b>Type</b></td><td><b>Description</b></td><td><b>Paths</b></td></tr>\r\n");
-      List<String> names = new ArrayList<String>();
-      names.addAll(resource.getSearchParams().keySet());
-      Collections.sort(names);
-      for (String name : names)  {
-        SearchParameterDefn p = resource.getSearchParams().get(name);
-        b.append("<tr><td>").append(p.getCode()).append("</td><td><a href=\"search.html#").append(p.getType()).append("\">").append(p.getType())
-                .append("</a></td><td>").append(Utilities.escapeXml(p.getDescription())).append("</td><td>").append(presentPaths(p.getPaths())).append(p.getType() == SearchType.reference ? p.getTargetTypesAsText() : "").append("</td></tr>\r\n");
+      if (resource.getName().equals("MetadataResource")) {        
+        genAbstractSearchParams(definitions.getResourceByName("CanonicalResource"), b);
+        genAbstractSearchParams(resource, b);
+      } else {
+        genAbstractSearchParams(resource, b);
       }
       b.append(searchAdditions);
       b.append("</table>\r\n");
       return b.toString();
+    }
+  }
+
+  private void genAbstractSearchParams(ResourceDefn resource, StringBuilder b) {
+    List<String> names = new ArrayList<String>();
+    names.addAll(resource.getSearchParams().keySet());
+    Collections.sort(names);
+    for (String name : names)  {
+      SearchParameterDefn p = resource.getSearchParams().get(name);
+      b.append("<tr><td>").append(p.getCode()).append("</td><td><a href=\"search.html#").append(p.getType()).append("\">").append(p.getType())
+              .append("</a></td><td>").append(Utilities.escapeXml(p.getDescription())).append("</td><td>").append(presentPaths(p.getPaths())).append(p.getType() == SearchType.reference ? p.getTargetTypesAsText() : "").append("</td></tr>\r\n");
     }
   }
 
@@ -9042,7 +9161,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
       else if (com[0].equals("definitions"))
         src = s1+definitionsExtension(ed, "")+s3;
       else if (com[0].equals("pubdetails")) {
-        src = s1+"Extension maintained by: " +Utilities.escapeXml(ed.getPublisher())+s3;
+        src = s1+extPubDetails(ed)+s3;
       } else if (com[0].equals("extref"))
         src = s1+""+s3;
       else if (com[0].equals("context-info"))
@@ -9081,7 +9200,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
         StandardsStatus ss = ToolingExtensions.getStandardsStatus(ed);
         if (ss == null)
           ss = StandardsStatus.INFORMATIVE;
-        src = s1+"<a href=\""+genlevel(level)+"versions.html#std-process\">Informative</a>"+s3;
+        src = s1+"<a href=\""+genlevel(level)+"versions.html#std-process\">"+ss.toDisplay()+"</a>"+s3;
       } else if (com[0].equals("profile-context")) {
         src = s1+getProfileContext(ed, genlevel(level))+s3;
       } else if (com[0].equals("res-type-count")) { 
@@ -9102,6 +9221,14 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
         src = s1 +(extensionIsModifier(ed) ? "This extension is a modifier extension, and only used in <code>modifierExtension</code>" : "This extension is not a modifier extension") + s3;
       } else if (com[0].equals("ext-status"))  {
         src = s1 + ed.getStatus().toCode() + s3;
+      } else if (com[0].equals("ext-present"))  {
+        src = s1 + ed.present() + s3;
+      } else if (com[0].equals("ext-date"))  {
+        src = s1 + crDate(ed) + s3;
+      } else if (com[0].equals("ext-flags"))  {
+        src = s1 + extFlags(ed) + s3;        
+      } else if (com[0].equals("ext-oid"))  {
+        src = s1 + crOids(ed) + s3;        
       } else if (macros.containsKey(com[0])) {
         src = s1+macros.get(com[0])+s3;
       } else if (com[0].equals("jira-link")) { 
@@ -9110,6 +9237,30 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
         throw new Exception("Instruction <%"+s2+"%> not understood parsing resource "+filename);
     }
     return src;
+  }
+
+  private String extPubDetails(StructureDefinition ed) throws FHIRException, Exception {
+    Extension ext = ToolingExtensions.getExtension(ed, ToolingExtensions.EXT_STANDARDS_STATUS);
+    if (ext == null) {
+      return "";
+    }
+    if (ext.getValue().hasExtension(ToolingExtensions.EXT_STANDARDS_STATUS_REASON)) {
+      return "<p><b>"+ToolingExtensions.getStandardsStatus(ed).toDisplay()+" Status Comment:</b></p>\r\n"+processMarkdown("ext-status", ext.getValue().getExtensionString(ToolingExtensions.EXT_STANDARDS_STATUS_REASON), null);
+    } else {
+      return "";
+    }
+  }
+
+  private String extFlags(StructureDefinition ed) {
+    CommaSeparatedStringBuilder b = new CommaSeparatedStringBuilder(" ");
+    b.append(extensionIsModifier(ed) ? "Modifier" : "Non-Modifier");
+    if (ed.getAbstract()) {
+      b.append("Abstract");
+    }
+    if (ed.getExperimental()) {
+      b.append("Experimental");
+    }
+    return b.toString();
   }
 
   private boolean extensionIsModifier(StructureDefinition ed) {
@@ -9184,7 +9335,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
   }
 
   private String describeExtensionContext(StructureDefinition ed) {
-    return "<p>Context of Use: "+ProfileUtilities.describeExtensionContext(ed)+"</p>";
+    return "<p><b>Context of Use</b>: "+ProfileUtilities.describeExtensionContext(ed)+"</p>";
   }
 
   private String generateExtensionTable(StructureDefinition ed, String filename, String full, String prefix) throws Exception {
@@ -10799,7 +10950,9 @@ private int countContains(List<ValueSetExpansionContainsComponent> list) {
     StringBuilder b = new StringBuilder();
     genSearchParams(b, splist, "Resource");
     genSearchParams(b, splist, "DomainResource");
-    genCommonSearchParams(b, splist);
+    genCommonSearchParams(b, splist, "CanonicalResource");
+    genCommonSearchParams(b, splist, "MetadataResource");
+    genCommonSearchParams(b, splist, null);
     for (String n : definitions.sortedResourceNames())
       genSearchParams(b, splist, n);
     return b.toString();
@@ -10845,21 +10998,24 @@ private int countContains(List<ValueSetExpansionContainsComponent> list) {
   }
 
 
-  private void genCommonSearchParams(StringBuilder b, List<SearchParameter> splist) throws Exception {
+  private void genCommonSearchParams(StringBuilder b, List<SearchParameter> splist, String name) throws Exception {
     List<SearchParameter> list = new ArrayList<SearchParameter>();
     for (SearchParameter sp : splist) {
-      if (sp.getBase().size() > 1) {
-        boolean found = false;
-        for (SearchParameter spt : list)
-          if (spt == sp)
-            found = true;
-        if (!found)
-          list.add(sp);
+      if ((name == null && !Utilities.startsWithInList(sp.getId(), "CanonicalResource", "MetadataResource")) || (name != null && sp.getId().startsWith(name+"-"))) {
+        if (sp.getBase().size() > 1) {
+          boolean found = false;
+          for (SearchParameter spt : list)
+            if (spt == sp)
+              found = true;
+          if (!found)
+            list.add(sp);
+        }
       }
     }
     Collections.sort(list, new SearchParameterListSorter());
     if (list.size() > 0) {
-      b.append("<tr><td colspan=\"5\" style=\"background-color: #dddddd\"><b>Common Search Parameters<a name=\"common\"> </a></b></td></tr>\r\n");
+      b.append("<tr><td colspan=\"5\" style=\"background-color: #dddddd\"><b>"+(name == null ? "Common Search Parameters" : 
+        "<b><a href=\""+name.toLowerCase()+".html\">"+name+"</a><a name=\""+name.toLowerCase()+"\"> </a></b>")+"<a name=\"common\"> </a></b></td></tr>\r\n");
       for (SearchParameter sp : list) {
         b.append("<tr><td>"+sp.getCode()+"<a name=\""+sp.getId()+"\"> </a>"+makeStandardsStatusRef(ToolingExtensions.getStandardsStatus(sp))+"</td><td><a href=\"search.html#"+sp.getType().toCode()+"\">"+sp.getType().toCode()+"</a></td><td>"+sp.getId()+"</td><td>"+processMarkdown("allsearchparams", sp.getDescription(), "")+"</td><td>"+Utilities.escapeXml(sp.getExpression()).replace(".", ".&#8203;")+"</td></tr>\r\n");
       }
@@ -11264,8 +11420,8 @@ private int countContains(List<ValueSetExpansionContainsComponent> list) {
     return uml;
   }
 
-  public PackageVersion packageInfo() {
-    return new PackageVersion(pidRoot()+".core", version.toCode(), new Date());
+  public PackageInformation packageInfo() {
+    return new PackageInformation(pidRoot()+".core", version.toCode(), new Date());
   }
 
   private String pidRoot() {

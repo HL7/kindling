@@ -40,7 +40,6 @@ import org.hl7.fhir.exceptions.FHIRException;
 import org.hl7.fhir.exceptions.FHIRFormatError;
 import org.hl7.fhir.r5.conformance.ProfileUtilities;
 import org.hl7.fhir.r5.context.CanonicalResourceManager;
-import org.hl7.fhir.r5.elementmodel.Element;
 import org.hl7.fhir.r5.formats.IParser.OutputStyle;
 import org.hl7.fhir.r5.formats.JsonParser;
 import org.hl7.fhir.r5.formats.XmlParser;
@@ -80,12 +79,12 @@ import org.hl7.fhir.r5.terminologies.ValueSetUtilities;
 import org.hl7.fhir.r5.utils.BuildExtensions;
 import org.hl7.fhir.r5.utils.ToolingExtensions;
 import org.hl7.fhir.tools.publisher.BuildWorkerContext;
+import org.hl7.fhir.tools.publisher.KindlingUtilities;
 import org.hl7.fhir.utilities.CSFile;
 import org.hl7.fhir.utilities.CSFileInputStream;
 import org.hl7.fhir.utilities.StandardsStatus;
 import org.hl7.fhir.utilities.TextFile;
 import org.hl7.fhir.utilities.Utilities;
-import org.w3c.dom.Document;
 
 public class ResourceParser {
 
@@ -423,6 +422,7 @@ public class ResourceParser {
         }
       }
     }
+    
     for (SearchParameterComponentComponent comp : src.getComponent()) {
       sp.getComposites().add(new CompositeDefinition(comp.getDefinition(), comp.getExpression()));
     }
@@ -552,7 +552,12 @@ public class ResourceParser {
     }
     ed.setOrderMeaning(focus.getOrderMeaning());
     if (BuildExtensions.hasExtension(focus, BuildExtensions.EXT_STANDARDS_STATUS)) {
-      ed.setStandardsStatus(StandardsStatus.fromCode(BuildExtensions.readStringExtension(focus, BuildExtensions.EXT_STANDARDS_STATUS)));
+      Extension sse = BuildExtensions.getExtension(focus, BuildExtensions.EXT_STANDARDS_STATUS);
+      ed.setStandardsStatus(StandardsStatus.fromCode(sse.getValue().primitiveValue()));
+      Extension ssr = sse.getValue().getExtensionByUrl(ToolingExtensions.EXT_STANDARDS_STATUS_REASON);
+      if (ssr != null) {
+        ed.setStandardsStatusReason(ssr.getValue().primitiveValue());
+      }
     }
     if (BuildExtensions.hasExtension(focus, BuildExtensions.EXT_NORMATIVE_VERSION)) {
       ed.setNormativeVersion(BuildExtensions.readStringExtension(focus, BuildExtensions.EXT_NORMATIVE_VERSION));
@@ -565,7 +570,6 @@ public class ResourceParser {
       if (cst.hasExtension(BuildExtensions.EXT_OCL)) {
         inv.setOcl(cst.getExtensionString(BuildExtensions.EXT_OCL));        
       }
-      inv.setXpath(cst.getXpath());
       inv.setId(cst.getKey());
       if (cst.hasExtension(BuildExtensions.EXT_FIXED_NAME)) {
         inv.setFixedName(cst.getExtensionString(BuildExtensions.EXT_FIXED_NAME));        

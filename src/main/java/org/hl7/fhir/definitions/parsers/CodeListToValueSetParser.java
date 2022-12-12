@@ -5,7 +5,6 @@ import java.util.List;
 import java.util.Map;
 
 import org.hl7.fhir.r5.context.CanonicalResourceManager;
-import org.hl7.fhir.r5.context.IWorkerContext.PackageVersion;
 import org.hl7.fhir.r5.model.CodeSystem;
 import org.hl7.fhir.r5.model.CodeSystem.CodeSystemContentMode;
 import org.hl7.fhir.r5.model.CodeSystem.ConceptDefinitionComponent;
@@ -13,19 +12,22 @@ import org.hl7.fhir.r5.model.ConceptMap;
 import org.hl7.fhir.r5.model.ConceptMap.ConceptMapGroupComponent;
 import org.hl7.fhir.r5.model.ConceptMap.SourceElementComponent;
 import org.hl7.fhir.r5.model.ConceptMap.TargetElementComponent;
-import org.hl7.fhir.r5.model.Constants;
 import org.hl7.fhir.r5.model.ContactDetail;
 import org.hl7.fhir.r5.model.ContactPoint;
 import org.hl7.fhir.r5.model.DateTimeType;
 import org.hl7.fhir.r5.model.Enumerations.ConceptMapRelationship;
 import org.hl7.fhir.r5.model.Enumerations.PublicationStatus;
 import org.hl7.fhir.r5.model.Factory;
+import org.hl7.fhir.r5.model.MarkdownType;
+import org.hl7.fhir.r5.model.PackageInformation;
 import org.hl7.fhir.r5.model.ValueSet;
 import org.hl7.fhir.r5.model.ValueSet.ConceptReferenceComponent;
 import org.hl7.fhir.r5.model.ValueSet.ConceptSetComponent;
 import org.hl7.fhir.r5.model.ValueSet.ValueSetComposeComponent;
 import org.hl7.fhir.r5.terminologies.CodeSystemUtilities;
 import org.hl7.fhir.r5.utils.ToolingExtensions;
+import org.hl7.fhir.tools.publisher.KindlingUtilities;
+import org.hl7.fhir.utilities.StandardsStatus;
 import org.hl7.fhir.utilities.Utilities;
 import org.hl7.fhir.utilities.xls.XLSXmlParser.Sheet;
 
@@ -37,10 +39,10 @@ public class CodeListToValueSetParser {
   private String sheetName;
   private CanonicalResourceManager<CodeSystem> codeSystems;
   private CanonicalResourceManager<ConceptMap> maps;
-  private PackageVersion packageInfo;
+  private PackageInformation packageInfo;
   private OIDRegistry registry;
 
-  public CodeListToValueSetParser(Sheet sheet, String sheetName, ValueSet valueSet, String version, CanonicalResourceManager<CodeSystem> codeSystems, CanonicalResourceManager<ConceptMap> maps, PackageVersion packageInfo,
+  public CodeListToValueSetParser(Sheet sheet, String sheetName, ValueSet valueSet, String version, CanonicalResourceManager<CodeSystem> codeSystems, CanonicalResourceManager<ConceptMap> maps, PackageInformation packageInfo,
       OIDRegistry registry) throws Exception {
     super();
     this.sheet = sheet;
@@ -87,6 +89,7 @@ public class CodeListToValueSetParser {
         CodeSystemUtilities.setOID(cs, oid);
       }
       codeSystems.see(cs, packageInfo);
+      KindlingUtilities.makeUniversal(cs);
 
       for (int row = 0; row < sheet.rows.size(); row++) {
         if (Utilities.noString(sheet.getColumn(row, "System"))) {
@@ -114,6 +117,12 @@ public class CodeListToValueSetParser {
           String deprecated = sheet.getColumn(row, "Deprecated");
           if (!Utilities.noString(deprecated)) {
             CodeSystemUtilities.setDeprecated(cs, cc, new DateTimeType(deprecated));
+            ToolingExtensions.setStandardsStatus(cc, StandardsStatus.DEPRECATED, null);
+            String deprecatedReason = sheet.getColumn(row, "DeprecatedReason");
+            if (!Utilities.noString(deprecatedReason)) {
+              cc.getExtensionByUrl(ToolingExtensions.EXT_STANDARDS_STATUS).getValue()
+                 .addExtension(ToolingExtensions.EXT_STANDARDS_STATUS_REASON, new MarkdownType(deprecatedReason));
+            }
           }
           String parent = sheet.getColumn(row, "Parent");
           if (Utilities.noString(parent))
@@ -177,6 +186,8 @@ public class CodeListToValueSetParser {
     cm.setName("v2."+vs.getName());
     cm.setTitle("v2 map for " + vs.present());
     cm.setPublisher("HL7 (FHIR Project)");
+    KindlingUtilities.makeUniversal(cm);
+
     for (ContactDetail cc : vs.getContact()) {
       ContactDetail cd = cm.addContact();
       cd.setName(cc.getName());
@@ -271,6 +282,8 @@ public class CodeListToValueSetParser {
     cm.setName("v3." + vs.getName());
     cm.setTitle("v3 map for " + vs.present());
     cm.setPublisher("HL7 (FHIR Project)");
+    KindlingUtilities.makeUniversal(cm);
+
     for (ContactDetail cc : vs.getContact()) {
       ContactDetail cd = cm.addContact();
       cd.setName(cc.getName());

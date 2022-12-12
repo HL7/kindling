@@ -97,7 +97,6 @@ import org.hl7.fhir.definitions.generators.specification.TerminologyNotesGenerat
 import org.hl7.fhir.definitions.generators.specification.ToolResourceUtilities;
 import org.hl7.fhir.definitions.generators.specification.TurtleSpecGenerator;
 import org.hl7.fhir.definitions.generators.specification.W5TurtleGenerator;
-import org.hl7.fhir.definitions.generators.specification.XPathQueryGenerator;
 import org.hl7.fhir.definitions.generators.specification.XmlSpecGenerator;
 import org.hl7.fhir.definitions.generators.xsd.SchemaGenerator;
 import org.hl7.fhir.definitions.model.BindingSpecification;
@@ -163,6 +162,7 @@ import org.hl7.fhir.r5.model.CapabilityStatement.CapabilityStatementSoftwareComp
 import org.hl7.fhir.r5.model.CapabilityStatement.ConditionalDeleteStatus;
 import org.hl7.fhir.r5.model.CapabilityStatement.ReferenceHandlingPolicy;
 import org.hl7.fhir.r5.model.CapabilityStatement.ResourceInteractionComponent;
+import org.hl7.fhir.r5.model.CapabilityStatement.RestfulCapabilityMode;
 import org.hl7.fhir.r5.model.CapabilityStatement.SystemInteractionComponent;
 import org.hl7.fhir.r5.model.CapabilityStatement.SystemRestfulInteraction;
 import org.hl7.fhir.r5.model.CapabilityStatement.TypeRestfulInteraction;
@@ -190,7 +190,6 @@ import org.hl7.fhir.r5.model.Enumerations.CompartmentType;
 import org.hl7.fhir.r5.model.Enumerations.ConceptMapRelationship;
 import org.hl7.fhir.r5.model.Enumerations.FHIRVersion;
 import org.hl7.fhir.r5.model.Enumerations.PublicationStatus;
-import org.hl7.fhir.r5.model.CapabilityStatement.RestfulCapabilityMode;
 import org.hl7.fhir.r5.model.Enumerations.SearchParamType;
 import org.hl7.fhir.r5.model.Factory;
 import org.hl7.fhir.r5.model.ImplementationGuide;
@@ -249,7 +248,6 @@ import org.hl7.fhir.utilities.CloseProtectedZipInputStream;
 import org.hl7.fhir.utilities.CommaSeparatedStringBuilder;
 import org.hl7.fhir.utilities.IniFile;
 import org.hl7.fhir.utilities.Logger.LogMessageType;
-import org.hl7.fhir.utilities.i18n.I18nConstants;
 import org.hl7.fhir.utilities.NDJsonWriter;
 import org.hl7.fhir.utilities.SIDUtilities;
 import org.hl7.fhir.utilities.StandardsStatus;
@@ -258,6 +256,7 @@ import org.hl7.fhir.utilities.Utilities;
 import org.hl7.fhir.utilities.VersionUtilities;
 import org.hl7.fhir.utilities.XsltUtilities;
 import org.hl7.fhir.utilities.ZipGenerator;
+import org.hl7.fhir.utilities.i18n.I18nConstants;
 import org.hl7.fhir.utilities.json.JsonUtilities;
 import org.hl7.fhir.utilities.npm.FilesystemPackageCacheManager;
 import org.hl7.fhir.utilities.npm.PackageGenerator.PackageType;
@@ -919,6 +918,8 @@ public class Publisher implements URIResolver, SectionNumberer {
     cm.setDescription("Canonical Mapping for \""+vs.getDescription()+"\"");
     cm.setSourceScope(new CanonicalType(vs.getUrl()));
     cm.setTargetScope(new CanonicalType("http://hl7.org/fhir/ValueSet/resource-status"));
+    KindlingUtilities.makeUniversal(cm);
+
     List<String> canonical = page.getDefinitions().getStatusCodes().get("@code");
     List<String> self = page.getDefinitions().getStatusCodes().get(path);
     ConceptMapGroupComponent grp = cm.addGroup();
@@ -1603,6 +1604,8 @@ public class Publisher implements URIResolver, SectionNumberer {
             ns.setStatus(PublicationStatus.DRAFT);
           ns.setKind(NamingSystemType.CODESYSTEM);
           ns.setPublisher(cs.getPublisher());
+          KindlingUtilities.makeUniversal(ns);
+
           for (ContactDetail c : cs.getContact()) {
             ContactDetail nc = ns.addContact();
             nc.setName(c.getName());
@@ -4358,7 +4361,7 @@ public class Publisher implements URIResolver, SectionNumberer {
     tmp.delete();
 
     StructureDefinitionSpreadsheetGenerator sdr = new StructureDefinitionSpreadsheetGenerator(page.getWorkerContext(), false, false);
-    sdr.renderStructureDefinition(resource.getProfile());
+    sdr.renderStructureDefinition(resource.getProfile(), false);
     sdr.finish(new FileOutputStream(Utilities.path(page.getFolders().dstDir, n + ".xlsx")));
 
     // because we'll pick up a little more information as we process the
@@ -5824,7 +5827,7 @@ public class Publisher implements URIResolver, SectionNumberer {
   private void insertSectionNumbersInNode(XhtmlNode node, SectionTracker st, String link, int level, BooleanHolder registered, XhtmlNode parent, StandardsStatus sstatus) throws Exception {
     // while we're looking, mark external references explicitly
     if (node.getNodeType() == NodeType.Element && node.getName().equals("a") &&
-        node.getAttribute("href") != null && node.getAttribute("no-external") == null && (node.getAttribute("href").startsWith("http:") || node.getAttribute("href").startsWith("https:"))) {
+        node.getAttribute("href") != null && node.getAttribute("no-external") == null && node.getAttribute("xlink:type") == null && (node.getAttribute("href").startsWith("http:") || node.getAttribute("href").startsWith("https:"))) {
       node.addText(" ");
       XhtmlNode img = node.addTag("img");
       String s = "external.png";
@@ -6382,6 +6385,7 @@ private String csCounter() {
   private void generateValueSetsPart1() throws Exception {
     page.log(" ...value sets", LogMessageType.Process);
     for (ValueSet vs : page.getDefinitions().getBoundValueSets().values()) {
+      KindlingUtilities.makeUniversal(vs);
       if (!vs.hasText()) {
         vs.setText(new Narrative());
         vs.getText().setStatus(NarrativeStatus.EMPTY);
@@ -6405,6 +6409,7 @@ private String csCounter() {
   private void generateCodeSystemsPart1() throws Exception {
     page.log(" ...code systems", LogMessageType.Process);
     for (CodeSystem cs : page.getDefinitions().getCodeSystems().getList()) {
+      KindlingUtilities.makeUniversal(cs);
       if (cs != null && page.isLocalResource(cs)) {
         if (!cs.hasText()) {
           cs.setText(new Narrative());
@@ -6424,6 +6429,7 @@ private String csCounter() {
     List<ConceptMap> list = new ArrayList<>();
     page.getConceptMaps().listAll(list);
     for (ConceptMap cm : list) {
+      KindlingUtilities.makeUniversal(cm);
       if (cm.hasUserData("generate")) {
         generateConceptMap(cm);
       }

@@ -6,7 +6,6 @@ import java.util.Set;
 import org.hl7.fhir.definitions.model.BindingSpecification;
 import org.hl7.fhir.definitions.model.Definitions;
 import org.hl7.fhir.definitions.model.ElementDefn;
-import org.hl7.fhir.r5.context.IWorkerContext;
 import org.hl7.fhir.r5.model.ValueSet;
 import org.hl7.fhir.tools.publisher.PageProcessor;
 import org.hl7.fhir.utilities.Utilities;
@@ -42,7 +41,7 @@ public class BaseGenerator {
           if (isKnownBrokenVS(bs.getReference())) {
             return "http://this-is-a-broken-link";
           } else {
-            throw new Error("Broken ValueSet reference "+bs.getReference());            
+            throw new Exception("Broken ValueSet reference "+bs.getReference());            
           }
         } else {
           return bs.getReference();

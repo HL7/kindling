@@ -34,7 +34,6 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
-import java.security.spec.ECField;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.HashMap;
@@ -60,7 +59,6 @@ import org.hl7.fhir.definitions.model.Compartment;
 import org.hl7.fhir.definitions.model.ConstraintStructure;
 import org.hl7.fhir.definitions.model.DefinedCode;
 import org.hl7.fhir.definitions.model.DefinedStringPattern;
-import org.hl7.fhir.definitions.model.DefinitionComparer;
 import org.hl7.fhir.definitions.model.Definitions;
 import org.hl7.fhir.definitions.model.Dictionary;
 import org.hl7.fhir.definitions.model.ElementDefn;
@@ -102,15 +100,14 @@ import org.hl7.fhir.r5.model.CanonicalResource;
 import org.hl7.fhir.r5.model.CodeSystem;
 import org.hl7.fhir.r5.model.CodeType;
 import org.hl7.fhir.r5.model.Composition;
-import org.hl7.fhir.r5.model.Constants;
 import org.hl7.fhir.r5.model.Enumerations.FHIRVersion;
 import org.hl7.fhir.r5.model.Resource;
 import org.hl7.fhir.r5.model.SearchParameter;
 import org.hl7.fhir.r5.model.StructureDefinition;
 import org.hl7.fhir.r5.model.StructureDefinition.StructureDefinitionContextComponent;
 import org.hl7.fhir.r5.model.StructureDefinition.TypeDerivationRule;
-import org.hl7.fhir.r5.terminologies.CodeSystemUtilities;
 import org.hl7.fhir.r5.model.ValueSet;
+import org.hl7.fhir.r5.terminologies.CodeSystemUtilities;
 import org.hl7.fhir.r5.utils.ToolingExtensions;
 import org.hl7.fhir.tools.publisher.BuildWorkerContext;
 import org.hl7.fhir.tools.publisher.PageProcessor;
@@ -1002,6 +999,9 @@ public class SourceParser {
           if (Utilities.noString(ed.getBaseDefinition()))
             ed.setBaseDefinition("http://hl7.org/fhir/StructureDefinition/Extension");
           ed.setDerivation(TypeDerivationRule.CONSTRAINT);
+          if (ToolingExtensions.getStandardsStatus(ed) == null) {
+            ToolingExtensions.setStandardsStatus(ed, StandardsStatus.TRIAL_USE, null);
+          }
           if (ToolingExtensions.readStringExtension(ed, ToolingExtensions.EXT_WORKGROUP) == null)
             ToolingExtensions.setCodeExtension(ed, ToolingExtensions.EXT_WORKGROUP, wg.getCode());
           if (!ed.hasUrl())
@@ -1155,6 +1155,7 @@ public class SourceParser {
     definitions.getKnownTypes().addAll(ts);
 
     StandardsStatus status = loadStatus(n);
+    String ssr = loadStatusReason(n);
     String nv = loadNormativeVersion(n);
     
     try {
@@ -1169,6 +1170,7 @@ public class SourceParser {
         org.hl7.fhir.definitions.model.TypeDefn el = p.parseCompositeType();
         el.setFmmLevel(fmm);
         el.setStandardsStatus(status);
+        el.setStandardsStatusReason(ssr);
         el.setNormativeVersion(nv);
         map.put(t.getName(), el);
         genTypeProfile(el);
@@ -1191,7 +1193,6 @@ public class SourceParser {
             inv.setId(n);
             inv.setEnglish(sheet.getColumn(i,"Rules"));
             inv.setOcl(sheet.getColumn(i, "OCL"));
-            inv.setXpath(sheet.getColumn(i, "XPath"));
             inv.setExpression(sheet.getColumn(i, "Expression"));
             inv.setExplanation(sheet.getColumn(i, "Explanation"));
             inv.setTurtle(sheet.getColumn(i, "RDF"));
@@ -1233,6 +1234,11 @@ public class SourceParser {
     if (Utilities.noString(ns))
       throw new FHIRException("Datatypes must be registered in the [standards-status] section of fhir.ini ("+n+")");
     return StandardsStatus.fromCode(ns);
+  }
+
+  private String loadStatusReason(String n) throws FHIRException {
+    String ns = ini.getStringProperty("standards-status-reason", n);
+    return ns;
   }
 
   private ResourceDefn loadResource(String n, Map<String, ResourceDefn> map, boolean isAbstract, boolean isTemplate, String t, boolean isInterface) throws Exception {
@@ -1308,6 +1314,15 @@ public class SourceParser {
       setResourceProps(n, wg, rootNew);
       if (map != null) {
         map.put(rootNew.getName(), rootNew);
+      }
+      if (isInterface) {
+        for (SearchParameterDefn spd : rootNew.getSearchParams().values()) {
+          CommonSearchParameter csp = new CommonSearchParameter();
+          csp.setCode(spd.getCode());
+          csp.setId(rootNew.getName()+"-"+spd.getCode());
+          csp.getResources().add(rootNew.getName());
+          definitions.getCommonSearchParameters().put(rootNew.getName()+"::"+spd.getCode(), csp);
+        }
       }
       return rootNew;
     }

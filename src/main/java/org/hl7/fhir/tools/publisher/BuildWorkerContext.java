@@ -31,20 +31,13 @@ import org.hl7.fhir.definitions.model.Definitions;
 import org.hl7.fhir.exceptions.DefinitionException;
 import org.hl7.fhir.exceptions.FHIRException;
 import org.hl7.fhir.exceptions.TerminologyServiceException;
-import org.hl7.fhir.definitions.model.TypeRef;
 import org.hl7.fhir.r5.conformance.ProfileUtilities;
 import org.hl7.fhir.r5.conformance.ProfileUtilities.ProfileKnowledgeProvider;
 import org.hl7.fhir.r5.context.BaseWorkerContext;
 import org.hl7.fhir.r5.context.CanonicalResourceManager;
 import org.hl7.fhir.r5.context.HTMLClientLogger;
 import org.hl7.fhir.r5.context.IWorkerContext;
-import org.hl7.fhir.r5.context.IWorkerContext.IContextResourceLoader;
-import org.hl7.fhir.r5.context.IWorkerContext.PackageVersion;
 import org.hl7.fhir.r5.context.SimpleWorkerContext.PackageResourceLoader;
-import org.hl7.fhir.r5.formats.IParser;
-import org.hl7.fhir.r5.formats.JsonParser;
-import org.hl7.fhir.r5.formats.ParserType;
-import org.hl7.fhir.r5.formats.XmlParser;
 import org.hl7.fhir.r5.model.CodeSystem;
 import org.hl7.fhir.r5.model.CodeSystem.CodeSystemContentMode;
 import org.hl7.fhir.r5.model.CodeSystem.ConceptDefinitionComponent;
@@ -53,10 +46,8 @@ import org.hl7.fhir.r5.model.ConceptMap;
 import org.hl7.fhir.r5.model.ElementDefinition.ElementDefinitionBindingComponent;
 import org.hl7.fhir.r5.model.ElementDefinition.TypeRefComponent;
 import org.hl7.fhir.r5.model.ImplementationGuide;
-import org.hl7.fhir.r5.model.NamingSystem;
-import org.hl7.fhir.r5.model.NamingSystem.NamingSystemIdentifierType;
-import org.hl7.fhir.r5.model.NamingSystem.NamingSystemUniqueIdComponent;
 import org.hl7.fhir.r5.model.OperationOutcome;
+import org.hl7.fhir.r5.model.PackageInformation;
 import org.hl7.fhir.r5.model.Parameters;
 import org.hl7.fhir.r5.model.Parameters.ParametersParameterComponent;
 import org.hl7.fhir.r5.model.StringType;
@@ -71,15 +62,13 @@ import org.hl7.fhir.r5.utils.client.EFhirClientException;
 import org.hl7.fhir.r5.utils.validation.IResourceValidator;
 import org.hl7.fhir.utilities.CSFileInputStream;
 import org.hl7.fhir.utilities.CommaSeparatedStringBuilder;
-import org.hl7.fhir.utilities.OIDUtils;
 import org.hl7.fhir.utilities.TextFile;
 import org.hl7.fhir.utilities.TranslatorXml;
 import org.hl7.fhir.utilities.Utilities;
-import org.hl7.fhir.utilities.VersionUtilities;
+import org.hl7.fhir.utilities.i18n.I18nConstants;
 import org.hl7.fhir.utilities.npm.BasePackageCacheManager;
 import org.hl7.fhir.utilities.npm.NpmPackage;
 import org.hl7.fhir.utilities.npm.NpmPackage.PackageResourceInformation;
-import org.hl7.fhir.utilities.i18n.I18nConstants;
 import org.hl7.fhir.utilities.validation.ValidationMessage;
 import org.hl7.fhir.utilities.validation.ValidationMessage.IssueSeverity;
 import org.hl7.fhir.utilities.validation.ValidationMessage.IssueType;
@@ -811,7 +800,7 @@ public class BuildWorkerContext extends BaseWorkerContext implements IWorkerCont
     }
     for (PackageResourceInformation pri : pi.listIndexedResources(types)) {
       try {
-        registerResourceFromPackage(new PackageResourceLoader(pri, loader), new PackageVersion(pi.id(), pi.version(), pi.dateAsDate()));
+        registerResourceFromPackage(new PackageResourceLoader(pri, loader), new PackageInformation(pi.id(), pi.version(), pi.dateAsDate()));
         t++;
       } catch (FHIRException e) {
         throw new FHIRException(formatMessage(I18nConstants.ERROR_READING__FROM_PACKAGE__, pri.getFilename(), pi.name(), pi.version(), e.getMessage()), e);
@@ -827,22 +816,21 @@ public class BuildWorkerContext extends BaseWorkerContext implements IWorkerCont
   }
 
   @Override
-  public void cachePackage(PackageDetails packageDetails, List<PackageVersion> dependencies) {
-
+  public boolean isPrimitiveType(String typeSimple) {
+    throw new NotImplementedException("Not implemented");
   }
 
   @Override
-  public boolean hasPackage(PackageVersion pack) {
+  public void cachePackage(PackageInformation packageInfo) {    
+  }
+
+  @Override
+  public boolean hasPackage(PackageInformation pack) {
     return false;
   }
 
   @Override
-  public PackageDetails getPackage(PackageVersion pack) {
+  public PackageInformation getPackage(String id, String ver) {
     return null;
-  }
-
-  @Override
-  public boolean isPrimitiveType(String typeSimple) {
-    throw new NotImplementedException("Not implemented");
   }
 }

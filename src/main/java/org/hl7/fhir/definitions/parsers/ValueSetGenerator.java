@@ -19,7 +19,6 @@ import org.hl7.fhir.definitions.model.EventDefn;
 import org.hl7.fhir.definitions.model.ResourceDefn;
 import org.hl7.fhir.definitions.model.TypeRef;
 import org.hl7.fhir.r5.context.IWorkerContext;
-import org.hl7.fhir.r5.context.IWorkerContext.PackageVersion;
 import org.hl7.fhir.r5.model.CodeSystem;
 import org.hl7.fhir.r5.model.CodeSystem.CodeSystemContentMode;
 import org.hl7.fhir.r5.model.CodeSystem.CodeSystemHierarchyMeaning;
@@ -29,14 +28,14 @@ import org.hl7.fhir.r5.model.CodeType;
 import org.hl7.fhir.r5.model.ContactDetail;
 import org.hl7.fhir.r5.model.ContactPoint.ContactPointSystem;
 import org.hl7.fhir.r5.model.Enumerations.PublicationStatus;
-import org.hl7.fhir.r5.model.StructureDefinition.TypeDerivationRule;
 import org.hl7.fhir.r5.model.Factory;
-import org.hl7.fhir.r5.model.StructureDefinition;
+import org.hl7.fhir.r5.model.PackageInformation;
 import org.hl7.fhir.r5.model.ValueSet;
 import org.hl7.fhir.r5.model.ValueSet.ValueSetComposeComponent;
 import org.hl7.fhir.r5.terminologies.CodeSystemUtilities;
 import org.hl7.fhir.r5.terminologies.ValueSetUtilities;
 import org.hl7.fhir.r5.utils.ToolingExtensions;
+import org.hl7.fhir.tools.publisher.KindlingUtilities;
 import org.hl7.fhir.utilities.StandardsStatus;
 import org.hl7.fhir.utilities.TranslationServices;
 import org.hl7.fhir.utilities.Utilities;
@@ -48,11 +47,11 @@ public class ValueSetGenerator {
   private String version;
   private Calendar genDate;
   private TranslationServices translator;
-  private PackageVersion packageInfo; 
+  private PackageInformation packageInfo; 
   private IWorkerContext context;
   
 
-  public ValueSetGenerator(Definitions definitions, String version, Calendar genDate, TranslationServices translator, PackageVersion packageInfo, IWorkerContext context) throws ParserConfigurationException, SAXException, IOException {
+  public ValueSetGenerator(Definitions definitions, String version, Calendar genDate, TranslationServices translator, PackageInformation packageInfo, IWorkerContext context) throws ParserConfigurationException, SAXException, IOException {
     super();
     this.definitions = definitions;
     this.version = version;
@@ -95,7 +94,8 @@ public class ValueSetGenerator {
         System.out.println("ValueSet "+vs.getUrl()+" WG mismatch 6: is "+ec+", want to set to "+"fhir");
     }     
     vs.setUserData("path", "valueset-"+vs.getId()+".html");
-    
+    KindlingUtilities.makeUniversal(vs);
+
     CodeSystem cs = new CodeSystem();
     CodeSystemConvertor.populate(cs, vs);
     cs.setUrl("http://hl7.org/fhir/data-types");
@@ -106,6 +106,7 @@ public class ValueSetGenerator {
       cs.setStatus(PublicationStatus.DRAFT);
     }
     definitions.getCodeSystems().see(cs, packageInfo);
+    KindlingUtilities.makeUniversal(cs);
 
     List<String> codes = new ArrayList<String>();
     for (TypeRef t : definitions.getKnownTypes())
@@ -171,7 +172,8 @@ public class ValueSetGenerator {
         System.out.println("ValueSet "+vs.getUrl()+" WG mismatch 7: is "+ec+", want to set to "+"fhir");
     }     
     vs.setUserData("path", "valueset-"+vs.getId()+".html");
-    
+    KindlingUtilities.makeUniversal(vs);
+
     CodeSystem cs = new CodeSystem();
     CodeSystemConvertor.populate(cs, vs);
     cs.setUrl("http://hl7.org/fhir/resource-types");
@@ -183,7 +185,8 @@ public class ValueSetGenerator {
       cs.setStatus(PublicationStatus.DRAFT);
     }
     definitions.getCodeSystems().see(cs, packageInfo);
-        
+    KindlingUtilities.makeUniversal(cs);
+
     Map<String, ConceptDefinitionComponent> codes = new HashMap<String, ConceptDefinitionComponent>();
     for (ResourceDefn rd : definitions.getBaseResources().values()) {
       ConceptDefinitionComponent cd = makeConceptForResource(rd.getName(), rd.getDefinition(), rd.isAbstract());
@@ -245,7 +248,8 @@ public class ValueSetGenerator {
         System.out.println("ValueSet "+vs.getUrl()+" WG mismatch 8: is "+ec+", want to set to "+"fhir");
     }     
     vs.setUserData("path", "valueset-"+vs.getId()+".html");
-    
+    KindlingUtilities.makeUniversal(vs);
+
     CodeSystem cs = new CodeSystem();
     cs.setUserData("filename", vs.getUserString("filename").replace("valueset-", "codesystem-"));
     cs.setUserData("path", vs.getUserString("path").replace("valueset-", "codesystem-"));
@@ -258,6 +262,7 @@ public class ValueSetGenerator {
       cs.setStatus(PublicationStatus.DRAFT);
     }
     definitions.getCodeSystems().see(cs, packageInfo);
+    KindlingUtilities.makeUniversal(cs);
 
     cs.addConcept().setCode("Type").setDisplay("Type").setDefinition("A place holder that means any kind of data ype");
     cs.addConcept().setCode("Any").setDisplay("Any").setDefinition("A place holder that means any kind of resource");
@@ -277,6 +282,7 @@ public class ValueSetGenerator {
         System.out.println("ValueSet "+vs.getUrl()+" WG mismatch 8: is "+ec+", want to set to "+"fhir");
     }     
     vs.setUserData("path", "valueset-"+vs.getId()+".html");
+    KindlingUtilities.makeUniversal(vs);
     
     CodeSystem cs = new CodeSystem();
     cs.setUserData("filename", vs.getUserString("filename").replace("valueset-", "codesystem-"));
@@ -291,7 +297,7 @@ public class ValueSetGenerator {
     }
     definitions.getCodeSystems().see(cs, packageInfo);
     markSpecialStatus(vs, cs, true);
-
+    KindlingUtilities.makeUniversal(cs);
   }
 
   private void genDefinedTypes(ValueSet vs, boolean doAbstract) throws Exception {
@@ -339,6 +345,7 @@ public class ValueSetGenerator {
       cs.setStatus(PublicationStatus.DRAFT);
     }
     definitions.getCodeSystems().see(cs, packageInfo);
+    KindlingUtilities.makeUniversal(cs);
 
     List<String> codes = new ArrayList<String>();
     codes.addAll(definitions.getEvents().keySet());
@@ -414,6 +421,7 @@ public class ValueSetGenerator {
     vs.setPublisher("HL7 (FHIR Project)");
     vs.setVersion(version);
     vs.setExperimental(false);
+    KindlingUtilities.makeUniversal(vs);
 
     vs.setUserData("filename", "valueset-"+vs.getId());
     if (!vs.hasExtension(ToolingExtensions.EXT_WORKGROUP)) {
@@ -452,6 +460,8 @@ public class ValueSetGenerator {
         }
       }
     }
+    KindlingUtilities.makeUniversal(cs);
+
     CodeSystemConvertor.populate(cs, vs);
     cs.setUrl("http://terminology.hl7.org/CodeSystem/operation-outcome");
     cs.setVersion(version);

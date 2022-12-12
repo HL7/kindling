@@ -39,36 +39,35 @@ import java.util.Set;
 
 import org.apache.commons.io.IOUtils;
 import org.hl7.fhir.definitions.model.BindingSpecification;
-import org.hl7.fhir.definitions.model.Definitions;
 import org.hl7.fhir.definitions.model.BindingSpecification.BindingMethod;
+import org.hl7.fhir.definitions.model.Definitions;
 import org.hl7.fhir.definitions.parsers.CodeListToValueSetParser;
 import org.hl7.fhir.definitions.parsers.CodeSystemConvertor;
 import org.hl7.fhir.definitions.parsers.OIDRegistry;
-import org.hl7.fhir.definitions.parsers.ValueSetGenerator;
 import org.hl7.fhir.exceptions.FHIRFormatError;
 import org.hl7.fhir.r5.context.CanonicalResourceManager;
-import org.hl7.fhir.r5.context.IWorkerContext.PackageVersion;
 import org.hl7.fhir.r5.formats.IParser;
 import org.hl7.fhir.r5.formats.JsonParser;
 import org.hl7.fhir.r5.formats.XmlParser;
 import org.hl7.fhir.r5.model.CodeSystem;
-import org.hl7.fhir.r5.model.CodeType;
-import org.hl7.fhir.r5.model.ConceptMap;
-import org.hl7.fhir.r5.model.Constants;
-import org.hl7.fhir.r5.model.ContactDetail;
-import org.hl7.fhir.r5.model.DateTimeType;
-import org.hl7.fhir.r5.model.Enumerations.BindingStrength;
-import org.hl7.fhir.r5.model.Enumerations.PublicationStatus;
-import org.hl7.fhir.r5.model.ValueSet.ValueSetComposeComponent;
-import org.hl7.fhir.r5.model.ValueSet;
 import org.hl7.fhir.r5.model.CodeSystem.CodeSystemContentMode;
 import org.hl7.fhir.r5.model.CodeSystem.CodeSystemHierarchyMeaning;
 import org.hl7.fhir.r5.model.CodeSystem.ConceptDefinitionComponent;
 import org.hl7.fhir.r5.model.CodeSystem.ConceptDefinitionDesignationComponent;
+import org.hl7.fhir.r5.model.CodeType;
+import org.hl7.fhir.r5.model.ConceptMap;
+import org.hl7.fhir.r5.model.ContactDetail;
 import org.hl7.fhir.r5.model.ContactPoint.ContactPointSystem;
+import org.hl7.fhir.r5.model.DateTimeType;
+import org.hl7.fhir.r5.model.Enumerations.BindingStrength;
+import org.hl7.fhir.r5.model.Enumerations.PublicationStatus;
+import org.hl7.fhir.r5.model.PackageInformation;
+import org.hl7.fhir.r5.model.ValueSet;
+import org.hl7.fhir.r5.model.ValueSet.ValueSetComposeComponent;
 import org.hl7.fhir.r5.terminologies.CodeSystemUtilities;
 import org.hl7.fhir.r5.terminologies.ValueSetUtilities;
 import org.hl7.fhir.r5.utils.ToolingExtensions;
+import org.hl7.fhir.tools.publisher.KindlingUtilities;
 import org.hl7.fhir.utilities.TranslationServices;
 import org.hl7.fhir.utilities.Utilities;
 import org.hl7.fhir.utilities.xls.XLSXmlNormaliser;
@@ -87,11 +86,11 @@ public class BindingsParser {
   private CanonicalResourceManager<ConceptMap> maps;
   private Calendar genDate;
   private boolean exceptionIfExcelNotNormalised;
-  private PackageVersion packageInfo;  
+  private PackageInformation packageInfo;  
   private Definitions definitions;
   private TranslationServices translator;
 
-  public BindingsParser(InputStream file, String filename, String root, OIDRegistry registry, String version, CanonicalResourceManager<CodeSystem> codeSystems, CanonicalResourceManager<ConceptMap> maps, Calendar genDate, boolean exceptionIfExcelNotNormalised, PackageVersion packageInfo, Definitions definitions, TranslationServices translator) {
+  public BindingsParser(InputStream file, String filename, String root, OIDRegistry registry, String version, CanonicalResourceManager<CodeSystem> codeSystems, CanonicalResourceManager<ConceptMap> maps, Calendar genDate, boolean exceptionIfExcelNotNormalised, PackageInformation packageInfo, Definitions definitions, TranslationServices translator) {
     this.file = file;
     this.filename = filename;
     this.root = root;
@@ -139,6 +138,7 @@ public class BindingsParser {
         cd.getValueSet().setId(ref.substring(1));
         cd.getValueSet().setUrl("http://hl7.org/fhir/ValueSet/"+ref.substring(1));
         cd.getValueSet().setVersion(version);
+        KindlingUtilities.makeUniversal(cd.getValueSet());
 
         if (!Utilities.noString(sheet.getColumn(row, "Committee"))) {
           cd.getValueSet().addExtension().setUrl(ToolingExtensions.EXT_WORKGROUP).setValue(new CodeType(sheet.getColumn(row, "Committee").toLowerCase()));
@@ -188,6 +188,7 @@ public class BindingsParser {
           cd.getValueSet().setUrl("http://hl7.org/fhir/ValueSet/"+ref.substring(1));
           cd.getValueSet().setVersion(version);
           cd.getValueSet().setName(cd.getName());
+          KindlingUtilities.makeUniversal(cd.getValueSet());
         }
         // do nothing more: this will get filled out once all the resources are loaded
       }
@@ -240,6 +241,7 @@ public class BindingsParser {
         System.out.println("ValueSet "+vs.getUrl()+" WG mismatch 11: is "+ec+", want to set to "+"fhir");
     }     
     vs.setUserData("path", "valueset-"+vs.getId()+".html");
+    KindlingUtilities.makeUniversal(vs);
 
     ContactDetail c = vs.addContact();
     c.addTelecom().setSystem(ContactPointSystem.URL).setValue("http://hl7.org/fhir");
@@ -268,6 +270,7 @@ public class BindingsParser {
         }
       }
     }
+    KindlingUtilities.makeUniversal(cs);
     CodeSystemConvertor.populate(cs, vs);
     cs.setUrl("http://hl7.org/fhir/operation-outcome");
     cs.setVersion(version);

@@ -15,6 +15,7 @@ import org.hl7.fhir.r5.model.ConceptMap.ConceptMapGroupComponent;
 import org.hl7.fhir.r5.model.ConceptMap.SourceElementComponent;
 import org.hl7.fhir.r5.model.Enumerations.ConceptMapRelationship;
 import org.hl7.fhir.r5.model.Enumerations.PublicationStatus;
+import org.hl7.fhir.tools.publisher.KindlingUtilities;
 import org.hl7.fhir.utilities.Utilities;
 import org.hl7.fhir.utilities.xls.XLSXmlParser;
 import org.hl7.fhir.utilities.xls.XLSXmlParser.Sheet;
@@ -44,6 +45,7 @@ public class ResourceNameConceptMapGenerator {
     cm.setDescription("This map contains a mapping between resources from "+src+" to "+dst);
     cm.setStatus(PublicationStatus.ACTIVE);
     cm.setDate(date);
+    KindlingUtilities.makeUniversal(cm);
     ConceptMapGroupComponent grp = cm.addGroup();
     grp.setSource("http://hl7.org/fhir/"+srcV+"/resource-types");
     grp.setTarget("http://hl7.org/fhir/"+dstV+"/resource-types");

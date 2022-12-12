@@ -1,7 +1,6 @@
 package org.hl7.fhir.definitions.parsers.spreadsheets;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -11,7 +10,6 @@ import java.util.Date;
 import java.util.List;
 
 import org.hl7.fhir.exceptions.FHIRException;
-import org.hl7.fhir.exceptions.FHIRFormatError;
 import org.hl7.fhir.r5.context.BaseWorkerContext;
 import org.hl7.fhir.r5.formats.IParser.OutputStyle;
 import org.hl7.fhir.r5.formats.XmlParser;
