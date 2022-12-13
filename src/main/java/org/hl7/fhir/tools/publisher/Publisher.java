@@ -291,7 +291,6 @@ import com.google.gson.JsonObject;
 
 public class Publisher implements URIResolver, SectionNumberer {
 
-  public static final String CANONICAL_BASE = "http://build.fhir.org/";
   public static final boolean WANT_REQUIRE_OIDS = false;
   
   public class DocumentHolder {
@@ -475,17 +474,21 @@ public class Publisher implements URIResolver, SectionNumberer {
       pub.singlePage = getNamedParam(args, "-page");
     if (hasParam(args, "-name"))
       pub.page.setPublicationType(getNamedParam(args, "-name"));
-    if (hasParam(args, "-url"))
-      pub.page.setBaseURL(getNamedParam(args, "-url"));
     if (hasParam(args, "-svn"))
       pub.page.setBuildId(getNamedParam(args, "-svn"));
     if (pub.web) {
+      pub.page.setWebLocation(PageProcessor.WEB_LOCATION);
+      pub.page.setSearchLocation(PageProcessor.WEB_SEARCH);
       pub.page.setPublicationType(PageProcessor.WEB_PUB_NAME);
       pub.page.setPublicationNotice(PageProcessor.WEB_PUB_NOTICE);
     } else {
+      pub.page.setWebLocation(PageProcessor.CI_LOCATION);
+      pub.page.setSearchLocation(PageProcessor.CI_SEARCH);
       pub.page.setPublicationType(PageProcessor.CI_PUB_NAME);
       pub.page.setPublicationNotice(PageProcessor.CI_PUB_NOTICE);
     }
+    if (hasParam(args, "-url"))
+      pub.page.setWebLocation(getNamedParam(args, "-url"));
     pub.validateId = getNamedParam(args, "-validate");
     String dir = hasParam(args, "-folder") ? getNamedParam(args, "-folder") : System.getProperty("user.dir");
     pub.outputdir = hasParam(args, "-output") ? getNamedParam(args, "-output") : null; 
@@ -2156,6 +2159,17 @@ public class Publisher implements URIResolver, SectionNumberer {
     for (Compartment cmp : page.getDefinitions().getCompartments())
       page.getValidationErrors().addAll(val.check(cmp));
     
+    for (CodeSystem cs : page.getCodeSystems().getList()) {
+      if (cs.getUrl().startsWith("http://terminology.hl7.org/CodeSystem")) {
+        if (!cs.hasUserData("external.url") && !Utilities.existsInList(cs.getUrl(), "http://terminology.hl7.org/CodeSystem/audit-event-outcome", "http://terminology.hl7.org/CodeSystem/certainty-rating", "http://terminology.hl7.org/CodeSystem/directness", 
+            "http://terminology.hl7.org/CodeSystem/measure-scoring", "http://terminology.hl7.org/CodeSystem/state-change-reason", "http://terminology.hl7.org/CodeSystem/study-type", 
+            "http://terminology.hl7.org/CodeSystem/synthesis-type", "http://terminology.hl7.org/CodeSystem/international-civil-aviation-organization-sex-or-gender", "http://terminology.hl7.org/CodeSystem/sex-for-clinical-use",
+            "http://terminology.hl7.org/CodeSystem/timing-abbreviation", "http://terminology.hl7.org/CodeSystem/usage-context-type", "http://terminology.hl7.org/CodeSystem/name-assembly-order")) {
+          throw new Error("Illegal code system URL: "+cs.getUrl());
+        }
+      }
+    }
+//          
     page.setPatternFinder(val.getPatternFinder());
     val.report();
     val.summariseSearchTypes(page.getSearchTypeUsage());
@@ -2597,13 +2611,13 @@ public class Publisher implements URIResolver, SectionNumberer {
     // first, process the RIM file
     String rim = TextFile.fileToString(Utilities.path(page.getFolders().rootDir, "tools", "tx", "v3", "rim.ttl"));
     ByteArrayOutputStream tmp = new ByteArrayOutputStream();
-    FhirTurtleGenerator ttl = new FhirTurtleGenerator(tmp, page.getDefinitions(), page.getWorkerContext(), page.getValidationErrors());
+    FhirTurtleGenerator ttl = new FhirTurtleGenerator(tmp, page.getDefinitions(), page.getWorkerContext(), page.getValidationErrors(), page.getWebLocation());
     ttl.executeV3(page.getValueSets(), page.getCodeSystems());
     rim = rim + tmp.toString();
     TextFile.stringToFile(rim, Utilities.path(page.getFolders().dstDir, "rim.ttl"));
-    ttl = new FhirTurtleGenerator(new FileOutputStream(Utilities.path(page.getFolders().dstDir, "fhir.ttl")), page.getDefinitions(), page.getWorkerContext(), page.getValidationErrors());
+    ttl = new FhirTurtleGenerator(new FileOutputStream(Utilities.path(page.getFolders().dstDir, "fhir.ttl")), page.getDefinitions(), page.getWorkerContext(), page.getValidationErrors(), page.getWebLocation());
     ttl.executeMain();
-    W5TurtleGenerator w5 = new W5TurtleGenerator(new FileOutputStream(Utilities.path(page.getFolders().dstDir, "w5.ttl")), page.getDefinitions(), page.getWorkerContext(), page.getValidationErrors());
+    W5TurtleGenerator w5 = new W5TurtleGenerator(new FileOutputStream(Utilities.path(page.getFolders().dstDir, "w5.ttl")), page.getDefinitions(), page.getWorkerContext(), page.getValidationErrors(), page.getWebLocation());
     w5.executeMain();
     RDFValidator val = new RDFValidator();
     val.validate(Utilities.path(page.getFolders().dstDir, "fhir.ttl"));
@@ -3109,7 +3123,7 @@ public class Publisher implements URIResolver, SectionNumberer {
       page.log("....IG Builder (2)", LogMessageType.Process);
 
       SpecNPMPackageGenerator self = new SpecNPMPackageGenerator();
-      self.generate(page.getFolders().dstDir, page.getBaseURL(), false, page.getGenDate().getTime(), pidRoot());
+      self.generate(page.getFolders().dstDir, page.getWebLocation(), false, page.getGenDate().getTime(), pidRoot());
       if (!isCIBuild) {
         new FilesystemPackageCacheManager(true, ToolsVersion.TOOLS_VERSION).addPackageToCache(pidRoot()+".core", "current", new FileInputStream(Utilities.path(page.getFolders().dstDir, pidRoot()+".core.tgz")), Utilities.path(page.getFolders().dstDir, pidRoot()+".core.tgz"));
       }
@@ -3282,7 +3296,7 @@ public class Publisher implements URIResolver, SectionNumberer {
 
 
   private void produceSpecMap() throws IOException {
-    SpecMapManager spm = new SpecMapManager("hl7.fhir.core", page.getVersion().toCode(), page.getVersion().toCode(), page.getBuildId(), page.getGenDate(), CANONICAL_BASE);
+    SpecMapManager spm = new SpecMapManager("hl7.fhir.core", page.getVersion().toCode(), page.getVersion().toCode(), page.getBuildId(), page.getGenDate(), page.getWebLocation());
         
     for (StructureDefinition sd : new ContextUtilities(page.getWorkerContext()).allStructures()) {
       if (sd.hasUserData("path")) {
@@ -5707,16 +5721,15 @@ public class Publisher implements URIResolver, SectionNumberer {
 
   private void produceSid(int i, String logicalName, String file) throws Exception {
     String src = TextFile.fileToString(page.getFolders().srcDir + file);
-    String dstName = Utilities.path(page.getFolders().dstDir, "sid", logicalName, "index.html");
+    String dstName = "sid-"+logicalName+ ".html";
     src = page.processPageIncludes(dstName, src, "sid:" + logicalName, null, null, null, "Sid", null, null, null, "?p7?");
     // before we save this page out, we're going to figure out what it's index
     // is, and number the headers if we can
 
-    Utilities.createDirectory(Utilities.path(page.getFolders().dstDir, "sid", logicalName));
-    TextFile.stringToFile(src, dstName);
-    src = addSectionNumbers(Utilities.path("sid", logicalName, "index.html"), "sid:terminologies-systems", src, "3." + Integer.toString(i), 0, null, null);
-    TextFile.stringToFile(src, dstName);
-    page.getHTMLChecker().registerFile(Utilities.path("sid", logicalName, "index.html"), logicalName, HTMLLinkChecker.XHTML_TYPE, true);
+//    TextFile.stringToFile(src, Utilities.path(page.getFolders().dstDir, dstName));
+    src = addSectionNumbers(Utilities.path("sid-"+ logicalName+ ".html"), "sid:terminologies-systems", src, "3." + Integer.toString(i), 0, null, null);
+    TextFile.stringToFile(src, Utilities.path(page.getFolders().dstDir, dstName));
+    page.getHTMLChecker().registerFile(Utilities.path("sid-"+ logicalName+ ".html"), logicalName, HTMLLinkChecker.XHTML_TYPE, true);
   }
 
   @Override

@@ -70,7 +70,7 @@ public abstract class BuildToolScriptedPageProcessor extends ScriptedPageProcess
     else if (com[0].equals("plural"))
       return Utilities.pluralizeMe(name);
     else if (com[0].equals("baseURL"))
-      return Utilities.URLEncode(page.getBaseURL());  
+      return Utilities.URLEncode(page.getWebLocation());  
     else 
       return super.processCommand(command, com);
   }

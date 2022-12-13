@@ -1086,8 +1086,8 @@ public class SourceParser {
         definitions.getBoundValueSets().put(cd.getMaxValueSet().getUrl(), cd.getMaxValueSet());
       }
     }
-    if (!page.getDefinitions().getBoundValueSets().containsKey("http://hl7.org/fhir/ValueSet/data-absent-reason"))
-      throw new Exception("d-a-r not found");
+//    if (!page.getDefinitions().getBoundValueSets().containsKey("http://hl7.org/fhir/ValueSet/data-absent-reason"))
+//      throw new Exception("d-a-r not found");
 
   }
 

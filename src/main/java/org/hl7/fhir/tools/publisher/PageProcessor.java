@@ -430,7 +430,6 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
   private OIDRegistry registry;
   private String oid; // technical identifier associated with the page being built
   private HTMLLinkChecker htmlchecker;
-  private String baseURL = "http://build.fhir.org/";
   private final String tsServer; // terminology to use
   private BuildWorkerContext workerContext;
 //  private List<ValidationMessage> collectedValidationErrors = new ArrayList<ValidationMessage>();
@@ -452,6 +451,8 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
   private Map<String, String> macros = new HashMap<String, String>();
   private RenderingContext rc;
   private Map<String, List<SearchParameter>> extensionSearchParameterMap;
+  private String webLocation;
+  private String searchLocation;
   
   public PageProcessor(String tsServer) throws URISyntaxException, UcumException {
     super();
@@ -459,14 +460,17 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
   }
 
 
-  public final static String WEB_PUB_NAME = "STU3";
-  public final static String CI_PUB_NAME = "Current Build";
-
+  public final static String WEB_LOCATION = "http://hl7.org/fhir/5.0.0-snapshot3/";
+  public final static String WEB_SEARCH = WEB_LOCATION+"search.html";
+  public final static String WEB_PUB_NAME = "R5";
   public final static String WEB_PUB_NOTICE =
       "<p style=\"background-color: #ffefef; border:1px solid maroon; padding: 5px; max-width: 790px;\">\r\n"+
        " This is Preview #2 for FHIR <a href=\"history.html\">R5</a>. <br/>For a full list of available versions, see the <a href=\"http://hl7.org/fhir/directory.html\">Directory of published versions</a>.\r\n"+
       "</p>\r\n"; 
 
+  public final static String CI_SEARCH = "http://build.fhir.org/search-build.html";
+  public final static String CI_LOCATION = "http://build.fhir.org/";
+  public final static String CI_PUB_NAME = "CI-Build";
   public final static String CI_PUB_NOTICE =
         "<p style=\"background-color: #ffefef; border:1px solid maroon; padding: 5px; max-width: 790px;\">"+
           "This is the Continuous Integration Build of FHIR (will be incorrect/inconsistent at times). <br/>See the <a href=\"http://hl7.org/fhir/directory.html\">Directory of published versions</a>"+
@@ -929,13 +933,13 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
         String p = com[1];
         String pd = p.contains("#") ? p.substring(0, p.indexOf("#")) : p;
         String t = s2.substring(com[0].length()+com[1].length()+2);
-        src = s1+"<a href=\""+p+"\">"+t+"</a> <a href=\"http://services.w3.org/htmldiff?doc1=http%3A%2F%2Fhl7.org%2Ffhir%2F2018May%2F"+pd+"&amp;doc2=http%3A%2F%2Fbuild.fhir.org%2F"+pd+"\" no-external=\"true\" style=\"border: 1px solid lightgrey; white-space: nowrap; background-color: #EDFDFE; padding: 2px 2px 2px 2px\">&Delta;B</a>"+s3;
+        src = s1+"<a href=\""+p+"\">"+t+"</a> <a href=\"http://services.w3.org/htmldiff?doc1=http%3A%2F%2Fhl7.org%2Ffhir%2F2018May%2F"+pd+"&amp;doc2="+Utilities.URLEncode(webLocation)+pd+"\" no-external=\"true\" style=\"border: 1px solid lightgrey; white-space: nowrap; background-color: #EDFDFE; padding: 2px 2px 2px 2px\">&Delta;B</a>"+s3;
       } else if (com[0].equals("diffx")) {
         String p1 = com[1];
         String pd = p1.contains("#") ? p1.substring(0, p1.indexOf("#")) : p1;
         String p2 = com[2];
         String t = s2.substring(com[0].length()+com[1].length()+2);
-        src = s1+"<a href=\""+p1+"\">"+t+"</a> <a href=\"http://services.w3.org/htmldiff?doc1=http%3A%2F%2Fhl7.org%2Ffhir%2F2018May%2F"+p2+"&amp;doc2=http%3A%2F%2Fbuild.fhir.org%2F"+pd+"\" no-external=\"true\" style=\"border: 1px solid lightgrey; white-space: nowrap; background-color: #EDFDFE; padding: 2px 2px 2px 2px\">&Delta;B</a>"+s3;
+        src = s1+"<a href=\""+p1+"\">"+t+"</a> <a href=\"http://services.w3.org/htmldiff?doc1=http%3A%2F%2Fhl7.org%2Ffhir%2F2018May%2F"+p2+"&amp;doc2="+Utilities.URLEncode(webLocation)+pd+"\" no-external=\"true\" style=\"border: 1px solid lightgrey; white-space: nowrap; background-color: #EDFDFE; padding: 2px 2px 2px 2px\">&Delta;B</a>"+s3;
       } else if (com[0].equals("StandardsStatus")) {
         src = s1+getStandardsStatusNote(genlevel(level), com[1], com[2], com.length == 4 ? com[3] : null)+s3;
       } else if (com[0].equals("circular-references")) {
@@ -1178,9 +1182,9 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
           throw new Error("Invalid link: "+pagePath+" at "+workingTitle);
         src = s1 + Utilities.URLEncode(pagePath) + s3;
       } else if (com[0].equals("baseURL"))
-        src = s1 + Utilities.URLEncode(baseURL) + s3;
+        src = s1 + Utilities.URLEncode(webLocation) + s3;
       else if (com[0].equals("baseURLn"))
-        src = s1 + Utilities.appendForwardSlash(baseURL) + s3;
+        src = s1 + Utilities.appendForwardSlash(webLocation) + s3;
       else if (com[0].equals("profilelist"))
         src = s1 + genProfilelist() + s3;
       else if (com[0].equals("igprofileslist"))
@@ -1348,6 +1352,8 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
         src = s1+genExampleXRef(type, name, resource)+s3;
       } else if (com[0].equals("jira-link")) { 
         src = s1+genJiralink(file, null)+s3;
+      } else if (com[0].equals("search-location")) {
+          src = s1+searchLocation+s3;
       } else if (com[0].equals("multi-language-resources")) { 
         src = s1+getMultiLanguageResourceList()+s3;        
       } else if (macros.containsKey(com[0])) {
@@ -1433,7 +1439,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
   }
 
   private String genJiralink(String file, String rn) {
-    String url = Utilities.pathURL(baseURL, file);
+    String url = Utilities.pathURL(webLocation, file);
     return "https://jira.hl7.org/secure/CreateIssueDetails!init.jspa?pid=10405&amp;issuetype=10600&amp;customfield_11302=FHIR-core&amp;"+
         "customfield_11808=R5&amp;customfield_10612="+url/*+(rn = null ? "" : "&amp;customfield_11300="+rn)*/;
 
@@ -1568,14 +1574,14 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
 
   private void resourceDiffLinks(StringBuilder b, String n) {
     b.append("<li>");
-    b.append("<a href=\""+n.toLowerCase()+".html\">"+n+"</a> <a href=\"http://services.w3.org/htmldiff?doc1=http%3A%2F%2Fhl7.org%2Ffhir%2F2018May%2F"+n.toLowerCase()+".html&amp;doc2=http%3A%2F%2Fbuild.fhir.org%2F"+n.toLowerCase()+".html\" no-external=\"true\" style=\"border: 1px solid lightgrey; white-space: nowrap; background-color: #EDFDFE; padding: 2px 2px 2px 2px\">&Delta;B</a>");
-    b.append(", <a href=\""+n.toLowerCase()+"-definitions.html\">Definitions</a> <a href=\"http://services.w3.org/htmldiff?doc1=http%3A%2F%2Fhl7.org%2Ffhir%2F2018May%2F"+n.toLowerCase()+"-definitions.html&amp;doc2=http%3A%2F%2Fbuild.fhir.org%2F"+n.toLowerCase()+"-definitions.html\" no-external=\"true\" style=\"border: 1px solid lightgrey; white-space: nowrap; background-color: #EDFDFE; padding: 2px 2px 2px 2px\">&Delta;B</a>");
-    b.append(", <a href=\""+n.toLowerCase()+"-operations.html\">Operations</a> <a href=\"http://services.w3.org/htmldiff?doc1=http%3A%2F%2Fhl7.org%2Ffhir%2F2018May%2F"+n.toLowerCase()+"-operations.html&amp;doc2=http%3A%2F%2Fbuild.fhir.org%2F"+n.toLowerCase()+"-operations.html\" no-external=\"true\" style=\"border: 1px solid lightgrey; white-space: nowrap; background-color: #EDFDFE; padding: 2px 2px 2px 2px\">&Delta;B</a>");
+    b.append("<a href=\""+n.toLowerCase()+".html\">"+n+"</a> <a href=\"http://services.w3.org/htmldiff?doc1=http%3A%2F%2Fhl7.org%2Ffhir%2F2018May%2F"+n.toLowerCase()+".html&amp;doc2="+Utilities.URLEncode(webLocation)+n.toLowerCase()+".html\" no-external=\"true\" style=\"border: 1px solid lightgrey; white-space: nowrap; background-color: #EDFDFE; padding: 2px 2px 2px 2px\">&Delta;B</a>");
+    b.append(", <a href=\""+n.toLowerCase()+"-definitions.html\">Definitions</a> <a href=\"http://services.w3.org/htmldiff?doc1=http%3A%2F%2Fhl7.org%2Ffhir%2F2018May%2F"+n.toLowerCase()+"-definitions.html&amp;doc2="+Utilities.URLEncode(webLocation)+n.toLowerCase()+"-definitions.html\" no-external=\"true\" style=\"border: 1px solid lightgrey; white-space: nowrap; background-color: #EDFDFE; padding: 2px 2px 2px 2px\">&Delta;B</a>");
+    b.append(", <a href=\""+n.toLowerCase()+"-operations.html\">Operations</a> <a href=\"http://services.w3.org/htmldiff?doc1=http%3A%2F%2Fhl7.org%2Ffhir%2F2018May%2F"+n.toLowerCase()+"-operations.html&amp;doc2="+Utilities.URLEncode(webLocation)+n.toLowerCase()+"-operations.html\" no-external=\"true\" style=\"border: 1px solid lightgrey; white-space: nowrap; background-color: #EDFDFE; padding: 2px 2px 2px 2px\">&Delta;B</a>");
     b.append("</li>\r\n");    
   }
 
   private void pageDiffLinks(StringBuilder b, String p) {
-    b.append("<li><a href=\""+p+".html\">"+p+"</a> <a href=\"http://services.w3.org/htmldiff?doc1=http%3A%2F%2Fhl7.org%2Ffhir%2F2018May%2F"+p+".html&amp;doc2=http%3A%2F%2Fbuild.fhir.org%2F"+p+".html\" no-external=\"true\" style=\"border: 1px solid lightgrey; white-space: nowrap; background-color: #EDFDFE; padding: 2px 2px 2px 2px\">&Delta;B</a></li>\r\n");    
+    b.append("<li><a href=\""+p+".html\">"+p+"</a> <a href=\"http://services.w3.org/htmldiff?doc1=http%3A%2F%2Fhl7.org%2Ffhir%2F2018May%2F"+p+".html&amp;doc2="+Utilities.URLEncode(webLocation)+p+".html\" no-external=\"true\" style=\"border: 1px solid lightgrey; white-space: nowrap; background-color: #EDFDFE; padding: 2px 2px 2px 2px\">&Delta;B</a></li>\r\n");    
   }
 
   private String listSpecialParameters() throws FHIRException {
@@ -1812,14 +1818,14 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
 
         if (pageExists(pnd))
           b.append("  <li><a href=\""+pn+"\">"+Utilities.escapeXml(s)+"</a></li>\r\n");
-//              "<a href=\"http://services.w3.org/htmldiff?doc1=http%3A%2F%2Fhl7.org%2Ffhir%2F"+          pn+"&amp;doc2=http%3A%2F%2Fbuild.fhir.org%2F"+pn+"\" no-external=\"true\" title=\"Difference to R3\" style=\"border: 1px solid lightgrey; white-space: nowrap; background-color: #FBF8D5; padding: 2px 2px 2px 2px\">&Delta;R</a>  "+
-//              "<a href=\"http://services.w3.org/htmldiff?doc1=http%3A%2F%2Fhl7.org%2Ffhir%2F2018May%2F"+pn+"&amp;doc2=http%3A%2F%2Fbuild.fhir.org%2F"+pn+"\" no-external=\"true\" title=\"Difference to last ballot\" style=\"border: 1px solid lightgrey; white-space: nowrap; background-color: #EDFDFE; padding: 2px 2px 2px 2px\">&Delta;B</a>\r\n"+
-//              "<br/>+ <a href=\""+pnd+"\">Defns</a>: <a href=\"http://services.w3.org/htmldiff?doc1=http%3A%2F%2Fhl7.org%2Ffhir%2F"+ pnd+"&amp;doc2=http%3A%2F%2Fbuild.fhir.org%2F"+pnd+"\" no-external=\"true\" title=\"Difference to R3\" style=\"border: 1px solid lightgrey; white-space: nowrap; background-color: #FBF8D5; padding: 2px 2px 2px 2px\">&Delta;R</a>  "+
-//              "<a href=\"http://services.w3.org/htmldiff?doc1=http%3A%2F%2Fhl7.org%2Ffhir%2F2018May%2F"+pnd+"&amp;doc2=http%3A%2F%2Fbuild.fhir.org%2F"+pnd+"\" no-external=\"true\" title=\"Difference to last ballot\" style=\"border: 1px solid lightgrey; white-space: nowrap; background-color: #EDFDFE; padding: 2px 2px 2px 2px\">&Delta;B</a>");
+//              "<a href=\"http://services.w3.org/htmldiff?doc1=http%3A%2F%2Fhl7.org%2Ffhir%2F"+          pn+"&amp;doc2="+Utilities.URLEncode(webLocation)+pn+"\" no-external=\"true\" title=\"Difference to R3\" style=\"border: 1px solid lightgrey; white-space: nowrap; background-color: #FBF8D5; padding: 2px 2px 2px 2px\">&Delta;R</a>  "+
+//              "<a href=\"http://services.w3.org/htmldiff?doc1=http%3A%2F%2Fhl7.org%2Ffhir%2F2018May%2F"+pn+"&amp;doc2="+Utilities.URLEncode(webLocation)+pn+"\" no-external=\"true\" title=\"Difference to last ballot\" style=\"border: 1px solid lightgrey; white-space: nowrap; background-color: #EDFDFE; padding: 2px 2px 2px 2px\">&Delta;B</a>\r\n"+
+//              "<br/>+ <a href=\""+pnd+"\">Defns</a>: <a href=\"http://services.w3.org/htmldiff?doc1=http%3A%2F%2Fhl7.org%2Ffhir%2F"+ pnd+"&amp;doc2="+Utilities.URLEncode(webLocation)+pnd+"\" no-external=\"true\" title=\"Difference to R3\" style=\"border: 1px solid lightgrey; white-space: nowrap; background-color: #FBF8D5; padding: 2px 2px 2px 2px\">&Delta;R</a>  "+
+//              "<a href=\"http://services.w3.org/htmldiff?doc1=http%3A%2F%2Fhl7.org%2Ffhir%2F2018May%2F"+pnd+"&amp;doc2="+Utilities.URLEncode(webLocation)+pnd+"\" no-external=\"true\" title=\"Difference to last ballot\" style=\"border: 1px solid lightgrey; white-space: nowrap; background-color: #EDFDFE; padding: 2px 2px 2px 2px\">&Delta;B</a>");
         else
           b.append("  <li><a href=\""+pn+"\">"+Utilities.escapeXml(s)+"</a></li>\r\n");
-//            "<a href=\"http://services.w3.org/htmldiff?doc1=http%3A%2F%2Fhl7.org%2Ffhir%2F"+          pn+"&amp;doc2=http%3A%2F%2Fbuild.fhir.org%2F"+pn+"\" no-external=\"true\" title=\"Difference to R3\" style=\"border: 1px solid lightgrey; white-space: nowrap; background-color: #FBF8D5; padding: 2px 2px 2px 2px\">&Delta;R</a>  "+
-//            "<a href=\"http://services.w3.org/htmldiff?doc1=http%3A%2F%2Fhl7.org%2Ffhir%2F2018May%2F"+pn+"&amp;doc2=http%3A%2F%2Fbuild.fhir.org%2F"+pn+"\" no-external=\"true\" title=\"Difference to last ballot\" style=\"border: 1px solid lightgrey; white-space: nowrap; background-color: #EDFDFE; padding: 2px 2px 2px 2px\">&Delta;B</a>;
+//            "<a href=\"http://services.w3.org/htmldiff?doc1=http%3A%2F%2Fhl7.org%2Ffhir%2F"+          pn+"&amp;doc2="+Utilities.URLEncode(webLocation)+pn+"\" no-external=\"true\" title=\"Difference to R3\" style=\"border: 1px solid lightgrey; white-space: nowrap; background-color: #FBF8D5; padding: 2px 2px 2px 2px\">&Delta;R</a>  "+
+//            "<a href=\"http://services.w3.org/htmldiff?doc1=http%3A%2F%2Fhl7.org%2Ffhir%2F2018May%2F"+pn+"&amp;doc2="+Utilities.URLEncode(webLocation)+pn+"\" no-external=\"true\" title=\"Difference to last ballot\" style=\"border: 1px solid lightgrey; white-space: nowrap; background-color: #EDFDFE; padding: 2px 2px 2px 2px\">&Delta;B</a>;
       }
       b.append("</ul>");      
       b.append("</td>\r\n");
@@ -5463,13 +5469,13 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
         String p = com[1];
         String pd = p.contains("#") ? p.substring(0, p.indexOf("#")) : p;
         String t = s2.substring(com[0].length()+com[1].length()+2);
-        src = s1+"<a href=\""+p+"\">"+t+"</a> <a href=\"http://services.w3.org/htmldiff?doc1=http%3A%2F%2Fhl7.org%2Ffhir%2F2018May%2F"+pd+"&amp;doc2=http%3A%2F%2Fbuild.fhir.org%2F"+pd+"\" no-external=\"true\" style=\"border: 1px solid lightgrey; white-space: nowrap; background-color: #EDFDFE; padding: 2px 2px 2px 2px\">&Delta;B</a>"+s3;
+        src = s1+"<a href=\""+p+"\">"+t+"</a> <a href=\"http://services.w3.org/htmldiff?doc1=http%3A%2F%2Fhl7.org%2Ffhir%2F2018May%2F"+pd+"&amp;doc2="+Utilities.URLEncode(webLocation)+pd+"\" no-external=\"true\" style=\"border: 1px solid lightgrey; white-space: nowrap; background-color: #EDFDFE; padding: 2px 2px 2px 2px\">&Delta;B</a>"+s3;
       } else if (com[0].equals("diffx")) {
         String p1 = com[1];
         String pd = p1.contains("#") ? p1.substring(0, p1.indexOf("#")) : p1;
         String p2 = com[2];
         String t = s2.substring(com[0].length()+com[1].length()+2);
-        src = s1+"<a href=\""+p1+"\">"+t+"</a> <a href=\"http://services.w3.org/htmldiff?doc1=http%3A%2F%2Fhl7.org%2Ffhir%2F2018May%2F"+p2+"&amp;doc2=http%3A%2F%2Fbuild.fhir.org%2F"+pd+"\" no-external=\"true\" style=\"border: 1px solid lightgrey; white-space: nowrap; background-color: #EDFDFE; padding: 2px 2px 2px 2px\">&Delta;B</a>"+s3;
+        src = s1+"<a href=\""+p1+"\">"+t+"</a> <a href=\"http://services.w3.org/htmldiff?doc1=http%3A%2F%2Fhl7.org%2Ffhir%2F2018May%2F"+p2+"&amp;doc2="+Utilities.URLEncode(webLocation)+pd+"\" no-external=\"true\" style=\"border: 1px solid lightgrey; white-space: nowrap; background-color: #EDFDFE; padding: 2px 2px 2px 2px\">&Delta;B</a>"+s3;
       }  else if (com[0].equals("dtmappings"))
         src = s1 + genDataTypeMappings(com[1]) + s3;
       else if (com[0].equals("sct-vs-list"))
@@ -5815,7 +5821,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
       else if (com[0].equals("internalsystemlistx"))
         src = s1 + genCSListX()+s3;
       else if (com[0].equals("baseURLn"))
-        src = s1 + Utilities.appendForwardSlash(baseURL)+s3;
+        src = s1 + Utilities.appendForwardSlash(webLocation)+s3;
       else if (com[0].equals("ig.title"))
         src = s1+ig.getName()+s3;
       else if (com[0].equals("ig.wglink"))
@@ -6389,9 +6395,9 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
           throw new Error("Invalid link: "+pagePath+" at "+workingTitle);
         src = s1 + Utilities.URLEncode(pagePath) + s3;
       } else if (com[0].equals("baseURL"))
-        src = s1 + Utilities.URLEncode(baseURL) + s3;
+        src = s1 + Utilities.URLEncode(webLocation) + s3;
       else if (com[0].equals("baseURLn"))
-        src = s1 + Utilities.appendForwardSlash(baseURL) + s3;
+        src = s1 + Utilities.appendForwardSlash(webLocation) + s3;
       else if (com[0].equals("operations")) {
         List<Operation> oplist = resource.getOperations(); 
         String n = resource.getName(); 
@@ -6442,6 +6448,8 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
         src = s1+genLiquidNotes(resource, genlevel(level))+s3;
       else if (com[0].equals("type"))  
         src = s1+resource.getName()+s3;
+      else if (com[0].equals("search-location"))
+        src = s1+searchLocation+s3;
       else if (com[0].equals("resurl")) {
         if (isAggregationEndpoint(resource.getName()))
           src = s1+s3;
@@ -8631,9 +8639,9 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
       else if (com[0].equals("profileurl"))
         src = s1 + profile.getResource().getUrl() + s3;
       else if (com[0].equals("baseURL"))
-        src = s1 + Utilities.URLEncode(baseURL) + s3;
+        src = s1 + Utilities.URLEncode(webLocation) + s3;
       else if (com[0].equals("baseURLn"))
-        src = s1 + Utilities.appendForwardSlash(baseURL) + s3;
+        src = s1 + Utilities.appendForwardSlash(webLocation) + s3;
       else if (com[0].equals("base-link"))
         src = s1 + baseLink(profile.getResource(), genlevel(level)) + s3;
       else if (com[0].equals("profile-structure-table-diff"))
@@ -8724,6 +8732,8 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
            src = s1+"The id of this profile is "+pack.metadata("id")+s3;
        } else if (com[0].equals("res-type-count")) { 
          src = s1+definitions.getResources().size()+s3;        
+       } else if (com[0].equals("search-location")) {
+         src = s1+searchLocation+s3;
        } else if (macros.containsKey(com[0])) {
          src = s1+macros.get(com[0])+s3;
        } else if (com[0].equals("jira-link")) { 
@@ -9153,9 +9163,9 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
           throw new Error("Invalid link: "+pagePath+" at "+workingTitle);
         src = s1 + Utilities.URLEncode(pagePath) + s3;
       } else if (com[0].equals("baseURL"))
-        src = s1 + Utilities.URLEncode(baseURL) + s3;
+        src = s1 + Utilities.URLEncode(webLocation) + s3;
       else if (com[0].equals("baseURLn"))
-        src = s1 + Utilities.appendForwardSlash(baseURL) + s3;
+        src = s1 + Utilities.appendForwardSlash(webLocation) + s3;
       else if (com[0].equals("mappings"))
         src = s1+mappingsExtension(ed)+s3;
       else if (com[0].equals("definitions"))
@@ -9229,6 +9239,8 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
         src = s1 + extFlags(ed) + s3;        
       } else if (com[0].equals("ext-oid"))  {
         src = s1 + crOids(ed) + s3;        
+      } else if (com[0].equals("search-location")) {
+        src = s1+searchLocation+s3;
       } else if (macros.containsKey(com[0])) {
         src = s1+macros.get(com[0])+s3;
       } else if (com[0].equals("jira-link")) { 
@@ -9669,14 +9681,11 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     workerContext.setVersion(version.toCode());
     htmlchecker.setVersion(version);
     uml.setVersion(version.toCode());
-    if (VersionUtilities.isR4BVer(version.toCode()) && baseURL.equals("http://build.fhir.org/")) {
-      setBaseURL("http://build.fhir.org/branches/R4B/");
-    }
   }
 
   public void setFolders(FolderManager folders) throws Exception {
     this.folders = folders;
-    htmlchecker = new HTMLLinkChecker(this, validationErrors, baseURL);
+    htmlchecker = new HTMLLinkChecker(this, validationErrors, webLocation);
     r3r4Outcomes = (JsonObject) new com.google.gson.JsonParser().parse(TextFile.fileToString(Utilities.path(folders.rootDir, "implementations", "r3maps", "outcomes.json")));
     for (File f : new File(Utilities.path(folders.rootDir, "tools", "macros")).listFiles()) {
       if (f.getAbsolutePath().endsWith(".html")) {
@@ -9825,16 +9834,6 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
 
   public CanonicalResourceManager<StructureDefinition> getProfiles() {
     return profiles;
-  }
-
-  public String getBaseURL() {
-    return baseURL;
-  }
-
-  public void setBaseURL(String baseURL) {
-    this.baseURL = !baseURL.endsWith("/") ? baseURL : baseURL + "/";
-    if ("http://hl7-fhir.github.io".equals(this.baseURL)) // work around for a build script issue? see GF#12664
-      this.baseURL = "http://build.fhir.org";
   }
 
   @Override
@@ -10176,7 +10175,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
           throw new Error("Invalid link: "+pack.getId()+" at "+workingTitle);
         src = s1 + Utilities.URLEncode(pack.getId()+".html") + s3;
       } else if (com[0].equals("baseURL"))
-        src = s1 + Utilities.URLEncode(baseURL) + s3;
+        src = s1 + Utilities.URLEncode(webLocation) + s3;
       else if (com[0].equals("description"))
         src = s1 + Utilities.escapeXml(pack.getDescription()) + s3;
       else if (com[0].equals("package-content"))
@@ -10187,6 +10186,8 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
         src = s1+searchHeader(level)+s3;
       else if (com[0].equals("package.search"))
         src = s1+getSearch(pack)+s3;
+      else if (com[0].equals("search-location"))
+        src = s1+searchLocation+s3;
       else if (com[0].startsWith("!"))
         src = s1 + s3;
       else if (com[0].equals("wg")) {
@@ -11549,4 +11550,22 @@ private int countContains(List<ValueSetExpansionContainsComponent> list) {
   public boolean isPrimitiveType(String typeSimple) {
     throw new NotImplementedException("Not implemented");
   }
+
+  public String getWebLocation() {
+    return webLocation;
+  }
+
+  public void setWebLocation(String webLocation) {
+    this.webLocation = webLocation;
+  }
+
+  public String getSearchLocation() {
+    return searchLocation;
+  }
+
+  public void setSearchLocation(String searchLocation) {
+    this.searchLocation = searchLocation;
+  }
+  
+  
 }

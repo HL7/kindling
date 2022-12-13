@@ -71,10 +71,12 @@ public class CodeListToValueSetParser {
     
     if (hasDefine) {
       cs = new CodeSystem();
-      if (utg)
+      if (utg) {
         cs.setUrl("http://terminology.hl7.org/CodeSystem/"+sheetName);
-      else
+        System.out.println("UTG Claimant: "+cs.getUrl());
+      } else {
         cs.setUrl("http://hl7.org/fhir/"+sheetName);
+      }
       if (!valueSet.hasCompose())
         valueSet.setCompose(new ValueSetComposeComponent());
       valueSet.getCompose().addInclude().setSystem(cs.getUrl());

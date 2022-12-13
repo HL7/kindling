@@ -833,4 +833,9 @@ public class BuildWorkerContext extends BaseWorkerContext implements IWorkerCont
   public PackageInformation getPackage(String id, String ver) {
     return null;
   }
+
+  @Override
+  public String getSpecUrl() {
+    return "";
+  }
 }
