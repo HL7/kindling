@@ -23,6 +23,7 @@ import org.hl7.fhir.tools.converters.TerminologyFixer.LoadedCodeSystem;
 import org.hl7.fhir.utilities.Utilities;
 import org.hl7.fhir.utilities.npm.FilesystemPackageCacheManager;
 import org.hl7.fhir.utilities.npm.NpmPackage;
+import org.hl7.fhir.utilities.npm.ToolsVersion;
 
 public class TerminologyFixer {
   
@@ -48,7 +49,7 @@ public class TerminologyFixer {
   private void start(File file) throws FHIRException, IOException  {
     load(file);
     
-    NpmPackage npm = new FilesystemPackageCacheManager(true).loadPackage("hl7.terminology");
+    NpmPackage npm = new FilesystemPackageCacheManager(true, ToolsVersion.TOOLS_VERSION).loadPackage("hl7.terminology");
     for (String s : npm.listResources("CodeSystem")) {
       CodeSystem cs = (CodeSystem) new JsonParser().parse(npm.load("package", s));
       tho.put(cs.getUrl(), cs);

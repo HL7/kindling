@@ -834,8 +834,5 @@ public class BuildWorkerContext extends BaseWorkerContext implements IWorkerCont
     return null;
   }
 
-  @Override
-  public String getSpecUrl() {
-    return "";
-  }
+
 }
