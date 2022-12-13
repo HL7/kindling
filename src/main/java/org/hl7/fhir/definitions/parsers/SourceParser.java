@@ -488,7 +488,7 @@ public class SourceParser {
       CommonSearchParameter csp = new CommonSearchParameter();
       csp.setId(sp.getId());
       csp.setCode(sp.getCode());
-      for (Enumeration<AllResourceTypes> ct : sp.getBase()) {
+      for (CodeType ct : sp.getBase()) {
         csp.getResources().add(ct.asStringValue());
         definitions.getCommonSearchParameters().put(ct.asStringValue()+"::"+sp.getCode(), csp);
       }

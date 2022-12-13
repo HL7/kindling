@@ -98,7 +98,10 @@ import org.hl7.fhir.r5.model.ElementDefinition.ElementDefinitionSlicingComponent
 import org.hl7.fhir.r5.model.ElementDefinition.PropertyRepresentation;
 import org.hl7.fhir.r5.model.ElementDefinition.SlicingRules;
 import org.hl7.fhir.r5.model.ElementDefinition.TypeRefComponent;
+import org.hl7.fhir.r5.model.Enumeration;
 import org.hl7.fhir.r5.model.Enumerations;
+import org.hl7.fhir.r5.model.Enumerations.AllResourceTypes;
+import org.hl7.fhir.r5.model.Enumerations.AllResourceTypesEnumFactory;
 import org.hl7.fhir.r5.model.Enumerations.BindingStrength;
 import org.hl7.fhir.r5.model.Enumerations.FHIRVersion;
 import org.hl7.fhir.r5.model.Enumerations.OperationParameterUse;
@@ -2131,7 +2134,6 @@ public class ProfileGenerator {
     inv.setSeverity(ConstraintSeverity.ERROR);
     inv.setHuman("All FHIR elements must have a @value or children");
     inv.setExpression("hasValue() or (children().count() > id.count())");
-    inv.setXpath("@value|f:*|h:div");
     inv.setSource("http://hl7.org/fhir/StructureDefinition/Element");
     return ed;  
   }
@@ -2157,7 +2159,6 @@ public class ProfileGenerator {
     inv.setSeverity(ConstraintSeverity.ERROR);
     inv.setHuman("Must have either extensions or value[x], not both");
     inv.setExpression("extension.exists() != value.exists()");
-    inv.setXpath("exists(f:extension)!=exists(f:*[starts-with(local-name(.), \"value\")])");
     inv.setSource("http://hl7.org/fhir/StructureDefinition/Extension");
     return ed;  
   }
@@ -2191,7 +2192,6 @@ public class ProfileGenerator {
     inv.setSeverity(ConstraintSeverity.ERROR);
     inv.setHuman("Must have either extensions or value[x], not both");
     inv.setExpression("extension.exists() != value.exists()");
-    inv.setXpath("exists(f:extension)!=exists(f:*[starts-with(local-name(.), 'value')])");
     inv.setSource("http://hl7.org/fhir/StructureDefinition/Extension");
     
     return ex;

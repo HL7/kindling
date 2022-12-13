@@ -1,4 +1,5 @@
 package org.hl7.fhir.definitions.model;
+
 import java.io.ByteArrayInputStream;
 /*
 Copyright (c) 2011+, HL7, Inc
