@@ -100,6 +100,8 @@ import org.hl7.fhir.r5.model.CanonicalResource;
 import org.hl7.fhir.r5.model.CodeSystem;
 import org.hl7.fhir.r5.model.CodeType;
 import org.hl7.fhir.r5.model.Composition;
+import org.hl7.fhir.r5.model.Enumeration;
+import org.hl7.fhir.r5.model.Enumerations.AllResourceTypes;
 import org.hl7.fhir.r5.model.Enumerations.FHIRVersion;
 import org.hl7.fhir.r5.model.Resource;
 import org.hl7.fhir.r5.model.SearchParameter;
@@ -486,7 +488,7 @@ public class SourceParser {
       CommonSearchParameter csp = new CommonSearchParameter();
       csp.setId(sp.getId());
       csp.setCode(sp.getCode());
-      for (CodeType ct : sp.getBase()) {
+      for (Enumeration<AllResourceTypes> ct : sp.getBase()) {
         csp.getResources().add(ct.asStringValue());
         definitions.getCommonSearchParameters().put(ct.asStringValue()+"::"+sp.getCode(), csp);
       }
