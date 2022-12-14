@@ -6,7 +6,7 @@ plugins {
 }
 
 group = "org.hl7.fhir"
-version = "1.1.0-SNAPSHOT"
+version = "1.1.1-SNAPSHOT"
 
 java {
     withJavadocJar()
@@ -104,10 +104,7 @@ dependencies {
     implementation("com.typesafe.scala-logging", "scala-logging_2.12", "3.5.0")
     implementation("com.github.everit-org.json-schema", "org.everit.json.schema", "1.9.1")
     implementation("org.json", "json", "20160212")
-    implementation("com.github.jsonld-java", "jsonld-java", "0.8.3")
     implementation("com.google.code.javaparser", "javaparser", "1.0.11")
-    implementation("com.github.jsonld-java", "jsonld-java", "0.9.0")
-    implementation("com.github.jsonld-java", "jsonld-java-jena", "0.4.1")
     implementation("com.google.guava", "guava", "23.6-jre")
     implementation("org.json", "json", "20171018")
     implementation("com.damnhandy", "handy-uri-templates", "2.1.6")
