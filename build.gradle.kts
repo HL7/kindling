@@ -93,8 +93,8 @@ dependencies {
     implementation("org.apache.jena", "jena-iri", "3.1.0")
     implementation("org.apache.jena", "jena-base", "3.1.0")
     implementation("org.apache.jena", "jena-shaded-guava", "3.1.0")
-    implementation("xerces", "xercesImpl", "2.11.0")
-    implementation("xml-apis", "xml-apis", "1.4.01")
+    implementation("xerces", "xercesImpl", "2.12.2")
+    //implementation("xml-apis", "xml-apis", "1.4.01")
     implementation("com.fasterxml.jackson.core", "jackson-core", "2.5.2")
     implementation("com.fasterxml.jackson.core", "jackson-databind", "2.5.2")
     implementation("com.fasterxml.jackson.core", "jackson-annotations", "2.5.2")
@@ -141,6 +141,10 @@ dependencies {
     implementation("org.jetbrains.kotlin", "kotlin-stdlib", "1.4.21")
 
     testImplementation("org.junit.jupiter","junit-jupiter","5.8.2")
+
+    configurations.implementation {
+        exclude(group = "xml-apis")
+    }
 }
 
 configurations {
@@ -150,8 +154,8 @@ configurations {
 }
 
 java {
-    sourceCompatibility = JavaVersion.VERSION_1_8
-    targetCompatibility = JavaVersion.VERSION_1_8
+    sourceCompatibility = JavaVersion.VERSION_11
+    targetCompatibility = JavaVersion.VERSION_11
 }
 
 publishing {
