@@ -94,7 +94,6 @@ dependencies {
     implementation("org.apache.jena", "jena-base", "3.1.0")
     implementation("org.apache.jena", "jena-shaded-guava", "3.1.0")
     implementation("xerces", "xercesImpl", "2.12.2")
-    //implementation("xml-apis", "xml-apis", "1.4.01")
     implementation("com.fasterxml.jackson.core", "jackson-core", "2.5.2")
     implementation("com.fasterxml.jackson.core", "jackson-databind", "2.5.2")
     implementation("com.fasterxml.jackson.core", "jackson-annotations", "2.5.2")
