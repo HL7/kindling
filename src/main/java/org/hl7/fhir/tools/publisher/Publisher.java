@@ -481,7 +481,7 @@ public class Publisher implements URIResolver, SectionNumberer {
     pub.validateId = getNamedParam(args, "-validate");
     String dir = hasParam(args, "-folder") ? getNamedParam(args, "-folder") : System.getProperty("user.dir");
     pub.outputdir = hasParam(args, "-output") ? getNamedParam(args, "-output") : null; 
-    pub.isCIBuild = true; // dir.contains("/ubuntu/agents/");
+    pub.isCIBuild = dir.contains("/ubuntu/agents/");
     if (pub.isCIBuild) {
       pub.page.setWebLocation(PageProcessor.CI_LOCATION);
       pub.page.setSearchLocation(PageProcessor.CI_SEARCH);
