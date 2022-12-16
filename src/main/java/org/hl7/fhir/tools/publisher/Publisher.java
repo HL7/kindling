@@ -476,23 +476,28 @@ public class Publisher implements URIResolver, SectionNumberer {
       pub.page.setPublicationType(getNamedParam(args, "-name"));
     if (hasParam(args, "-svn"))
       pub.page.setBuildId(getNamedParam(args, "-svn"));
-    if (pub.web) {
-      pub.page.setWebLocation(PageProcessor.WEB_LOCATION);
-      pub.page.setSearchLocation(PageProcessor.WEB_SEARCH);
-      pub.page.setPublicationType(PageProcessor.WEB_PUB_NAME);
-      pub.page.setPublicationNotice(PageProcessor.WEB_PUB_NOTICE);
-    } else {
-      pub.page.setWebLocation(PageProcessor.CI_LOCATION);
-      pub.page.setSearchLocation(PageProcessor.CI_SEARCH);
-      pub.page.setPublicationType(PageProcessor.CI_PUB_NAME);
-      pub.page.setPublicationNotice(PageProcessor.CI_PUB_NOTICE);
-    }
     if (hasParam(args, "-url"))
       pub.page.setWebLocation(getNamedParam(args, "-url"));
     pub.validateId = getNamedParam(args, "-validate");
     String dir = hasParam(args, "-folder") ? getNamedParam(args, "-folder") : System.getProperty("user.dir");
     pub.outputdir = hasParam(args, "-output") ? getNamedParam(args, "-output") : null; 
-    pub.isCIBuild = dir.contains("/ubuntu/agents/");
+    pub.isCIBuild = true; // dir.contains("/ubuntu/agents/");
+    if (pub.isCIBuild) {
+      pub.page.setWebLocation(PageProcessor.CI_LOCATION);
+      pub.page.setSearchLocation(PageProcessor.CI_SEARCH);
+      pub.page.setPublicationType(PageProcessor.CI_PUB_NAME);
+      pub.page.setPublicationNotice(PageProcessor.CI_PUB_NOTICE);
+    } else if (pub.web) {
+      pub.page.setWebLocation(PageProcessor.WEB_LOCATION);
+      pub.page.setSearchLocation(PageProcessor.WEB_SEARCH);
+      pub.page.setPublicationType(PageProcessor.WEB_PUB_NAME);
+      pub.page.setPublicationNotice(PageProcessor.WEB_PUB_NOTICE);
+    } else {
+      pub.page.setWebLocation(PageProcessor.LOCAL_LOCATION);
+      pub.page.setSearchLocation(PageProcessor.LOCAL_SEARCH);
+      pub.page.setPublicationNotice(PageProcessor.LOCAL_PUB_NOTICE);
+    }
+
     if (hasParam(args, "-api-key-file")) {
       pub.apiKeyFile = new IniFile(new File(getNamedParam(args, "-api-key-file")).getAbsolutePath());
     }
@@ -2088,7 +2093,14 @@ public class Publisher implements URIResolver, SectionNumberer {
     if (checkFile("required", page.getFolders().rootDir, "publish.ini", errors, "all")) {
       checkFile("required", page.getFolders().srcDir, "navigation.xml", errors, "all");
       page.setIni(new IniFile(page.getFolders().rootDir + "publish.ini"));
-      page.setVersion(FHIRVersion.fromCode(page.getIni().getStringProperty("FHIR", "version")));
+      if (isCIBuild) {
+        page.setVersion(FHIRVersion.fromCode(Constants.VERSION_BASE+"-cibuild"));
+      } else {
+        page.setVersion(FHIRVersion.fromCode(page.getIni().getStringProperty("FHIR", "version")));
+        if (page.getPublicationType() == null) {
+          page.setPublicationType(page.getIni().getStringProperty("FHIR", "version-name"));
+        }
+      }
 
       prsr = new SourceParser(page, folder, page.getDefinitions(), web, page.getVersion(), page.getWorkerContext(), page.getGenDate(), page, fpUsages, isCIBuild);
       prsr.checkConditions(errors, dates);

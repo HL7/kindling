@@ -249,6 +249,7 @@ public class ProfileGenerator {
       de.setMeta(new Meta());
     de.getMeta().setLastUpdatedElement(new InstantType(genDate));
     de.setVersion(version.toCode());
+    de.setFhirVersion(version);
     de.setName(ed.getPath());
     de.setStatus(PublicationStatus.DRAFT);
     de.setExperimental(true);
@@ -645,6 +646,8 @@ public class ProfileGenerator {
     p.setUserData("path", "datatypes.html#"+type.getCode());
     p.setFhirVersion(version);
     p.setVersion(version.toCode());
+    p.setFhirVersion(version);
+
     ToolingExtensions.setStandardsStatus(p, StandardsStatus.NORMATIVE, "4.0.0");
     KindlingUtilities.makeUniversal(p);
 

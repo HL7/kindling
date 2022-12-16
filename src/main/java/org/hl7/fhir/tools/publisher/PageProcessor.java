@@ -427,7 +427,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
   private Map<String, String> svgs = new HashMap<String, String>();
   private Translations translations = new Translations();
   private BreadCrumbManager breadCrumbManager = new BreadCrumbManager(translations);
-  private String publicationType = "Local Build ("+System.getenv("COMPUTERNAME")+")";
+  private String publicationType = "Local Build ("+getComputerName()+")";
   private String publicationNotice = "";
   private OIDRegistry registry;
   private String oid; // technical identifier associated with the page being built
@@ -456,15 +456,33 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
   private String webLocation;
   private String searchLocation;
   
+  private String getComputerName()
+  {
+      Map<String, String> env = System.getenv();
+      if (env.containsKey("COMPUTERNAME"))
+          return env.get("COMPUTERNAME");
+      else if (env.containsKey("HOSTNAME"))
+        return env.get("HOSTNAME");
+      else if (env.containsKey("USERNAME"))
+        return env.get("USERNAME");
+      else {
+        String res = System.getProperty("user.name");
+        if (res == null) {
+          return "Unknown Computer";
+        } else {
+          return res;
+        }
+      }
+  }
+  
   public PageProcessor(String tsServer) throws URISyntaxException, UcumException {
     super();
     this.tsServer = tsServer;
   }
 
-
-  public final static String WEB_LOCATION = "http://hl7.org/fhir/5.0.0-snapshot3/";
+  public final static String WEB_LOCATION = "http://hl7.org/fhir/{version}/";
   public final static String WEB_SEARCH = WEB_LOCATION+"search.html";
-  public final static String WEB_PUB_NAME = "R5";
+  public final static String WEB_PUB_NAME = null;
   public final static String WEB_PUB_NOTICE =
       "<p style=\"background-color: #ffefef; border:1px solid maroon; padding: 5px; max-width: 790px;\">\r\n"+
        " This is Preview #2 for FHIR <a href=\"history.html\">R5</a>. <br/>For a full list of available versions, see the <a href=\"http://hl7.org/fhir/directory.html\">Directory of published versions</a>.\r\n"+
@@ -472,12 +490,20 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
 
   public final static String CI_SEARCH = "http://build.fhir.org/search-build.html";
   public final static String CI_LOCATION = "http://build.fhir.org/";
-  public final static String CI_PUB_NAME = "CI-Build";
+  public final static String CI_PUB_NAME = "FHIR CI-Build";
   public final static String CI_PUB_NOTICE =
         "<p style=\"background-color: #ffefef; border:1px solid maroon; padding: 5px; max-width: 790px;\">"+
           "This is the Continuous Integration Build of FHIR (will be incorrect/inconsistent at times). <br/>See the <a href=\"http://hl7.org/fhir/directory.html\">Directory of published versions</a>"+
           "</p>\r\n";
-
+  
+  public final static String LOCAL_SEARCH = "http://build.fhir.org/search-build.html";
+  public final static String LOCAL_LOCATION = "file:{dest}";
+//  public final static String LOCAL_PUB_NAME = "FHIR Local Build";
+  public final static String LOCAL_PUB_NOTICE =
+        "<p style=\"background-color: #ffefef; border:1px solid maroon; padding: 5px; max-width: 790px;\">"+
+          "This is your Local Build of FHIR. <br/>See the <a href=\"http://hl7.org/fhir/directory.html\">Directory of published versions for published versions</a>"+
+          "</p>\r\n";
+  
   public static final String CODE_LIMIT_EXPANSION = "1000";
   public static final String TOO_MANY_CODES_TEXT_NOT_EMPTY = "This value set has >1000 codes in it. In order to keep the publication size manageable, only a selection (1000 codes) of the whole set of codes is shown";
   public static final String TOO_MANY_CODES_TEXT_EMPTY = "This value set cannot be expanded because of the way it is defined - it has an infinite number of members";
@@ -1004,6 +1030,8 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
         src = s1+makeJsonld(name)+s3;
       else if (com[0].equals("version"))
         src = s1+version.toCode()+s3;
+      else if (com[0].equals("verTitle"))
+        src = s1+VersionUtilities.getNameForVersion(version.toCode())+s3;
       else if (com[0].equals("type")) {
         if (resource == null) {
           src = s1+s3;          
@@ -1154,7 +1182,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
         src = s1 + new SimpleDateFormat("yyyy").format(new Date()) + s3;
       else if (com[0].equals("buildId"))
         src = s1 + buildId + s3;
-      else if (com[0].equals("pub-type"))
+      else if (com[0].equals("pub-name"))
         src = s1 + publicationType + s3;
       else if (com[0].equals("pub-notice"))
         src = s1 + publicationNotice + s3;
@@ -5142,7 +5170,9 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
       else if (com[0].equals("name"))
         src = s1+name+s3;
       else if (com[0].equals("version"))
-        src = s1+ini.getStringProperty("FHIR", "version")+s3;
+        src = s1+version.toCode()+s3;
+      else if (com[0].equals("verTitle"))
+        src = s1+VersionUtilities.getNameForVersion(version.toCode())+s3;
       else if (com[0].equals("gendate"))
         src = s1+Config.DATE_FORMAT().format(new Date())+s3;
       else if (com[0].equals("maindiv"))
@@ -5205,7 +5235,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
 //        src = s1 + "todo" + s3;
       else if (com[0].equals("piperesources"))
         src = s1+pipeResources()+s3;
-      else if (com[0].equals("pub-type"))
+      else if (com[0].equals("pub-name"))
         src = s1 + publicationType + s3;
 //      else if (com[0].equals("vsexpansion"))
 //        src = s1 + expandValueSet(Utilities.fileTitle(file), resource == null ? null : (ValueSet) resource) + s3;
@@ -5652,7 +5682,9 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
       else if (com[0].equals("name"))
         src = s1+name+s3;
       else if (com[0].equals("version"))
-        src = s1+ini.getStringProperty("FHIR", "version")+s3;
+        src = s1+version.toCode()+s3;
+      else if (com[0].equals("verTitle"))
+        src = s1+VersionUtilities.getNameForVersion(version.toCode())+s3;
       else if (com[0].equals("gendate"))
         src = s1+Config.DATE_FORMAT().format(new Date())+s3;
       else if (com[0].equals("maindiv"))
@@ -5788,7 +5820,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
         src = s1+pipeResources()+s3;
       else if (com[0].equals("archive"))
         src = s1 + makeArchives() + s3;
-      else if (com[0].equals("pub-type"))
+      else if (com[0].equals("pub-name"))
         src = s1 + publicationType + s3;
       else if (com[0].equals("pub-notice"))
         src = s1 + publicationNotice + s3;
@@ -6341,7 +6373,9 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
       } else if (com[0].equals("asearch"))
         src = s1+getAbstractSearch(resource, searchAdditions)+s3;
       else if (com[0].equals("version"))
-        src = s1+ini.getStringProperty("FHIR", "version")+s3;
+        src = s1+version.toCode()+s3;
+      else if (com[0].equals("verTitle"))
+        src = s1+VersionUtilities.getNameForVersion(version.toCode())+s3;
       else if (com[0].equals("gendate"))
         src = s1+Config.DATE_FORMAT().format(new Date())+s3;
       else if (com[0].equals("definition"))
@@ -6382,7 +6416,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
         src = s1 + genlevel(level) + s3;
       else if (com[0].equals("atitle"))
         src = s1 + abstractResourceTitle(resource) + s3;
-      else if (com[0].equals("pub-type"))
+      else if (com[0].equals("pub-name"))
         src = s1 + publicationType + s3;
       else if (com[0].equals("example-header"))
         src = s1 + loadXmlNotesFromFile(Utilities.path(folders.srcDir, name.toLowerCase(), name+"-examples-header.xml"), false, null, resource, tabs, null, wg)+s3;
@@ -8597,7 +8631,9 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
         else
           src = s1+"[no date]"+s3;
       } else if (com[0].equals("version"))
-        src = s1+ini.getStringProperty("FHIR", "version")+s3;
+        src = s1+version.toCode()+s3;
+      else if (com[0].equals("verTitle"))
+        src = s1+VersionUtilities.getNameForVersion(version.toCode())+s3;
       else if (com[0].equals("gendate"))
         src = s1+Config.DATE_FORMAT().format(new Date())+s3;
       else if (com[0].equals("definition"))
@@ -8634,7 +8670,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
         src = s1 + buildId + s3;
       else if (com[0].equals("level"))
         src = s1 + genlevel(0) + s3;
-      else if (com[0].equals("pub-type"))
+      else if (com[0].equals("pub-name"))
         src = s1 + publicationType + s3;
       else if (com[0].equals("pub-notice"))
         src = s1 + publicationNotice + s3;
@@ -9109,7 +9145,9 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
         else
           src = s1+"[no date]"+s3;
       } else if (com[0].equals("version"))
-        src = s1+ini.getStringProperty("FHIR", "version")+s3;
+        src = s1+version.toCode()+s3;
+      else if (com[0].equals("verTitle"))
+        src = s1+VersionUtilities.getNameForVersion(version.toCode())+s3;
       else if (com[0].equals("gendate"))
         src = s1+Config.DATE_FORMAT().format(new Date())+s3;
       else if (com[0].equals("definition"))
@@ -9152,7 +9190,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
         src = s1 + buildId + s3;
       else if (com[0].equals("level"))
         src = s1 + genlevel(level) + s3;
-      else if (com[0].equals("pub-type"))
+      else if (com[0].equals("pub-name"))
         src = s1 + publicationType + s3;
       else if (com[0].equals("pub-notice"))
         src = s1 + publicationNotice + s3;
@@ -9683,6 +9721,8 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     workerContext.setVersion(version.toCode());
     htmlchecker.setVersion(version);
     uml.setVersion(version.toCode());
+    
+    webLocation = webLocation.replace("{version}", version.toCode());
   }
 
   public void setFolders(FolderManager folders) throws Exception {
@@ -9694,6 +9734,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
         macros.put(Utilities.fileTitle(f.getName()), TextFile.fileToString(f));
       }
     }
+    webLocation = webLocation.replace("{dest}", folders.dstDir);
   }
 
   public void setIni(IniFile ini) {
@@ -10118,6 +10159,8 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
         src = s1+makePretty(pack.getId())+s3;
       else if (com[0].equals("version"))
         src = s1+version.toCode()+s3;
+      else if (com[0].equals("verTitle"))
+        src = s1+VersionUtilities.getNameForVersion(version.toCode())+s3;
       else if (com[0].equals("gendate"))
         src = s1+Config.DATE_FORMAT().format(new Date())+s3;
       else if (com[0].equals("maindiv"))
@@ -10164,7 +10207,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
         src = s1 + new SimpleDateFormat("yyyy").format(new Date()) + s3;
       else if (com[0].equals("buildId"))
         src = s1 + buildId + s3;
-      else if (com[0].equals("pub-type"))
+      else if (com[0].equals("-"))
         src = s1 + publicationType + s3;
       else if (com[0].equals("pub-notice"))
         src = s1 + publicationNotice + s3;
@@ -10186,6 +10229,8 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
         src = s1+searchFooter(level)+s3;
       else if (com[0].equals("search-header"))
         src = s1+searchHeader(level)+s3;
+      else if (com[0].equals("pub-name"))
+        src = s1+publicationType+s3;
       else if (com[0].equals("package.search"))
         src = s1+getSearch(pack)+s3;
       else if (com[0].equals("search-location"))

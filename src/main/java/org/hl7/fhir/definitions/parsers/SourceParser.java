@@ -991,7 +991,9 @@ public class SourceParser {
         if (ae.getResource() instanceof Composition)
           pack.loadFromComposition((Composition) ae.getResource(), file.getAbsolutePath());
         else if (ae.getResource() instanceof StructureDefinition && !((StructureDefinition) ae.getResource()).getType().equals("Extension")) {
-          StructureDefinition ed = (StructureDefinition) ae.getResource();
+          StructureDefinition ed = (StructureDefinition) ae.getResource();          
+          ed.setVersion(version.toCode());
+          ed.setFhirVersion(version);
           for (StructureDefinitionContextComponent s : ed.getContext())
             definitions.checkContextValid(s, file.getName(), this.context);
           ToolResourceUtilities.updateUsage(ed, pack.getCategory());
@@ -1004,6 +1006,8 @@ public class SourceParser {
           if (ToolingExtensions.getStandardsStatus(ed) == null) {
             ToolingExtensions.setStandardsStatus(ed, StandardsStatus.TRIAL_USE, null);
           }
+          ed.setVersion(version.toCode());
+          ed.setFhirVersion(version);
           if (ToolingExtensions.readStringExtension(ed, ToolingExtensions.EXT_WORKGROUP) == null)
             ToolingExtensions.setCodeExtension(ed, ToolingExtensions.EXT_WORKGROUP, wg.getCode());
           if (!ed.hasUrl())
@@ -1050,6 +1054,7 @@ public class SourceParser {
         throw new Exception("Error parsing Profile: not a structure definition");
       StructureDefinition sd = (StructureDefinition) rf;
       sd.setVersion(version.toCode());
+      sd.setFhirVersion(version);
       ap.putMetadata("id", sd.getId()+"-pack");
       ap.putMetadata("date", sd.getDateElement().asStringValue());
       ap.putMetadata("title", sd.getTitle());

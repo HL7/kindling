@@ -55,6 +55,7 @@ import org.hl7.fhir.r5.model.ElementDefinition.ElementDefinitionConstraintCompon
 import org.hl7.fhir.r5.model.ElementDefinition.ElementDefinitionMappingComponent;
 import org.hl7.fhir.r5.model.ElementDefinition.PropertyRepresentation;
 import org.hl7.fhir.r5.model.ElementDefinition.TypeRefComponent;
+import org.hl7.fhir.r5.model.Enumerations.FHIRVersion;
 import org.hl7.fhir.r5.model.Enumerations.PublicationStatus;
 import org.hl7.fhir.r5.model.Enumerations.SearchParamType;
 import org.hl7.fhir.r5.model.Extension;
@@ -225,16 +226,19 @@ public class ResourceParser {
         if (new File(Utilities.path(folder, "structuredefinition-extension-"+rid+".xml")).exists()) {
           sd = (StructureDefinition) parseXml("structuredefinition-extension-"+rid+".xml");
           sd.setUserData("path", "extension-"+sd.getId()+".html");
+          sd.setVersion(context.getVersion());
           p.getExtensions().add(sd);
           context.cacheResource(sd);
         } else {
           ConstraintStructure tp = processProfile(rid, ig.getId().substring(ig.getId().indexOf("-")+1), res, wg);
           sd = tp.getResource();
+          sd.setVersion(context.getVersion());
           sd.setUserData("path", sd.getId()+".html");
           p.getProfiles().add(tp); 
         }
         sd.setUserData(ToolResourceUtilities.NAME_RES_IG, id);
         sd.setVersion(version);
+        sd.setFhirVersion(FHIRVersion.fromCode(version));
         for (ElementDefinition ed : sd.getDifferential().getElement()) {
           if (ed.hasBinding() && ed.getBinding().hasValueSet()) { 
             loadValueSet(ed.getBinding().getValueSet(), true);
@@ -262,6 +266,9 @@ public class ResourceParser {
     if (ig == null ) {
       ig = definitions.getIgs().get("core");
     }
+    sd.setVersion(version);
+    sd.setFhirVersion(FHIRVersion.fromCode(version));
+
     ConstraintStructure cs = new ConstraintStructure(sd, ig, wg == null ? wg(sd) : wg, null, false);
     return cs;
   }
@@ -450,6 +457,8 @@ public class ResourceParser {
     StructureDefinition sd = (StructureDefinition) parseXml("structuredefinition-"+t+".xml");
     sdList.put(sd.getUrl(), sd);
     sd.setVersion(version);
+    sd.setFhirVersion(FHIRVersion.fromCode(version));
+
     ResourceDefn r = new ResourceDefn();
     r.setName(sd.getName());
     r.setEnteredInErrorStatus(ToolingExtensions.readStringExtension(sd, BuildExtensions.EXT_ENTERED_IN_ERROR_STATUS));
