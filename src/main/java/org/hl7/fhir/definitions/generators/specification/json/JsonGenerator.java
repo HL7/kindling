@@ -113,6 +113,7 @@ public class JsonGenerator  {
     Set<String> required = new HashSet<String>();
     JsonObject props = new JsonObject();
     r.add("properties", props);
+    r.addProperty("type", "object");
 
     if (isResource && definitions.hasResource(root.getName()) || "Parameters".equals(struc.getName())) {
       JsonObject rt = new JsonObject();

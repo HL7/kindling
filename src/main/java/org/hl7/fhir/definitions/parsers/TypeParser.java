@@ -109,7 +109,7 @@ public class TypeParser {
         int startPos = typeString.indexOf("<");
         int endPos = typeString.indexOf(">");
         if (endPos < startPos) {
-          throw new Exception(exceptionPrefix + "Missing '>' in data type definition: " + typeList[i]);
+          throw new Exception(exceptionPrefix + "Missing '>' in datatype definition: " + typeList[i]);
         }
         t.getAggregations().addAll(Arrays.asList(typeString.substring(startPos + 1, endPos).trim().split(",")));
 
@@ -128,7 +128,7 @@ public class TypeParser {
         int startPos = typeString.indexOf("{");
         int endPos = typeString.indexOf("}");
         if (endPos < startPos) {
-          throw new Exception(exceptionPrefix + "Missing '}' in data type definition: " + typeList[i]);
+          throw new Exception(exceptionPrefix + "Missing '}' in datatype definition: " + typeList[i]);
         }
         String pt = typeString.substring(startPos + 1, endPos).trim();
         typeString = typeString.substring(0, startPos);
@@ -148,7 +148,7 @@ public class TypeParser {
         int startPos = typeString.indexOf("(");
         int endPos = typeString.indexOf(")");
         if (endPos < startPos) {
-          throw new Exception(exceptionPrefix + "Missing ')' in data type definition: " + typeList[i]);
+          throw new Exception(exceptionPrefix + "Missing ')' in datatype definition: " + typeList[i]);
         }
         String[] params = typeString.substring(startPos + 1, endPos).split(",");
         for (int j=0;j<params.length;j++) {

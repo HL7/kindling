@@ -6,11 +6,15 @@ plugins {
 }
 
 group = "org.hl7.fhir"
-version = "1.0.12-SNAPSHOT"
+version = "1.2.0-SNAPSHOT"
 
 java {
     withJavadocJar()
     withSourcesJar()
+}
+
+tasks.withType<JavaCompile> {
+    options.encoding = "UTF-8"
 }
 
 repositories {
@@ -89,8 +93,7 @@ dependencies {
     implementation("org.apache.jena", "jena-iri", "3.1.0")
     implementation("org.apache.jena", "jena-base", "3.1.0")
     implementation("org.apache.jena", "jena-shaded-guava", "3.1.0")
-    implementation("xerces", "xercesImpl", "2.11.0")
-    implementation("xml-apis", "xml-apis", "1.4.01")
+    implementation("xerces", "xercesImpl", "2.12.2")
     implementation("com.fasterxml.jackson.core", "jackson-core", "2.5.2")
     implementation("com.fasterxml.jackson.core", "jackson-databind", "2.5.2")
     implementation("com.fasterxml.jackson.core", "jackson-annotations", "2.5.2")
@@ -100,10 +103,7 @@ dependencies {
     implementation("com.typesafe.scala-logging", "scala-logging_2.12", "3.5.0")
     implementation("com.github.everit-org.json-schema", "org.everit.json.schema", "1.9.1")
     implementation("org.json", "json", "20160212")
-    implementation("com.github.jsonld-java", "jsonld-java", "0.8.3")
     implementation("com.google.code.javaparser", "javaparser", "1.0.11")
-    implementation("com.github.jsonld-java", "jsonld-java", "0.9.0")
-    implementation("com.github.jsonld-java", "jsonld-java-jena", "0.4.1")
     implementation("com.google.guava", "guava", "23.6-jre")
     implementation("org.json", "json", "20171018")
     implementation("com.damnhandy", "handy-uri-templates", "2.1.6")
@@ -139,7 +139,11 @@ dependencies {
     implementation("com.squareup.okio", "okio", "2.9.0")
     implementation("org.jetbrains.kotlin", "kotlin-stdlib", "1.4.21")
 
-    testImplementation("junit", "junit", "4.12")
+    testImplementation("org.junit.jupiter","junit-jupiter","5.8.2")
+
+    configurations.implementation {
+        exclude(group = "xml-apis")
+    }
 }
 
 configurations {
@@ -149,8 +153,8 @@ configurations {
 }
 
 java {
-    sourceCompatibility = JavaVersion.VERSION_1_8
-    targetCompatibility = JavaVersion.VERSION_1_8
+    sourceCompatibility = JavaVersion.VERSION_11
+    targetCompatibility = JavaVersion.VERSION_11
 }
 
 publishing {
@@ -215,6 +219,7 @@ signing {
 
 tasks {
     test {
+        useJUnitPlatform()
         testLogging.showExceptions = true
     }
 }

@@ -70,7 +70,7 @@ public abstract class BuildToolScriptedPageProcessor extends ScriptedPageProcess
     else if (com[0].equals("plural"))
       return Utilities.pluralizeMe(name);
     else if (com[0].equals("baseURL"))
-      return Utilities.URLEncode(page.getBaseURL());  
+      return Utilities.URLEncode(page.getWebLocation());  
     else 
       return super.processCommand(command, com);
   }
@@ -111,9 +111,9 @@ public abstract class BuildToolScriptedPageProcessor extends ScriptedPageProcess
     for (ElementDefinition e : res.getSnapshot().getElement()) {      
       for (ElementDefinitionConstraintComponent inv : e.getConstraint()) {
         if (!e.getPath().contains("."))
-          b.append("<li><b title=\"Formal Invariant Identifier\">"+inv.getKey()+"</b>: "+Utilities.escapeXml(inv.getHuman())+" (xpath: <span style=\"font-family: Courier New, monospace\">"+Utilities.escapeXml(inv.getXpath())+"</span>)</li>");
+          b.append("<li><b title=\"Formal Invariant Identifier\">"+inv.getKey()+"</b>: "+Utilities.escapeXml(inv.getHuman())+" (xpath: <span style=\"font-family: Courier New, monospace\">"+Utilities.escapeXml(inv.getExpression())+"</span>)</li>");
         else
-          b.append("<li><b title=\"Formal Invariant Identifier\">"+inv.getKey()+"</b>: On "+e.getPath()+": "+Utilities.escapeXml(inv.getHuman())+" (xpath on "+presentPath(e.getPath())+": <span style=\"font-family: Courier New, monospace\">"+Utilities.escapeXml(inv.getXpath())+"</span>)</li>");
+          b.append("<li><b title=\"Formal Invariant Identifier\">"+inv.getKey()+"</b>: On "+e.getPath()+": "+Utilities.escapeXml(inv.getHuman())+" (xpath on "+presentPath(e.getPath())+": <span style=\"font-family: Courier New, monospace\">"+Utilities.escapeXml(inv.getExpression())+"</span>)</li>");
       }
     }    
     if (b.length() > 0)

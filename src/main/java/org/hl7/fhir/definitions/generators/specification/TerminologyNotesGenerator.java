@@ -46,6 +46,9 @@ import org.hl7.fhir.r5.model.ElementDefinition.ElementDefinitionBindingComponent
 import org.hl7.fhir.r5.model.Enumerations.BindingStrength;
 import org.hl7.fhir.r5.model.StructureDefinition;
 import org.hl7.fhir.r5.model.ValueSet;
+import org.hl7.fhir.r5.terminologies.CodeSystemUtilities;
+import org.hl7.fhir.r5.terminologies.CodeSystemUtilities.SystemReference;
+import org.hl7.fhir.r5.terminologies.ValueSetUtilities;
 import org.hl7.fhir.tools.publisher.PageProcessor;
 import org.hl7.fhir.utilities.Utilities;
 
@@ -182,7 +185,13 @@ public class TerminologyNotesGenerator extends OutputStreamWriter {
         write(list.get(i).path);          
       }
       write(" </td>");
-      write("<td valign=\"top\">"+Utilities.escapeXml(cd.getDefinition())+"</td>");
+      if (cd.getValueSet() != null) {
+        write("<td valign=\"top\">");
+        write(page.processMarkdown("vs.description", cd.getValueSet().getDescription(), ""));
+        write("</td>");
+      } else {
+        write("<td valign=\"top\">"+Utilities.escapeXml(cd.getDefinition())+"</td>");
+      }
       if (cd.getBinding() == BindingMethod.Unbound)
         write("<td>Unknown</td><td valign=\"top\">No details provided yet</td>");
       else { 
@@ -203,7 +212,7 @@ public class TerminologyNotesGenerator extends OutputStreamWriter {
           else if (name.equals("ResourceType"))
             write("<a href=\""+prefix+"valueset-resource-types.html\">Resource Types</a>");
           else if (name.equals("DataType"))
-            write("<a href=\""+prefix+"valueset-data-types.html\">Data Types</a>");
+            write("<a href=\""+prefix+"valueset-data-types.html\">Datatypes</a>");
           else if (name.equals("FHIRDefinedType"))
             write("<a href=\""+prefix+"valueset-defined-types.html\">Defined Types</a>");
           else if (name.equals("FHIRAllTypes"))
@@ -216,6 +225,19 @@ public class TerminologyNotesGenerator extends OutputStreamWriter {
           if (pp == null)
             throw new Exception("unknown path on "+cd.getReference());
           write("<a href=\""+prefix+pp.replace(File.separatorChar, '/')+"\">"+vs.getName()+"</a><!-- b -->");
+          String system = ValueSetUtilities.getAllCodesSystem(vs);
+          if (system != null) {
+            SystemReference sr = CodeSystemUtilities.getSystemReference(system, page.getWorkerContext());
+            if (sr == null) {
+              write(" (a valid code from <code>"+system+"</code>)");
+            } else if (sr.getText() != null && textSame(sr.getText(), vs.getName())) {
+              write(" ");
+            } else if (sr.getLink() == null) {
+              write(" (a valid code from "+sr.getText()+" (<code>"+system+"</code>)");
+            } else {
+              write(" (a valid code from <a href=\""+sr.getLink()+"\">"+sr.getText()+"</a>)");
+            }
+          }
         } else if (cd.getBinding() == BindingSpecification.BindingMethod.ValueSet) {
           if (Utilities.noString(cd.getReference())) 
             write("??");
@@ -256,6 +278,10 @@ public class TerminologyNotesGenerator extends OutputStreamWriter {
     }
     write("</table>\r\n<p> </p>\r\n");		
 	}
+
+  private boolean textSame(String t1, String t2) {
+    return t1.toLowerCase().replace(" ", "").equals(t2.toLowerCase().replace(" ", ""));
+  }
 
   private boolean matchesTypes(String t1, String t2) {
     if (t1.equals(t2)) {
@@ -313,11 +339,11 @@ public class TerminologyNotesGenerator extends OutputStreamWriter {
       else if (cd.getValueSet().getName().equals("ResourceType"))
         return "<a href=\""+prefix+"valueset-resource-types.html\">Any defined Resource Type name</a>";
       else if (cd.getValueSet().getName().equals("DataType"))
-        return "<a href=\""+prefix+"valueset-data-types.html\">Any defined Data Type name</a>";
+        return "<a href=\""+prefix+"valueset-data-types.html\">Any defined Datatype name</a>";
       else if (cd.getValueSet().getName().equals("FHIRDefinedType"))
-        return "<a href=\""+prefix+"valueset-defined-types.html\">Any defined Resource or Data Type name</a>";
+        return "<a href=\""+prefix+"valueset-defined-types.html\">Any defined Resource or Datatype name</a>";
       else if (cd.getValueSet().getName().equals("FHIRAllTypes"))
-        return "<a href=\""+prefix+"valueset-all-types.html\">Any defined Resource or Data Type name (including \"Any\" and \"Type\")</a>";
+        return "<a href=\""+prefix+"valueset-all-types.html\">Any defined Resource or Datatype name (including \"Any\" and \"Type\")</a>";
       else 
         throw new Exception("Unknown special type "+cd.getValueSet().getName());
     }
@@ -403,9 +429,9 @@ public class TerminologyNotesGenerator extends OutputStreamWriter {
       else if (cd.getValueSet().getName().equals("ResourceType"))
         write("  <li>"+path+" of <a href=\"terminologies.html#ResourceType\"> any defined Resource Type name</a></li>\r\n");
       else if (cd.getValueSet().getName().equals("FHIRContentType"))
-        write("  <li>"+path+" of <a href=\"terminologies.html#fhircontenttypes\"> any defined Resource or Data Type name</a></li>\r\n");
+        write("  <li>"+path+" of <a href=\"terminologies.html#fhircontenttypes\"> any defined Resource or Datatype name</a></li>\r\n");
       else 
-        write("  <li>"+path+" of <a href=\"datatypes.html\"> any defined data Type name</a> (including <a href=\"resource.html#Resource\">Resource</a>)</li>\r\n");
+        write("  <li>"+path+" of <a href=\"datatypes.html\"> any defined datatype name</a> (including <a href=\"resource.html#Resource\">Resource</a>)</li>\r\n");
       
     } else {
       String bs = "<a href=\"terminologies.html#"+cd.getStrength().toCode()+"\">"+cd.getStrength().getDisplay()+"</a>";

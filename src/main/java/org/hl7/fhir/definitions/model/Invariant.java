@@ -35,7 +35,6 @@ public class Invariant {
   private String context;
   private String english;
   private String ocl;
-  private String xpath;
   private String id;
   private String fixedName; // when the invariant is only one one of a set of choices
   private String severity;
@@ -43,12 +42,12 @@ public class Invariant {
   private String requirements;
   private String expression;
   private String explanation;
+  private Boolean testOutcome;
   
   public Invariant(Invariant inv, String oname, String name, String templateTitle, String abb) {
     context = inv.context.replace(oname, name);
     english = inv.english;
     ocl = inv.ocl;
-    xpath = inv.xpath;
     id = inv.id.replace("inv", abb);
     fixedName = inv.fixedName;
     severity = inv.severity;
@@ -104,14 +103,6 @@ public class Invariant {
     this.ocl = ocl;
   }
 
-  public String getXpath() {
-    return xpath;
-  }
-
-  public void setXpath(String xpath) {
-    this.xpath = xpath;
-  }
-
   public String getFixedName() {
     return fixedName;
   }
@@ -155,6 +146,16 @@ public class Invariant {
     this.explanation = explanation;
   }
 
-  
-  
+  public void setTestOutcome(boolean outcome) {
+    if (testOutcome == null) {
+      testOutcome = outcome;
+    } else if (!outcome) {
+      testOutcome = outcome;
+    }
+  }
+
+  public Boolean getTestOutcome() {
+    return testOutcome;
+  }
+
 }

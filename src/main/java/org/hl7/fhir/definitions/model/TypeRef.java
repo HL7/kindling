@@ -50,7 +50,6 @@ package org.hl7.fhir.definitions.model;
 
  */
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 
 import org.hl7.fhir.r5.model.ElementDefinition.ReferenceVersionRules;

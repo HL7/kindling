@@ -30,7 +30,6 @@ POSSIBILITY OF SUCH DAMAGE.
 import java.util.ArrayList;
 import java.util.List;
 
-import org.fhir.ucum.Utilities;
 import org.hl7.fhir.definitions.generators.specification.ToolResourceUtilities;
 import org.hl7.fhir.r5.context.CanonicalResourceManager;
 import org.hl7.fhir.r5.model.CodeSystem;
@@ -41,8 +40,8 @@ import org.hl7.fhir.r5.model.ValueSet;
 import org.hl7.fhir.r5.model.ValueSet.ConceptReferenceComponent;
 import org.hl7.fhir.r5.model.ValueSet.ConceptSetComponent;
 import org.hl7.fhir.r5.terminologies.CodeSystemUtilities;
-import org.hl7.fhir.r5.terminologies.ValueSetUtilities;
 import org.hl7.fhir.r5.utils.ToolingExtensions;
+import org.hl7.fhir.utilities.StandardsStatus;
 
 /**
  * A concept domain - a use of terminology in FHIR.
@@ -54,10 +53,7 @@ import org.hl7.fhir.r5.utils.ToolingExtensions;
  *
  */
 public class BindingSpecification {
-  
-  public static final String DEFAULT_OID_CS = "2.16.840.1.113883.4.642.1.";
-  public static final String DEFAULT_OID_VS = "2.16.840.1.113883.4.642.3.";
-  
+    
   public enum BindingMethod {
     Unbound,
     CodeList, 
@@ -98,8 +94,6 @@ public class BindingSpecification {
   private String email;
   private String copyright;
 //  private List<DefinedCode> codes = new ArrayList<DefinedCode>();
-  private String csOid;
-  private String vsOid;
 //  private List<DefinedCode> childCodes;
   private PublicationStatus status;
   private List<DefinedCode> allCodes;
@@ -327,24 +321,6 @@ public class BindingSpecification {
     this.v3Map = v3Map;
   }
 
-  public String getCsOid() {
-    return csOid;
-  }
-
-  public void setCsOid(String csOid) {
-    this.csOid = csOid;
-  }
-
-  public String getVsOid() {
-    return vsOid;
-  }
-
-  public void setVsOid(String vsOid) {
-    this.vsOid = vsOid;
-    if (!Utilities.noString(vsOid) && valueSet != null) 
-      ValueSetUtilities.setOID(valueSet, vsOid);
-  }
-
   public PublicationStatus getStatus() {
     return status;
   }
@@ -361,8 +337,6 @@ public class BindingSpecification {
     this.valueSet = valueSet;
     if (valueSet != null) {
       ToolResourceUtilities.updateUsage(valueSet, usageContext);
-      if (!Utilities.noString(vsOid)) 
-        ValueSetUtilities.setOID(valueSet, vsOid);
       if (shared) {
         valueSet.setUserData("build.shared", "true");
       }
@@ -425,6 +399,7 @@ public class BindingSpecification {
     code.setParent(parent);
     code.setSystem(system);
     code.setAbstract(CodeSystemUtilities.isNotSelectable(cs, c));
+    code.setDeprecated(ToolingExtensions.getStandardsStatus(c) == StandardsStatus.DEPRECATED);
     allCodes.add(code);
     for (ConceptDefinitionComponent cc : c.getConcept())
       processCode(cs, cc, system, c.getCode());

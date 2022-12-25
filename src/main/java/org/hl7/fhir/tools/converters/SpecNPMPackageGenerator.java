@@ -26,7 +26,6 @@ import org.hl7.fhir.exceptions.FHIRFormatError;
 import org.hl7.fhir.r5.formats.IParser.OutputStyle;
 import org.hl7.fhir.r5.formats.JsonParser;
 import org.hl7.fhir.r5.formats.XmlParser;
-import org.hl7.fhir.r5.model.BooleanType;
 import org.hl7.fhir.r5.model.Bundle;
 import org.hl7.fhir.r5.model.Constants;
 import org.hl7.fhir.r5.model.ContactPoint.ContactPointSystem;
@@ -78,7 +77,7 @@ public class SpecNPMPackageGenerator {
     Map<String, byte[]> files = loadZip(new FileInputStream(Utilities.path(folder, "igpack.zip")));
     FHIRVersion version = determineVersion(files);    
     
-    System.out.println(" .. Loading v"+version);
+    System.out.println(" .. Loading v"+version.toCode());
     SpecMapManager spm = new SpecMapManager(files.get("spec.internals"), version.toCode());    
     System.out.println(" .. Conformance Resources");
     List<ResourceEntry> reslist = makeResourceList(files, version.toCode());
@@ -104,7 +103,7 @@ public class SpecNPMPackageGenerator {
       ManifestResourceComponent r = ig.getManifest().addResource();
       r.setReference(new Reference(e.type+"/"+e.id));
       if (e.conf)
-        r.setExample(new BooleanType(true));
+        r.setIsExample(true);
       r.setRelativePath(spm.getPath(e.canonical, null));  
     }
     for (String k : files.keySet()) {
@@ -182,7 +181,7 @@ public class SpecNPMPackageGenerator {
     npm = new NPMPackageGenerator(Utilities.path(folder, pidRoot+".corexml.tgz"), "http://hl7.org/fhir", url, PackageType.CORE, ig, genDate, true);
     bs = new ByteArrayOutputStream();
     new org.hl7.fhir.r5.formats.XmlParser().setOutputStyle(OutputStyle.NORMAL).compose(bs, ig);
-    npm.addFile(Category.RESOURCE, "ig-r4.xml", bs.toByteArray());
+    npm.addFile(Category.OTHER, "ig-r4.xml", bs.toByteArray());
     addConvertedIgX(npm, ig, version.toCode());
     for (ResourceEntry e : reslist) {
       if (e.xml != null)
@@ -196,7 +195,7 @@ public class SpecNPMPackageGenerator {
   private void checkForDE(List<ResourceEntry> reslist) {
     for (ResourceEntry r : reslist) {
       if (r.canonical != null && r.canonical.contains("/de-")) {
-        System.out.println("Waht?");
+        System.out.println("Error: Found DataElement resource '"+r.canonical+" where it shouldn't be");
       }
     }
   
@@ -396,7 +395,7 @@ public class SpecNPMPackageGenerator {
   
   private List<ResourceEntry> makeResourceList5(Map<String, byte[]> files, String version, List<ResourceEntry> res) throws FHIRFormatError, IOException {
     for (String k : files.keySet()) {
-      if (k.endsWith(".xml")) {
+      if (k.endsWith(".xml") && !k.contains("dataelements")) {
         Bundle b = (Bundle) new org.hl7.fhir.r5.formats.XmlParser().parse(files.get(k));
         for (org.hl7.fhir.r5.model.Bundle.BundleEntryComponent be : b.getEntry()) {
           if (be.hasResource()) {

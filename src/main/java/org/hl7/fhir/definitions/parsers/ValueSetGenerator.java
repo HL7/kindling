@@ -18,23 +18,24 @@ import org.hl7.fhir.definitions.model.Definitions;
 import org.hl7.fhir.definitions.model.EventDefn;
 import org.hl7.fhir.definitions.model.ResourceDefn;
 import org.hl7.fhir.definitions.model.TypeRef;
-import org.hl7.fhir.r5.context.IWorkerContext.PackageVersion;
+import org.hl7.fhir.r5.context.IWorkerContext;
 import org.hl7.fhir.r5.model.CodeSystem;
 import org.hl7.fhir.r5.model.CodeSystem.CodeSystemContentMode;
 import org.hl7.fhir.r5.model.CodeSystem.CodeSystemHierarchyMeaning;
 import org.hl7.fhir.r5.model.CodeSystem.ConceptDefinitionComponent;
 import org.hl7.fhir.r5.model.CodeSystem.ConceptDefinitionDesignationComponent;
 import org.hl7.fhir.r5.model.CodeType;
-import org.hl7.fhir.r5.model.Constants;
 import org.hl7.fhir.r5.model.ContactDetail;
 import org.hl7.fhir.r5.model.ContactPoint.ContactPointSystem;
 import org.hl7.fhir.r5.model.Enumerations.PublicationStatus;
 import org.hl7.fhir.r5.model.Factory;
+import org.hl7.fhir.r5.model.PackageInformation;
 import org.hl7.fhir.r5.model.ValueSet;
 import org.hl7.fhir.r5.model.ValueSet.ValueSetComposeComponent;
 import org.hl7.fhir.r5.terminologies.CodeSystemUtilities;
 import org.hl7.fhir.r5.terminologies.ValueSetUtilities;
 import org.hl7.fhir.r5.utils.ToolingExtensions;
+import org.hl7.fhir.tools.publisher.KindlingUtilities;
 import org.hl7.fhir.utilities.StandardsStatus;
 import org.hl7.fhir.utilities.TranslationServices;
 import org.hl7.fhir.utilities.Utilities;
@@ -46,34 +47,38 @@ public class ValueSetGenerator {
   private String version;
   private Calendar genDate;
   private TranslationServices translator;
-  private PackageVersion packageInfo; 
+  private PackageInformation packageInfo; 
+  private IWorkerContext context;
   
 
-  public ValueSetGenerator(Definitions definitions, String version, Calendar genDate, TranslationServices translator, PackageVersion packageInfo) throws ParserConfigurationException, SAXException, IOException {
+  public ValueSetGenerator(Definitions definitions, String version, Calendar genDate, TranslationServices translator, PackageInformation packageInfo, IWorkerContext context) throws ParserConfigurationException, SAXException, IOException {
     super();
     this.definitions = definitions;
     this.version = version;
     this.genDate = genDate;
     this.translator = translator;
     this.packageInfo = packageInfo;
+    this.context = context;
   }
 
   public void check(ValueSet vs) throws Exception {
     if (!vs.hasUrl())
       throw new Exception("Value set with no URL!");
 
-    if (vs.getId().equals("data-types"))
-      genDataTypes(vs);
-    else if (vs.getId().equals("defined-types"))
-      genDefinedTypes(vs, false);
-    else if (vs.getId().equals("all-types"))
-      genDefinedTypes(vs, true);
-    else if (vs.getId().equals("message-events"))
+//    if (vs.getId().equals("data-types"))
+//      genDataTypes(vs);
+//    else if (vs.getId().equals("defined-types"))
+//      genDefinedTypes(vs, false);
+//    else if (vs.getId().equals("all-types"))
+//      genDefinedTypes(vs, true);
+//    else if (vs.getId().equals("fhir-types"))
+//      genFhirTypes(vs);
+    if (vs.getId().equals("message-events"))
       genMessageEvents(vs);
-    else if (vs.getId().equals("resource-types"))
-      genResourceTypes(vs);
-    else if (vs.getId().equals("abstract-types"))
-      genAbstractTypes(vs);
+//    else if (vs.getId().equals("resource-types"))
+//      genResourceTypes(vs);
+//    else if (vs.getId().equals("abstract-types"))
+//      genAbstractTypes(vs);
   }
 
   private void genDataTypes(ValueSet vs) throws Exception {
@@ -89,14 +94,19 @@ public class ValueSetGenerator {
         System.out.println("ValueSet "+vs.getUrl()+" WG mismatch 6: is "+ec+", want to set to "+"fhir");
     }     
     vs.setUserData("path", "valueset-"+vs.getId()+".html");
-    
+    KindlingUtilities.makeUniversal(vs);
+
     CodeSystem cs = new CodeSystem();
     CodeSystemConvertor.populate(cs, vs);
     cs.setUrl("http://hl7.org/fhir/data-types");
     cs.setVersion(version);
     cs.setCaseSensitive(true);
     cs.setContent(CodeSystemContentMode.COMPLETE);
+    if (!cs.hasStatus()) {
+      cs.setStatus(PublicationStatus.DRAFT);
+    }
     definitions.getCodeSystems().see(cs, packageInfo);
+    KindlingUtilities.makeUniversal(cs);
 
     List<String> codes = new ArrayList<String>();
     for (TypeRef t : definitions.getKnownTypes())
@@ -117,7 +127,7 @@ public class ValueSetGenerator {
           c.setDefinition("...to do...");
       }
     }
-    ToolingExtensions.addCSComment(cs.addConcept().setCode("xhtml").setDisplay("XHTML").setDefinition("XHTML format, as defined by W3C, but restricted usage (mainly, no active content)"), "Special case: xhtml can only be used in the narrative Data Type");
+    ToolingExtensions.addCSComment(cs.addConcept().setCode("xhtml").setDisplay("XHTML").setDefinition("XHTML format, as defined by W3C, but restricted usage (mainly, no active content)"), "Special case: xhtml can only be used in the narrative Datatype");
     markSpecialStatus(vs, cs, true);
   }
 
@@ -162,7 +172,8 @@ public class ValueSetGenerator {
         System.out.println("ValueSet "+vs.getUrl()+" WG mismatch 7: is "+ec+", want to set to "+"fhir");
     }     
     vs.setUserData("path", "valueset-"+vs.getId()+".html");
-    
+    KindlingUtilities.makeUniversal(vs);
+
     CodeSystem cs = new CodeSystem();
     CodeSystemConvertor.populate(cs, vs);
     cs.setUrl("http://hl7.org/fhir/resource-types");
@@ -170,8 +181,12 @@ public class ValueSetGenerator {
     cs.setCaseSensitive(true);    
     cs.setHierarchyMeaning(CodeSystemHierarchyMeaning.ISA);
     cs.setContent(CodeSystemContentMode.COMPLETE);
+    if (!cs.hasStatus()) {
+      cs.setStatus(PublicationStatus.DRAFT);
+    }
     definitions.getCodeSystems().see(cs, packageInfo);
-        
+    KindlingUtilities.makeUniversal(cs);
+
     Map<String, ConceptDefinitionComponent> codes = new HashMap<String, ConceptDefinitionComponent>();
     for (ResourceDefn rd : definitions.getBaseResources().values()) {
       ConceptDefinitionComponent cd = makeConceptForResource(rd.getName(), rd.getDefinition(), rd.isAbstract());
@@ -233,7 +248,8 @@ public class ValueSetGenerator {
         System.out.println("ValueSet "+vs.getUrl()+" WG mismatch 8: is "+ec+", want to set to "+"fhir");
     }     
     vs.setUserData("path", "valueset-"+vs.getId()+".html");
-    
+    KindlingUtilities.makeUniversal(vs);
+
     CodeSystem cs = new CodeSystem();
     cs.setUserData("filename", vs.getUserString("filename").replace("valueset-", "codesystem-"));
     cs.setUserData("path", vs.getUserString("path").replace("valueset-", "codesystem-"));
@@ -242,11 +258,46 @@ public class ValueSetGenerator {
     cs.setVersion(version);
     cs.setCaseSensitive(true);    
     cs.setContent(CodeSystemContentMode.COMPLETE);
+    if (!cs.hasStatus()) {
+      cs.setStatus(PublicationStatus.DRAFT);
+    }
     definitions.getCodeSystems().see(cs, packageInfo);
+    KindlingUtilities.makeUniversal(cs);
 
-    cs.addConcept().setCode("Type").setDisplay("Type").setDefinition("A place holder that means any kind of data type");
+    cs.addConcept().setCode("Type").setDisplay("Type").setDefinition("A place holder that means any kind of data ype");
     cs.addConcept().setCode("Any").setDisplay("Any").setDefinition("A place holder that means any kind of resource");
     markSpecialStatus(vs, cs, true);
+  }
+
+  private void genFhirTypes(ValueSet vs) {
+    if (!vs.hasCompose())
+      vs.setCompose(new ValueSetComposeComponent());
+    vs.getCompose().addInclude().setSystem("http://hl7.org/fhir/fhir-types");
+    vs.setUserData("filename", "valueset-"+vs.getId());
+    if (!vs.hasExtension(ToolingExtensions.EXT_WORKGROUP)) {
+      vs.addExtension().setUrl(ToolingExtensions.EXT_WORKGROUP).setValue(new CodeType("fhir"));
+    } else {
+      String ec = ToolingExtensions.readStringExtension(vs, ToolingExtensions.EXT_WORKGROUP);
+      if (!ec.equals("fhir"))
+        System.out.println("ValueSet "+vs.getUrl()+" WG mismatch 8: is "+ec+", want to set to "+"fhir");
+    }     
+    vs.setUserData("path", "valueset-"+vs.getId()+".html");
+    KindlingUtilities.makeUniversal(vs);
+    
+    CodeSystem cs = new CodeSystem();
+    cs.setUserData("filename", vs.getUserString("filename").replace("valueset-", "codesystem-"));
+    cs.setUserData("path", vs.getUserString("path").replace("valueset-", "codesystem-"));
+    CodeSystemConvertor.populate(cs, vs);
+    cs.setUrl("http://hl7.org/fhir/fhir-types");
+    cs.setVersion(version);
+    cs.setCaseSensitive(true);    
+    cs.setContent(CodeSystemContentMode.COMPLETE);
+    if (!cs.hasStatus()) {
+      cs.setStatus(PublicationStatus.DRAFT);
+    }
+    definitions.getCodeSystems().see(cs, packageInfo);
+    markSpecialStatus(vs, cs, true);
+    KindlingUtilities.makeUniversal(cs);
   }
 
   private void genDefinedTypes(ValueSet vs, boolean doAbstract) throws Exception {
@@ -290,7 +341,11 @@ public class ValueSetGenerator {
     cs.setVersion(version);
     cs.setCaseSensitive(true);
     cs.setContent(CodeSystemContentMode.COMPLETE);
+    if (!cs.hasStatus()) {
+      cs.setStatus(PublicationStatus.DRAFT);
+    }
     definitions.getCodeSystems().see(cs, packageInfo);
+    KindlingUtilities.makeUniversal(cs);
 
     List<String> codes = new ArrayList<String>();
     codes.addAll(definitions.getEvents().keySet());
@@ -366,6 +421,7 @@ public class ValueSetGenerator {
     vs.setPublisher("HL7 (FHIR Project)");
     vs.setVersion(version);
     vs.setExperimental(false);
+    KindlingUtilities.makeUniversal(vs);
 
     vs.setUserData("filename", "valueset-"+vs.getId());
     if (!vs.hasExtension(ToolingExtensions.EXT_WORKGROUP)) {
@@ -404,11 +460,16 @@ public class ValueSetGenerator {
         }
       }
     }
+    KindlingUtilities.makeUniversal(cs);
+
     CodeSystemConvertor.populate(cs, vs);
     cs.setUrl("http://terminology.hl7.org/CodeSystem/operation-outcome");
     cs.setVersion(version);
     cs.setCaseSensitive(true);
     cs.setContent(CodeSystemContentMode.COMPLETE);
+    if (!cs.hasStatus()) {
+      cs.setStatus(PublicationStatus.DRAFT);
+    }
     definitions.getCodeSystems().see(cs, packageInfo);
   }
 

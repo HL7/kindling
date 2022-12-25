@@ -9,7 +9,6 @@ Please maintain this README.md as a linkable document, as other documentation ma
 ## Building this Project
 ## CI/CD
 ## Maintenance
-
 --->
 
 # kindling
@@ -18,7 +17,10 @@ Please maintain this README.md as a linkable document, as other documentation ma
 | :---: | :---: |
 | [![Build Status][Badge-BuildPipeline]][Link-AzureMainPipeline] | [![Snapshot Artifact][Badge-SonatypeSnapshots]][Link-SonatypeSnapshots] |
 
-This is the core publishing code for the HL7 FHIR specification. The jar produced from this repository is used within the publisher [here][Link-PublisherProject].
+This is the core publishing code for the HL7 FHIR specification itself. The jar produced from this repository is used within the publisher [here][Link-PublisherProject].
+
+There's no reason to use this code for any other purpose: all the generally purpose FHIR code which can be used for other things 
+that are part of this application can be found at found in https://github.com/hapifhir/org.hl7.fhir.core
 
 ## Building this Project
 

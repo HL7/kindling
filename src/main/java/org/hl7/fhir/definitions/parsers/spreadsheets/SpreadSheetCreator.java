@@ -167,7 +167,6 @@ public class SpreadSheetCreator extends SpreadSheetBase {
     addCellHeading(CN_STRENGTH, row, sheet, columnCount++, 10);
     addCellHeading(CN_VALUE_SET, row, sheet, columnCount++, 30);
     addCellHeading(CN_DESCRIPTION, row, sheet, columnCount++, 30);
-    addCellHeading(CN_OID, row, sheet, columnCount++, 10);
     addCellHeading(CN_URI, row, sheet, columnCount++, 30);
     addCellHeading(CN_WEBSITE_EMAIL, row, sheet, columnCount++, 30);
     addCellHeading(CN_V2, row, sheet, columnCount++, 10);
@@ -196,7 +195,7 @@ public class SpreadSheetCreator extends SpreadSheetBase {
   private void addElements(XSSFSheet resources, XSSFSheet bindings, XSSFSheet invariants, ElementDefinition ed, int rowCount) throws IOException {
     Row row = resources.createRow(rowCount);    
     int columnCount = 0;
-    ed.removeExtension("http://hl7.org/fhir/StructureDefinition/elementdefinition-heirarchy");
+    ed.removeExtension(ToolingExtensions.EXT_ED_HEIRARCHY);
     addCell(ed.getPath(), row, columnCount++); // Path
     addCell(aliases(ed), row, columnCount++); // Aliases
     addCell(ed.getMin()+".."+ed.getMax(), row, columnCount++); // Card.
@@ -227,7 +226,6 @@ public class SpreadSheetCreator extends SpreadSheetBase {
       addCell(ed.getPath(), row, columnCount++); 
       addCell(inv.getHuman(), row, columnCount++); 
       addCell(inv.getExpression(), row, columnCount++); 
-      addCell(inv.getXpath(), row, columnCount++); // Example
       addCell(ext(inv, BuildExtensions.EXT_BEST_PRACTICE_EXPLANATION), row, columnCount++); // Example
       addCell(ext(inv, BuildExtensions.EXT_COMMITTEE_NOTES), row, columnCount++); // Commitee Notes          
     }
@@ -359,7 +357,6 @@ public class SpreadSheetCreator extends SpreadSheetBase {
       addCell(bs.getStrength().toCode(), row, columnCount++);
       addCell(bs.getValueSet(), row, columnCount++);
       addCell(null, row, columnCount++);
-      addCell(ext(bs, BuildExtensions.EXT_VS_OID), row, columnCount++);
       addCell(ext(bs, BuildExtensions.EXT_URI), row, columnCount++);
       addCell(ext(bs, BuildExtensions.EXT_WEBSITE), row, columnCount++);
       addCell(ext(bs, BuildExtensions.EXT_V2_MAP), row, columnCount++);
@@ -393,7 +390,6 @@ public class SpreadSheetCreator extends SpreadSheetBase {
       addCell(bs.getStrength().toCode(), row, columnCount++);
       addCell(bs.getValueSet(), row, columnCount++);
       addCell(bs.getDescription(), row, columnCount++);
-      addCell(ext(bs, BuildExtensions.EXT_VS_OID), row, columnCount++);
       addCell(ext(bs, BuildExtensions.EXT_URI), row, columnCount++);
       addCell(ext(bs, BuildExtensions.EXT_WEBSITE), row, columnCount++);
       addCell(ext(bs, BuildExtensions.EXT_V2_MAP), row, columnCount++);
@@ -731,7 +727,6 @@ public class SpreadSheetCreator extends SpreadSheetBase {
     addCell(ext(sp, BuildExtensions.EXT_PATH), row, columnCount++); 
     addCell(sp.getExpression(), row, columnCount++); 
     addCell(sp.getDescription(), row, columnCount++); 
-    addCell(sp.getXpath(), row, columnCount++); 
     addCell(ext(sp, BuildExtensions.EXT_COMMITTEE_NOTES), row, columnCount++);
   }
 
@@ -753,7 +748,6 @@ public class SpreadSheetCreator extends SpreadSheetBase {
     addCellHeading(CN_PATH, row, sheet, columnCount++, 30);
     addCellHeading(CN_EXPRESSION, row, sheet, columnCount++, 30);
     addCellHeading(CN_DESCRIPTION, row, sheet, columnCount++, 30);
-    addCellHeading(CN_X_PATH, row, sheet, columnCount++, 30);
     addCellHeading(CN_COMMITTEE_NOTES, row, sheet, columnCount++, 30);   
     sheet.createFreezePane(1, 1);
   }

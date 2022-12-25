@@ -32,14 +32,16 @@ public class W5TurtleGenerator {
     private Definitions definitions;
     private BuildWorkerContext context;
     private List<ValidationMessage> issues;
+    private String host;
 
 
     public W5TurtleGenerator(OutputStream destination, Definitions definitions, BuildWorkerContext context,
-                             List<ValidationMessage> issues) {
+                             List<ValidationMessage> issues, String host) {
         this.destination = destination;
         this.definitions = definitions;
         this.context = context;
         this.issues = issues;
+        this.host = host;
     }
 
     /**
@@ -59,7 +61,7 @@ public class W5TurtleGenerator {
         w5.addProperty(RDFS.label, "W5 Categorization");
         w5.addProperty(RDFS.comment, "FHIR W5 categorization is a preliminary classification of the fhir property");
         w5.addVersionInfo("FHIR W5 categorization (Preliminary)");
-        w5.addProperty(OWL2.versionIRI, "http://build.fhir.org/w5.ttl");
+        w5.addProperty(OWL2.versionIRI, host+"w5.ttl");
 
         // The only way to differentiate predicates from classes is the existence of subclasses -- if something
         // has subclasses or is a subclass then it is a class.  Otherwise it is a predicate...

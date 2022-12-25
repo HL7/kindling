@@ -17,6 +17,7 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 
+import org.apache.commons.lang3.NotImplementedException;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
@@ -30,20 +31,13 @@ import org.hl7.fhir.definitions.model.Definitions;
 import org.hl7.fhir.exceptions.DefinitionException;
 import org.hl7.fhir.exceptions.FHIRException;
 import org.hl7.fhir.exceptions.TerminologyServiceException;
-import org.hl7.fhir.definitions.model.TypeRef;
 import org.hl7.fhir.r5.conformance.ProfileUtilities;
 import org.hl7.fhir.r5.conformance.ProfileUtilities.ProfileKnowledgeProvider;
 import org.hl7.fhir.r5.context.BaseWorkerContext;
 import org.hl7.fhir.r5.context.CanonicalResourceManager;
 import org.hl7.fhir.r5.context.HTMLClientLogger;
 import org.hl7.fhir.r5.context.IWorkerContext;
-import org.hl7.fhir.r5.context.IWorkerContext.IContextResourceLoader;
-import org.hl7.fhir.r5.context.IWorkerContext.PackageVersion;
 import org.hl7.fhir.r5.context.SimpleWorkerContext.PackageResourceLoader;
-import org.hl7.fhir.r5.formats.IParser;
-import org.hl7.fhir.r5.formats.JsonParser;
-import org.hl7.fhir.r5.formats.ParserType;
-import org.hl7.fhir.r5.formats.XmlParser;
 import org.hl7.fhir.r5.model.CodeSystem;
 import org.hl7.fhir.r5.model.CodeSystem.CodeSystemContentMode;
 import org.hl7.fhir.r5.model.CodeSystem.ConceptDefinitionComponent;
@@ -52,10 +46,8 @@ import org.hl7.fhir.r5.model.ConceptMap;
 import org.hl7.fhir.r5.model.ElementDefinition.ElementDefinitionBindingComponent;
 import org.hl7.fhir.r5.model.ElementDefinition.TypeRefComponent;
 import org.hl7.fhir.r5.model.ImplementationGuide;
-import org.hl7.fhir.r5.model.NamingSystem;
-import org.hl7.fhir.r5.model.NamingSystem.NamingSystemIdentifierType;
-import org.hl7.fhir.r5.model.NamingSystem.NamingSystemUniqueIdComponent;
 import org.hl7.fhir.r5.model.OperationOutcome;
+import org.hl7.fhir.r5.model.PackageInformation;
 import org.hl7.fhir.r5.model.Parameters;
 import org.hl7.fhir.r5.model.Parameters.ParametersParameterComponent;
 import org.hl7.fhir.r5.model.StringType;
@@ -70,15 +62,13 @@ import org.hl7.fhir.r5.utils.client.EFhirClientException;
 import org.hl7.fhir.r5.utils.validation.IResourceValidator;
 import org.hl7.fhir.utilities.CSFileInputStream;
 import org.hl7.fhir.utilities.CommaSeparatedStringBuilder;
-import org.hl7.fhir.utilities.OIDUtils;
 import org.hl7.fhir.utilities.TextFile;
 import org.hl7.fhir.utilities.TranslatorXml;
 import org.hl7.fhir.utilities.Utilities;
-import org.hl7.fhir.utilities.VersionUtilities;
+import org.hl7.fhir.utilities.i18n.I18nConstants;
 import org.hl7.fhir.utilities.npm.BasePackageCacheManager;
 import org.hl7.fhir.utilities.npm.NpmPackage;
 import org.hl7.fhir.utilities.npm.NpmPackage.PackageResourceInformation;
-import org.hl7.fhir.utilities.i18n.I18nConstants;
 import org.hl7.fhir.utilities.validation.ValidationMessage;
 import org.hl7.fhir.utilities.validation.ValidationMessage.IssueSeverity;
 import org.hl7.fhir.utilities.validation.ValidationMessage.IssueType;
@@ -200,47 +190,9 @@ public class BuildWorkerContext extends BaseWorkerContext implements IWorkerCont
   }
 
   @Override
-  public IParser getParser(ParserType type) {
-    switch (type) {
-    case JSON: return newJsonParser();
-    case XML: return newXmlParser();
-    default:
-      throw new Error("Parser Type "+type.toString()+" not supported");
-    }
-  }
-
-  @Override
-  public IParser getParser(String type) {
-    if (type.equalsIgnoreCase("JSON"))
-      return new JsonParser();
-  if (type.equalsIgnoreCase("XML"))
-    return new XmlParser();
-  throw new Error("Parser Type "+type.toString()+" not supported");
-  }
-
-  @Override
-  public IParser newJsonParser() {
-    return new JsonParser();
-  }
-
-  @Override
-  public IParser newXmlParser() {
-    return new XmlParser();
-  }
-
-  @Override
   public IResourceValidator newValidator() {
     throw new Error("check this");
 //    return new InstanceValidator(this, null);
-  }
-
-  @Override
-  public List<ConceptMap> findMapsForSource(String url) throws FHIRException {
-    List<ConceptMap> res = new ArrayList<ConceptMap>();
-    for (ConceptMap map : listMaps())
-      if (map.getSourceScopeCanonicalType().getValue().equals(url)) 
-        res.add(map);
-    return res;
   }
 
   @Override
@@ -717,69 +669,8 @@ public class BuildWorkerContext extends BaseWorkerContext implements IWorkerCont
     return s.replace("http://hl7.org/fhir/ValueSet/", "").replace("http://", "").replace("/", "_");
   }
 
-  @Override
-  public String getAbbreviation(String name) {
-    String s = definitions.getTLAs().get(name.toLowerCase());
-    if (Utilities.noString(s))
-      return "xxx";
-    else
-      return s;
-  }
-
   public void setDefinitions(Definitions definitions) {
     this.definitions = definitions;    
-  }
-
-  @Override
-  public List<StructureDefinition> allStructures() {
-    List<StructureDefinition> result = new ArrayList<StructureDefinition>();
-    result.addAll(listStructures());
-    return result;
-  }
-
-
-  @Override
-  public String oid2Uri(String oid) {
-    String uri = OIDUtils.getUriForOid(oid);
-    if (uri != null)
-      return uri;
-//    for (NamingSystem ns : systems) {
-//      if (hasOid(ns, oid)) {
-//        uri = getUri(ns);
-//        if (uri != null)
-//          return null;
-//      }
-//    }
-    return null;
-  }
-
-  private String getUri(NamingSystem ns) {
-    for (NamingSystemUniqueIdComponent id : ns.getUniqueId()) {
-      if (id.getType() == NamingSystemIdentifierType.URI)
-        return id.getValue();
-    }
-    return null;
-  }
-
-  private boolean hasOid(NamingSystem ns, String oid) {
-    for (NamingSystemUniqueIdComponent id : ns.getUniqueId()) {
-      if (id.getType() == NamingSystemIdentifierType.OID && id.getValue().equals(oid))
-        return true;
-    }
-    return false;
-  }
-
-  @Override
-  public boolean hasCache() {
-    return true;
-  }
-
-  @Override
-  public List<String> getTypeNames() {
-    List<String> names = new ArrayList<String>();
-    for (TypeRef tr : definitions.getKnownTypes())
-      names.add(tr.getName());
-    return names;
   }
 
   public List<StructureDefinition> getExtensionDefinitions() {
@@ -868,11 +759,6 @@ public class BuildWorkerContext extends BaseWorkerContext implements IWorkerCont
     throw new Error("Not done yet");
   }
 
-  @Override
-  public StructureDefinition fetchRawProfile(String uri) {
-    StructureDefinition r = super.fetchResource(StructureDefinition.class, uri);
-    return r;
-  }
 
   @Override
   public int loadFromPackage(NpmPackage pi, IContextResourceLoader loader, String[] types) throws FileNotFoundException, IOException, FHIRException {
@@ -914,7 +800,7 @@ public class BuildWorkerContext extends BaseWorkerContext implements IWorkerCont
     }
     for (PackageResourceInformation pri : pi.listIndexedResources(types)) {
       try {
-        registerResourceFromPackage(new PackageResourceLoader(pri, loader), new PackageVersion(pi.id(), pi.version(), pi.dateAsDate()));
+        registerResourceFromPackage(new PackageResourceLoader(pri, loader), new PackageInformation(pi.id(), pi.version(), pi.dateAsDate()));
         t++;
       } catch (FHIRException e) {
         throw new FHIRException(formatMessage(I18nConstants.ERROR_READING__FROM_PACKAGE__, pri.getFilename(), pi.name(), pi.version(), e.getMessage()), e);
@@ -930,17 +816,26 @@ public class BuildWorkerContext extends BaseWorkerContext implements IWorkerCont
   }
 
   @Override
-  public void cachePackage(PackageDetails packageDetails, List<PackageVersion> dependencies) {
-
+  public boolean isPrimitiveType(String typeSimple) {
+    throw new NotImplementedException("Not implemented");
   }
 
   @Override
-  public boolean hasPackage(PackageVersion pack) {
+  public void cachePackage(PackageInformation packageInfo) {    
+  }
+
+  @Override
+  public boolean hasPackage(PackageInformation pack) {
     return false;
   }
 
   @Override
-  public PackageDetails getPackage(PackageVersion pack) {
+  public PackageInformation getPackage(String id, String ver) {
     return null;
+  }
+
+  @Override
+  public String getSpecUrl() {
+    return "";
   }
 }

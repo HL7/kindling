@@ -1,19 +1,10 @@
 package org.hl7.fhir.definitions.model;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 import org.hl7.fhir.definitions.model.Operation.OperationExample;
-import org.hl7.fhir.definitions.model.Profile.ConformancePackageSourceType;
 import org.hl7.fhir.definitions.model.ResourceDefn.InheritedMapping;
 import org.hl7.fhir.definitions.model.ResourceDefn.PointSpec;
 import org.hl7.fhir.definitions.model.SearchParameterDefn.CompositeDefinition;
 import org.hl7.fhir.r5.model.Base;
-import org.hl7.fhir.r5.model.SearchParameter;
-import org.hl7.fhir.r5.model.StructureDefinition;
-import org.hl7.fhir.r5.model.ValueSet;
 import org.hl7.fhir.utilities.Utilities;
 
 public class DefinitionComparer {
@@ -559,10 +550,7 @@ public class DefinitionComparer {
       res = false;
       System.out.println("Definitions differ @"+path+": url = "+left.getUrl()+" vs "+right.getUrl());
     }
-    if (!stringsMatch(left.getXPath(), right.getXPath()) && (left.getXPath() != null)) {
-      res = false;
-      System.out.println("Definitions differ @"+path+": xPath = "+left.getXPath()+" vs "+right.getXPath());
-    }
+    
     if (!stringsMatch(left.getNormativeVersion(), right.getNormativeVersion())) {
       res = false;
       System.out.println("Definitions differ @"+path+": normativeVersion = "+left.getNormativeVersion()+" vs "+right.getNormativeVersion());
@@ -573,10 +561,10 @@ public class DefinitionComparer {
       System.out.println("Definitions differ @"+path+": type = "+left.getType()+" vs "+right.getType());
     }
     
-    if (left.getxPathUsage() != right.getxPathUsage()) {
-      res = false;
-      System.out.println("Definitions differ @"+path+": xPathUsage = "+left.getxPathUsage()+" vs "+right.getxPathUsage());
-    }
+//    if (left.getxPathUsage() != right.getxPathUsage()) {
+//      res = false;
+//      System.out.println("Definitions differ @"+path+": xPathUsage = "+left.getxPathUsage()+" vs "+right.getxPathUsage());
+//    }
 // often wrong in spreadsheet model    
 //    if (left.getStandardsStatus() != right.getStandardsStatus() && left.getStandardsStatus() != null) {
 //      res = false;
@@ -917,10 +905,6 @@ public class DefinitionComparer {
       res = false;
       System.out.println("Definitions differ @"+path+": ocl = "+left.getOcl()+" vs "+right.getOcl());
     }
-    if (!stringsMatch(left.getXpath(), right.getXpath())) {
-      res = false;
-      System.out.println("Definitions differ @"+path+": xpath = "+left.getXpath()+" vs "+right.getXpath());
-    }
     if (!stringsMatch(left.getId(), right.getId())) {
       res = false;
       System.out.println("Definitions differ @"+path+": id = "+left.getId()+" vs "+right.getId());
@@ -1015,17 +999,6 @@ public class DefinitionComparer {
       res = false;
       System.out.println("Definitions differ @"+path+": copyright = "+left.getCopyright()+" vs "+right.getCopyright());
     }
-    
-    if (!stringsMatch(left.getCsOid(), right.getCsOid())) {
-      res = false;
-      System.out.println("Definitions differ @"+path+": csOid = "+left.getCsOid()+" vs "+right.getCsOid());
-    }
-
-    if (!stringsMatch(left.getVsOid(), right.getVsOid())) {
-      res = false;
-      System.out.println("Definitions differ @"+path+": vsOid = "+left.getVsOid()+" vs "+right.getVsOid());
-    }
-
     
     if (left.getStrength() != right.getStrength()) {
       res = false;

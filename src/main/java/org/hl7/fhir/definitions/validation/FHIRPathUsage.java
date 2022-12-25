@@ -13,17 +13,6 @@ public class FHIRPathUsage {
   private String context;
   private String description;
   private String expression;
-  private String xpath;
-  
-  public FHIRPathUsage(String location, String resource, String context, String description, String expression, String xpath) {
-    super();
-    this.location = location;
-    this.resource = resource;
-    this.context = context;
-    this.description = description;
-    this.expression = expression;
-    this.xpath = xpath;
-  }
   
   public FHIRPathUsage(String location, String resource, String context, String description, String expression) {
     super();
@@ -50,9 +39,6 @@ public class FHIRPathUsage {
     return expression;
   }
 
-  public String getXpath() {
-    return xpath;
-  }
 
   public String getResource() {
     return resource;

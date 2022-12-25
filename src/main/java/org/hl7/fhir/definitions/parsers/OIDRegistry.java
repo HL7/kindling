@@ -1,6 +1,9 @@
 package org.hl7.fhir.definitions.parsers;
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 
+import org.hl7.fhir.tools.publisher.Publisher;
 import org.hl7.fhir.utilities.IniFile;
 import org.hl7.fhir.utilities.Utilities;
 /*
@@ -34,37 +37,69 @@ POSSIBILITY OF SUCH DAMAGE.
 
 public class OIDRegistry {
 
-  private boolean forPublication;
+//  private boolean forPublication;
   private IniFile ini;
+  private Map<String, String> oids = new HashMap<>();
+  private Map<String, String> urls = new HashMap<>();
 
-  public OIDRegistry(String srcDir, boolean forPublication) throws IOException {
-    this.forPublication = forPublication;
-    ini = new IniFile(Utilities.path(srcDir, "oids.ini"));
+  public OIDRegistry(String srcDir) throws IOException {
+    ini = new IniFile(Utilities.path(srcDir, "source", "oids.ini"));
+    for (String s : ini.getPropertyNames("Key")) {
+      loadIniSection(s);
+    }
   }
+//
+//  public String idForUri(String url) {
+//    if (Utilities.noString(url))
+//      throw new Error("Request for id for null url");
+//    if (ini.getIntegerProperty("URLs", url) != null)
+//      return ini.getIntegerProperty("URLs", url).toString();
+//    else if (!forPublication)
+//      return "0";
+//    else {
+//      Integer last;
+//      if (ini.getIntegerProperty("Management", "last") != null)
+//        last = ini.getIntegerProperty("Management", "last")+1;
+//      else 
+//        last = 1;
+//      ini.setIntegerProperty("Management", "last", last, null);
+//      ini.setIntegerProperty("URLs", url, last, null);
+//      return last.toString();
+//    }
+//  }
+//
+//  public void commit() {
+//    if (forPublication) {
+//      ini.save();
+//    }
+//  }
 
-  public String idForUri(String url) {
-    if (Utilities.noString(url))
-      throw new Error("Request for id for null url");
-    if (ini.getIntegerProperty("URLs", url) != null)
-      return ini.getIntegerProperty("URLs", url).toString();
-    else if (!forPublication)
-      return "0";
-    else {
-      Integer last;
-      if (ini.getIntegerProperty("Management", "last") != null)
-        last = ini.getIntegerProperty("Management", "last")+1;
-      else 
-        last = 1;
-      ini.setIntegerProperty("Management", "last", last, null);
-      ini.setIntegerProperty("URLs", url, last, null);
-      return last.toString();
+  private void loadIniSection(String section) {
+    String[] list = ini.getPropertyNames(section);
+    if (list != null) {
+      for (String s : list) {
+        String oid = ini.getStringProperty(section, s);
+        if (oids.containsKey(oid)) {
+          throw new Error("duplicate OID "+oid);
+        }
+        oids.put(oid, s);
+        if (oids.containsKey(s)) {
+          throw new Error("duplicate url "+s);
+        }
+        urls.put(s, oid);
+      }
     }
   }
 
-  public void commit() {
-    if (forPublication) {
-      ini.save();
+  public String checkOid(String oid) {
+    return oids.get(oid);
+  }
+
+  public String getOID(String url) {
+    if (!urls.containsKey(url) && Publisher.WANT_REQUIRE_OIDS) {
+      System.out.println("Url '"+url+"' has no assigned OID");
     }
+    return urls.get(url);
   }
 
 }

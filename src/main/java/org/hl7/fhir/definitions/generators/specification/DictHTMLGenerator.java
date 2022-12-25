@@ -42,8 +42,8 @@ import org.hl7.fhir.definitions.model.BindingSpecification;
 import org.hl7.fhir.definitions.model.Definitions;
 import org.hl7.fhir.definitions.model.ElementDefn;
 import org.hl7.fhir.definitions.model.Invariant;
-import org.hl7.fhir.exceptions.FHIRException;
 import org.hl7.fhir.definitions.model.TypeRef;
+import org.hl7.fhir.exceptions.FHIRException;
 import org.hl7.fhir.r5.conformance.ProfileUtilities;
 import org.hl7.fhir.r5.formats.IParser.OutputStyle;
 import org.hl7.fhir.r5.formats.XmlParser;
@@ -63,10 +63,12 @@ import org.hl7.fhir.r5.model.StringType;
 import org.hl7.fhir.r5.model.StructureDefinition;
 import org.hl7.fhir.r5.model.StructureDefinition.StructureDefinitionKind;
 import org.hl7.fhir.r5.model.StructureDefinition.StructureDefinitionMappingComponent;
+import org.hl7.fhir.r5.utils.ToolingExtensions;
 import org.hl7.fhir.tools.publisher.PageProcessor;
 import org.hl7.fhir.utilities.CommaSeparatedStringBuilder;
 import org.hl7.fhir.utilities.StandardsStatus;
 import org.hl7.fhir.utilities.Utilities;
+import org.hl7.fhir.utilities.VersionUtilities;
 
 public class DictHTMLGenerator  extends OutputStreamWriter {
 
@@ -189,6 +191,7 @@ public class DictHTMLGenerator  extends OutputStreamWriter {
   private void generateElementInner(StructureDefinition profile, ElementDefinition d, int mode, ElementDefinition value) throws Exception {
     tableRow("Element Id", null, d.getId());
     tableRowNE("Definition", null, page.processMarkdown(profile.getName(), d.getDefinition(), prefix));
+    tableRow("Short Display", null, d.getShort());
     tableRowNE("Note", null, businessIdWarning(profile.getName(), tail(d.getPath())));
     tableRow("Cardinality", "conformance-rules.html#cardinality", describeCardinality(d) + summariseConditions(d.getCondition()));
     tableRowNE("Terminology Binding", "terminologies.html", describeBinding(d));
@@ -197,7 +200,7 @@ public class DictHTMLGenerator  extends OutputStreamWriter {
     else
       tableRowNE("Type", "datatypes.html", describeTypes(d.getType()) + processSecondary(mode, value));
     if (d.getPath().endsWith("[x]"))
-      tableRowNE("[x] Note", null, "See <a href=\""+prefix+"formats.html#choice\">Choice of Data Types</a> for further information about how to use [x]");
+      tableRowNE("[x] Note", null, "See <a href=\""+prefix+"formats.html#choice\">Choice of Datatypes</a> for further information about how to use [x]");
     if (d.getIsModifier())
       tableRow("Is Modifier", "conformance-rules.html#ismodifier", displayBoolean(d.getIsModifier()) + " (Reason: "+d.getIsModifierReason()+")");
     else
@@ -214,8 +217,9 @@ public class DictHTMLGenerator  extends OutputStreamWriter {
     tableRowNE("Pattern Value", null, encodeValue(d.getPattern()));
     tableRowNE("Example", null, encodeValues(d.getExample()));
     tableRowNE("Invariants", null, invariants(d.getConstraint(), profile));
-    tableRow("LOINC Code", null, getMapping(profile, d, Definitions.LOINC_MAPPING));
-    tableRow("SNOMED-CT Code", null, getMapping(profile, d, Definitions.SNOMED_MAPPING));
+// see task FHIR-20502    
+//    tableRow("LOINC Code", null, getMapping(profile, d, Definitions.LOINC_MAPPING));
+//    tableRow("SNOMED-CT Code", null, getMapping(profile, d, Definitions.SNOMED_MAPPING));
    }
 
   private String encodeValues(List<ElementDefinitionExampleComponent> examples) throws Exception {
@@ -408,7 +412,7 @@ public class DictHTMLGenerator  extends OutputStreamWriter {
     for (String id : ids) {
       ElementDefinitionConstraintComponent inv = getConstraint(constraints, id);
       s.append("<tr><td width=\"60px\"><b title=\"Formal Invariant Identifier\">"+inv.getKey()+"</b></td><td>"+presentLevel(inv)+"</td><td>"+Utilities.escapeXml(inv.getHuman())+"</td><td><span style=\"font-family: Courier New, monospace\">"+Utilities.escapeXml(inv.getExpression())+"</span>");
-      if (inv.hasExtension("http://hl7.org/fhir/StructureDefinition/elementdefinition-bestpractice")) 
+      if (inv.hasExtension(ToolingExtensions.EXT_BEST_PRACTICE)) 
         s.append("<br/>This is (only) a best practice guideline because: <blockquote>"+page.processMarkdown("best practice guideline", inv.getExtensionString("http://hl7.org/fhir/StructureDefinition/elementdefinition-bestpractice-explanation"), prefix)+"</blockquote>");
       s.append("</td></tr>");
     }
@@ -416,7 +420,7 @@ public class DictHTMLGenerator  extends OutputStreamWriter {
   }
 
   private String presentLevel(ElementDefinitionConstraintComponent inv) {
-    if (inv.hasExtension("http://hl7.org/fhir/StructureDefinition/elementdefinition-bestpractice"))
+    if (inv.hasExtension(ToolingExtensions.EXT_BEST_PRACTICE))
       return "<a href=\""+prefix+"conformance-rules.html#best-practice\" style=\"color: DarkGreen\">Guideline</a>";
     if ("warning".equals(inv.getSeverity().toCode()))
       return "<a href=\""+prefix+"conformance-rules.html#warning\" style=\"color: Chocolate\">Warning</a>";
@@ -505,11 +509,12 @@ public class DictHTMLGenerator  extends OutputStreamWriter {
 	private void writeEntry(String path, String cardinality, String type, BindingSpecification bs, ElementDefn e, String resourceName, boolean root) throws Exception {
 		write("  <tr><td colspan=\"2\" class=\"structure\"><a name=\""+path.replace("[", "_").replace("]", "_")+"\"> </a><b>"+path+"</b></td></tr>\r\n");
 		if (e.getStandardsStatus() != null && !path.contains("."))
-      tableRowStyled("Standards Status", "versions.html#std-process", getStandardsStatusNote(e.getStandardsStatus(), root), getStandardsStatusStyle(e.getStandardsStatus()));
+      tableRowStyled("Standards Status", "versions.html#std-process", getStandardsStatusNote(e.getStandardsStatus(), e.getStandardsStatusReason(), root), getStandardsStatusStyle(e.getStandardsStatus()));
     if (e.getStandardsStatus() == StandardsStatus.DEPRECATED && path.contains("."))
-      tableRowStyled("Standards Status", "versions.html#std-process", getStandardsStatusNote(e.getStandardsStatus(), root), getStandardsStatusStyle(e.getStandardsStatus()));
+      tableRowStyled("Standards Status", "versions.html#std-process", getStandardsStatusNote(e.getStandardsStatus(), e.getStandardsStatusReason(), root), getStandardsStatusStyle(e.getStandardsStatus()));
     tableRow("Element Id", null, e.getPath());
     tableRowNE("Definition", null, page.processMarkdown(path, e.getDefinition(), prefix));
+    tableRow("Short Display", null, e.getShortDefn());
     tableRowNE("Note", null, businessIdWarning(resourceName, e.getName()));
 		tableRow("Cardinality", "conformance-rules.html#cardinality", cardinality);
 		tableRowNE("Terminology Binding", "terminologies.html", describeBinding(path, e));
@@ -526,7 +531,7 @@ public class DictHTMLGenerator  extends OutputStreamWriter {
 		if (e.hasHierarchy())
 	    tableRow("Hierarchy", "references.html#circular", e.getHierarchy() ? "This reference is part of a strict Hierarchy" : "This reference may point back to the same instance (including transitively)");
     if (path.endsWith("[x]"))
-      tableRowNE("[x] Note", null, "See <a href=\""+prefix+"formats.html#choice\">Choice of Data Types</a> for further information about how to use [x]");
+      tableRowNE("[x] Note", null, "See <a href=\""+prefix+"formats.html#choice\">Choice of Datatypes</a> for further information about how to use [x]");
     if (e.isModifier())
       tableRow("Is Modifier", "conformance-rules.html#ismodifier", displayBoolean(e.isModifier()) + " (Reason: "+e.getModifierReason()+")");
     else
@@ -547,7 +552,7 @@ public class DictHTMLGenerator  extends OutputStreamWriter {
 	}
 	
 	private boolean isR5() {
-    return !page.getVersion().isR4B();
+    return !VersionUtilities.isR5VerOrLater(page.getVersion().toCode());
   }
 
   private String patternAnalysis(ElementDefn e) {
@@ -577,8 +582,12 @@ public class DictHTMLGenerator  extends OutputStreamWriter {
     return "background-color: "+status.getColor();
   }
 
-  private String getStandardsStatusNote(StandardsStatus status, boolean root) {
-    return "This element has a standards status of \""+status.toDisplay()+"\""+ (!root ? " which is different from the status of the whole resource" : "");  
+  private String getStandardsStatusNote(StandardsStatus status, String md, boolean root) throws Exception {
+    String s = "This element has a standards status of \""+status.toDisplay()+"\""+ (!root ? " which is different from the status of the whole resource" : "");
+    if (!Utilities.noString(md)) {
+      s = s + page.processMarkdown("standards status", md, null);
+    }
+    return s;  
   }
 
   private String tasks(List<String> tasks) {
@@ -633,7 +642,7 @@ public class DictHTMLGenerator  extends OutputStreamWriter {
 //  for (String id : ids) {
 //    ElementDefinitionConstraintComponent inv = getConstraint(constraints, id);
 //    s.append("<tr><td><b title=\"Formal Invariant Identifier\">"+inv.getId()+"</b></td><td>"+presentLevel(inv)+"</td><td>(base)</td><td>"+Utilities.escapeXml(inv.getHuman())+"</td><td><span style=\"font-family: Courier New, monospace\">"+Utilities.escapeXml(inv.getExpression())+"</span>");
-//    if (inv.hasExtension("http://hl7.org/fhir/StructureDefinition/elementdefinition-bestpractice")) 
+//    if (inv.hasExtension(ToolingExtensions.EXT_BEST_PRACTICE)) 
 //      s.append("<br/>This is (only) a best practice guideline because: <blockquote>"+page.processMarkdown("best practice guideline", inv.getExtensionString("http://hl7.org/fhir/StructureDefinition/elementdefinition-bestpractice-explanation"), prefix)+"</blockquote>");
 //    s.append("</td></tr>");
 //  }

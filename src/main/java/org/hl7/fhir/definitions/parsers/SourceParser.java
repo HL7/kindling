@@ -59,7 +59,6 @@ import org.hl7.fhir.definitions.model.Compartment;
 import org.hl7.fhir.definitions.model.ConstraintStructure;
 import org.hl7.fhir.definitions.model.DefinedCode;
 import org.hl7.fhir.definitions.model.DefinedStringPattern;
-import org.hl7.fhir.definitions.model.DefinitionComparer;
 import org.hl7.fhir.definitions.model.Definitions;
 import org.hl7.fhir.definitions.model.Dictionary;
 import org.hl7.fhir.definitions.model.ElementDefn;
@@ -96,19 +95,21 @@ import org.hl7.fhir.r5.formats.XmlParser;
 import org.hl7.fhir.r5.model.Bundle;
 import org.hl7.fhir.r5.model.Bundle.BundleEntryComponent;
 import org.hl7.fhir.r5.model.Bundle.BundleType;
+import org.hl7.fhir.r5.model.Bundle.LinkRelationTypes;
 import org.hl7.fhir.r5.model.CanonicalResource;
 import org.hl7.fhir.r5.model.CodeSystem;
 import org.hl7.fhir.r5.model.CodeType;
 import org.hl7.fhir.r5.model.Composition;
-import org.hl7.fhir.r5.model.Constants;
+import org.hl7.fhir.r5.model.Enumeration;
+import org.hl7.fhir.r5.model.Enumerations.AllResourceTypes;
 import org.hl7.fhir.r5.model.Enumerations.FHIRVersion;
 import org.hl7.fhir.r5.model.Resource;
 import org.hl7.fhir.r5.model.SearchParameter;
 import org.hl7.fhir.r5.model.StructureDefinition;
 import org.hl7.fhir.r5.model.StructureDefinition.StructureDefinitionContextComponent;
 import org.hl7.fhir.r5.model.StructureDefinition.TypeDerivationRule;
-import org.hl7.fhir.r5.terminologies.CodeSystemUtilities;
 import org.hl7.fhir.r5.model.ValueSet;
+import org.hl7.fhir.r5.terminologies.CodeSystemUtilities;
 import org.hl7.fhir.r5.utils.ToolingExtensions;
 import org.hl7.fhir.tools.publisher.BuildWorkerContext;
 import org.hl7.fhir.tools.publisher.PageProcessor;
@@ -172,7 +173,7 @@ public class SourceParser {
   public SourceParser(Logger logger, String root, Definitions definitions, boolean forPublication, FHIRVersion version, BuildWorkerContext context, Calendar genDate, PageProcessor page, List<FHIRPathUsage> fpUsages, boolean exceptionIfExcelNotNormalised) throws IOException, ParserConfigurationException, SAXException {
     this.logger = logger;
     this.forPublication = forPublication;
-    this.registry = new OIDRegistry(root, forPublication);
+    this.registry = new OIDRegistry(root);
     this.definitions = definitions;
     this.version = version;
     this.context = context;
@@ -188,7 +189,7 @@ public class SourceParser {
     dtDir = srcDir + "datatypes" + sl;
     imgDir = root + sl + "images" + sl;
     rootDir = root + sl;
-    vsGen = new ValueSetGenerator(definitions, version.toCode(), genDate, context.translator(), page.packageInfo());
+    vsGen = new ValueSetGenerator(definitions, version.toCode(), genDate, context.translator(), page.packageInfo(), context);
     this.exceptionIfExcelNotNormalised = exceptionIfExcelNotNormalised;
   }
 
@@ -239,17 +240,17 @@ public class SourceParser {
     }
 
     for (String n : ini.getPropertyNames("infrastructure")) {
-      loadCompositeType(n, definitions.getInfrastructure(), "5", "abstract".equals(ini.getStringProperty("infrastructure", n)));
+      loadCompositeType(n, definitions.getInfrastructure(), getFmmForType(n, "5"), "abstract".equals(ini.getStringProperty("infrastructure", n)));
     }
 
     for (String n : ini.getPropertyNames("types")) {
-      loadCompositeType(n, definitions.getTypes(), "5", "abstract".equals(ini.getStringProperty("types", n)));
+      loadCompositeType(n, definitions.getTypes(), getFmmForType(n, "5"), "abstract".equals(ini.getStringProperty("types", n)));
     }
 
     String[] shared = ini.getPropertyNames("shared"); 
     if (shared != null) {
       for (String n : shared ) {
-        definitions.getShared().add(loadCompositeType(n, definitions.getTypes(), "2", "abstract".equals(ini.getStringProperty("shared", n))));
+        definitions.getShared().add(loadCompositeType(n, definitions.getTypes(), getFmmForType(n, "2"), "abstract".equals(ini.getStringProperty("shared", n))));
       }
     }
 
@@ -355,9 +356,19 @@ public class SourceParser {
         }
       }        
     }
-    closeTemplates();
-       
+    closeTemplates();    
   }
+
+  private String getFmmForType(String n, String def) {
+    if (ini.hasProperty("fmm-dt", n)) {
+      return ini.getStringProperty("fmm-dt", n);
+    } else {
+      return def;
+    }
+  }
+
+
+
 
   private void findValueSets(ElementDefn ed) {
     if (ed.getBinding() != null) {
@@ -427,7 +438,7 @@ public class SourceParser {
       res.setUserData("external.url", stated);
       res.setUserData("path", stated);
       context.cacheResource(res);
-      externals.addEntry().setFullUrl("http://hl7.org/fhir/"+res.fhirType()+"/"+res.getId()).setResource(res).addLink().setRelation("via").setUrl(stated);
+      externals.addEntry().setFullUrl("http://hl7.org/fhir/"+res.fhirType()+"/"+res.getId()).setResource(res).addLink().setRelation(LinkRelationTypes.VIA).setUrl(stated);
     } else
       throw new Exception("Unsupported external resource type "+res.fhirType());  
   }
@@ -543,6 +554,7 @@ public class SourceParser {
     if (lm.getResource().getFmmLevel() == null)
       lm.getResource().setFmmLevel("1");
     lm.getResource().setStatus(StandardsStatus.INFORMATIVE);
+    lm.getResource().setPattern(true);
     errors.addAll(sparser.getErrors());
     File f = new File(Utilities.path(srcDir, n, n+".svg"));
     if (f.exists()) 
@@ -893,7 +905,7 @@ public class SourceParser {
           c.getResources().put(r,  sheet.getColumn(row, c.getName()));
         }
       }
-    }    
+    }
   }
 
   private void loadCodeSystem(String n) throws FileNotFoundException, Exception {
@@ -902,7 +914,7 @@ public class SourceParser {
     CodeSystem cs = (CodeSystem) xml.parse(new CSFileInputStream(fn));
     if (!cs.hasId())  
       cs.setId(FormatUtilities.makeId(n));
-    if (cs.getUrl().startsWith("http://hl7.org/fhir"))
+    if (cs.getUrl().startsWith("http://hl7.org/fhir") || !cs.hasVersion())
       cs.setVersion(version.toCode());
     cs.setUserData("path", "codesystem-"+cs.getId()+".html");
     cs.setUserData("filename", "codesystem-"+cs.getId());
@@ -922,7 +934,7 @@ public class SourceParser {
   private void loadValueSet(String n) throws FileNotFoundException, Exception {
     XmlParser xml = new XmlParser();
     ValueSet vs = (ValueSet) xml.parse(new CSFileInputStream(srcDir+ini.getStringProperty("valuesets", n).replace('\\', File.separatorChar)));
-    new CodeSystemConvertor(definitions.getCodeSystems()).convert(xml, vs, srcDir+ini.getStringProperty("valuesets", n).replace('\\', File.separatorChar), page.packageInfo());
+    new CodeSystemConvertor(definitions.getCodeSystems(), registry).convert(xml, vs, srcDir+ini.getStringProperty("valuesets", n).replace('\\', File.separatorChar), page.packageInfo());
     vs.setId(FormatUtilities.makeId(n));
     vs.setUrl("http://hl7.org/fhir/ValueSet/"+vs.getId());
     if (!vs.hasVersion() || vs.getUrl().startsWith("http://hl7.org/fhir"))
@@ -979,7 +991,9 @@ public class SourceParser {
         if (ae.getResource() instanceof Composition)
           pack.loadFromComposition((Composition) ae.getResource(), file.getAbsolutePath());
         else if (ae.getResource() instanceof StructureDefinition && !((StructureDefinition) ae.getResource()).getType().equals("Extension")) {
-          StructureDefinition ed = (StructureDefinition) ae.getResource();
+          StructureDefinition ed = (StructureDefinition) ae.getResource();          
+          ed.setVersion(version.toCode());
+          ed.setFhirVersion(version);
           for (StructureDefinitionContextComponent s : ed.getContext())
             definitions.checkContextValid(s, file.getName(), this.context);
           ToolResourceUtilities.updateUsage(ed, pack.getCategory());
@@ -989,6 +1003,11 @@ public class SourceParser {
           if (Utilities.noString(ed.getBaseDefinition()))
             ed.setBaseDefinition("http://hl7.org/fhir/StructureDefinition/Extension");
           ed.setDerivation(TypeDerivationRule.CONSTRAINT);
+          if (ToolingExtensions.getStandardsStatus(ed) == null) {
+            ToolingExtensions.setStandardsStatus(ed, StandardsStatus.TRIAL_USE, null);
+          }
+          ed.setVersion(version.toCode());
+          ed.setFhirVersion(version);
           if (ToolingExtensions.readStringExtension(ed, ToolingExtensions.EXT_WORKGROUP) == null)
             ToolingExtensions.setCodeExtension(ed, ToolingExtensions.EXT_WORKGROUP, wg.getCode());
           if (!ed.hasUrl())
@@ -1035,6 +1054,7 @@ public class SourceParser {
         throw new Exception("Error parsing Profile: not a structure definition");
       StructureDefinition sd = (StructureDefinition) rf;
       sd.setVersion(version.toCode());
+      sd.setFhirVersion(version);
       ap.putMetadata("id", sd.getId()+"-pack");
       ap.putMetadata("date", sd.getDateElement().asStringValue());
       ap.putMetadata("title", sd.getTitle());
@@ -1056,7 +1076,7 @@ public class SourceParser {
     logger.log("Load Common Bindings", LogMessageType.Process);
 
     BindingsParser parser = new BindingsParser(new CSFileInputStream(new CSFile(termDir + "bindings.xml")), termDir + "bindings.xml", srcDir, registry, version.toCode(), 
-        definitions.getCodeSystems(), page.getConceptMaps(), genDate, exceptionIfExcelNotNormalised, page.packageInfo());
+        definitions.getCodeSystems(), page.getConceptMaps(), genDate, exceptionIfExcelNotNormalised, page.packageInfo(), page.getDefinitions(), context.translator());
     List<BindingSpecification> cds = parser.parse();
 
     for (BindingSpecification cd : cds) {
@@ -1073,8 +1093,8 @@ public class SourceParser {
         definitions.getBoundValueSets().put(cd.getMaxValueSet().getUrl(), cd.getMaxValueSet());
       }
     }
-    if (!page.getDefinitions().getBoundValueSets().containsKey("http://hl7.org/fhir/ValueSet/data-absent-reason"))
-      throw new Exception("d-a-r not found");
+//    if (!page.getDefinitions().getBoundValueSets().containsKey("http://hl7.org/fhir/ValueSet/data-absent-reason"))
+//      throw new Exception("d-a-r not found");
 
   }
 
@@ -1130,8 +1150,6 @@ public class SourceParser {
       DataTypeTableGenerator dtg = new DataTypeTableGenerator(dstDir, page, t.getName(), true, version);
       t.getProfile().getText().setDiv(new XhtmlNode(NodeType.Element, "div"));
       t.getProfile().getText().getDiv().getChildNodes().add(dtg.generate(t, null, false));
-      if (context.hasResource(StructureDefinition.class, t.getProfile().getUrl()))
-        throw new Exception("Duplicate Profile "+t.getProfile().getUrl());
       context.cacheResource(t.getProfile());
     } catch (Exception e) {
       throw new Exception("Error generating profile for '"+t.getName()+"': "+e.getMessage(), e);
@@ -1139,21 +1157,27 @@ public class SourceParser {
   }
 
   private String loadCompositeType(String n, Map<String, org.hl7.fhir.definitions.model.TypeDefn> map, String fmm, boolean isAbstract) throws Exception {
-    TypeParser tp = new TypeParser(version.toString());
+    TypeParser tp = new TypeParser(version.toCode());
     List<TypeRef> ts = tp.parse(n, false, null, context, true);
     definitions.getKnownTypes().addAll(ts);
 
     StandardsStatus status = loadStatus(n);
+    String ssr = loadStatusReason(n);
     String nv = loadNormativeVersion(n);
     
     try {
       TypeRef t = ts.get(0);
       File csv = new CSFile(dtDir + t.getName().toLowerCase() + ".xml");
       if (csv.exists()) {
-        OldSpreadsheetParser p = new OldSpreadsheetParser("core", new CSFileInputStream(csv), csv.getName(), csv.getAbsolutePath(), definitions, srcDir, logger, registry, version, context, genDate, isAbstract, page, true, ini, wg("fhir"), definitions.getProfileIds(), fpUsages, page.getConceptMaps(), exceptionIfExcelNotNormalised, page.packageInfo(), page.getRc());
+        String wgc = "fhir";
+        if (ini.hasProperty("workgroups", t.getName().toLowerCase())) {
+          wgc = ini.getStringProperty("workgroups", t.getName().toLowerCase());
+        }
+        OldSpreadsheetParser p = new OldSpreadsheetParser("core", new CSFileInputStream(csv), csv.getName(), csv.getAbsolutePath(), definitions, srcDir, logger, registry, version, context, genDate, isAbstract, page, true, ini, wg(wgc), definitions.getProfileIds(), fpUsages, page.getConceptMaps(), exceptionIfExcelNotNormalised, page.packageInfo(), page.getRc());
         org.hl7.fhir.definitions.model.TypeDefn el = p.parseCompositeType();
         el.setFmmLevel(fmm);
         el.setStandardsStatus(status);
+        el.setStandardsStatusReason(ssr);
         el.setNormativeVersion(nv);
         map.put(t.getName(), el);
         genTypeProfile(el);
@@ -1176,7 +1200,6 @@ public class SourceParser {
             inv.setId(n);
             inv.setEnglish(sheet.getColumn(i,"Rules"));
             inv.setOcl(sheet.getColumn(i, "OCL"));
-            inv.setXpath(sheet.getColumn(i, "XPath"));
             inv.setExpression(sheet.getColumn(i, "Expression"));
             inv.setExplanation(sheet.getColumn(i, "Explanation"));
             inv.setTurtle(sheet.getColumn(i, "RDF"));
@@ -1216,8 +1239,13 @@ public class SourceParser {
   private StandardsStatus loadStatus(String n) throws FHIRException {
     String ns = ini.getStringProperty("standards-status", n);
     if (Utilities.noString(ns))
-      throw new FHIRException("Data types must be registered in the [standards-status] section of fhir.ini ("+n+")");
+      throw new FHIRException("Datatypes must be registered in the [standards-status] section of fhir.ini ("+n+")");
     return StandardsStatus.fromCode(ns);
+  }
+
+  private String loadStatusReason(String n) throws FHIRException {
+    String ns = ini.getStringProperty("standards-status-reason", n);
+    return ns;
   }
 
   private ResourceDefn loadResource(String n, Map<String, ResourceDefn> map, boolean isAbstract, boolean isTemplate, String t, boolean isInterface) throws Exception {
@@ -1293,6 +1321,15 @@ public class SourceParser {
       setResourceProps(n, wg, rootNew);
       if (map != null) {
         map.put(rootNew.getName(), rootNew);
+      }
+      if (isInterface) {
+        for (SearchParameterDefn spd : rootNew.getSearchParams().values()) {
+          CommonSearchParameter csp = new CommonSearchParameter();
+          csp.setCode(spd.getCode());
+          csp.setId(rootNew.getName()+"-"+spd.getCode());
+          csp.getResources().add(rootNew.getName());
+          definitions.getCommonSearchParameters().put(rootNew.getName()+"::"+spd.getCode(), csp);
+        }
       }
       return rootNew;
     }
@@ -1396,7 +1433,7 @@ public class SourceParser {
 
     for (String n : ini.getPropertyNames("types"))
       if (ini.getStringProperty("types", n).equals("")) {
-        TypeRef t = new TypeParser(version.toString()).parse(n, false, null, context, true).get(0);
+        TypeRef t = new TypeParser(version.toCode()).parse(n, false, null, context, true).get(0);
         checkFile("type definition", dtDir, t.getName().toLowerCase() + ".xml", errors, "all");
       }
 

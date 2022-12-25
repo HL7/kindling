@@ -34,30 +34,41 @@ import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import org.apache.commons.io.IOUtils;
 import org.hl7.fhir.definitions.model.BindingSpecification;
 import org.hl7.fhir.definitions.model.BindingSpecification.BindingMethod;
+import org.hl7.fhir.definitions.model.Definitions;
 import org.hl7.fhir.definitions.parsers.CodeListToValueSetParser;
 import org.hl7.fhir.definitions.parsers.CodeSystemConvertor;
 import org.hl7.fhir.definitions.parsers.OIDRegistry;
 import org.hl7.fhir.exceptions.FHIRFormatError;
 import org.hl7.fhir.r5.context.CanonicalResourceManager;
-import org.hl7.fhir.r5.context.IWorkerContext.PackageVersion;
 import org.hl7.fhir.r5.formats.IParser;
 import org.hl7.fhir.r5.formats.JsonParser;
 import org.hl7.fhir.r5.formats.XmlParser;
 import org.hl7.fhir.r5.model.CodeSystem;
+import org.hl7.fhir.r5.model.CodeSystem.CodeSystemContentMode;
+import org.hl7.fhir.r5.model.CodeSystem.CodeSystemHierarchyMeaning;
+import org.hl7.fhir.r5.model.CodeSystem.ConceptDefinitionComponent;
+import org.hl7.fhir.r5.model.CodeSystem.ConceptDefinitionDesignationComponent;
 import org.hl7.fhir.r5.model.CodeType;
 import org.hl7.fhir.r5.model.ConceptMap;
-import org.hl7.fhir.r5.model.Constants;
+import org.hl7.fhir.r5.model.ContactDetail;
+import org.hl7.fhir.r5.model.ContactPoint.ContactPointSystem;
 import org.hl7.fhir.r5.model.DateTimeType;
 import org.hl7.fhir.r5.model.Enumerations.BindingStrength;
 import org.hl7.fhir.r5.model.Enumerations.PublicationStatus;
+import org.hl7.fhir.r5.model.PackageInformation;
 import org.hl7.fhir.r5.model.ValueSet;
+import org.hl7.fhir.r5.model.ValueSet.ValueSetComposeComponent;
 import org.hl7.fhir.r5.terminologies.CodeSystemUtilities;
 import org.hl7.fhir.r5.terminologies.ValueSetUtilities;
 import org.hl7.fhir.r5.utils.ToolingExtensions;
+import org.hl7.fhir.tools.publisher.KindlingUtilities;
+import org.hl7.fhir.utilities.TranslationServices;
 import org.hl7.fhir.utilities.Utilities;
 import org.hl7.fhir.utilities.xls.XLSXmlNormaliser;
 import org.hl7.fhir.utilities.xls.XLSXmlParser;
@@ -75,9 +86,11 @@ public class BindingsParser {
   private CanonicalResourceManager<ConceptMap> maps;
   private Calendar genDate;
   private boolean exceptionIfExcelNotNormalised;
-  private PackageVersion packageInfo;
-  
-  public BindingsParser(InputStream file, String filename, String root, OIDRegistry registry, String version, CanonicalResourceManager<CodeSystem> codeSystems, CanonicalResourceManager<ConceptMap> maps, Calendar genDate, boolean exceptionIfExcelNotNormalised, PackageVersion packageInfo) {
+  private PackageInformation packageInfo;  
+  private Definitions definitions;
+  private TranslationServices translator;
+
+  public BindingsParser(InputStream file, String filename, String root, OIDRegistry registry, String version, CanonicalResourceManager<CodeSystem> codeSystems, CanonicalResourceManager<ConceptMap> maps, Calendar genDate, boolean exceptionIfExcelNotNormalised, PackageInformation packageInfo, Definitions definitions, TranslationServices translator) {
     this.file = file;
     this.filename = filename;
     this.root = root;
@@ -88,6 +101,8 @@ public class BindingsParser {
     this.genDate = genDate;
     this.exceptionIfExcelNotNormalised = exceptionIfExcelNotNormalised;
     this.packageInfo = packageInfo;
+    this.definitions = definitions;
+    this.translator = translator;
   }
 
   public List<BindingSpecification> parse() throws Exception {
@@ -100,7 +115,7 @@ public class BindingsParser {
     xls = new XLSXmlParser(file, filename);
     new XLSXmlNormaliser(filename, exceptionIfExcelNotNormalised).go();
     Sheet sheet = xls.getSheets().get("Bindings");
-        
+
     for (int row = 0; row < sheet.rows.size(); row++) {
       processLine(results, sheet, row);
     }		
@@ -123,7 +138,8 @@ public class BindingsParser {
         cd.getValueSet().setId(ref.substring(1));
         cd.getValueSet().setUrl("http://hl7.org/fhir/ValueSet/"+ref.substring(1));
         cd.getValueSet().setVersion(version);
-        
+        KindlingUtilities.makeUniversal(cd.getValueSet());
+
         if (!Utilities.noString(sheet.getColumn(row, "Committee"))) {
           cd.getValueSet().addExtension().setUrl(ToolingExtensions.EXT_WORKGROUP).setValue(new CodeType(sheet.getColumn(row, "Committee").toLowerCase()));
         }
@@ -141,7 +157,17 @@ public class BindingsParser {
         Sheet cs = xls.getSheets().get(ref.substring(1));
         if (cs == null)
           throw new Exception("Error parsing binding "+cd.getName()+": code list reference '"+ref+"' not resolved");
-        new CodeListToValueSetParser(cs, ref.substring(1), cd.getValueSet(), version, codeSystems, maps, packageInfo).execute(sheet.getColumn(row, "v2"), sheet.getColumn(row, "v3"), utg);
+        String oid = registry.getOID(cd.getValueSet().getUrl());
+        if (oid != null) {
+          ValueSetUtilities.setOID(cd.getValueSet(), oid);
+        }
+        if (cd.getMaxValueSet() != null) {
+          oid = registry.getOID(cd.getMaxValueSet().getUrl());
+          if (oid != null) {
+            ValueSetUtilities.setOID(cd.getMaxValueSet(), oid);
+          }          
+        }
+        new CodeListToValueSetParser(cs, ref.substring(1), cd.getValueSet(), version, codeSystems, maps, packageInfo, registry).execute(sheet.getColumn(row, "v2"), sheet.getColumn(row, "v3"), utg);
       } else if (cd.getBinding() == BindingMethod.ValueSet) {
         if (ref.startsWith("http:")) {
           cd.setReference(sheet.getColumn(row, "Reference")); // will sort this out later
@@ -154,17 +180,21 @@ public class BindingsParser {
           } else
             cd.setMaxValueSet(loadValueSet(max, sheet.getColumn(row, "Committee").toLowerCase()));
       } else if (cd.getBinding() == BindingMethod.Special) {
-        cd.setValueSet(new ValueSet());
-        cd.getValueSet().setId(ref.substring(1));
-        cd.getValueSet().setUrl("http://hl7.org/fhir/ValueSet/"+ref.substring(1));
-        cd.getValueSet().setVersion(version);
-        cd.getValueSet().setName(cd.getName());
-        
+        if ("#operation-outcome".equals(sheet.getColumn(row, "Reference"))) {
+          loadOperationOutcomeValueSet(cd);
+        } else {
+          cd.setValueSet(new ValueSet());
+          cd.getValueSet().setId(ref.substring(1));
+          cd.getValueSet().setUrl("http://hl7.org/fhir/ValueSet/"+ref.substring(1));
+          cd.getValueSet().setVersion(version);
+          cd.getValueSet().setName(cd.getName());
+          KindlingUtilities.makeUniversal(cd.getValueSet());
+        }
         // do nothing more: this will get filled out once all the resources are loaded
       }
       cd.setReference(sheet.getColumn(row, "Reference")); // do this anyway in the short term
 
-      
+
       if (cd.getValueSet() != null) {
         touchVS(cd.getValueSet());
         ValueSetUtilities.markStatus(cd.getValueSet(), Utilities.noString(sheet.getColumn(row, "Committee")) ? "vocab" : sheet.getColumn(row, "Committee").toLowerCase(), null, null, Utilities.noString(sheet.getColumn(row, "FMM")) ? null : sheet.getColumn(row, "FMM"), null, Utilities.noString(sheet.getColumn(row, "Normative-Version")) ? null : sheet.getColumn(row, "Normative-Version"));
@@ -173,14 +203,11 @@ public class BindingsParser {
         touchVS(cd.getMaxValueSet());
         ValueSetUtilities.markStatus(cd.getMaxValueSet(), Utilities.noString(sheet.getColumn(row, "Committee")) ? "vocab" : sheet.getColumn(row, "Committee").toLowerCase(), null, null, Utilities.noString(sheet.getColumn(row, "FMM")) ? null : sheet.getColumn(row, "FMM"), null, Utilities.noString(sheet.getColumn(row, "Max-Normative-Version")) ? null : sheet.getColumn(row, "Max-Normative-Version"));
       }
-      
+
       cd.setDescription(sheet.getColumn(row, "Description"));
       cd.setSource(filename);
       cd.setUri(sheet.getColumn(row, "Uri"));
       cd.setStrength(readBindingStrength(sheet.getColumn(row, "Conformance")));
-      String oid = sheet.getColumn(row, "Oid");
-      if (!Utilities.noString(oid))
-        cd.setVsOid(oid); // no cs oid in this case
       cd.setWebSite(sheet.getColumn(row, "Website"));
       cd.setStatus(PublicationStatus.fromCode(sheet.getColumn(row, "Status")));
       cd.setEmail(sheet.getColumn(row, "Email"));
@@ -193,14 +220,86 @@ public class BindingsParser {
     }
   }
 
+  private void loadOperationOutcomeValueSet(BindingSpecification cd) {
+    ValueSet vs = new ValueSet();
+    cd.setValueSet(vs);
+    cd.setBindingMethod(BindingMethod.ValueSet);
+    vs.setId("operation-outcome");
+    vs.setUrl("http://hl7.org/fhir/ValueSet/"+vs.getId());
+    vs.setName("OperationOutcomeCodes");
+    vs.setTitle("Operation Outcome Codes");
+    vs.setPublisher("HL7 (FHIR Project)");
+    vs.setVersion(version);
+    vs.setExperimental(false);
+
+    vs.setUserData("filename", "valueset-"+vs.getId());
+    if (!vs.hasExtension(ToolingExtensions.EXT_WORKGROUP)) {
+      vs.addExtension().setUrl(ToolingExtensions.EXT_WORKGROUP).setValue(new CodeType("fhir"));
+    } else {
+      String ec = ToolingExtensions.readStringExtension(vs, ToolingExtensions.EXT_WORKGROUP);
+      if (!ec.equals("fhir"))
+        System.out.println("ValueSet "+vs.getUrl()+" WG mismatch 11: is "+ec+", want to set to "+"fhir");
+    }     
+    vs.setUserData("path", "valueset-"+vs.getId()+".html");
+    KindlingUtilities.makeUniversal(vs);
+
+    ContactDetail c = vs.addContact();
+    c.addTelecom().setSystem(ContactPointSystem.URL).setValue("http://hl7.org/fhir");
+    c.addTelecom().setSystem(ContactPointSystem.EMAIL).setValue("fhir@lists.hl7.org");
+    vs.setDescription("Operation Outcome codes for translatable phrases used by FHIR test servers (see Implementation file translations.xml)");
+    vs.setStatus(PublicationStatus.DRAFT);
+    if (!vs.hasCompose())
+      vs.setCompose(new ValueSetComposeComponent());
+    vs.getCompose().addInclude().setSystem("http://hl7.org/fhir/operation-outcome");
+
+    CodeSystem cs = new CodeSystem();
+    cs.setHierarchyMeaning(CodeSystemHierarchyMeaning.ISA);
+    Set<String> codes = translator.listTranslations("ecode");
+    for (String s : Utilities.sorted(codes)) {
+      Map<String, String> langs = translator.translations(s);
+      ConceptDefinitionComponent cv = cs.addConcept();
+      cv.setCode(s);
+      cv.setDisplay(langs.get("en"));
+      for (String lang : langs.keySet()) {
+        if (!lang.equals("en")) {
+          String value = langs.get(lang);
+          ConceptDefinitionDesignationComponent dc = cv.addDesignation();
+          dc.setLanguage(lang);
+          dc.setValue(value);
+          dc.getUse().setSystem("http://terminology.hl7.org/CodeSystem/designation-usage").setCode("display");
+        }
+      }
+    }
+    KindlingUtilities.makeUniversal(cs);
+    CodeSystemConvertor.populate(cs, vs);
+    cs.setUrl("http://hl7.org/fhir/operation-outcome");
+    cs.setVersion(version);
+    cs.setCaseSensitive(true);
+    cs.setContent(CodeSystemContentMode.COMPLETE);
+    if (!cs.hasStatus()) {
+      cs.setStatus(PublicationStatus.DRAFT);
+    }
+    definitions.getCodeSystems().see(cs, packageInfo);
+  }
+
   private void touchVS(ValueSet vs) throws FHIRFormatError, URISyntaxException {
     ValueSetUtilities.makeShareable(vs);
-    if (!ValueSetUtilities.hasOID(vs))
-      ValueSetUtilities.setOID(vs, "urn:oid:"+BindingSpecification.DEFAULT_OID_VS +registry.idForUri(vs.getUrl()));
+    if (!ValueSetUtilities.hasOID(vs)) {
+      String oid = registry.getOID(vs.getUrl());
+      if (oid != null) {
+        ValueSetUtilities.setOID(vs, oid);
+      }
+    }
 
-    if (vs.getUserData("cs") != null)
-      if (!CodeSystemUtilities.hasOID((CodeSystem) vs.getUserData("cs")))
-        CodeSystemUtilities.setOID((CodeSystem) vs.getUserData("cs"), "urn:oid:"+BindingSpecification.DEFAULT_OID_CS + registry.idForUri(((CodeSystem) vs.getUserData("cs")).getUrl()));
+    if (vs.getUserData("cs") != null) {
+      CodeSystem cs = (CodeSystem) vs.getUserData("cs");
+      if (!CodeSystemUtilities.hasOID(cs)) {
+        String oid = registry.getOID(cs.getUrl());
+        if (oid != null) {
+          CodeSystemUtilities.setOID((CodeSystem) vs.getUserData("cs"), "urn:oid:"+oid);
+        }
+      }
+    }
   }
 
   private ValueSet loadValueSet(String ref, String committee) throws Exception {
@@ -223,26 +322,28 @@ public class BindingsParser {
       result.setId(ref.substring(9));
       if (!result.hasExperimental())
         result.setExperimental(false);
-//    if (!result.hasUrl())
-        result.setUrl("http://hl7.org/fhir/ValueSet/"+ref.substring(9));
+      //    if (!result.hasUrl())
+      result.setUrl("http://hl7.org/fhir/ValueSet/"+ref.substring(9));
 
       if (!result.hasVersion() || result.getUrl().startsWith("http://hl7.org/fhir"))
         result.setVersion(version);
 
-        
-        if (!Utilities.noString(committee)) {
-          if (!result.hasExtension(ToolingExtensions.EXT_WORKGROUP)) {
-            result.addExtension().setUrl(ToolingExtensions.EXT_WORKGROUP).setValue(new CodeType(committee));
-          } else {
-            String ec = ToolingExtensions.readStringExtension(result, ToolingExtensions.EXT_WORKGROUP);
-            if (!ec.equals(committee))
-              System.out.println("ValueSet "+result.getUrl()+" WG mismatch 1: is "+ec+", want to set to "+committee);
-          } 
-        }
-        result.setUserData("filename", "valueset-"+ref.substring(9));
-        result.setUserData("path", "valueset-"+ref.substring(9)+".html");
-        
-        new CodeSystemConvertor(codeSystems).convert(p, result, srcName, packageInfo);
+      if (!Utilities.noString(committee)) {
+        if (!result.hasExtension(ToolingExtensions.EXT_WORKGROUP)) {
+          result.addExtension().setUrl(ToolingExtensions.EXT_WORKGROUP).setValue(new CodeType(committee));
+        } else {
+          String ec = ToolingExtensions.readStringExtension(result, ToolingExtensions.EXT_WORKGROUP);
+          if (!ec.equals(committee))
+            System.out.println("ValueSet "+result.getUrl()+" WG mismatch 1: is "+ec+", want to set to "+committee);
+        } 
+      }
+      result.setUserData("filename", "valueset-"+ref.substring(9));
+      result.setUserData("path", "valueset-"+ref.substring(9)+".html");
+      String oid = registry.getOID(result.getUrl());
+      if (oid != null) {
+        ValueSetUtilities.setOID(result, oid);
+      }
+      new CodeSystemConvertor(codeSystems, registry).convert(p, result, srcName, packageInfo);
       return result;
     } finally {
       IOUtils.closeQuietly(input);

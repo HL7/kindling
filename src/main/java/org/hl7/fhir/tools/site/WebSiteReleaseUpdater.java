@@ -50,7 +50,7 @@ public class WebSiteReleaseUpdater {
 
     if (exempt != null)
       return "<p id=\"publish-box-current\">This is the current officially released version of FHIR, which is <a href=\"history.html\">"+sequence+
-          "</a> (v"+version+"). For a full list of all versions, see the <a href=\"http://hl7.org/fhir/directory.cfml\">Directory of published versions <img src=\"{pd}external.png\" style=\"vertical-align: baseline\"></a>.</p>";
+          "</a> (v"+version+"). For a full list of all versions, see the <a href=\"http://hl7.org/fhir/directory.cfml\">Directory of published versions <img src=\"{pd}external.png\" style=\"vertical-align: baseline\" alt=\"img\"></a>.</p>";
     
     String desc = JsonUtilities.str(ver, "desc");
     String status = JsonUtilities.str(ver, "status");

@@ -14,7 +14,7 @@ public class UTGLoader implements ILoaderKnowledgeProviderR5 {
   
   public UTGLoader(String version) {
     super();
-    this.version = "current".equals(version) ? "1.0.0" : version;
+    this.version = version;
   }
 
   @Override

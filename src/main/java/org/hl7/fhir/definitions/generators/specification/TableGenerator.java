@@ -11,13 +11,17 @@ import org.hl7.fhir.definitions.model.ElementDefn;
 import org.hl7.fhir.definitions.model.Invariant;
 import org.hl7.fhir.definitions.model.ProfiledType;
 import org.hl7.fhir.definitions.model.TypeRef;
+import org.hl7.fhir.r5.conformance.ProfileUtilities;
 import org.hl7.fhir.r5.model.Enumerations.FHIRVersion;
 import org.hl7.fhir.r5.model.ValueSet;
+import org.hl7.fhir.r5.utils.ToolingExtensions;
 import org.hl7.fhir.tools.publisher.PageProcessor;
 import org.hl7.fhir.utilities.StandardsStatus;
 import org.hl7.fhir.utilities.Utilities;
+import org.hl7.fhir.utilities.VersionUtilities;
 import org.hl7.fhir.utilities.xhtml.HierarchicalTableGenerator;
 import org.hl7.fhir.utilities.xhtml.HierarchicalTableGenerator.Cell;
+import org.hl7.fhir.utilities.xhtml.HierarchicalTableGenerator.Piece;
 import org.hl7.fhir.utilities.xhtml.HierarchicalTableGenerator.Row;
 
 public class TableGenerator extends BaseGenerator {
@@ -42,6 +46,7 @@ public class TableGenerator extends BaseGenerator {
     this.pageName = pageName;
     this.inlineGraphics = inlineGraphics; 
     this.version = version;
+
   }
   
   protected boolean dictLinks() {
@@ -64,13 +69,19 @@ public class TableGenerator extends BaseGenerator {
     if (e.isSummary()) { 
       gc.addStyledText("This element is included in summaries", "\u03A3", null, null, prefix+"elementdefinition-definitions.html#ElementDefinition.isSummary", false);
     }
+    if (e.isTranslatable()) { 
+      gc.addStyledText("This element is a candidate for being translated", "T", null, null, prefix+"languages.html#translatable", false);
+    }
     if (!isRoot && (!e.getInvariants().isEmpty() || !e.getStatedInvariants().isEmpty())) { 
-      gc.addStyledText("This element has or is affected by some invariants", "I", null, null, prefix+"conformance-rules.html#constraints", false);
+      Piece p = gc.addText(ProfileUtilities.CONSTRAINT_CHAR);
+      p.setHint("This element has or is affected by some invariants");
+      p.addStyle(ProfileUtilities.CONSTRAINT_STYLE);
+      p.setReference(prefix+"conformance-rules.html#constraints");      
     }
     if (isInterface) {
-      gc.addStyledText("This is an interface resource", "«I»", null, null, page.getVersion().isR4B() ? null : prefix+"uml.html#interface", false);
+      gc.addStyledText("This is an interface resource", "«I»", null, null, VersionUtilities.isR4BVer(page.getVersion().toCode()) ? null : prefix+"uml.html#interface", false);
     } else if (isAbstract) {
-      gc.addStyledText("This is an abstract type", "«A»", null, null, page.getVersion().isR4B() ? null : prefix+"uml.html#abstract", false);
+      gc.addStyledText("This is an abstract type", "«A»", null, null, VersionUtilities.isR4BVer(page.getVersion().toCode()) ? null : prefix+"uml.html#abstract", false);
     }
     if (rootStatus != null)
       gc.addStyledText("Standards Status = "+rootStatus.toDisplay(), rootStatus.getAbbrev(), "black", rootStatus.getColor(), prefix+"versions.html#std-process", true);
@@ -86,8 +97,12 @@ public class TableGenerator extends BaseGenerator {
         row.getCells().add(gen.new Cell(null, prefix+"structuredefinition.html#logical", e.typeCode(), null, null)); 
       else if ("Base".equals(e.typeCode()))
         row.getCells().add(gen.new Cell(null, prefix+definitions.getSrcFile("Base")+".html#"+e.typeCode(), e.typeCode(), null, null)); 
-      else
-        row.getCells().add(gen.new Cell(null, prefix+e.typeCode().toLowerCase()+".html", e.typeCode(), null, null)); 
+      else if (Utilities.existsInList(e.typeCode(), definitions.getInterfaceNames()) && !Utilities.existsInList(e.getName(), definitions.getInterfaceNames())) {
+        Cell c = gen.new Cell(null, prefix+"domainresource.html", "DomainResource", null, null);
+        row.getCells().add(c);
+      } else {
+        row.getCells().add(gen.new Cell(null, prefix+e.typeCode().toLowerCase()+".html", e.typeCode(), null, null));
+      }
       // todo: base elements
     } else {
       if (!e.getElements().isEmpty()) {
@@ -98,7 +113,7 @@ public class TableGenerator extends BaseGenerator {
         else if (e.getName().equals("Type"))
           row.getCells().add(gen.new Cell(null, null, "", null, null)); 
         else if (e.getName().equals("Element")) {
-          if (version.isR4B()) {
+          if (VersionUtilities.isR4BVer(version.toCode())) {
             row.getCells().add(gen.new Cell(null, prefix+definitions.getElementLink(), "Element", null, null));
           } else {
             row.getCells().add(gen.new Cell(null, prefix+definitions.getBaseLink(), "Base", null, null));            
@@ -163,7 +178,7 @@ public class TableGenerator extends BaseGenerator {
     if (e.hasBinding() && e.getBinding() != null && e.getBinding().getBinding() != BindingMethod.Unbound) {
       if (cc.getPieces().size() == 1)
         cc.addPiece(gen.new Piece("br"));
-      cc.getPieces().add(gen.new Piece(getBindingLink(prefix, e), e.getBinding().getValueSet() != null ? e.getBinding().getValueSet().present() : e.getBinding().getName(), 
+      cc.getPieces().add(gen.new Piece(getBindingLink(prefix, e, page), e.getBinding().getValueSet() != null ? e.getBinding().getValueSet().present() : e.getBinding().getName(), 
             e.getBinding().getDefinition()));
       cc.getPieces().add(gen.new Piece(null, " (", null));
       BindingSpecification b = e.getBinding();
@@ -195,26 +210,75 @@ public class TableGenerator extends BaseGenerator {
         cc.getPieces().add(gen.new Piece(null, "This repeating element order: "+e.getOrderMeaning(), null));
       }
     }
+    cc.getPieces().add(gen.new Piece("br"));
     if (isRoot && !Utilities.noString(e.typeCode()) && !"Logical".equals(e.typeCode())) {
       List<ElementDefn> ancestors = new ArrayList<ElementDefn>();
       ElementDefn f = definitions.getElementDefn(e.typeCode());
       while (f != null) {
-        ancestors.add(0, f);
+        if (Utilities.existsInList(e.getName(), definitions.getInterfaceNames()) || !Utilities.existsInList(f.getName(), definitions.getInterfaceNames())) {
+          ancestors.add(0, f);
+        }
+        f = Utilities.noString(f.typeCode()) || "Logical".equals(f.typeCode()) ? null : definitions.getElementDefn(f.typeCode());
+      }
+
+      boolean isIntf = definitions.isInterface(e);
+      boolean hasIntf = false;
+      for (ElementDefn fi : ancestors) {
+        hasIntf = hasIntf || definitions.isInterface(fi);
+      }
+
+      cc.getPieces().add(gen.new Piece("br"));
+      cc.getPieces().add(gen.new Piece(null, isIntf || hasIntf ? "Elements defined in Ancestor Resources: " : "Elements defined in Ancestors: ", null));
+      boolean first = true;
+      for (ElementDefn fi : ancestors) { 
+        if (!definitions.isInterface(fi)) {
+          for (ElementDefn fc : fi.getElements()) {
+            if (first)
+              first = false;
+            else
+              cc.getPieces().add(gen.new Piece(null, ", ", null));
+            cc.getPieces().add(gen.new Piece(definitions.getSrcFile(fi.getName())+".html#"+fi.getName(), fc.getName(), fc.getDefinition()));
+          }
+        }
+      }      
+      if (hasIntf) {
+        cc.getPieces().add(gen.new Piece("br"));
+        cc.getPieces().add(gen.new Piece(null, "Elements defined in Ancestor interfaces: ", null));
+        first = true;
+        for (ElementDefn fi : ancestors) { 
+          if (definitions.isInterface(fi)) {
+            for (ElementDefn fc : fi.getElements()) {
+              if (first)
+                first = false;
+              else
+                cc.getPieces().add(gen.new Piece(null, ", ", null));
+              cc.getPieces().add(gen.new Piece(definitions.getSrcFile(fi.getName())+".html#"+fi.getName(), fc.getName(), fc.getDefinition()));
+            }
+          }     
+        }
+      }
+    }
+    if (isRoot && !Utilities.noString(e.typeCode()) && Utilities.existsInList(e.typeCode(), definitions.getInterfaceNames()) && !Utilities.existsInList(e.getName(), definitions.getInterfaceNames())) {
+      List<ElementDefn> ancestors = new ArrayList<ElementDefn>();
+      ElementDefn f = definitions.getElementDefn(e.typeCode());
+      while (f != null) {
+        if (Utilities.existsInList(f.getName(), definitions.getInterfaceNames())) {
+          ancestors.add(0, f);
+          break;
+        }
         f = Utilities.noString(f.typeCode()) || "Logical".equals(f.typeCode()) ? null : definitions.getElementDefn(f.typeCode());
       }
       
       cc.getPieces().add(gen.new Piece("br"));
-      cc.getPieces().add(gen.new Piece(null, "Elements defined in Ancestors: ", null));
+      cc.getPieces().add(gen.new Piece(null, "Interfaces Implemented: ", "uml.html#interfaces"));
       boolean first = true;
       for (ElementDefn fi : ancestors) { 
-        for (ElementDefn fc : fi.getElements()) {
-          if (first)
-            first = false;
-          else
-            cc.getPieces().add(gen.new Piece(null, ", ", null));
-          cc.getPieces().add(gen.new Piece(definitions.getSrcFile(fi.getName())+".html#"+fi.getName(), fc.getName(), fc.getDefinition()));
-        }
-      }
+        if (first)
+          first = false;
+        else
+          cc.getPieces().add(gen.new Piece(null, ", ", null));
+        cc.getPieces().add(gen.new Piece(definitions.getSrcFile(fi.getName())+".html#"+fi.getName(), fi.getName(), fi.getDefinition()));
+      }      
     }
     if (mode == RenderMode.LOGICAL) {
       String logical = e.getMappings().get("http://hl7.org/fhir/logical");

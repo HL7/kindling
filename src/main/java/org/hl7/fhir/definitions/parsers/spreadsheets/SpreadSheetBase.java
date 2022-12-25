@@ -1,7 +1,6 @@
 package org.hl7.fhir.definitions.parsers.spreadsheets;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -10,7 +9,7 @@ import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 
-import org.hl7.fhir.exceptions.FHIRFormatError;
+import org.hl7.fhir.exceptions.FHIRException;
 import org.hl7.fhir.r5.context.BaseWorkerContext;
 import org.hl7.fhir.r5.formats.IParser.OutputStyle;
 import org.hl7.fhir.r5.formats.XmlParser;
@@ -92,7 +91,6 @@ public class SpreadSheetBase {
   protected static final String CN_V2 = "v2";
   protected static final String CN_WEBSITE_EMAIL = "Website/Email";
   protected static final String CN_URI = "URI";
-  protected static final String CN_OID = "OID";
   protected static final String CN_DESCRIPTION = "Description";
   protected static final String CN_VALUE_SET = "ValueSet";
   protected static final String CN_STRENGTH = "Strength";
@@ -183,22 +181,26 @@ public class SpreadSheetBase {
 //    return resourceName;
 //  }
 
-  protected Resource parseXml(String fn) throws FHIRFormatError, FileNotFoundException, IOException {
-//    String fn = Utilities.path(srcFolder, resourceName.toLowerCase(), name);
-    File f = new CSFile(fn);
-    long d = f.lastModified();
-    if (d == 0) {
-      f.setLastModified(new Date().getTime());
-      d = f.lastModified();
-    }
-    if (useLoadingDates()) {
-      date = Long.max(date, d);
-    }
-    CSFileInputStream fs = new CSFileInputStream(f);
+  protected Resource parseXml(String fn)  {
+    //    String fn = Utilities.path(srcFolder, resourceName.toLowerCase(), name);
     try {
-      return new XmlParser().parse(fs);
-    } finally {
-      fs.close();
+      File f = new CSFile(fn);
+      long d = f.lastModified();
+      if (d == 0) {
+        f.setLastModified(new Date().getTime());
+        d = f.lastModified();
+      }
+      if (useLoadingDates()) {
+        date = Long.max(date, d);
+      }
+      CSFileInputStream fs = new CSFileInputStream(f);
+      try {
+        return new XmlParser().parse(fs);
+      } finally {
+        fs.close();
+      }
+    } catch (Exception e) {
+      throw new FHIRException("Error parsing "+fn+": "+e.getMessage(), e);
     }
   }
 

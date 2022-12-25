@@ -18,6 +18,7 @@ import org.hl7.fhir.definitions.model.ProfiledType;
 import org.hl7.fhir.definitions.model.ResourceDefn;
 import org.hl7.fhir.definitions.model.ResourceDefn.PointSpec;
 import org.hl7.fhir.definitions.model.TypeRef;
+import org.hl7.fhir.r5.conformance.ProfileUtilities;
 import org.hl7.fhir.r5.model.Enumerations.BindingStrength;
 import org.hl7.fhir.r5.model.Enumerations.FHIRVersion;
 import org.hl7.fhir.r5.model.StructureDefinition;
@@ -25,6 +26,7 @@ import org.hl7.fhir.tools.publisher.PageProcessor;
 import org.hl7.fhir.utilities.IniFile;
 import org.hl7.fhir.utilities.StandardsStatus;
 import org.hl7.fhir.utilities.Utilities;
+import org.hl7.fhir.utilities.VersionUtilities;
 import org.hl7.fhir.utilities.xml.XMLWriter;
 
 public class SvgGenerator extends BaseGenerator {
@@ -157,16 +159,16 @@ public class SvgGenerator extends BaseGenerator {
   private String prefix;
   private Map<String, PointSpec> layout;
   private boolean makeTargets;
-  private boolean isDatatypes;
+  private String suffix;
   private FHIRVersion version;
 
-  public SvgGenerator(PageProcessor page, String prefix, Map<String, PointSpec> layout, boolean makeTargets, boolean isDatatypes, FHIRVersion version) {
+  public SvgGenerator(PageProcessor page, String prefix, Map<String, PointSpec> layout, boolean makeTargets, String suffix, FHIRVersion version) {
     this.definitions = page.getDefinitions();
     this.page = page;
     this.prefix = prefix;
     this.layout = layout;
     this.makeTargets = makeTargets;
-    this.isDatatypes = isDatatypes;
+    this.suffix = suffix;
     this.version = version;
   }
   
@@ -751,7 +753,7 @@ public class SvgGenerator extends BaseGenerator {
           if (cd instanceof DefinedStringPattern) {
             links.add(new Link(classes.get(fakes.get(((DefinedStringPattern) cd).getBase())), drawClass(xml, fake, false, null, true, null, cd, StandardsStatus.NORMATIVE), LinkType.SPECIALIZATION, null, null, PointKind.unknown, null, null));        
           } else {
-            ClassItem parent = classes.get(definitions.getElementDefn(version.isR4B() ? "Element" : "PrimitiveType"));
+            ClassItem parent = classes.get(definitions.getElementDefn(VersionUtilities.isR4BVer(version.toCode()) ? "Element" : "PrimitiveType"));
             if (parent == null) {
               drawClass(xml, fake, false, null, true, null, cd, StandardsStatus.NORMATIVE); 
             } else {
@@ -761,7 +763,7 @@ public class SvgGenerator extends BaseGenerator {
         } else if ("xhtml".equals(cn)) {
           DefinedCode cd = new DefinedCode("xhtml", "XHTML for resource narrative", null);
           ElementDefn fake = fakes.get(cn);
-          ClassItem parent = classes.get(definitions.getElementDefn(version.isR4B() ? "Element" :"DataType"));
+          ClassItem parent = classes.get(definitions.getElementDefn(VersionUtilities.isR4BVer(version.toCode()) ? "Element" :"DataType"));
           if (parent == null) {
             drawClass(xml, fake, false, null, true, null, cd, StandardsStatus.NORMATIVE);
           } else {
@@ -847,14 +849,14 @@ public class SvgGenerator extends BaseGenerator {
         xml.attribute("style", "font-style: italic");
       }
       xml.enter("text");
-      xml.attribute("xlink:href", makeRel(definitions.getSrcFile(tn)+".html#"+tn));
+      xml.attribute("xlink:href", makeLink(tn));
       xml.attribute("id", "n"+(++nc));
       xml.enter("a");
       xml.text(tn);
       xml.exit("a");
       if (definitions.getBaseResources().containsKey(e.getName()) && definitions.getBaseResources().get(e.getName()).isInterface()) {
         xml.text(" ");
-        xml.attribute("xlink:href", makeRel("uml.html#interface"));
+        xml.attribute("xlink:href", "uml.html#interface");
         xml.enter("a");
         xml.text("«Interface»");
         xml.exit("a");
@@ -872,32 +874,48 @@ public class SvgGenerator extends BaseGenerator {
       } else {
         xml.attribute("class", "diagram-class-title-link");
         xml.enter("tspan");
-        xml.text(" (");
-        if ("Logical".equals(e.typeCode()))
-          xml.attribute("xlink:href", prefix+definitions.getBaseLink());
-        else
-          xml.attribute("xlink:href", prefix+definitions.getSrcFile(e.typeCode())+".html#"+e.typeCode());
-        xml.attribute("class", "diagram-class-reference");
-        xml.attribute("id", "n"+(++nc));
-        xml.attribute("style", "font-style: italic");
-        if ("Logical".equals(e.typeCode())) {
-          xml.element("a", "Base");
-        } else {
+        if (Utilities.existsInList(e.typeCode(), definitions.getInterfaceNames()) && !Utilities.existsInList(e.getName(), definitions.getInterfaceNames())) {
+          xml.text(" (");
+          xml.attribute("xlink:href", prefix+makeLink("DomainResource"));
+          xml.attribute("class", "diagram-class-reference");
+          xml.attribute("id", "n"+(++nc));
+          xml.attribute("style", "font-style: italic");
+          xml.element("a", "DomainResource");
+          xml.text(") +");
+          xml.attribute("xlink:href", prefix+definitions.getSrcFile(e.typeCode())+suffix+".html#"+e.typeCode());
+          xml.attribute("class", "diagram-class-reference");
+          xml.attribute("id", "n"+(++nc));
+          xml.attribute("style", "font-style: italic");
           xml.element("a", e.typeCode());
+        } else {
+          xml.text(" (");
+          if ("Logical".equals(e.typeCode())) {
+            xml.attribute("xlink:href", prefix+definitions.getBaseLink());
+          } else {
+            xml.attribute("xlink:href", prefix+makeLink(e.typeCode()));
+          }
+          xml.attribute("class", "diagram-class-reference");
+          xml.attribute("id", "n"+(++nc));
+          xml.attribute("style", "font-style: italic");
+          if ("Logical".equals(e.typeCode())) {
+            xml.element("a", "Base");
+          } else {
+            xml.element("a", e.typeCode());
+          }
+          xml.text(")");
         }
-        xml.text(")");
         xml.exit("tspan");
       }
       if ("Logical".equals(e.typeCode())) {
         xml.text(" ");
-        xml.attribute("xlink:href", makeRel("uml.html#pattern"));
+        xml.attribute("xlink:href", ("uml.html#pattern"));
         xml.enter("a");
         xml.text("«Pattern»");
         xml.exit("a");        
       }
       if (definitions.getBaseResources().containsKey(e.getName()) && definitions.getBaseResources().get(e.getName()).isInterface()) {
         xml.text(" ");
-        xml.attribute("xlink:href", makeRel("uml.html#interface"));
+        xml.attribute("xlink:href", ("uml.html#interface"));
         xml.enter("a");
         xml.text("«Interface»");
         xml.exit("a");
@@ -942,6 +960,52 @@ public class SvgGenerator extends BaseGenerator {
       }
     }
     return item;  
+  }
+
+  private String makeLink(String tn) {
+    String src = definitions.getSrcFile(tn);
+    String sfx = suffix;
+    if (src.equals("metadatatypes")) {
+      if (Utilities.existsInList(sfx, "-extras", "-version-maps")) {
+        sfx = "";
+      }
+    }
+    if (src.equals("types")) {
+      if (Utilities.existsInList(sfx, "-examples", "-version-maps")) {
+        sfx = "";
+      }
+    }
+    if (src.equals("references")) {
+      if (Utilities.existsInList(sfx, "-examples", "-mappings", "-version-maps")) {
+        sfx = "";
+      }
+    }
+    if (src.equals("narrative")) {
+      if (Utilities.existsInList(sfx, "-extras", "-mappings", "-examples", "-version-maps")) {
+        sfx = "";
+      }
+    }
+    if (src.equals("extensibility")) {
+      if (Utilities.existsInList(sfx, "-examples", "-mappings", "-extras", "-version-maps")) {
+        sfx = "";
+      }
+    }
+    if (src.equals("resource")) {
+      if (Utilities.existsInList(sfx, "-examples", "-mappings", "-extras", "-version-maps")) {
+        sfx = "";
+      }
+    }
+    if (src.equals("elementdefinition")) {
+      if (Utilities.existsInList(sfx, "-version-maps")) {
+        sfx = "";
+      }
+    }
+    if (src.equals("dosage")) {
+      if (Utilities.existsInList(sfx, "-version-maps")) {
+        sfx = "";
+      }
+    }
+    return src+sfx+".html#"+tn;
   } 
 
   private String getXsi(DefinedCode primitive) {
@@ -953,23 +1017,29 @@ public class SvgGenerator extends BaseGenerator {
 
   private String baseUrl(String path) throws Exception {
     String root = path.contains(".") ? path.substring(0, path.indexOf(".")) : path;
-    if (definitions.hasResource(root) || definitions.hasLogicalModel(root))
-      return root.toLowerCase()+"-definitions.html#";
-    else if ("Narrative".equals(root))
-      return "narrative-definitions.html#";
-    else if ("Reference".equals(root))
-      return "references-definitions.html#";
-    else if ("Extension".equals(root))
-      return "extensibility-definitions.html#";
-    else if (definitions.hasType(root))
-      return "datatypes-definitions.html#";
-    if (definitions.getBaseResources().containsKey(root))
-      return root.toLowerCase()+"-definitions.html#";
-    else if (root.equals("Type")) {
-      return "datatypes-definitions.html#";
-    } else {
-      throw new Exception(root+" not handled yet");
-    }
+    return  definitions.getSrcFile(root)+"-definitions.html#";
+//    String r = null;
+//    if (definitions.hasResource(root) || definitions.hasLogicalModel(root))
+//      r = root.toLowerCase()+"-definitions.html#";
+//    else if ("Narrative".equals(root))
+//      r = "narrative-definitions.html#";
+//    else if ("Reference".equals(root))
+//      r = "references-definitions.html#";
+//    else if ("Extension".equals(root))
+//      r = "extensibility-definitions.html#";
+//    else if (definitions.hasType(root))
+//      r = "datatypes-definitions.html#";
+//    else if (definitions.getBaseResources().containsKey(root))
+//      r = root.toLowerCase()+"-definitions.html#";
+//    else if (root.equals("Type")) {
+//      r = "datatypes-definitions.html#";
+//    } else {
+//      throw new Exception(root+" not handled yet");
+//    }
+//    if (!s.equals(r)) {
+//      throw new Error("mismatch for "+path+": "+s+" vs "+r);
+//    }
+//    return r;
   } 
 
   private ClassItem getItemForPath(ResourceDefn resource, String path) throws Exception {
@@ -1004,6 +1074,8 @@ public class SvgGenerator extends BaseGenerator {
       return "Reference";
     } else if (allSame && t.equals("canonical")) {
       return "canonical";
+    } else if (allSame && t.equals("CodeableReference")) {
+      return "CodeableReference";
     }  else {
       boolean allPrimitive = true;
       for (TypeRef tr : tl) {
@@ -1011,7 +1083,7 @@ public class SvgGenerator extends BaseGenerator {
           allPrimitive = false;
         }
       }
-      if (version.isR4B()) {
+      if (VersionUtilities.isR4BVer(version.toCode())) {
         return "Element";
       } if (allPrimitive) {
         return "PrimitiveType";
@@ -1156,7 +1228,7 @@ public class SvgGenerator extends BaseGenerator {
           name = name.substring(0, name.length()-5);
         if (name.length() > 30)
           name = name.substring(0, 29)+"...";
-        String link = getBindingLink(prefix, e);
+        String link = getBindingLink(prefix, e, page);
         if (b.getStrength() == BindingStrength.EXAMPLE) {
           if (link != null) {
             xml.attribute("xlink:href", link);
@@ -1228,7 +1300,19 @@ public class SvgGenerator extends BaseGenerator {
       }
       xml.text(ls.see(" \u00BB"));
     }
-    
+    if (e.getStatedInvariants().size() > 0) {
+      xml.text(ls.see(" \u00AB "));
+      xml.attribute("id", "n"+(++nc));
+      xml.attribute("style", "padding-left: 3px; padding-right: 3px; border: 1px maroon solid; font-weight: bold; color: #301212; background-color: #fdeeee;");
+      xml.attribute("xlink:href", "conformance-rules.html#constraints");
+      xml.enter("a");
+      xml.attribute("id", "n"+(++nc));
+      xml.element("title", "This element has or is affected by some invariants");
+      xml.text(ls.see(ProfileUtilities.CONSTRAINT_CHAR));
+      xml.exit("a");      
+      xml.text(ls.see(" \u00BB"));
+
+    }
     xml.exit("text");
   }
 
@@ -1298,7 +1382,7 @@ public class SvgGenerator extends BaseGenerator {
     xml.attribute("id", "n"+(++nc));
     xml.enter("tspan");
     xml.attribute("id", "n"+(++nc));
-    xml.element("title", "Actual value attribute of the data type");
+    xml.element("title", "Actual value attribute of the datatype");
     xml.text("value");
     xml.exit("tspan");
     xml.text(" : ");
@@ -1333,27 +1417,20 @@ public class SvgGenerator extends BaseGenerator {
       return tc.length();
     } else if (definitions.getConstraints().containsKey(tc)) {
       ProfiledType pt = definitions.getConstraints().get(tc);
-      xml.attribute("xlink:href", makeRel(prefix+definitions.getSrcFile(pt.getBaseType()) + ".html#" + pt.getBaseType()));
+      xml.attribute("xlink:href", (prefix+makeLink(pt.getBaseType())));
       xml.attribute("id", "n"+(++nc));
       xml.element("a", ls.see(pt.getBaseType()));
       xml.text(ls.see("("));
-      xml.attribute("xlink:href", makeRel(prefix+definitions.getSrcFile(tc) + ".html#" + tc));
+      xml.attribute("xlink:href", (prefix+makeLink(tc)));
       xml.element("a", ls.see(tc));
       xml.text(ls.see(")"));
       return tc.length()+2+pt.getBaseType().length();
     } else {
-      xml.attribute("xlink:href", makeRel(prefix+definitions.getSrcFile(tc) + ".html#" + tc));
+      xml.attribute("xlink:href", (prefix+makeLink(tc)));
       xml.attribute("id", "n"+(++nc));
       xml.element("a", ls.see(tc));
       return tc.length();
     }
-  }
-
-  private String makeRel(String link) {
-    if (isDatatypes && link.startsWith(prefix+"datatypes.html#"))
-      return link.substring(link.indexOf("#"));
-    else
-      return link;
   }
 
 

@@ -25,9 +25,7 @@ import org.hl7.fhir.definitions.parsers.spreadsheets.OldSpreadsheetParser;
 import org.hl7.fhir.r5.conformance.ProfileUtilities;
 import org.hl7.fhir.r5.conformance.ProfileUtilities.ProfileKnowledgeProvider;
 import org.hl7.fhir.r5.context.CanonicalResourceManager;
-import org.hl7.fhir.r5.context.IWorkerContext.PackageVersion;
 import org.hl7.fhir.r5.formats.XmlParser;
-import org.hl7.fhir.r5.model.BooleanType;
 import org.hl7.fhir.r5.model.CodeSystem;
 import org.hl7.fhir.r5.model.CodeType;
 import org.hl7.fhir.r5.model.ConceptMap;
@@ -39,6 +37,7 @@ import org.hl7.fhir.r5.model.ImplementationGuide.ImplementationGuideDefinitionGr
 import org.hl7.fhir.r5.model.ImplementationGuide.ImplementationGuideDefinitionPageComponent;
 import org.hl7.fhir.r5.model.ImplementationGuide.ImplementationGuideDefinitionResourceComponent;
 import org.hl7.fhir.r5.model.ImplementationGuide.ImplementationGuideDependsOnComponent;
+import org.hl7.fhir.r5.model.PackageInformation;
 import org.hl7.fhir.r5.model.Reference;
 import org.hl7.fhir.r5.model.Resource;
 import org.hl7.fhir.r5.model.ResourceType;
@@ -91,10 +90,10 @@ return null;
   private CanonicalResourceManager<ConceptMap> maps;
   private Map<String, WorkGroup> workgroups;
   private boolean exceptionIfExcelNotNormalised;
-  private PackageVersion packageInfo;
+  private PackageInformation packageInfo;
 
 
-  public IgParser(Logger logger, BuildWorkerContext context, Calendar genDate, ProfileKnowledgeProvider pkp, Map<String, BindingSpecification> commonBindings, WorkGroup committee, Map<String, MappingSpace> mappings, Map<String, ConstraintStructure> profileIds, CanonicalResourceManager<CodeSystem> codeSystems, OIDRegistry registry, CanonicalResourceManager<ConceptMap> maps, Map<String, WorkGroup> workgroups, boolean exceptionIfExcelNotNormalised, PackageVersion packageInfo) {
+  public IgParser(Logger logger, BuildWorkerContext context, Calendar genDate, ProfileKnowledgeProvider pkp, Map<String, BindingSpecification> commonBindings, WorkGroup committee, Map<String, MappingSpace> mappings, Map<String, ConstraintStructure> profileIds, CanonicalResourceManager<CodeSystem> codeSystems, OIDRegistry registry, CanonicalResourceManager<ConceptMap> maps, Map<String, WorkGroup> workgroups, boolean exceptionIfExcelNotNormalised, PackageInformation packageInfo) {
     super();
     this.logger = logger;
     this.context = context;
@@ -156,7 +155,7 @@ return null;
         String id = Utilities.changeFileExt(fn.getName(), "");
         // we're going to try and load the resource directly.
         // if that fails, then we'll treat it as an example.
-        boolean isExample = r.hasExample();
+        boolean isExample = r.hasIsExample() && r.getIsExample();
         ResourceType rt = null;
         try {
           rt = new XmlParser().parse(new FileInputStream(fn)).getResourceType();
@@ -170,8 +169,8 @@ return null;
             throw new Exception("no name on resource in IG "+ig.getName());
           Example example = new Example(r.getName(), id, r.getDescription(), fn, false, ExampleType.XmlFile, false);
           example.setIg(igd.getCode());
-          if (r.hasExampleCanonicalType()) {
-            example.setExampleFor(r.getExampleCanonicalType().asStringValue());
+          if (r.hasProfile()) {
+            example.setExampleFor(r.getProfile().get(0).asStringValue());
             example.setRegistered(true);
             exr.add(example);
           }
@@ -199,7 +198,7 @@ return null;
               System.out.println("ValueSet "+vs.getUrl()+" WG mismatch 2: is "+ec+", want to set to "+committee);
           } 
           }
-          new CodeSystemConvertor(codeSystems).convert(new XmlParser(), vs, fn.getAbsolutePath(), packageInfo);
+          new CodeSystemConvertor(codeSystems, registry).convert(new XmlParser(), vs, fn.getAbsolutePath(), packageInfo);
 //          if (id.contains(File.separator))
           igd.getValueSets().add(vs);
           if (!r.hasName())
@@ -285,12 +284,12 @@ return null;
           }
           // now, register resources for all the things in the spreadsheet
           for (ValueSet vs : sparser.getValuesets()) 
-            ig.getDefinition().addResource().setExample(new BooleanType(false)).setName(vs.getName()).setDescription(vs.getDescription()).setReference(new Reference("valueset-"+vs.getId()+".html")).setUserData(ToolResourceUtilities.RES_ACTUAL_RESOURCE, vs);
+            ig.getDefinition().addResource().setIsExample(false).setName(vs.getName()).setDescription(vs.getDescription()).setReference(new Reference("valueset-"+vs.getId()+".html")).setUserData(ToolResourceUtilities.RES_ACTUAL_RESOURCE, vs);
           for (StructureDefinition exd : pr.getExtensions()) 
-            ig.getDefinition().addResource().setExample(new BooleanType(false)).setName(exd.getName()).setDescription(exd.getDescription()).setReference(new Reference("extension-"+exd.getId().toLowerCase()+".html")).setUserData(ToolResourceUtilities.RES_ACTUAL_RESOURCE, exd);
+            ig.getDefinition().addResource().setIsExample(false).setName(exd.getName()).setDescription(exd.getDescription()).setReference(new Reference("extension-"+exd.getId().toLowerCase()+".html")).setUserData(ToolResourceUtilities.RES_ACTUAL_RESOURCE, exd);
           for (ConstraintStructure cs : pr.getProfiles()) {
             cs.setResourceInfo(ig.getDefinition().addResource());
-            cs.getResourceInfo().setExample(new BooleanType(false)).setName(cs.getDefn().getName()).setDescription(cs.getDefn().getDefinition()).setReference(new Reference(cs.getId().toLowerCase()+".html"));
+            cs.getResourceInfo().setIsExample(false).setName(cs.getDefn().getName()).setDescription(cs.getDefn().getDefinition()).setReference(new Reference(cs.getId().toLowerCase()+".html"));
           }
         }
         if (ex.getUrl().equals(ToolResourceUtilities.EXT_LOGICAL_SPREADSHEET)) {
@@ -439,10 +438,10 @@ return null;
 
   private void processPage(ImplementationGuideDefinitionPageComponent page, ImplementationGuideDefn igd) throws Exception {
     if (!page.hasTitle())
-      throw new Exception("Page "+page.getNameUrlType().getValue()+" has no name");
+      throw new Exception("Page "+page.getName()+" has no name");
     if (getKind(page) == null || getKind(page) == GuidePageKind.PAGE || getKind(page) == GuidePageKind.DIRECTORY || getKind(page) == GuidePageKind.LIST || getKind(page) == GuidePageKind.RESOURCE) {
-      checkExists(igd, page.getNameUrlType().getValue());
-      igd.getPageList().add(page.getNameUrlType().getValue());
+      checkExists(igd, page.getName());
+      igd.getPageList().add(page.getName());
     }
     for (ImplementationGuideDefinitionPageComponent pp : page.getPage()) {
       processPage(pp, igd);

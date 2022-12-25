@@ -13,12 +13,8 @@ import org.apache.poi.xssf.usermodel.XSSFCell;
 import org.apache.poi.xssf.usermodel.XSSFRow;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
-import org.apache.xerces.dom3.as.DOMImplementationAS;
 import org.hl7.fhir.definitions.model.TypeRef;
 import org.hl7.fhir.definitions.parsers.TypeParser;
-import org.hl7.fhir.r5.model.Extension;
-import org.hl7.fhir.r5.model.ImplementationGuide;
-import org.hl7.fhir.r5.model.IntegerType;
 import org.hl7.fhir.exceptions.FHIRException;
 import org.hl7.fhir.exceptions.FHIRFormatError;
 import org.hl7.fhir.r5.context.BaseWorkerContext;
@@ -35,18 +31,20 @@ import org.hl7.fhir.r5.model.ElementDefinition.ElementDefinitionBindingComponent
 import org.hl7.fhir.r5.model.ElementDefinition.ElementDefinitionConstraintComponent;
 import org.hl7.fhir.r5.model.ElementDefinition.TypeRefComponent;
 import org.hl7.fhir.r5.model.Enumerations.BindingStrength;
-import org.hl7.fhir.r5.model.Enumerations.FHIRAllTypes;
+import org.hl7.fhir.r5.model.Enumerations.FHIRTypes;
 import org.hl7.fhir.r5.model.Enumerations.OperationParameterUse;
 import org.hl7.fhir.r5.model.Enumerations.PublicationStatus;
 import org.hl7.fhir.r5.model.Enumerations.SearchParamType;
-import org.hl7.fhir.r5.model.ImplementationGuide.ImplementationGuideDefinitionResourceComponent;
+import org.hl7.fhir.r5.model.Extension;
+import org.hl7.fhir.r5.model.ImplementationGuide;
+import org.hl7.fhir.r5.model.IntegerType;
 import org.hl7.fhir.r5.model.ListResource;
 import org.hl7.fhir.r5.model.ListResource.ListResourceEntryComponent;
+import org.hl7.fhir.r5.model.MarkdownType;
+import org.hl7.fhir.r5.model.OperationDefinition;
 import org.hl7.fhir.r5.model.OperationDefinition.OperationDefinitionParameterBindingComponent;
 import org.hl7.fhir.r5.model.OperationDefinition.OperationDefinitionParameterComponent;
 import org.hl7.fhir.r5.model.OperationDefinition.OperationKind;
-import org.hl7.fhir.r5.model.MarkdownType;
-import org.hl7.fhir.r5.model.OperationDefinition;
 import org.hl7.fhir.r5.model.ResourceFactory;
 import org.hl7.fhir.r5.model.SearchParameter;
 import org.hl7.fhir.r5.model.StringType;
@@ -55,9 +53,9 @@ import org.hl7.fhir.r5.model.UriType;
 import org.hl7.fhir.r5.model.UrlType;
 import org.hl7.fhir.r5.utils.BuildExtensions;
 import org.hl7.fhir.r5.utils.ToolingExtensions;
+import org.hl7.fhir.tools.publisher.KindlingUtilities;
 import org.hl7.fhir.utilities.IniFile;
 import org.hl7.fhir.utilities.Utilities;
-import org.hl7.fhir.utilities.VersionUtilities;
 import org.hl7.fhir.utilities.json.JsonTrackingParser;
 
 import com.google.gson.JsonObject;
@@ -192,7 +190,7 @@ public class SpreadSheetReloader extends SpreadSheetBase {
     inv.setSeverity(ConstraintSeverity.fromCode(getValue(row, cols, CN_SEVERITY)));
     inv.setHuman(getValue(row, cols, CN_ENGLISH));
     inv.setExpression(getValue(row, cols, CN_EXPRESSION));
-    inv.setXpath(getValue(row, cols, CN_X_PATH));
+//    inv.setXpath(getValue(row, cols, CN_X_PATH));
   }
 
   private ElementDefinitionConstraintComponent getInv(List<ElementDefinitionConstraintComponent> list, String n) {
@@ -264,7 +262,6 @@ public class SpreadSheetReloader extends SpreadSheetBase {
       readExt(bs, row, cols, CN_DEFINITION, BuildExtensions.EXT_BINDING_DEFINITION, ExtensionType.String);
       bs.setStrength(BindingStrength.fromCode(getValue(row, cols, CN_STRENGTH)));
       bs.setValueSet(getValue(row, cols, CN_VALUE_SET));
-      readExt(bs, row, cols, CN_OID, BuildExtensions.EXT_VS_OID, ExtensionType.String);
       readExt(bs, row, cols, CN_URI, BuildExtensions.EXT_URI, ExtensionType.String);
       readExt(bs, row, cols, CN_WEBSITE_EMAIL, BuildExtensions.EXT_WEBSITE, ExtensionType.Uri);
       readExt(bs, row, cols, CN_V2, BuildExtensions.EXT_V2_MAP, ExtensionType.String);
@@ -289,7 +286,6 @@ public class SpreadSheetReloader extends SpreadSheetBase {
       readExt(bs, row, cols, CN_DEFINITION, BuildExtensions.EXT_BINDING_DEFINITION, ExtensionType.String);
       bs.setStrength(BindingStrength.fromCode(getValue(row, cols, CN_STRENGTH)));
       bs.setValueSet(getValue(row, cols, CN_VALUE_SET));
-      readExt(bs, row, cols, CN_OID, BuildExtensions.EXT_VS_OID, ExtensionType.String);
       readExt(bs, row, cols, CN_URI, BuildExtensions.EXT_URI, ExtensionType.String);
       readExt(bs, row, cols, CN_WEBSITE_EMAIL, BuildExtensions.EXT_WEBSITE, ExtensionType.Uri);
       readExt(bs, row, cols, CN_V2, BuildExtensions.EXT_V2_MAP, ExtensionType.String);
@@ -534,7 +530,7 @@ public class SpreadSheetReloader extends SpreadSheetBase {
     sp.setType(SearchParamType.fromCode(getValue(row, cols, CN_TYPE)));
     sp.setExpression(getValue(row, cols, CN_EXPRESSION));
     sp.setDescription(getValue(row, cols, CN_DESCRIPTION));
-    sp.setXpath(getValue(row, cols, CN_X_PATH));
+//    sp.setXpath(getValue(row, cols, CN_X_PATH));
     sp.getTarget().clear();
     for (String s : splitValue(row, cols, CN_TARGET_TYPES, "\\|")) {
       sp.getTarget().add(new CodeType(s));
@@ -656,6 +652,8 @@ public class SpreadSheetReloader extends SpreadSheetBase {
       opd.setName(name);
       opd.setCode(name);
     }
+    KindlingUtilities.makeUniversal(opd);
+    
     opd.setSystem(false);
     opd.setType(false);
     opd.setInstance(false);
@@ -745,7 +743,7 @@ public class SpreadSheetReloader extends SpreadSheetBase {
     String t = getValue(row, cols, CN_TYPE);
     if (!Utilities.noString(t)) {
       if (t.contains(" | ")) {
-        param.setType(FHIRAllTypes.ELEMENT);
+        param.setType(FHIRTypes.ELEMENT);
         for (String s : t.split("\\|")) {
           param.addExtension(BuildExtensions.EXT_ALLOWED_TYPE, new UriType(s.trim()));
         }
@@ -754,7 +752,7 @@ public class SpreadSheetReloader extends SpreadSheetBase {
           param.setSearchType(SearchParamType.fromCode(t.substring(t.lastIndexOf("/")+1).trim()));
           t = t.substring(0, t.indexOf("/")).trim();
         }
-        param.setType(FHIRAllTypes.fromCode(t));
+        param.setType(FHIRTypes.fromCode(t));
       }
     }
 

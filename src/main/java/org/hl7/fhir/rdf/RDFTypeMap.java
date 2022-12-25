@@ -1,15 +1,15 @@
 package org.hl7.fhir.rdf;
 
-import org.apache.jena.rdf.model.Resource;
-import org.apache.jena.vocabulary.XSD;
-
 import java.util.HashMap;
 import java.util.Map;
+
+import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.vocabulary.XSD;
 
 
 public class RDFTypeMap {
     /**
-     * FHIR to XSD data type map.
+     * FHIR to XSD datatype map.
      */
     static public final Map<String, Resource> ptMap = new HashMap<String, Resource>();
     static public final Map<Resource, Resource> owlTypeMap = new HashMap<Resource, Resource>();

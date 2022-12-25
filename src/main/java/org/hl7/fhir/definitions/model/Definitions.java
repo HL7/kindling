@@ -39,21 +39,20 @@ import java.util.Queue;
 import java.util.Set;
 
 import org.hl7.fhir.exceptions.FHIRException;
-import org.hl7.fhir.definitions.model.MappingSpace;
-import org.hl7.fhir.definitions.model.TypeRef;
 import org.hl7.fhir.r5.context.CanonicalResourceManager;
 import org.hl7.fhir.r5.context.IWorkerContext;
 import org.hl7.fhir.r5.model.CodeSystem;
 import org.hl7.fhir.r5.model.ConceptMap;
+import org.hl7.fhir.r5.model.Enumerations.FHIRVersion;
 import org.hl7.fhir.r5.model.NamingSystem;
 import org.hl7.fhir.r5.model.StructureDefinition;
 import org.hl7.fhir.r5.model.StructureDefinition.ExtensionContextType;
 import org.hl7.fhir.r5.model.StructureDefinition.StructureDefinitionContextComponent;
 import org.hl7.fhir.r5.model.TypeDetails;
 import org.hl7.fhir.r5.model.ValueSet;
-import org.hl7.fhir.r5.model.Enumerations.FHIRVersion;
 import org.hl7.fhir.r5.utils.FHIRPathEngine;
 import org.hl7.fhir.utilities.Utilities;
+import org.hl7.fhir.utilities.VersionUtilities;
 
 /**
  * This class is the root to all the definitions in FHIR. There are the
@@ -307,6 +306,17 @@ public class Definitions {
 		return resources.containsKey(name) || baseResources.containsKey(name);
 	}
 	
+  public boolean hasCanonicalResource(String name) {
+    ResourceDefn rd = hasResource(name) ? getResourceByName(name) : null;
+    while (rd != null) {
+      if (rd.getName().equals("CanonicalResource")) {
+        return true;
+      }
+      rd = hasResource(rd.getRoot().typeCode()) ? getResourceByName(rd.getRoot().typeCode()) : null;
+    }
+    return false;
+  }
+  
 	
 	// List of all names of Resources (as code), including "future" resources
 	// (but not special resources, as these aren't resources)
@@ -866,7 +876,7 @@ public class Definitions {
   }
 
   public String getElementLink() {
-    if (version.isR4B()) {
+    if (VersionUtilities.isR4BVer(version.toCode())) {
       return "element.html";
     } else {
       return "types.html#Element";
@@ -874,7 +884,7 @@ public class Definitions {
   }
 
   public String getBackboneLink() {
-    if (version.isR4B()) {
+    if (VersionUtilities.isR4BVer(version.toCode())) {
       return "backboneelement.html";
     } else {
       return "types.html#BackBoneElement";
@@ -882,7 +892,7 @@ public class Definitions {
   }
 
   public String getBaseLink() {
-    if (version.isR4B()) {
+    if (VersionUtilities.isR4BVer(version.toCode())) {
       return "element.html";
     } else {
       return "types.html#Base";
@@ -890,11 +900,93 @@ public class Definitions {
   }
 
   public String getElementExtrasLink() {
-    if (version.isR4B()) {
+    if (VersionUtilities.isR4BVer(version.toCode())) {
       return "element-extras.html";
     } else {
       return "types-extras.html#Element";
     }
+  }
+
+  public List<String> getInterfaceNames() {
+    List<String> res = new ArrayList<>();
+    res.add("CanonicalResource");
+    res.add("MetadataResource");
+    return res;
+  }
+
+  public List<StructureDefinition> getAllProfiles() {
+    List<StructureDefinition> res = new ArrayList<>();
+    for (ResourceDefn r : getResources().values()) {
+      for (Profile cp : r.getConformancePackages()) {
+        for (ConstraintStructure s : cp.getProfiles()) {          
+          res.add(s.getResource());
+        }
+      }
+    }
+    for (ImplementationGuideDefn e : getIgs().values()) {
+      for (Profile cp : e.getProfiles()) {
+        for (ConstraintStructure s : cp.getProfiles()) {          
+          res.add(s.getResource());
+        }
+      }
+    }
+    return res;
+  }
+
+  public boolean isInterface(ElementDefn fi) {
+    ResourceDefn rd = baseResources.get(fi.getName());
+    return rd != null && rd.isInterface();
+  }
+
+  public String getCorrectCaseForType(String tn) {
+    for (String s : getBaseResources().keySet()) {
+      if (s.equalsIgnoreCase(tn)) {
+        return s;
+      }
+    }
+    for (String s : getResources().keySet()) {
+      if (s.equalsIgnoreCase(tn)) {
+        return s;
+      }
+    }
+    for (String s : getInfrastructure().keySet()) {
+      if (s.equalsIgnoreCase(tn)) {
+        return s;
+      }
+    }
+    for (String s : getTypes().keySet()) {
+      if (s.equalsIgnoreCase(tn)) {
+        return s;
+      }
+    }
+    for (String s : getPrimitives().keySet()) {
+      if (s.equalsIgnoreCase(tn)) {
+        return s;
+      }
+    }
+    for (TypeRef tr : getKnownTypes()) {
+      if (tr.getName().equalsIgnoreCase(tn)) {
+        return tr.getName();
+      }
+    }
+    for (String s : getAllTypeNames()) {
+      if (s.equalsIgnoreCase(tn)) {
+        return s;
+      }
+    }
+    if (Utilities.existsInList(tn, "xhtml")) {
+      return tn;
+    }
+    throw new Error("Unknown type "+tn);
+  }
+
+  public CommonSearchParameter getCommonSearchParameter(String commonId) {
+    for (CommonSearchParameter csp : commonSearchParameters.values()) {
+      if (commonId.equals(csp.getId())) {
+        return csp;
+      }
+    }
+    return null;
   }
 
 }

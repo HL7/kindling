@@ -167,6 +167,7 @@ public class ResourceDefn  {
   private StandardsStatus status = StandardsStatus.TRIAL_USE;
   private boolean abstract_;
   private boolean interface_;
+  private boolean pattern;
   private WorkGroup wg;
   private Profile conformancePack;
 
@@ -178,6 +179,8 @@ public class ResourceDefn  {
   private List<String> hints = new ArrayList<String>();
   private Map<String, PointSpec> layout = new HashMap<String, PointSpec>();
   private SecurityCategorization securityCategorization;
+  private String liquid;
+  private String liquidNotes;
 
   private long timestamp;
   
@@ -489,6 +492,47 @@ public class ResourceDefn  {
 
   public List<InheritedMapping> getInheritedMappings() {
     return inheritedMappings;
+  }
+
+  public boolean isPattern() {
+    return pattern;
+  }
+
+  public void setPattern(boolean pattern) {
+    this.pattern = pattern;
+  }
+
+  public String present() {
+    return root.getName();
+  }
+
+  public boolean hasLiquid() {
+    return liquid != null;
+  }
+
+  public String getLiquid() {
+    return liquid;
+  }
+
+  public void setLiquid(String liquid) {
+    this.liquid = liquid;
+  }
+
+  public boolean hasLiquidNotes() {
+    return liquidNotes != null;
+  }
+
+  public String getLiquidNotes() {
+    return liquidNotes;
+  }
+  
+  public void setLiquidNotes(String liquidNotes) {
+    this.liquidNotes = liquidNotes;
+  }
+
+  public Invariant findInvariant(String key) {
+    return root.findInvariant(key);
+
   }
   
   

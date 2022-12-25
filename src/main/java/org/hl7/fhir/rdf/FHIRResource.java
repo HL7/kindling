@@ -1,5 +1,7 @@
 package org.hl7.fhir.rdf;
 
+import java.util.List;
+
 import org.apache.jena.datatypes.xsd.XSDDatatype;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Property;
@@ -9,8 +11,6 @@ import org.apache.jena.vocabulary.DC;
 import org.apache.jena.vocabulary.RDF;
 import org.apache.jena.vocabulary.RDFS;
 import org.hl7.fhir.utilities.Utilities;
-
-import java.util.List;
 
 
 /**

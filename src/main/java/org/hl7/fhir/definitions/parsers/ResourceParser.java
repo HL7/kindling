@@ -40,7 +40,6 @@ import org.hl7.fhir.exceptions.FHIRException;
 import org.hl7.fhir.exceptions.FHIRFormatError;
 import org.hl7.fhir.r5.conformance.ProfileUtilities;
 import org.hl7.fhir.r5.context.CanonicalResourceManager;
-import org.hl7.fhir.r5.elementmodel.Element;
 import org.hl7.fhir.r5.formats.IParser.OutputStyle;
 import org.hl7.fhir.r5.formats.JsonParser;
 import org.hl7.fhir.r5.formats.XmlParser;
@@ -56,6 +55,7 @@ import org.hl7.fhir.r5.model.ElementDefinition.ElementDefinitionConstraintCompon
 import org.hl7.fhir.r5.model.ElementDefinition.ElementDefinitionMappingComponent;
 import org.hl7.fhir.r5.model.ElementDefinition.PropertyRepresentation;
 import org.hl7.fhir.r5.model.ElementDefinition.TypeRefComponent;
+import org.hl7.fhir.r5.model.Enumerations.FHIRVersion;
 import org.hl7.fhir.r5.model.Enumerations.PublicationStatus;
 import org.hl7.fhir.r5.model.Enumerations.SearchParamType;
 import org.hl7.fhir.r5.model.Extension;
@@ -75,16 +75,17 @@ import org.hl7.fhir.r5.model.StructureDefinition;
 import org.hl7.fhir.r5.model.StructureDefinition.StructureDefinitionMappingComponent;
 import org.hl7.fhir.r5.model.ValueSet;
 import org.hl7.fhir.r5.terminologies.CodeSystemUtilities;
+import org.hl7.fhir.r5.terminologies.ConceptMapUtilities;
 import org.hl7.fhir.r5.terminologies.ValueSetUtilities;
 import org.hl7.fhir.r5.utils.BuildExtensions;
 import org.hl7.fhir.r5.utils.ToolingExtensions;
 import org.hl7.fhir.tools.publisher.BuildWorkerContext;
+import org.hl7.fhir.tools.publisher.KindlingUtilities;
 import org.hl7.fhir.utilities.CSFile;
 import org.hl7.fhir.utilities.CSFileInputStream;
 import org.hl7.fhir.utilities.StandardsStatus;
 import org.hl7.fhir.utilities.TextFile;
 import org.hl7.fhir.utilities.Utilities;
-import org.w3c.dom.Document;
 
 public class ResourceParser {
 
@@ -119,6 +120,8 @@ public class ResourceParser {
     parseOperations(r, n, t);
     parsePacks(r, n, t);
 
+    parseLiquid(r);
+
 //    private List<Profile> conformancePackages = new ArrayList<Profile>();
 //    private Profile conformancePack;
 
@@ -136,6 +139,17 @@ public class ResourceParser {
 //    
     
     return r;
+  }
+
+  private void parseLiquid(ResourceDefn r) throws IOException, FileNotFoundException {
+    File lt = new CSFile(Utilities.path(this.folder, r.getName()+".liquid"));
+    if (lt.exists()) {
+      r.setLiquid(TextFile.fileToString(lt));
+    }
+    lt = new CSFile(Utilities.path(this.folder, r.getName()+".liquid.md"));
+    if (lt.exists()) {
+      r.setLiquidNotes(TextFile.fileToString(lt));
+    }
   }
 
   private void parsePacks(ResourceDefn r, String n, String t) throws Exception {
@@ -212,16 +226,19 @@ public class ResourceParser {
         if (new File(Utilities.path(folder, "structuredefinition-extension-"+rid+".xml")).exists()) {
           sd = (StructureDefinition) parseXml("structuredefinition-extension-"+rid+".xml");
           sd.setUserData("path", "extension-"+sd.getId()+".html");
+          sd.setVersion(context.getVersion());
           p.getExtensions().add(sd);
           context.cacheResource(sd);
         } else {
           ConstraintStructure tp = processProfile(rid, ig.getId().substring(ig.getId().indexOf("-")+1), res, wg);
           sd = tp.getResource();
+          sd.setVersion(context.getVersion());
           sd.setUserData("path", sd.getId()+".html");
           p.getProfiles().add(tp); 
         }
         sd.setUserData(ToolResourceUtilities.NAME_RES_IG, id);
         sd.setVersion(version);
+        sd.setFhirVersion(FHIRVersion.fromCode(version));
         for (ElementDefinition ed : sd.getDifferential().getElement()) {
           if (ed.hasBinding() && ed.getBinding().hasValueSet()) { 
             loadValueSet(ed.getBinding().getValueSet(), true);
@@ -249,6 +266,9 @@ public class ResourceParser {
     if (ig == null ) {
       ig = definitions.getIgs().get("core");
     }
+    sd.setVersion(version);
+    sd.setFhirVersion(FHIRVersion.fromCode(version));
+
     ConstraintStructure cs = new ConstraintStructure(sd, ig, wg == null ? wg(sd) : wg, null, false);
     return cs;
   }
@@ -395,11 +415,10 @@ public class ResourceParser {
       src.setName(src.getCode());
     }
     src.setVersion(version);
-    SearchParameterDefn sp = new SearchParameterDefn(src.getCode(), src.getDescription(), type(src.getType()), src.getXpathUsage(), 
+    SearchParameterDefn sp = new SearchParameterDefn(src.getCode(), src.getDescription(), type(src.getType()), src.getProcessingMode(), 
         StandardsStatus.fromCode(BuildExtensions.readStringExtension(src, "http://hl7.org/fhir/StructureDefinition/structuredefinition-standards-status")));
     r.getSearchParams().put(sp.getCode(), sp);
     sp.setExpression(src.getExpression());
-    sp.setXPath(src.getXpath());
     sp.setResource(src);
     String s = BuildExtensions.readStringExtension(src, BuildExtensions.EXT_PATH);
     if (!Utilities.noString(s)) {
@@ -410,6 +429,7 @@ public class ResourceParser {
         }
       }
     }
+    
     for (SearchParameterComponentComponent comp : src.getComponent()) {
       sp.getComposites().add(new CompositeDefinition(comp.getDefinition(), comp.getExpression()));
     }
@@ -437,6 +457,8 @@ public class ResourceParser {
     StructureDefinition sd = (StructureDefinition) parseXml("structuredefinition-"+t+".xml");
     sdList.put(sd.getUrl(), sd);
     sd.setVersion(version);
+    sd.setFhirVersion(FHIRVersion.fromCode(version));
+
     ResourceDefn r = new ResourceDefn();
     r.setName(sd.getName());
     r.setEnteredInErrorStatus(ToolingExtensions.readStringExtension(sd, BuildExtensions.EXT_ENTERED_IN_ERROR_STATUS));
@@ -539,7 +561,12 @@ public class ResourceParser {
     }
     ed.setOrderMeaning(focus.getOrderMeaning());
     if (BuildExtensions.hasExtension(focus, BuildExtensions.EXT_STANDARDS_STATUS)) {
-      ed.setStandardsStatus(StandardsStatus.fromCode(BuildExtensions.readStringExtension(focus, BuildExtensions.EXT_STANDARDS_STATUS)));
+      Extension sse = BuildExtensions.getExtension(focus, BuildExtensions.EXT_STANDARDS_STATUS);
+      ed.setStandardsStatus(StandardsStatus.fromCode(sse.getValue().primitiveValue()));
+      Extension ssr = sse.getValue().getExtensionByUrl(ToolingExtensions.EXT_STANDARDS_STATUS_REASON);
+      if (ssr != null) {
+        ed.setStandardsStatusReason(ssr.getValue().primitiveValue());
+      }
     }
     if (BuildExtensions.hasExtension(focus, BuildExtensions.EXT_NORMATIVE_VERSION)) {
       ed.setNormativeVersion(BuildExtensions.readStringExtension(focus, BuildExtensions.EXT_NORMATIVE_VERSION));
@@ -552,7 +579,6 @@ public class ResourceParser {
       if (cst.hasExtension(BuildExtensions.EXT_OCL)) {
         inv.setOcl(cst.getExtensionString(BuildExtensions.EXT_OCL));        
       }
-      inv.setXpath(cst.getXpath());
       inv.setId(cst.getKey());
       if (cst.hasExtension(BuildExtensions.EXT_FIXED_NAME)) {
         inv.setFixedName(cst.getExtensionString(BuildExtensions.EXT_FIXED_NAME));        
@@ -576,7 +602,7 @@ public class ResourceParser {
     for (IdType cnd : focus.getCondition()) {
       Invariant inv = invariants.get(cnd.primitiveValue());
       if (inv == null) {
-        System.out.println("Unable to find invariant "+cnd.primitiveValue());
+        System.out.println("Unable to find invariant "+cnd.primitiveValue()+" at "+focus.getName());
       } else {
         ed.getStatedInvariants().add(inv);
       }
@@ -638,8 +664,8 @@ public class ResourceParser {
     }
 
     String name = parentName + Utilities.capitalize(ed.getName());
-    if (focus.hasExtension("http://hl7.org/fhir/StructureDefinition/structuredefinition-explicit-type-name")) {
-      ed.setStatedType(focus.getExtensionString("http://hl7.org/fhir/StructureDefinition/structuredefinition-explicit-type-name"));
+    if (focus.hasExtension(ToolingExtensions.EXT_EXPLICIT_TYPE)) {
+      ed.setStatedType(focus.getExtensionString(ToolingExtensions.EXT_EXPLICIT_TYPE));
       ed.setDeclaredTypeName(ed.getStatedType());
     } else if (ed.getTypes().isEmpty() && !focus.hasContentReference()) {      
       ed.setDeclaredTypeName(name+"Component");
@@ -668,8 +694,8 @@ public class ResourceParser {
       bs.setValueSet(loadValueSet(bs.getReference(), false));
     }
 
-    if (binding.hasExtension("http://hl7.org/fhir/StructureDefinition/elementdefinition-maxValueSet")) {
-      bs.setMaxReference(binding.getExtensionString("http://hl7.org/fhir/StructureDefinition/elementdefinition-maxValueSet"));
+    if (binding.hasExtension(ToolingExtensions.EXT_MAX_VALUESET)) {
+      bs.setMaxReference(binding.getExtensionString(ToolingExtensions.EXT_MAX_VALUESET));
       bs.setMaxValueSet(loadValueSet(bs.getMaxReference(), false));
     }
 
@@ -694,12 +720,6 @@ public class ResourceParser {
     if (binding.hasExtension(BuildExtensions.EXT_COPYRIGHT)) {
       bs.setCopyright(binding.getExtensionString(BuildExtensions.EXT_COPYRIGHT));
     }      
-    if (binding.hasExtension(BuildExtensions.EXT_CS_OID)) {
-      bs.setCsOid(binding.getExtensionString(BuildExtensions.EXT_CS_OID));
-    }      
-    if (binding.hasExtension(BuildExtensions.EXT_VS_OID)) {
-      bs.setVsOid(binding.getExtensionString(BuildExtensions.EXT_VS_OID));
-    }
     if (binding.hasExtension(BuildExtensions.EXT_STATUS)) {
       bs.setStatus(PublicationStatus.fromCode(binding.getExtensionString(BuildExtensions.EXT_STATUS)));
     }
@@ -716,8 +736,8 @@ public class ResourceParser {
     if (bs.hasReference()) {
       bs.setValueSet(loadValueSet(bs.getReference(), false));
     }
-    if (binding.hasExtension("http://hl7.org/fhir/StructureDefinition/elementdefinition-maxValueSet")) {
-      bs.setMaxReference(binding.getExtensionString("http://hl7.org/fhir/StructureDefinition/elementdefinition-maxValueSet"));
+    if (binding.hasExtension(ToolingExtensions.EXT_MAX_VALUESET)) {
+      bs.setMaxReference(binding.getExtensionString(ToolingExtensions.EXT_MAX_VALUESET));
       bs.setMaxValueSet(loadValueSet(bs.getMaxReference(), false));
     }
 
@@ -742,12 +762,6 @@ public class ResourceParser {
     if (binding.hasExtension(BuildExtensions.EXT_COPYRIGHT)) {
       bs.setCopyright(binding.getExtensionString(BuildExtensions.EXT_COPYRIGHT));
     }      
-    if (binding.hasExtension(BuildExtensions.EXT_CS_OID)) {
-      bs.setCsOid(binding.getExtensionString(BuildExtensions.EXT_CS_OID));
-    }      
-    if (binding.hasExtension(BuildExtensions.EXT_VS_OID)) {
-      bs.setVsOid(binding.getExtensionString(BuildExtensions.EXT_VS_OID));
-    }
     if (binding.hasExtension(BuildExtensions.EXT_STATUS)) {
       bs.setStatus(PublicationStatus.fromCode(binding.getExtensionString(BuildExtensions.EXT_STATUS)));
     }
@@ -797,6 +811,9 @@ public class ResourceParser {
       if (!cs.hasHierarchyMeaningElement() && CodeSystemUtilities.hasHierarchy(cs)) {
         System.out.println("The CodeSystem "+csfn+" doesn't have a hierarchyMeaning element");
       }
+      if (cs.hasStatus()) {
+        cs.setStatus(PublicationStatus.ACTIVE);
+      }
       cs.setVersion(version);
       if (!cs.hasExtension(ToolingExtensions.EXT_WORKGROUP)) {
         cs.addExtension().setUrl(ToolingExtensions.EXT_WORKGROUP).setValue(new CodeType(committee.getCode()));
@@ -804,15 +821,21 @@ public class ResourceParser {
       } else {
         String ec = ToolingExtensions.readStringExtension(cs, ToolingExtensions.EXT_WORKGROUP);
         if (!ec.equals(committee.getCode()))
-          System.out.println("CodeSystem "+cs.getUrl()+" WG mismatch 4: is "+ec+", want to set to "+committee.getCode());
+          System.out.println("CodeSystem "+cs.getUrl()+" WG mismatch 4a: is "+ec+", want to set to "+committee.getCode());
       } 
       if (ext && !cs.hasCaseSensitive()) {
         cs.setCaseSensitive(true);
         save = true;
       }
+      if (!cs.hasStatus()) {
+        cs.setStatus(PublicationStatus.DRAFT);
+      }
       if (!CodeSystemUtilities.hasOID(cs)) {
-        CodeSystemUtilities.setOID(cs, "urn:oid:"+BindingSpecification.DEFAULT_OID_CS + registry.idForUri(cs.getUrl()));
-        save = true;
+        String oid = registry.getOID(cs.getUrl());
+        if (oid != null) {
+          save = true;
+          CodeSystemUtilities.setOID(cs, "urn:oid:"+oid);
+        }
       }
       if (save) {
         saveXml(cs, "codesystem-"+id+".xml");
@@ -841,6 +864,12 @@ public class ResourceParser {
         cm.setUserData("filename", cmid);
         cm.setUserData("path", cmid+".html");
         cm.setUserData("generate", "true");
+        if (!ConceptMapUtilities.hasOID(cm)) {
+          String oid = registry.getOID(cm.getUrl());
+          if (oid != null) {
+            ConceptMapUtilities.setOID(cm, "urn:oid:"+oid);
+          }
+        }
         maps.see(cm, null);
       }
     }
@@ -869,18 +898,24 @@ public class ResourceParser {
         vs.setDescription("Description Needed Here");
         save = true;
       }
+      if (!vs.hasStatus()) {
+        vs.setStatus(PublicationStatus.ACTIVE);
+      }
       if (!vs.hasExtension(ToolingExtensions.EXT_WORKGROUP)) {
         vs.addExtension().setUrl(ToolingExtensions.EXT_WORKGROUP).setValue(new CodeType(committee.getCode()));
         save = true;
       } else {
         String ec = ToolingExtensions.readStringExtension(vs, ToolingExtensions.EXT_WORKGROUP);
         if (!ec.equals(committee.getCode()))
-          System.out.println("ValueSet "+vs.getUrl()+" WG mismatch 4: is "+ec+", want to set to "+committee.getCode());
+          System.out.println("ValueSet "+vs.getUrl()+" WG mismatch 4b: is "+ec+", want to set to "+committee.getCode());
       } 
       vs.setUserData("path", "valueset-"+vs.getId()+".html");
       if (!ValueSetUtilities.hasOID(vs)) {
-        save = true;
-        ValueSetUtilities.setOID(vs, "urn:oid:"+BindingSpecification.DEFAULT_OID_VS +registry.idForUri(vs.getUrl()));
+        String oid = registry.getOID(vs.getUrl());
+        if (oid != null) {
+          save = true;
+          ValueSetUtilities.setOID(vs, "urn:oid:"+oid);
+        }
       }
       if (save) {
         saveXml(vs, "valueset-"+id+".xml");
@@ -922,7 +957,11 @@ public class ResourceParser {
     if (d == 0) {
       f.setLastModified(new Date().getTime());
     }
-    return new XmlParser().parse(new CSFileInputStream(f));
+    try {
+      return new XmlParser().parse(new CSFileInputStream(f));
+    } catch (Exception e) {
+      throw new IOException("Error parsing "+name+": "+e.getMessage(), e);
+    }
   }
 
   private void saveXml(Resource res, String name) throws FHIRFormatError, FileNotFoundException, IOException {

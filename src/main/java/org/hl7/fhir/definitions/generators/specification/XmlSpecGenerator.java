@@ -62,7 +62,7 @@ import org.hl7.fhir.utilities.Utilities;
 
 public class XmlSpecGenerator extends OutputStreamWriter {
 
-	private String defPage;
+  private String defPage;
 	private String dtRoot;
 	private Definitions definitions;
   private PageProcessor page;
@@ -202,8 +202,9 @@ public class XmlSpecGenerator extends OutputStreamWriter {
     if (rn.equals(root.getName()) && resource) {
       if (!Utilities.noString(root.typeCode())) {
         write(" &lt;!-- from <a href=\""+prefix+"resource.html\">Resource</a>: <a href=\""+prefix+"resource.html#id\">id</a>, <a href=\""+prefix+"resource.html#meta\">meta</a>, <a href=\""+prefix+"resource.html#implicitRules\">implicitRules</a>, and <a href=\""+prefix+"resource.html#language\">language</a> -->\r\n");
-        if (root.typeCode().equals("DomainResource"))
+        if (root.typeCode().equals("DomainResource") || Utilities.existsInList(root.typeCode(), definitions.getInterfaceNames())) {
           write(" &lt;!-- from <a href=\""+prefix+"domainresource.html\">DomainResource</a>: <a href=\""+prefix+"narrative.html#Narrative\">text</a>, <a href=\""+prefix+"references.html#contained\">contained</a>, <a href=\""+prefix+"extensibility.html\">extension</a>, and <a href=\""+prefix+"extensibility.html#modifierExtension\">modifierExtension</a> -->\r\n");
+        }
       }
     } else if (root.typeCode().equals("BackboneElement")) {
       write(" &lt;!-- from BackboneElement: <a href=\""+prefix+"extensibility.html\">extension</a>, <a href=\""+prefix+"extensibility.html\">modifierExtension</a> -->\r\n");
@@ -827,7 +828,7 @@ public class XmlSpecGenerator extends OutputStreamWriter {
 	private void writeCardinality(ElementDefn elem) throws IOException {
 		if (elem.getStatedInvariants().size() > 0)
 			write(" <span style=\"color: brown\" title=\""
-					+ Utilities.escapeXml(getInvariants(elem)) + "\"><b><img alt=\"??\" src=\"lock.png\"/> "
+					+ Utilities.escapeXml(getInvariants(elem)) + "\"><b>"+ToolResourceUtilities.INV_FLAG+" "
 					+ elem.describeCardinality() + "</b></span>");
 		else
 			write(" <span style=\"color: brown\"><b>"
@@ -837,7 +838,7 @@ public class XmlSpecGenerator extends OutputStreamWriter {
   private void writeCardinality(ElementDefinition elem) throws IOException {
     if (elem.getConstraint().size() > 0)
       write(" <span style=\"color: brown\" title=\""
-          + Utilities.escapeXml(getInvariants(elem)) + "\"><b><img alt=\"??\" src=\"lock.png\"/> "
+          + Utilities.escapeXml(getInvariants(elem)) + "\"><b>"+ToolResourceUtilities.INV_FLAG+" "
           + describeCardinality(elem) + "</b></span>");
     else
       write(" <span style=\"color: brown\"><b>"
