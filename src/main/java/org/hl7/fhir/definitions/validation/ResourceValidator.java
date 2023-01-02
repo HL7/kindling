@@ -1,10 +1,32 @@
 package org.hl7.fhir.definitions.validation;
 
-import org.hl7.fhir.definitions.model.*;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import org.hl7.fhir.definitions.model.BindingSpecification;
 import org.hl7.fhir.definitions.model.BindingSpecification.BindingMethod;
 import org.hl7.fhir.definitions.model.BindingSpecification.ElementType;
+import org.hl7.fhir.definitions.model.Compartment;
+import org.hl7.fhir.definitions.model.DefinedCode;
+import org.hl7.fhir.definitions.model.DefinedStringPattern;
+import org.hl7.fhir.definitions.model.Definitions;
+import org.hl7.fhir.definitions.model.ElementDefn;
+import org.hl7.fhir.definitions.model.ImplementationGuideDefn;
+import org.hl7.fhir.definitions.model.LogicalModel;
+import org.hl7.fhir.definitions.model.MappingSpace;
+import org.hl7.fhir.definitions.model.Operation;
 import org.hl7.fhir.definitions.model.Operation.OperationExample;
+import org.hl7.fhir.definitions.model.ResourceDefn;
+import org.hl7.fhir.definitions.model.SearchParameterDefn;
 import org.hl7.fhir.definitions.model.SearchParameterDefn.SearchType;
+import org.hl7.fhir.definitions.model.TypeDefn;
+import org.hl7.fhir.definitions.model.TypeRef;
+import org.hl7.fhir.definitions.model.W5Entry;
 import org.hl7.fhir.exceptions.FHIRException;
 import org.hl7.fhir.r5.context.CanonicalResourceManager;
 import org.hl7.fhir.r5.context.IWorkerContext;
@@ -14,7 +36,6 @@ import org.hl7.fhir.r5.model.Enumerations.BindingStrength;
 import org.hl7.fhir.r5.model.ValueSet;
 import org.hl7.fhir.r5.model.ValueSet.ConceptSetComponent;
 import org.hl7.fhir.r5.renderers.RendererFactory;
-import org.hl7.fhir.r5.renderers.ResourceRenderer;
 import org.hl7.fhir.r5.terminologies.ValueSetUtilities;
 import org.hl7.fhir.r5.utils.Translations;
 import org.hl7.fhir.utilities.StandardsStatus;
@@ -24,9 +45,6 @@ import org.hl7.fhir.utilities.validation.ValidationMessage.IssueSeverity;
 import org.hl7.fhir.utilities.validation.ValidationMessage.IssueType;
 import org.hl7.fhir.utilities.validation.ValidationMessage.Source;
 import org.hl7.fhir.validation.BaseValidator;
-
-import java.io.IOException;
-import java.util.*;
 
 
 /**
@@ -94,7 +112,7 @@ public class ResourceValidator extends BaseValidator {
   }
 
   public void checkStucture(List<ValidationMessage> errors, String name, ElementDefn structure) throws Exception {
-    rule(errors, IssueType.STRUCTURE, structure.getName(), name.length() > 1 && Character.isUpperCase(name.charAt(0)), "Resource Name must start with an uppercase alpha character");
+    rule(errors, ValidationMessage.NO_RULE_DATE, IssueType.STRUCTURE, structure.getName(), name.length() > 1 && Character.isUpperCase(name.charAt(0)), "Resource Name must start with an uppercase alpha character");
     ResourceDefn fakeParent = new ResourceDefn();
     fakeParent.setRoot((TypeDefn) structure);
     fakeParent.setWg(definitions.getWorkgroups().get("fhir"));
@@ -123,46 +141,46 @@ public class ResourceValidator extends BaseValidator {
 
   protected boolean rule(List<ValidationMessage> errors, IssueType type, String path, boolean b, String msg) {
     String rn = path.contains(".") ? path.substring(0, path.indexOf(".")) : path;
-    return super.ruleHtml(errors, type, path, b, msg, "<a href=\"" + (rn.toLowerCase()) + ".html\">" + rn + "</a>: " + Utilities.escapeXml(msg));
+    return super.ruleHtml(errors, ValidationMessage.NO_RULE_DATE, type, path, b, msg, "<a href=\"" + (rn.toLowerCase()) + ".html\">" + rn + "</a>: " + Utilities.escapeXml(msg));
   }
 
   public void check(List<ValidationMessage> errors, String name, ResourceDefn rd) throws Exception {
     for (String s : rd.getHints())
-      hint(errors, IssueType.INFORMATIONAL, rd.getName(), false, s);
+      hint(errors, ValidationMessage.NO_RULE_DATE, IssueType.INFORMATIONAL, rd.getName(), false, s);
 
     Set<String> invIds = new HashSet<>();
-    rule(errors, IssueType.STRUCTURE, rd.getName(), !name.equals("Metadata"), "The name 'Metadata' is not a legal name for a resource");
-    rule(errors, IssueType.STRUCTURE, rd.getName(), !name.equals("History"), "The name 'History' is not a legal name for a resource");
-    rule(errors, IssueType.STRUCTURE, rd.getName(), !name.equals("Tag"), "The name 'Tag' is not a legal name for a resource");
-    rule(errors, IssueType.STRUCTURE, rd.getName(), !name.equals("Tags"), "The name 'Tags' is not a legal name for a resource");
-    rule(errors, IssueType.STRUCTURE, rd.getName(), !name.equals("MailBox"), "The name 'MailBox' is not a legal name for a resource");
-    rule(errors, IssueType.STRUCTURE, rd.getName(), !name.equals("Validation"), "The name 'Validation' is not a legal name for a resource");
-    rule(errors, IssueType.REQUIRED, rd.getName(), name.equals("Parameters") || translations.hasTranslation(name), "The name '" + name + "' is not found in the file translations.xml");
-    rule(errors, IssueType.STRUCTURE, rd.getName(), name.length() > 1 && Character.isUpperCase(name.charAt(0)), "Resource Name must start with an uppercase alpha character");
-    rule(errors, IssueType.STRUCTURE, rd.getName(), !Utilities.noString(rd.getFmmLevel()), "Resource must have a maturity level");
-    rule(errors, IssueType.REQUIRED, rd.getName(), rd.getRoot().getElements().size() > 0, "A resource must have at least one element in it before the build can proceed"); // too many downstream issues in the parsers, and it would only happen as a transient thing when designing the resources
-    rule(errors, IssueType.REQUIRED, rd.getName(), rd.getWg() != null, "A resource must have a designated owner"); // too many downstream issues in the parsers, and it would only happen as a transient thing when designing the resources
-    rule(errors, IssueType.REQUIRED, rd.getName(), !Utilities.noString(rd.getRoot().getW5()), "A resource must have a W5 category");
+    rule(errors, ValidationMessage.NO_RULE_DATE, IssueType.STRUCTURE, rd.getName(), !name.equals("Metadata"), "The name 'Metadata' is not a legal name for a resource");
+    rule(errors, ValidationMessage.NO_RULE_DATE, IssueType.STRUCTURE, rd.getName(), !name.equals("History"), "The name 'History' is not a legal name for a resource");
+    rule(errors, ValidationMessage.NO_RULE_DATE, IssueType.STRUCTURE, rd.getName(), !name.equals("Tag"), "The name 'Tag' is not a legal name for a resource");
+    rule(errors, ValidationMessage.NO_RULE_DATE, IssueType.STRUCTURE, rd.getName(), !name.equals("Tags"), "The name 'Tags' is not a legal name for a resource");
+    rule(errors, ValidationMessage.NO_RULE_DATE, IssueType.STRUCTURE, rd.getName(), !name.equals("MailBox"), "The name 'MailBox' is not a legal name for a resource");
+    rule(errors, ValidationMessage.NO_RULE_DATE, IssueType.STRUCTURE, rd.getName(), !name.equals("Validation"), "The name 'Validation' is not a legal name for a resource");
+    rule(errors, ValidationMessage.NO_RULE_DATE, IssueType.REQUIRED, rd.getName(), name.equals("Parameters") || translations.hasTranslation(name), "The name '" + name + "' is not found in the file translations.xml");
+    rule(errors, ValidationMessage.NO_RULE_DATE, IssueType.STRUCTURE, rd.getName(), name.length() > 1 && Character.isUpperCase(name.charAt(0)), "Resource Name must start with an uppercase alpha character");
+    rule(errors, ValidationMessage.NO_RULE_DATE, IssueType.STRUCTURE, rd.getName(), !Utilities.noString(rd.getFmmLevel()), "Resource must have a maturity level");
+    rule(errors, ValidationMessage.NO_RULE_DATE, IssueType.REQUIRED, rd.getName(), rd.getRoot().getElements().size() > 0, "A resource must have at least one element in it before the build can proceed"); // too many downstream issues in the parsers, and it would only happen as a transient thing when designing the resources
+    rule(errors, ValidationMessage.NO_RULE_DATE, IssueType.REQUIRED, rd.getName(), rd.getWg() != null, "A resource must have a designated owner"); // too many downstream issues in the parsers, and it would only happen as a transient thing when designing the resources
+    rule(errors, ValidationMessage.NO_RULE_DATE, IssueType.REQUIRED, rd.getName(), !Utilities.noString(rd.getRoot().getW5()), "A resource must have a W5 category");
     rd.getRoot().setMinCardinality(0);
     rd.getRoot().setMaxCardinality(Integer.MAX_VALUE);
     // pattern related rules
     buildW5Mappings(rd.getRoot(), true);
     if ((isWorkflowPattern(rd, "Event") || isWorkflowPattern(rd, "Request")) && hasPatient(rd)) {
-      rule(errors, IssueType.STRUCTURE, rd.getName(), rd.getSearchParams().containsKey("patient"), "An 'event' or 'request' resource must have a search parameter 'patient'");
+      rule(errors, ValidationMessage.NO_RULE_DATE, IssueType.STRUCTURE, rd.getName(), rd.getSearchParams().containsKey("patient"), "An 'event' or 'request' resource must have a search parameter 'patient'");
     }
-    rule(errors, IssueType.STRUCTURE, rd.getName(), !rd.hasLiquid() || !RendererFactory.hasSpecificRenderer(rd.getName()), "Cannot provide a liquid template for "+rd.getName());
+    rule(errors, ValidationMessage.NO_RULE_DATE, IssueType.STRUCTURE, rd.getName(), !rd.hasLiquid() || !RendererFactory.hasSpecificRenderer(rd.getName()), "Cannot provide a liquid template for "+rd.getName());
     
-    if (suppressedwarning(errors, IssueType.REQUIRED, rd.getName(), hasW5Mappings(rd) || rd.getName().equals("Binary") || rd.getName().equals("OperationOutcome") || rd.getName().equals("Parameters"), "A resource must have w5 mappings")) {
+    if (suppressedwarning(errors, ValidationMessage.NO_RULE_DATE, IssueType.REQUIRED, rd.getName(), hasW5Mappings(rd) || rd.getName().equals("Binary") || rd.getName().equals("OperationOutcome") || rd.getName().equals("Parameters"), "A resource must have w5 mappings")) {
       String w5Order = listW5Elements(rd);
       String w5CorrectOrder = listW5Correct(rd);
       if (!w5Order.equals(w5CorrectOrder)) {
-        warning(errors, IssueType.REQUIRED, rd.getName(), false, "Resource elements are out of order. The correct order is '" + w5CorrectOrder + "' but the actual order is '" + w5Order + "'");
+        warning(errors, ValidationMessage.NO_RULE_DATE, IssueType.REQUIRED, rd.getName(), false, "Resource elements are out of order. The correct order is '" + w5CorrectOrder + "' but the actual order is '" + w5Order + "'");
         //        System.out.println("Resource "+parent.getName()+": elements are out of order. The correct order is '"+w5CorrectOrder+"' but the actual order is '"+w5Order+"'");
       }
       if (!Utilities.noString(rd.getProposedOrder())) {
         w5Order = listW5Elements(rd, rd.getProposedOrder());
         if (!w5Order.equals(w5CorrectOrder)) {
-          rule(errors, IssueType.REQUIRED, rd.getName(), false, "Proposed Resource elements are out of order. The correct order is '" + w5CorrectOrder + "' but the proposed order is '" + w5Order + "'");
+          rule(errors, ValidationMessage.NO_RULE_DATE, IssueType.REQUIRED, rd.getName(), false, "Proposed Resource elements are out of order. The correct order is '" + w5CorrectOrder + "' but the proposed order is '" + w5Order + "'");
         } else
           System.out.println("Proposed order for " + rd.getName() + ": build order ok");
       }
@@ -175,15 +193,15 @@ public class ResourceValidator extends BaseValidator {
       else if (hasActivFalse(rd))
         rd.setEnteredInErrorStatus(".active = false");
       else
-        warning(errors, IssueType.REQUIRED, rd.getName(), false, "A resource must have an 'entered in error' status"); // too many downstream issues in the parsers, and it would only happen as a transient thing when designing the resources
+        warning(errors, ValidationMessage.NO_RULE_DATE, IssueType.REQUIRED, rd.getName(), false, "A resource must have an 'entered in error' status"); // too many downstream issues in the parsers, and it would only happen as a transient thing when designing the resources
 
     String s = rd.getRoot().getMapping(Definitions.RIM_MAPPING);
     // We no longer require RIM mappings
-    //        hint(errors, IssueType.REQUIRED, rd.getName(), !Utilities.noString(s), "RIM Mapping is required");
+    //        hint(errors, ValidationMessage.NO_RULE_DATE, IssueType.REQUIRED, rd.getName(), !Utilities.noString(s), "RIM Mapping is required");
 
     for (Operation op : rd.getOperations()) {
-      warning(errors, IssueType.BUSINESSRULE, rd.getName() + ".$" + op.getName(), hasOpExample(op.getExamples(), false), "Operation must have an example request");
-      warning(errors, IssueType.BUSINESSRULE, rd.getName() + ".$" + op.getName(), hasOpExample(op.getExamples(), true), "Operation must have an example response");
+      warning(errors, ValidationMessage.NO_RULE_DATE, IssueType.BUSINESSRULE, rd.getName() + ".$" + op.getName(), hasOpExample(op.getExamples(), false), "Operation must have an example request");
+      warning(errors, ValidationMessage.NO_RULE_DATE, IssueType.BUSINESSRULE, rd.getName() + ".$" + op.getName(), hasOpExample(op.getExamples(), true), "Operation must have an example response");
     }
     List<String> vsWarns = new ArrayList<String>();
     int vsWarnings = checkElement(errors, rd.getName(), rd.getRoot(), rd, null, s == null || !s.equalsIgnoreCase("n/a"), false, hasSummary(rd.getRoot()), vsWarns, true, rd.getStatus(), invIds);
@@ -191,49 +209,49 @@ public class ResourceValidator extends BaseValidator {
     if (!resourceIsTechnical(name)) { // these are exempt because identification is tightly managed
       ElementDefn id = rd.getRoot().getElementByName(definitions, "identifier", true, false);
       if (id == null)
-        warning(errors, IssueType.STRUCTURE, rd.getName(), false, "All resources should have an identifier");
+        warning(errors, ValidationMessage.NO_RULE_DATE, IssueType.STRUCTURE, rd.getName(), false, "All resources should have an identifier");
       else
-        rule(errors, IssueType.STRUCTURE, rd.getName(), id.typeCode().equals("Identifier"), "If a resource has an element named identifier, it must have a type 'Identifier'");
+        rule(errors, ValidationMessage.NO_RULE_DATE, IssueType.STRUCTURE, rd.getName(), id.typeCode().equals("Identifier"), "If a resource has an element named identifier, it must have a type 'Identifier'");
     }
-    rule(errors, IssueType.STRUCTURE, rd.getName(), rd.getRoot().getElementByName(definitions, "text", true, false) == null, "Element named \"text\" not allowed");
-    rule(errors, IssueType.STRUCTURE, rd.getName(), rd.getRoot().getElementByName(definitions, "contained", true, false) == null, "Element named \"contained\" not allowed");
+    rule(errors, ValidationMessage.NO_RULE_DATE, IssueType.STRUCTURE, rd.getName(), rd.getRoot().getElementByName(definitions, "text", true, false) == null, "Element named \"text\" not allowed");
+    rule(errors, ValidationMessage.NO_RULE_DATE, IssueType.STRUCTURE, rd.getName(), rd.getRoot().getElementByName(definitions, "contained", true, false) == null, "Element named \"contained\" not allowed");
     if (rd.getRoot().getElementByName(definitions, "subject", true, false) != null && rd.getRoot().getElementByName(definitions, "subject", true, false).typeCode().startsWith("Reference"))
-      rule(errors, IssueType.STRUCTURE, rd.getName(), rd.getSearchParams().containsKey("subject"), "A resource that contains a subject reference must have a search parameter 'subject'");
+      rule(errors, ValidationMessage.NO_RULE_DATE, IssueType.STRUCTURE, rd.getName(), rd.getSearchParams().containsKey("subject"), "A resource that contains a subject reference must have a search parameter 'subject'");
     ElementDefn ped = rd.getRoot().getElementByName(definitions, "patient", true, false);
     if (ped != null && ped.typeCode().startsWith("Reference")) {
       SearchParameterDefn spd = rd.getSearchParams().get("patient");
-      if (rule(errors, IssueType.STRUCTURE, rd.getName(), spd != null, "A resource that contains a patient reference must have a search parameter 'patient'"))
-        rule(errors, IssueType.STRUCTURE, rd.getName(),
+      if (rule(errors, ValidationMessage.NO_RULE_DATE, IssueType.STRUCTURE, rd.getName(), spd != null, "A resource that contains a patient reference must have a search parameter 'patient'"))
+        rule(errors, ValidationMessage.NO_RULE_DATE, IssueType.STRUCTURE, rd.getName(),
             (spd.getTargets().size() == 1 && spd.getTargets().contains("Patient")) || (ped.getTypes().get(0).getParams().size() == 1 && ped.getTypes().get(0).getParams().get(0).equals("Patient")),
             "A Patient search parameter must only refer to patient");
     }
     ElementDefn sed = rd.getRoot().getElementByName(definitions, "subject", true, false);
     if (sed != null && sed.typeCode().startsWith("Reference") && sed.typeCode().contains("Patient"))
-      warning(errors, IssueType.STRUCTURE, rd.getName(), rd.getSearchParams().containsKey("patient"), "A resource that contains a subject that can be a patient reference must have a search parameter 'patient'");
+      warning(errors, ValidationMessage.NO_RULE_DATE, IssueType.STRUCTURE, rd.getName(), rd.getSearchParams().containsKey("patient"), "A resource that contains a subject that can be a patient reference must have a search parameter 'patient'");
     if (rd.getRoot().getElementByName(definitions, "identifier", true, false) != null) {
-      warning(errors, IssueType.STRUCTURE, rd.getName(), rd.getSearchParams().containsKey("identifier"), "A resource that contains an identifier must have a search parameter 'identifier'");
+      warning(errors, ValidationMessage.NO_RULE_DATE, IssueType.STRUCTURE, rd.getName(), rd.getSearchParams().containsKey("identifier"), "A resource that contains an identifier must have a search parameter 'identifier'");
     }
     if (rd.getRoot().getElementByName(definitions, "status", true, false) != null) {
-      hint(errors, IssueType.STRUCTURE, rd.getName(), rd.getSearchParams().containsKey("status"), "A resource that contains a status element must have a search parameter 'status'"); // todo: change to a warning post STU3
+      hint(errors, ValidationMessage.NO_RULE_DATE, IssueType.STRUCTURE, rd.getName(), rd.getSearchParams().containsKey("status"), "A resource that contains a status element must have a search parameter 'status'"); // todo: change to a warning post STU3
     }
     if (rd.getRoot().getElementByName(definitions, "url", true, false) != null) {
-      warning(errors, IssueType.STRUCTURE, rd.getName(), rd.getSearchParams().containsKey("url"), "A resource that contains a url element must have a search parameter 'url'");
+      warning(errors, ValidationMessage.NO_RULE_DATE, IssueType.STRUCTURE, rd.getName(), rd.getSearchParams().containsKey("url"), "A resource that contains a url element must have a search parameter 'url'");
     }
     checkSearchParams(errors, rd);
     for (Operation op : rd.getOperations()) {
-      rule(errors, IssueType.STRUCTURE, rd.getName() + "/$" + op.getName(), !parentHasOp(rd.getRoot().typeCode(), op.getName()), "Duplicate Operation Name $" + op.getName() + " on " + rd.getName());
+      rule(errors, ValidationMessage.NO_RULE_DATE, IssueType.STRUCTURE, rd.getName() + "/$" + op.getName(), !parentHasOp(rd.getRoot().typeCode(), op.getName()), "Duplicate Operation Name $" + op.getName() + " on " + rd.getName());
     }
 
     for (Compartment c : definitions.getCompartments()) {
-      if (rule(errors, IssueType.STRUCTURE, rd.getName(), name.equals("Parameters") || c.getResources().containsKey(rd), "Resource not entered in resource map for compartment '" + c.getTitle() + "' (compartments.xml)")) {
+      if (rule(errors, ValidationMessage.NO_RULE_DATE, IssueType.STRUCTURE, rd.getName(), name.equals("Parameters") || c.getResources().containsKey(rd), "Resource not entered in resource map for compartment '" + c.getTitle() + "' (compartments.xml)")) {
         String param = c.getResources().get(rd);
         if (!Utilities.noString(param)) {
-          //          rule(errors, IssueType.STRUCTURE, parent.getName(), param.equals("{def}") || parent.getSearchParams().containsKey(c.getName()), "Resource "+parent.getName()+" in compartment " +c.getName()+" must have a search parameter named "+c.getName().toLowerCase()+")");
+          //          rule(errors, ValidationMessage.NO_RULE_DATE, IssueType.STRUCTURE, parent.getName(), param.equals("{def}") || parent.getSearchParams().containsKey(c.getName()), "Resource "+parent.getName()+" in compartment " +c.getName()+" must have a search parameter named "+c.getName().toLowerCase()+")");
           for (String p : param.split("\\|")) {
             String pn = p.trim();
             if (pn.contains("."))
               pn = pn.substring(0, pn.indexOf("."));
-            rule(errors, IssueType.STRUCTURE, rd.getName(), Utilities.noString(pn) || pn.equals("{def}") || rd.getSearchParams().containsKey(pn), "Resource " + rd.getName() + " in compartment " + c.getName() + ": parameter " + param + " was not found (" + pn + ")");
+            rule(errors, ValidationMessage.NO_RULE_DATE, IssueType.STRUCTURE, rd.getName(), Utilities.noString(pn) || pn.equals("{def}") || rd.getSearchParams().containsKey(pn), "Resource " + rd.getName() + " in compartment " + c.getName() + ": parameter " + param + " was not found (" + pn + ")");
           }
         }
       }
@@ -257,17 +275,17 @@ public class ResourceValidator extends BaseValidator {
         hints++;
     }
     boolean ok = warnings == 0 || "0".equals(rd.getFmmLevel());
-    if (rule(errors, IssueType.STRUCTURE, rd.getName(), ok, "Resource " + rd.getName() + " (FMM=" + rd.getFmmLevel() + ") cannot have an FMM level > 0 (" + rd.getFmmLevel() + ") if it has warnings"))
-      rule(errors, IssueType.STRUCTURE, rd.getName(), vsWarnings == 0 || "0".equals(rd.getFmmLevel()), "Resource " + rd.getName() + " (FMM=" + rd.getFmmLevel() + ") cannot have an FMM level >1 (" + rd.getFmmLevel() + ") if it has linked value set warnings (" + vsWarns.toString() + ")");
+    if (rule(errors, ValidationMessage.NO_RULE_DATE, IssueType.STRUCTURE, rd.getName(), ok, "Resource " + rd.getName() + " (FMM=" + rd.getFmmLevel() + ") cannot have an FMM level > 0 (" + rd.getFmmLevel() + ") if it has warnings"))
+      rule(errors, ValidationMessage.NO_RULE_DATE, IssueType.STRUCTURE, rd.getName(), vsWarnings == 0 || "0".equals(rd.getFmmLevel()), "Resource " + rd.getName() + " (FMM=" + rd.getFmmLevel() + ") cannot have an FMM level >1 (" + rd.getFmmLevel() + ") if it has linked value set warnings (" + vsWarns.toString() + ")");
     ok = hints == 0 || Integer.parseInt(rd.getFmmLevel()) < 3;
-    rule(errors, IssueType.STRUCTURE, rd.getName(), ok, "Resource " + rd.getName() + " (FMM=" + rd.getFmmLevel() + ") cannot have an FMM level >2 (" + rd.getFmmLevel() + ") if it has informational hints");
+    rule(errors, ValidationMessage.NO_RULE_DATE, IssueType.STRUCTURE, rd.getName(), ok, "Resource " + rd.getName() + " (FMM=" + rd.getFmmLevel() + ") cannot have an FMM level >2 (" + rd.getFmmLevel() + ") if it has informational hints");
 
     //    if (isInterface(rd.getRoot().typeCode())) {
     //      checkInterface(errors, rd, definitions.getBaseResources().get(rd.getRoot().typeCode()));
     //    }
     if (!Utilities.noString(rd.getEnteredInErrorStatus())) {
       if (hasEnteredInErrorInStatus(rd)) {
-        rule(errors, IssueType.STRUCTURE, rd.getName(), rd.getEnteredInErrorStatus().contains("entered-in-error"), "If a resource has an entered-in-error statys, then this must be mentioned in the entered in error status");
+        rule(errors, ValidationMessage.NO_RULE_DATE, IssueType.STRUCTURE, rd.getName(), rd.getEnteredInErrorStatus().contains("entered-in-error"), "If a resource has an entered-in-error statys, then this must be mentioned in the entered in error status");
       }
     }
   }
@@ -295,15 +313,15 @@ public class ResourceValidator extends BaseValidator {
       }
       List<String> path = new ArrayList<>();
       path.add(self.getName());
-      if (rule(errors, IssueType.BUSINESSRULE, path, es != null, "[ic]: No definition for element '" + ei.getName() + " defined in " + iface.getName())) {
+      if (rule(errors, ValidationMessage.NO_RULE_DATE, IssueType.BUSINESSRULE, path, es != null, "[ic]: No definition for element '" + ei.getName() + " defined in " + iface.getName())) {
         int index = self.getRoot().getElements().indexOf(es);
         path.add(ei.getName());
-        rule(errors, IssueType.BUSINESSRULE, path, ei.getMinCardinality() <= es.getMinCardinality(), "[ic]: Min cardinality for " + self.getName() + "." + ei.getName() + " is " + es.getMinCardinality() + " but interface has " + ei.getMinCardinality());
-        rule(errors, IssueType.BUSINESSRULE, path, ei.getMaxCardinality() >= es.getMaxCardinality(), "[ic]: Max cardinality for " + self.getName() + "." + ei.getName() + " is " + es.getMaxCardinality() + " but interface has " + ei.getMaxCardinality());
+        rule(errors, ValidationMessage.NO_RULE_DATE, IssueType.BUSINESSRULE, path, ei.getMinCardinality() <= es.getMinCardinality(), "[ic]: Min cardinality for " + self.getName() + "." + ei.getName() + " is " + es.getMinCardinality() + " but interface has " + ei.getMinCardinality());
+        rule(errors, ValidationMessage.NO_RULE_DATE, IssueType.BUSINESSRULE, path, ei.getMaxCardinality() >= es.getMaxCardinality(), "[ic]: Max cardinality for " + self.getName() + "." + ei.getName() + " is " + es.getMaxCardinality() + " but interface has " + ei.getMaxCardinality());
         for (TypeRef t : es.getTypes()) {
-          rule(errors, IssueType.BUSINESSRULE, path, ei.hasType(t.getName()), "[ic]: The type " + t.getName() + " is not valid in the interface");
+          rule(errors, ValidationMessage.NO_RULE_DATE, IssueType.BUSINESSRULE, path, ei.hasType(t.getName()), "[ic]: The type " + t.getName() + " is not valid in the interface");
         }
-        rule(errors, IssueType.BUSINESSRULE, path, lastIndex < index, "[ic]: Out of order " + self.getName() + "." + ei.getName() + " (" + lastIndex + " / " + index);
+        rule(errors, ValidationMessage.NO_RULE_DATE, IssueType.BUSINESSRULE, path, lastIndex < index, "[ic]: Out of order " + self.getName() + "." + ei.getName() + " (" + lastIndex + " / " + index);
         lastIndex = index;
       }
     }
@@ -329,15 +347,15 @@ public class ResourceValidator extends BaseValidator {
         spgroups.put(spgn, spg);
       }
       spgroups.get(spgn).resources.add(rd.getName());
-      rule(errors, IssueType.FORBIDDEN, rd.getName(), checkNamingPattern(rd.getName(), p.getCode()), "Search Parameter name is not valid - must use lowercase letters with '_' between words");
-      rule(errors, IssueType.STRUCTURE, rd.getName(), !p.getCode().equals("filter"), "Search Parameter Name cannot be 'filter')");
-      rule(errors, IssueType.STRUCTURE, rd.getName(), !p.getCode().contains("."), "Search Parameter Names cannot contain a '.' (\"" + p.getCode() + "\")");
-      rule(errors, IssueType.STRUCTURE, rd.getName(), !p.getCode().equalsIgnoreCase("id"), "Search Parameter Names cannot be named 'id' (\"" + p.getCode() + "\")");
-      warning(errors, IssueType.STRUCTURE, rd.getName(), !stringMatches(p.getCode(), "id", "lastUpdated", "tag", "profile", "security", "text", "content", "list", "query"), "Search Parameter Names cannot be named one of the reserved names (\"" + p.getCode() + "\")");
-      hint(errors, IssueType.STRUCTURE, rd.getName(), searchNameOk(p.getCode()), "Search Parameter name '" + p.getCode() + "' does not follow the style guide");
-      rule(errors, IssueType.STRUCTURE, rd.getName(), p.getCode().equals(p.getCode().toLowerCase()) || p.getCode().equals("_lastUpdated"), "Search Parameter Names should be all lowercase (\"" + p.getCode() + "\")");
-      if (rule(errors, IssueType.STRUCTURE, rd.getName(), !Utilities.noString(p.getDescription()), "Search Parameter description is empty (\"" + p.getCode() + "\")"))
-        rule(errors, IssueType.STRUCTURE, rd.getName(), Character.isUpperCase(p.getDescription().charAt(0)) || p.getDescription().startsWith("e.g. ") || p.getDescription().contains("|") || startsWithType(p.getDescription()), "Search Parameter descriptions should start with an uppercase character(\"" + p.getDescription() + "\")");
+      rule(errors, ValidationMessage.NO_RULE_DATE, IssueType.FORBIDDEN, rd.getName(), checkNamingPattern(rd.getName(), p.getCode()), "Search Parameter name is not valid - must use lowercase letters with '_' between words");
+      rule(errors, ValidationMessage.NO_RULE_DATE, IssueType.STRUCTURE, rd.getName(), !p.getCode().equals("filter"), "Search Parameter Name cannot be 'filter')");
+      rule(errors, ValidationMessage.NO_RULE_DATE, IssueType.STRUCTURE, rd.getName(), !p.getCode().contains("."), "Search Parameter Names cannot contain a '.' (\"" + p.getCode() + "\")");
+      rule(errors, ValidationMessage.NO_RULE_DATE, IssueType.STRUCTURE, rd.getName(), !p.getCode().equalsIgnoreCase("id"), "Search Parameter Names cannot be named 'id' (\"" + p.getCode() + "\")");
+      warning(errors, ValidationMessage.NO_RULE_DATE, IssueType.STRUCTURE, rd.getName(), !stringMatches(p.getCode(), "id", "lastUpdated", "tag", "profile", "security", "text", "content", "list", "query"), "Search Parameter Names cannot be named one of the reserved names (\"" + p.getCode() + "\")");
+      hint(errors, ValidationMessage.NO_RULE_DATE, IssueType.STRUCTURE, rd.getName(), searchNameOk(p.getCode()), "Search Parameter name '" + p.getCode() + "' does not follow the style guide");
+      rule(errors, ValidationMessage.NO_RULE_DATE, IssueType.STRUCTURE, rd.getName(), p.getCode().equals(p.getCode().toLowerCase()) || p.getCode().equals("_lastUpdated"), "Search Parameter Names should be all lowercase (\"" + p.getCode() + "\")");
+      if (rule(errors, ValidationMessage.NO_RULE_DATE, IssueType.STRUCTURE, rd.getName(), !Utilities.noString(p.getDescription()), "Search Parameter description is empty (\"" + p.getCode() + "\")"))
+        rule(errors, ValidationMessage.NO_RULE_DATE, IssueType.STRUCTURE, rd.getName(), Character.isUpperCase(p.getDescription().charAt(0)) || p.getDescription().startsWith("e.g. ") || p.getDescription().contains("|") || startsWithType(p.getDescription()), "Search Parameter descriptions should start with an uppercase character(\"" + p.getDescription() + "\")");
       try {
         if (!Utilities.noString(p.getExpression()))
           fpUsages.add(new FHIRPathUsage(rd.getName() + "::" + p.getCode(), rd.getName(), rd.getName(), p.getDescription(), p.getExpression().replace("[x]", "")));
@@ -363,7 +381,7 @@ public class ResourceValidator extends BaseValidator {
                 tn = ((DefinedStringPattern) definitions.getPrimitives().get(tn)).getBase();
               usagest.get(p.getType()).usage.add(tn);
             } else
-              warning(errors, IssueType.STRUCTURE, rd.getName(), tlist.size() > 1, "Search Parameter " + p.getCode() + " : " + p.getType().name() + " type illegal for " + path + " : " + tn + " (" + e.typeCode() + ")");
+              warning(errors, ValidationMessage.NO_RULE_DATE, IssueType.STRUCTURE, rd.getName(), tlist.size() > 1, "Search Parameter " + p.getCode() + " : " + p.getType().name() + " type illegal for " + path + " : " + tn + " (" + e.typeCode() + ")");
           }
         }
       } catch (Exception e1) {
@@ -375,7 +393,7 @@ public class ResourceValidator extends BaseValidator {
             String pp = trimIndexes(path);
             e = rd.getRoot().getElementForPath(pp, definitions, "Resolving Search Parameter Path", true, false);
             if (e == null) {
-              rule(errors, IssueType.STRUCTURE, rd.getName(), false, "Unable to find element for Search Parameter Path: \"" + pp + "\"");
+              rule(errors, ValidationMessage.NO_RULE_DATE, IssueType.STRUCTURE, rd.getName(), false, "Unable to find element for Search Parameter Path: \"" + pp + "\"");
             } else {
               for (TypeRef t : e.getTypes()) {
                 if (t.getName().equals("Reference") || t.getName().equals("canonical")) {
@@ -396,18 +414,18 @@ public class ResourceValidator extends BaseValidator {
             String pp = trimIndexes(path);
             e = rd.getRoot().getElementForPath(pp, definitions, "Resolving Search Parameter Path", true, false);
             if (e == null) {
-              rule(errors, IssueType.STRUCTURE, rd.getName(), false, "Unable to find element for Search Parameter Path: \"" + pp + "\"");
+              rule(errors, ValidationMessage.NO_RULE_DATE, IssueType.STRUCTURE, rd.getName(), false, "Unable to find element for Search Parameter Path: \"" + pp + "\"");
             } else {
               for (TypeRef t : e.getTypes()) {
                 if (t.getName().equals("Reference")/* || t.getName().equals("canonical")*/) {
-                  rule(errors, IssueType.STRUCTURE, rd.getName(), false, "Parameters of type uri cannot refer to the types Reference or canonical (" + p.getCode() + ")");
+                  rule(errors, ValidationMessage.NO_RULE_DATE, IssueType.STRUCTURE, rd.getName(), false, "Parameters of type uri cannot refer to the types Reference or canonical (" + p.getCode() + ")");
                 }
               }
             }
           }
         }
       } catch (Exception e1) {
-        rule(errors, IssueType.STRUCTURE, rd.getName(), false, e1.getMessage());
+        rule(errors, ValidationMessage.NO_RULE_DATE, IssueType.STRUCTURE, rd.getName(), false, e1.getMessage());
       }
     }
   }
@@ -634,11 +652,11 @@ public class ResourceValidator extends BaseValidator {
 
     checkPatterns(e);
 
-    rule(errors, IssueType.STRUCTURE, path, e.getName().length() < maxElementLength, "Name " + e.getName() + " is too long (max element name length = " + Integer.toString(maxElementLength));
-    rule(errors, IssueType.STRUCTURE, path, isValidToken(e.getName(), !path.contains(".")), "Name " + e.getName() + " is not a valid element name");
-    rule(errors, IssueType.STRUCTURE, path, e.unbounded() || e.getMaxCardinality() == 1, "Max Cardinality must be 1 or unbounded");
-    rule(errors, IssueType.STRUCTURE, path, e.getMinCardinality() == 0 || e.getMinCardinality() == 1, "Min Cardinality must be 0 or 1");
-    rule(errors, IssueType.STRUCTURE, path, !e.getName().equals("div") || e.typeCode().equals("xhtml"), "Any element named 'div' must have a type of 'xhtml'");
+    rule(errors, ValidationMessage.NO_RULE_DATE, IssueType.STRUCTURE, path, e.getName().length() < maxElementLength, "Name " + e.getName() + " is too long (max element name length = " + Integer.toString(maxElementLength));
+    rule(errors, ValidationMessage.NO_RULE_DATE, IssueType.STRUCTURE, path, isValidToken(e.getName(), !path.contains(".")), "Name " + e.getName() + " is not a valid element name");
+    rule(errors, ValidationMessage.NO_RULE_DATE, IssueType.STRUCTURE, path, e.unbounded() || e.getMaxCardinality() == 1, "Max Cardinality must be 1 or unbounded");
+    rule(errors, ValidationMessage.NO_RULE_DATE, IssueType.STRUCTURE, path, e.getMinCardinality() == 0 || e.getMinCardinality() == 1, "Min Cardinality must be 0 or 1");
+    rule(errors, ValidationMessage.NO_RULE_DATE, IssueType.STRUCTURE, path, !e.getName().equals("div") || e.typeCode().equals("xhtml"), "Any element named 'div' must have a type of 'xhtml'");
 
     if (e.typeCode().startsWith("Reference"))
       patternFinder.registerReference(parent.getRoot(), e);
@@ -646,91 +664,90 @@ public class ResourceValidator extends BaseValidator {
     if (status == StandardsStatus.NORMATIVE && e.getStandardsStatus() == null && e.getTypes().size() == 1) {
       if (definitions.hasElementDefn(e.typeCode())) {
         TypeDefn t = definitions.getElementDefn(e.typeCode());
-        if (t != null && t.getStandardsStatus() != StandardsStatus.NORMATIVE)
+        if (t != null && t.getStandardsStatus() != StandardsStatus.NORMATIVE) {
           e.setStandardsStatus(t.getStandardsStatus());
+          e.setStandardsStatusReason(t.getStandardsStatusReason());
+        }
         e.setNormativeVersion(null);
       }
     }
     if (!hasSummary)
       e.setSummaryItem(true);
     else if (parentInSummary) {
-      rule(errors, IssueType.STRUCTURE, path, hasSummary(e) || !e.isModifier(), "A modifier element must be in the summary (" + path + ")");
-      rule(errors, IssueType.STRUCTURE, path, hasSummary(e) || e.getMinCardinality() == 0, "A required element (min > 0) must be in the summary (" + path + ")");
+      rule(errors, ValidationMessage.NO_RULE_DATE, IssueType.STRUCTURE, path, hasSummary(e) || !e.isModifier(), "A modifier element must be in the summary (" + path + ")");
+      rule(errors, ValidationMessage.NO_RULE_DATE, IssueType.STRUCTURE, path, hasSummary(e) || e.getMinCardinality() == 0, "A required element (min > 0) must be in the summary (" + path + ")");
     }
 
-    rule(errors, IssueType.STRUCTURE, path, optionalParent || e.isSummary() || !path.contains(".") || e.getMinCardinality() == 0, "An element with a minimum cardinality = 1 must be in the summary (" + path + ")");
+    rule(errors, ValidationMessage.NO_RULE_DATE, IssueType.STRUCTURE, path, optionalParent || e.isSummary() || !path.contains(".") || e.getMinCardinality() == 0, "An element with a minimum cardinality = 1 must be in the summary (" + path + ")");
     optionalParent = optionalParent || e.getMinCardinality() == 0;
 
-    hint(errors, IssueType.STRUCTURE, path, !nameOverlaps(e.getName(), parentName), "Name of child (" + e.getName() + ") overlaps with name of parent (" + parentName + ")");
+    hint(errors, ValidationMessage.NO_RULE_DATE, IssueType.STRUCTURE, path, !nameOverlaps(e.getName(), parentName), "Name of child (" + e.getName() + ") overlaps with name of parent (" + parentName + ")");
     checkDefinitions(errors, path, e);
-    warning(errors, IssueType.STRUCTURE, path, !path.contains(".") || !Utilities.isPlural(e.getName()) || !e.unbounded(), "Element names should be singular");
-    rule(errors, IssueType.STRUCTURE, path, !e.getName().equals("id"), "Element named \"id\" not allowed");
-    warning(errors, IssueType.STRUCTURE, path, !e.getName().equals("comments"), "Element named \"comments\" not allowed - use 'comment'");
-    warning(errors, IssueType.STRUCTURE, path, !e.getName().equals("notes"), "Element named \"notes\" not allowed - use 'note'");
-    rule(errors, IssueType.STRUCTURE, path, !e.getName().endsWith("[x]") || !e.unbounded(), "Elements with a choice of types cannot have a cardinality > 1");
-    rule(errors, IssueType.STRUCTURE, path, !e.getName().equals("extension"), "Element named \"extension\" not allowed");
-    rule(errors, IssueType.STRUCTURE, path, !e.getName().equals("entries"), "Element named \"entries\" not allowed");
-    rule(errors, IssueType.STRUCTURE, path, (parentName == null) || e.getName().charAt(0) == e.getName().toLowerCase().charAt(0), "Element Names must not start with an uppercase character");
-    rule(errors, IssueType.STRUCTURE, path, e.getName().equals(path) || e.getElements().size() == 0 || (e.hasSvg() || e.isUmlBreak() || !Utilities.noString(e.getUmlDir())), "Element is missing a UML layout direction");
+    warning(errors, ValidationMessage.NO_RULE_DATE, IssueType.STRUCTURE, path, !path.contains(".") || !Utilities.isPlural(e.getName()) || !e.unbounded(), "Element names should be singular");
+    rule(errors, ValidationMessage.NO_RULE_DATE, IssueType.STRUCTURE, path, !e.getName().equals("id"), "Element named \"id\" not allowed");
+    warning(errors, ValidationMessage.NO_RULE_DATE, IssueType.STRUCTURE, path, !e.getName().equals("comments"), "Element named \"comments\" not allowed - use 'comment'");
+    warning(errors, ValidationMessage.NO_RULE_DATE, IssueType.STRUCTURE, path, !e.getName().equals("notes"), "Element named \"notes\" not allowed - use 'note'");
+    rule(errors, ValidationMessage.NO_RULE_DATE, IssueType.STRUCTURE, path, !e.getName().endsWith("[x]") || !e.unbounded(), "Elements with a choice of types cannot have a cardinality > 1");
+    rule(errors, ValidationMessage.NO_RULE_DATE, IssueType.STRUCTURE, path, !e.getName().equals("extension"), "Element named \"extension\" not allowed");
+    rule(errors, ValidationMessage.NO_RULE_DATE, IssueType.STRUCTURE, path, !e.getName().equals("entries"), "Element named \"entries\" not allowed");
+    rule(errors, ValidationMessage.NO_RULE_DATE, IssueType.STRUCTURE, path, (parentName == null) || e.getName().charAt(0) == e.getName().toLowerCase().charAt(0), "Element Names must not start with an uppercase character");
+    rule(errors, ValidationMessage.NO_RULE_DATE, IssueType.STRUCTURE, path, e.getName().equals(path) || e.getElements().size() == 0 || (e.hasSvg() || e.isUmlBreak() || !Utilities.noString(e.getUmlDir())), "Element is missing a UML layout direction");
     //Comment out until STU 4
-    //    hint(errors, IssueType.BUSINESSRULE, path, !e.isModifier() || e.getMinCardinality() > 0 || e.getDefaultValue()!=null, "if an element is modifier = true, minimum cardinality should be > 0 if no default is specified");
-    rule(errors, IssueType.STRUCTURE, path, !e.getDefinition().toLowerCase().startsWith("this is"), "Definition should not start with 'this is'");
-    rule(errors, IssueType.STRUCTURE, path, e.getDefinition().endsWith(".") || e.getDefinition().endsWith("?"), "Definition should end with '.' or '?', but is '" + e.getDefinition() + "'");
+    //    hint(errors, ValidationMessage.NO_RULE_DATE, IssueType.BUSINESSRULE, path, !e.isModifier() || e.getMinCardinality() > 0 || e.getDefaultValue()!=null, "if an element is modifier = true, minimum cardinality should be > 0 if no default is specified");
+    rule(errors, ValidationMessage.NO_RULE_DATE, IssueType.STRUCTURE, path, !e.getDefinition().toLowerCase().startsWith("this is"), "Definition should not start with 'this is'");
+    rule(errors, ValidationMessage.NO_RULE_DATE, IssueType.STRUCTURE, path, e.getDefinition().endsWith(".") || e.getDefinition().endsWith("?"), "Definition should end with '.' or '?', but is '" + e.getDefinition() + "'");
     if ((e.usesType("string") && e.usesType("CodeableConcept")) && !e.usesType("base64Binary")) // if it uses base64binary, then it's a wide set of types, and no comment is needed
-      rule(errors, IssueType.STRUCTURE, path, e.hasComments() && e.getComments().contains("string") && e.getComments().contains("CodeableConcept"), "Element type cannot have both string and CodeableConcept unless the difference between their usage is explained in the comments");
-    warning(errors, IssueType.BUSINESSRULE, path, Utilities.noString(e.getTodo()), "Element has a todo associated with it (" + e.getTodo() + ")");
+      rule(errors, ValidationMessage.NO_RULE_DATE, IssueType.STRUCTURE, path, e.hasComments() && e.getComments().contains("string") && e.getComments().contains("CodeableConcept"), "Element type cannot have both string and CodeableConcept unless the difference between their usage is explained in the comments");
+    warning(errors, ValidationMessage.NO_RULE_DATE, IssueType.BUSINESSRULE, path, Utilities.noString(e.getTodo()), "Element has a todo associated with it (" + e.getTodo() + ")");
 
     if (!Utilities.noString(e.getW5())) {
       if (path.contains("."))
-        rule(errors, IssueType.INVALID, path, definitions.getW5s().containsKey(e.getW5()), "The w5 value '" + e.getW5() + "' is illegal");
+        rule(errors, ValidationMessage.NO_RULE_DATE, IssueType.INVALID, path, definitions.getW5s().containsKey(e.getW5()), "The w5 value '" + e.getW5() + "' is illegal");
       else {
         String[] vs = e.getW5().split("\\.");
-        rule(errors, IssueType.INVALID, path, vs.length == 2 && definitions.getW5s().containsKey(vs[0]) && definitions.getW5s().get(vs[0]).getSubClasses().contains(vs[1]), "The w5 value '" + e.getW5() + "' is illegal");
+        rule(errors, ValidationMessage.NO_RULE_DATE, IssueType.INVALID, path, vs.length == 2 && definitions.getW5s().containsKey(vs[0]) && definitions.getW5s().get(vs[0]).getSubClasses().contains(vs[1]), "The w5 value '" + e.getW5() + "' is illegal");
       }
     }
     if (e.getName().equals("subject"))
-      warning(errors, IssueType.STRUCTURE, path, !e.typeCode().equals("Reference(Patient)"), "Elements with name 'subject' cannot be a reference to just a patient"); // make this an error...
+      warning(errors, ValidationMessage.NO_RULE_DATE, IssueType.STRUCTURE, path, !e.typeCode().equals("Reference(Patient)"), "Elements with name 'subject' cannot be a reference to just a patient"); // make this an error...
     if (e.getName().equals("patient"))
-      rule(errors, IssueType.STRUCTURE, path, e.typeCode().equals("Reference(Patient)"), "Elements with name 'patient' must be a reference to just a patient");
+      rule(errors, ValidationMessage.NO_RULE_DATE, IssueType.STRUCTURE, path, e.typeCode().equals("Reference(Patient)"), "Elements with name 'patient' must be a reference to just a patient");
 
     //    if (needsRimMapping)
-    //      suppressedwarning(errors, IssueType.REQUIRED, path, !Utilities.noString(e.getMapping(ElementDefn.RIM_MAPPING)), "RIM Mapping is required");
+    //      suppressedwarning(errors, ValidationMessage.NO_RULE_DATE, IssueType.REQUIRED, path, !Utilities.noString(e.getMapping(ElementDefn.RIM_MAPPING)), "RIM Mapping is required");
 
     if (e.getName().equals("comment")) {
-      warning(errors, IssueType.STRUCTURE, path, isOkComment(path), "MnM must have confirmed this should not be an Annotation");
-      warning(errors, IssueType.STRUCTURE, path, Utilities.existsInList(e.typeCode(), "string", "markdown"), "The type of 'comment' must be 'string' or 'markdown'");
-      warning(errors, IssueType.STRUCTURE, path, e.getMinCardinality() == 0, "The min cardinality of 'comment' must be 0");
-      warning(errors, IssueType.STRUCTURE, path, e.getMaxCardinality() == 1, "The max cardinality of 'comment' must be 1");
+      warning(errors, ValidationMessage.NO_RULE_DATE, IssueType.STRUCTURE, path, isOkComment(path), "MnM must have confirmed this should not be an Annotation");
+      warning(errors, ValidationMessage.NO_RULE_DATE, IssueType.STRUCTURE, path, Utilities.existsInList(e.typeCode(), "string", "markdown"), "The type of 'comment' must be 'string' or 'markdown'");
+      warning(errors, ValidationMessage.NO_RULE_DATE, IssueType.STRUCTURE, path, e.getMinCardinality() == 0, "The min cardinality of 'comment' must be 0");
+      warning(errors, ValidationMessage.NO_RULE_DATE, IssueType.STRUCTURE, path, e.getMaxCardinality() == 1, "The max cardinality of 'comment' must be 1");
     }
     if (e.getName().equals("note")) {
-      warning(errors, IssueType.STRUCTURE, path, e.typeCode().equals("Annotation"), "The type of 'note' must be 'Annotation'");
-      warning(errors, IssueType.STRUCTURE, path, e.getMinCardinality() == 0, "The min cardinality of 'note' must be 0");
-      warning(errors, IssueType.STRUCTURE, path, e.unbounded(), "The max cardinality of 'note' must be *");
+      warning(errors, ValidationMessage.NO_RULE_DATE, IssueType.STRUCTURE, path, e.typeCode().equals("Annotation"), "The type of 'note' must be 'Annotation'");
+      warning(errors, ValidationMessage.NO_RULE_DATE, IssueType.STRUCTURE, path, e.getMinCardinality() == 0, "The min cardinality of 'note' must be 0");
+      warning(errors, ValidationMessage.NO_RULE_DATE, IssueType.STRUCTURE, path, e.unbounded(), "The max cardinality of 'note' must be *");
     }
     String sd = e.getShortDefn();
     if (sd.length() > 0) {
-      rule(errors, IssueType.STRUCTURE, path, sd.contains("|") || Character.isUpperCase(sd.charAt(0)) || sd.startsWith("e.g. ") || !Character.isLetter(sd.charAt(0)) || Utilities.isURL(sd) || sd.startsWith("e.g. ") || startsWithType(sd), "Short Description must start with an uppercase character ('" + sd + "')");
-      rule(errors, IssueType.STRUCTURE, path, !sd.endsWith(".") || sd.endsWith("etc."), "Short Description must not end with a period ('" + sd + "')");
-      rule(errors, IssueType.STRUCTURE, path, e.getDefinition().contains("|") || Character.isUpperCase(e.getDefinition().charAt(0)) || !Character.isLetter(e.getDefinition().charAt(0)), "Long Description must start with an uppercase character ('" + e.getDefinition() + "')");
+      rule(errors, ValidationMessage.NO_RULE_DATE, IssueType.STRUCTURE, path, sd.contains("|") || Character.isUpperCase(sd.charAt(0)) || sd.startsWith("e.g. ") || !Character.isLetter(sd.charAt(0)) || Utilities.isURL(sd) || sd.startsWith("e.g. ") || startsWithType(sd), "Short Description must start with an uppercase character ('" + sd + "')");
+      rule(errors, ValidationMessage.NO_RULE_DATE, IssueType.STRUCTURE, path, !sd.endsWith(".") || sd.endsWith("etc."), "Short Description must not end with a period ('" + sd + "')");
+      rule(errors, ValidationMessage.NO_RULE_DATE, IssueType.STRUCTURE, path, e.getDefinition().contains("|") || Character.isUpperCase(e.getDefinition().charAt(0)) || !Character.isLetter(e.getDefinition().charAt(0)), "Long Description must start with an uppercase character ('" + e.getDefinition() + "')");
     }
 
     for (String inv : e.getInvariants().keySet()) {
       String id = e.getInvariants().get(inv).getId();
-      rule(errors, IssueType.VALUE, path, !invIds.contains(id), "Duplicate constraint id "+id);
+      rule(errors, ValidationMessage.NO_RULE_DATE, IssueType.VALUE, path, !invIds.contains(id), "Duplicate constraint id "+id);
       invIds.add(id);
-
-      String xpath = e.getInvariants().get(inv).getXpath();
-      rule(errors, IssueType.VALUE, path, xpath == null || (!(xpath.contains("&lt;") || xpath.contains("&gt;"))), "error in xpath - do not escape xml characters in the xpath in the excel spreadsheet");
     }
-    rule(errors, IssueType.STRUCTURE, path, !e.getName().startsWith("_"), "Element names cannot start with '_'");
+    rule(errors, ValidationMessage.NO_RULE_DATE, IssueType.STRUCTURE, path, !e.getName().startsWith("_"), "Element names cannot start with '_'");
     //TODO: Really? A composite element need not have a definition?
     checkType(errors, path, e, parent);
 
     if (e.typeCode().equals("code") && parent != null && !e.isNoBindingAllowed()) {
-      rule(errors, IssueType.STRUCTURE, path, e.hasBinding(), "An element of type code must have a binding");
+      rule(errors, ValidationMessage.NO_RULE_DATE, IssueType.STRUCTURE, path, e.hasBinding(), "An element of type code must have a binding");
     }
     if ((e.usesType("Coding") && !parentName.equals("CodeableConcept")) || e.usesType("CodeableConcept") && !e.isNoBindingAllowed()) {
-      hint(errors, IssueType.STRUCTURE, path, e.hasBinding() || (e.usesType("Reference") || e.usesType("Quantity") || e.usesType("SimpleQuantity")), "An element of type CodeableConcept or Coding must have a binding");
+      hint(errors, ValidationMessage.NO_RULE_DATE, IssueType.STRUCTURE, path, e.hasBinding() || (e.usesType("Reference") || e.usesType("Quantity") || e.usesType("SimpleQuantity")), "An element of type CodeableConcept or Coding must have a binding");
     }
     if (e.getTypes().size() > 1) {
       Set<String> types = new HashSet<String>();
@@ -740,19 +757,19 @@ public class ResourceValidator extends BaseValidator {
           base = definitions.getConstraints().get(t.getName()).getBaseType();
         else
           base = t.getName();
-        rule(errors, IssueType.STRUCTURE, path, !types.contains(base), "Element type combination includes multiple actual types that are the same");
+        rule(errors, ValidationMessage.NO_RULE_DATE, IssueType.STRUCTURE, path, !types.contains(base), "Element type combination includes multiple actual types that are the same");
         types.add(base);
       }
     }
     for (TypeRef tr : e.getTypes()) {
       if ("Reference".equals(tr.getName()) || "CodeableReference".equals(tr.getName()) ) {
         for (String p : tr.getParams()) {
-          rule(errors, IssueType.STRUCTURE, path, "Any".equals(p) || definitions.hasResource(p), "Reference to invalid resource "+p);
+          rule(errors, ValidationMessage.NO_RULE_DATE, IssueType.STRUCTURE, path, "Any".equals(p) || definitions.hasResource(p), "Reference to invalid resource "+p);
         }
       }
       if ("canonical".equals(tr.getName())) {
         for (String p : tr.getParams()) {
-          rule(errors, IssueType.STRUCTURE, path, Utilities.existsInList(p, "Any", "Definition") || definitions.hasCanonicalResource(p), "Reference to invalid canonical resource "+p);
+          rule(errors, ValidationMessage.NO_RULE_DATE, IssueType.STRUCTURE, path, Utilities.existsInList(p, "Any", "Definition") || definitions.hasCanonicalResource(p), "Reference to invalid canonical resource "+p);
         }
       }
     }
@@ -762,7 +779,7 @@ public class ResourceValidator extends BaseValidator {
       for (TypeRef tr : e.getTypes()) {
         ok = ok || Utilities.existsInList(tr.getName(), "code", "id", "Coding", "CodeableConcept", "uri", "Quantity", "CodeableReference");
       }
-      rule(errors, IssueType.STRUCTURE, path, ok, "Can only specify bindings for coded datatypes (not (" + e.typeCode() + ")");
+      rule(errors, ValidationMessage.NO_RULE_DATE, IssueType.STRUCTURE, path, ok, "Can only specify bindings for coded datatypes (not (" + e.typeCode() + ")");
       if (e.getBinding().getValueSet() != null && e.getBinding().getValueSet().getName() == null)
         throw new Error("unnamed value set on " + e.getBinding().getName());
       BindingSpecification cd = e.getBinding();
@@ -792,7 +809,7 @@ public class ResourceValidator extends BaseValidator {
 
     String s = e.getMapping(Definitions.RIM_MAPPING);
     // RIM mappings are no longer required
-    //        hint(errors, IssueType.REQUIRED, path, !needsRimMapping || !Utilities.noString(s), "RIM Mapping is required");
+    //        hint(errors, ValidationMessage.NO_RULE_DATE, IssueType.REQUIRED, path, !needsRimMapping || !Utilities.noString(s), "RIM Mapping is required");
 
     needsRimMapping = needsRimMapping && !"n/a".equalsIgnoreCase(s) && !Utilities.noString(s);
 
@@ -802,7 +819,7 @@ public class ResourceValidator extends BaseValidator {
         String map = e.getMapping(uri);
         if (!Utilities.noString(map)) {
           String err = checkPatternMap(e, map);
-          rule(errors, IssueType.STRUCTURE, path, err == null, "Pattern " + m.getTitle() + " is invalid at " + path + ": " + err);
+          rule(errors, ValidationMessage.NO_RULE_DATE, IssueType.STRUCTURE, path, err == null, "Pattern " + m.getTitle() + " is invalid at " + path + ": " + err);
         }
       }
     }
@@ -814,7 +831,7 @@ public class ResourceValidator extends BaseValidator {
         name = name.substring(0, name.length() - 3);
         for (ElementDefn c2 : e.getElements()) {
           if (c != c2)
-            rule(errors, IssueType.STRUCTURE, path, !c2.getName().startsWith(name) || !definitions.hasType(c2.getName().substring(name.length())), "Duplicate Child Name " + c.getName() + "/" + c2.getName() + " at " + path);
+            rule(errors, ValidationMessage.NO_RULE_DATE, IssueType.STRUCTURE, path, !c2.getName().startsWith(name) || !definitions.hasType(c2.getName().substring(name.length())), "Duplicate Child Name " + c.getName() + "/" + c2.getName() + " at " + path);
         }
       }
     }
@@ -983,13 +1000,13 @@ public class ResourceValidator extends BaseValidator {
   }
 
   private void checkDefinitions(List<ValidationMessage> errors, String path, ElementDefn e) {
-    rule(errors, IssueType.STRUCTURE, path, e.hasDefinition(), "A Definition is required");
+    rule(errors, ValidationMessage.NO_RULE_DATE, IssueType.STRUCTURE, path, e.hasDefinition(), "A Definition is required");
 
     if (!e.hasShortDefn())
       return;
 
-    warning(errors, IssueType.STRUCTURE, path, !e.getShortDefn().equals(e.getDefinition()), "Element needs a definition of its own");
-    warning(errors, IssueType.STRUCTURE, path, !e.getShortDefn().equals(e.getName()), "Short description can't be the same as the name");
+    warning(errors, ValidationMessage.NO_RULE_DATE, IssueType.STRUCTURE, path, !e.getShortDefn().equals(e.getDefinition()), "Element needs a definition of its own");
+    warning(errors, ValidationMessage.NO_RULE_DATE, IssueType.STRUCTURE, path, !e.getShortDefn().equals(e.getName()), "Short description can't be the same as the name");
     Set<String> defn = new HashSet<String>();
     for (String w : splitByCamelCase(e.getName()).toLowerCase().split(" "))
       defn.add(Utilities.pluralizeMe(w));
@@ -1005,7 +1022,7 @@ public class ResourceValidator extends BaseValidator {
     for (String s : provided)
       if (!defn.contains(s))
         ok = true;
-    warning(errors, IssueType.STRUCTURE, path, ok, "Short description doesn't add any new content: '" + e.getShortDefn() + "'");
+    warning(errors, ValidationMessage.NO_RULE_DATE, IssueType.STRUCTURE, path, ok, "Short description doesn't add any new content: '" + e.getShortDefn() + "'");
   }
 
   private boolean nameOverlaps(String name, String parentName) {
@@ -1047,15 +1064,15 @@ public class ResourceValidator extends BaseValidator {
 
   private void checkType(List<ValidationMessage> errors, String path, ElementDefn e, ResourceDefn parent) {
     if (e.getTypes().size() == 0) {
-      rule(errors, IssueType.STRUCTURE, path, path.contains("."), "Must have a type on a base element");
-      rule(errors, IssueType.STRUCTURE, path, e.getName().equals("extension") || e.getElements().size() > 0, "Must have a type unless sub-elements exist");
+      rule(errors, ValidationMessage.NO_RULE_DATE, IssueType.STRUCTURE, path, path.contains("."), "Must have a type on a base element");
+      rule(errors, ValidationMessage.NO_RULE_DATE, IssueType.STRUCTURE, path, e.getName().equals("extension") || e.getElements().size() > 0, "Must have a type unless sub-elements exist");
     } else {
-      rule(errors, IssueType.STRUCTURE, path, e.getTypes().size() == 1 || e.getName().endsWith("[x]"), "If an element has a choice of datatypes, its name must end with [x]");
+      rule(errors, ValidationMessage.NO_RULE_DATE, IssueType.STRUCTURE, path, e.getTypes().size() == 1 || e.getName().endsWith("[x]"), "If an element has a choice of datatypes, its name must end with [x]");
       if (definitions.dataTypeIsSharedInfo(e.typeCode())) {
         try {
           e.getElements().addAll(definitions.getElementDefn(e.typeCode()).getElements());
         } catch (Exception e1) {
-          rule(errors, IssueType.STRUCTURE, path, false, e1.getMessage());
+          rule(errors, ValidationMessage.NO_RULE_DATE, IssueType.STRUCTURE, path, false, e1.getMessage());
         }
       } else {
         for (TypeRef t : e.getTypes()) {
@@ -1066,10 +1083,10 @@ public class ResourceValidator extends BaseValidator {
             if (s.charAt(0) == '#')
               s = s.substring(1);
             if (!t.isSpecialType()) {
-              rule(errors, IssueType.STRUCTURE, path, typeExists(s, parent), "Illegal Type '" + s + "'");
+              rule(errors, ValidationMessage.NO_RULE_DATE, IssueType.STRUCTURE, path, typeExists(s, parent), "Illegal Type '" + s + "'");
               if (t.isResourceReference()) {
                 for (String p : t.getParams()) {
-                  rule(errors, IssueType.STRUCTURE, path,
+                  rule(errors, ValidationMessage.NO_RULE_DATE, IssueType.STRUCTURE, path,
                       p.equals("Any")
                       || definitions.hasResource(p),
                       "Unknown resource type " + p);
@@ -1107,22 +1124,22 @@ public class ResourceValidator extends BaseValidator {
         d = c.getDisplay();
 
       if (Utilities.noString(c.getSystem()))
-        warning(errors, IssueType.STRUCTURE, "Binding @ " + path, !Utilities.noString(c.getDefinition()), "Code " + d + " must have a definition");
-      rule(errors, IssueType.STRUCTURE, "Binding @ " + path, !(Utilities.noString(c.getId()) && Utilities.noString(c.getSystem())), "Code " + d + " must have a id or a system");
+        warning(errors, ValidationMessage.NO_RULE_DATE, IssueType.STRUCTURE, "Binding @ " + path, !Utilities.noString(c.getDefinition()), "Code " + d + " must have a definition");
+      rule(errors, ValidationMessage.NO_RULE_DATE, IssueType.STRUCTURE, "Binding @ " + path, !(Utilities.noString(c.getId()) && Utilities.noString(c.getSystem())), "Code " + d + " must have a id or a system");
     }
     
-    rule(errors, IssueType.STRUCTURE, "Binding @ " + path, !e.typeCode().equals("code") || cd.getStrength() != BindingStrength.EXAMPLE, "Code elements can't have example bindings");
+    rule(errors, ValidationMessage.NO_RULE_DATE, IssueType.STRUCTURE, "Binding @ " + path, !e.typeCode().equals("code") || cd.getStrength() != BindingStrength.EXAMPLE, "Code elements can't have example bindings");
 
     // trigger processing into a Heirachical set if necessary
-    //    rule(errors, IssueType.STRUCTURE, "Binding @ "+path, !cd.isHeirachical() || (cd.getChildCodes().size() < cd.getCodes().size()), "Logic error processing Hirachical code set");
+    //    rule(errors, ValidationMessage.NO_RULE_DATE, IssueType.STRUCTURE, "Binding @ "+path, !cd.isHeirachical() || (cd.getChildCodes().size() < cd.getCodes().size()), "Logic error processing Hirachical code set");
 
     // now, rules for the source
-    hint(errors, IssueType.STRUCTURE, "Binding @ " + path, cd.getBinding() != BindingMethod.Unbound, "Need to provide a binding");
-    rule(errors, IssueType.STRUCTURE, "Binding @ " + path, Utilities.noString(cd.getDefinition()) || (cd.getDefinition().charAt(0) == cd.getDefinition().toUpperCase().charAt(0)), "Definition cannot start with a lowercase letter");
+    hint(errors, ValidationMessage.NO_RULE_DATE, IssueType.STRUCTURE, "Binding @ " + path, cd.getBinding() != BindingMethod.Unbound, "Need to provide a binding");
+    rule(errors, ValidationMessage.NO_RULE_DATE, IssueType.STRUCTURE, "Binding @ " + path, Utilities.noString(cd.getDefinition()) || (cd.getDefinition().charAt(0) == cd.getDefinition().toUpperCase().charAt(0)), "Definition cannot start with a lowercase letter");
     if (cd.getBinding() == BindingMethod.CodeList || (cd.getBinding() == BindingMethod.ValueSet && cd.getStrength() == BindingStrength.REQUIRED && ac.size() > 0 && "code".equals(e.typeCode()))) {
       if (path.toLowerCase().endsWith("status")) {
-        if (rule(errors, IssueType.STRUCTURE, path, definitions.getStatusCodes().containsKey(path), "Status element not registered in status-codes.xml")) {
-          //          rule(errors, IssueType.STRUCTURE, path, e.isModifier(), "Status elements that map to status-codes should be labelled as a modifier");
+        if (rule(errors, ValidationMessage.NO_RULE_DATE, IssueType.STRUCTURE, path, definitions.getStatusCodes().containsKey(path), "Status element not registered in status-codes.xml")) {
+          //          rule(errors, ValidationMessage.NO_RULE_DATE, IssueType.STRUCTURE, path, e.isModifier(), "Status elements that map to status-codes should be labelled as a modifier");
           ArrayList<String> list = definitions.getStatusCodes().get(path);
           for (DefinedCode c : ac) {
             boolean ok = false;
@@ -1132,7 +1149,7 @@ public class ResourceValidator extends BaseValidator {
                 if (p.trim().equals(c.getCode()))
                   ok = true;
             }
-            rule(errors, IssueType.STRUCTURE, path, ok, "Status element code \"" + c.getCode() + "\" not found in status-codes.xml");
+            rule(errors, ValidationMessage.NO_RULE_DATE, IssueType.STRUCTURE, path, ok, "Status element code \"" + c.getCode() + "\" not found in status-codes.xml");
           }
           for (String s : list) {
             String[] parts = s.split("\\,");
@@ -1146,7 +1163,7 @@ public class ResourceValidator extends BaseValidator {
                     ok = true;
                 }
                 if (!ok)
-                  rule(errors, IssueType.STRUCTURE, path, ok, "Status element code \"" + p + "\" found for " + path + " in status-codes.xml but has no matching code in the resource (codes = " + cl + ")");
+                  rule(errors, ValidationMessage.NO_RULE_DATE, IssueType.STRUCTURE, path, ok, "Status element code \"" + p + "\" found for " + path + " in status-codes.xml but has no matching code in the resource (codes = " + cl + ")");
               }
             }
           }
@@ -1154,7 +1171,7 @@ public class ResourceValidator extends BaseValidator {
       }
       StringBuilder b = new StringBuilder();
       for (DefinedCode c : ac) {
-        if (!c.getAbstract())
+        if (!c.getAbstract() && !c.isDeprecated())
           b.append(" | ").append(c.getCode());
       }
       if (sd.equals("*")) {
@@ -1166,16 +1183,16 @@ public class ResourceValidator extends BaseValidator {
         if (b.length() < 3)
           throw new Error("surprise");
         String esd = b.substring(3);
-        rule(errors, IssueType.STRUCTURE, path, sd.startsWith(esd) || (sd.endsWith("+") && b.substring(3).startsWith(sd.substring(0, sd.length() - 1))), "The short description \"" + sd + "\" does not match the expected (\"" + b.substring(3) + "\")");
+        rule(errors, ValidationMessage.NO_RULE_DATE, IssueType.STRUCTURE, path, sd.startsWith(esd) || (sd.endsWith("+") && b.substring(3).startsWith(sd.substring(0, sd.length() - 1))), "The short description \"" + sd + "\" does not match the expected (\"" + b.substring(3) + "\")");
       } else {
-        rule(errors, IssueType.STRUCTURE, path, cd.getStrength() != BindingStrength.REQUIRED || ac.size() > 12 || ac.size() <= 1 || !hasGoodCode(ac) || isExemptFromCodeList(path),
+        rule(errors, ValidationMessage.NO_RULE_DATE, IssueType.STRUCTURE, path, cd.getStrength() != BindingStrength.REQUIRED || ac.size() > 12 || ac.size() <= 1 || !hasGoodCode(ac) || isExemptFromCodeList(path),
             "The short description of an element with a code list should have the format code | code | etc (is " + sd.toString() + ") (" + ac.size() + " codes = \"" + b.toString() + "\")");
       }
     }
     boolean isComplex = !e.typeCode().equals("code");
 
     if (isComplex && cd.getValueSet() != null && hasInternalReference(cd.getValueSet()) && cd.getStrength() != BindingStrength.EXAMPLE) {
-      hint(errors, IssueType.BUSINESSRULE, path, false, "The value " + cd.getValueSet().getUrl() + " defines codes, but is used by a Coding/CodeableConcept @ " + path + ", so it should not use FHIR defined codes");
+      hint(errors, ValidationMessage.NO_RULE_DATE, IssueType.BUSINESSRULE, path, false, "The value " + cd.getValueSet().getUrl() + " defines codes, but is used by a Coding/CodeableConcept @ " + path + ", so it should not use FHIR defined codes");
       cd.getValueSet().setUserData("vs-val-warned", true);
     }
 
@@ -1185,21 +1202,21 @@ public class ResourceValidator extends BaseValidator {
       else
         cd.setElementType(ElementType.Simple);
     } else if (isComplex && !cd.hasMax())
-      rule(errors, IssueType.STRUCTURE, path, cd.getElementType() == ElementType.Complex, "Cannot use a binding from both code and Coding/CodeableConcept elements");
+      rule(errors, ValidationMessage.NO_RULE_DATE, IssueType.STRUCTURE, path, cd.getElementType() == ElementType.Complex, "Cannot use a binding from both code and Coding/CodeableConcept elements");
     else
-      rule(errors, IssueType.STRUCTURE, path, cd.getElementType() == ElementType.Simple, "Cannot use a binding from both code and Coding/CodeableConcept elements");
+      rule(errors, ValidationMessage.NO_RULE_DATE, IssueType.STRUCTURE, path, cd.getElementType() == ElementType.Simple, "Cannot use a binding from both code and Coding/CodeableConcept elements");
     if (isComplex && cd.getValueSet() != null) {
       for (ConceptSetComponent inc : cd.getValueSet().getCompose().getInclude())
         if (inc.hasSystem())
           txurls.add(inc.getSystem());
     }
-    rule(errors, IssueType.STRUCTURE, "Binding @ " + path, (cd.getElementType() != ElementType.Simple || cd.getStrength() == BindingStrength.REQUIRED || cd.hasMax()) || isExemptFromProperBindingRules(path), "Must be a required binding if bound to a code instead of a Coding/CodeableConcept");
-    rule(errors, IssueType.STRUCTURE, "Binding @ " + path, cd.getElementType() != ElementType.Simple || cd.getBinding() != BindingMethod.Unbound, "Need to provide a binding for code elements");
+    rule(errors, ValidationMessage.NO_RULE_DATE, IssueType.STRUCTURE, "Binding @ " + path, (cd.getElementType() != ElementType.Simple || cd.getStrength() == BindingStrength.REQUIRED || cd.hasMax()) || isExemptFromProperBindingRules(path), "Must be a required binding if bound to a code instead of a Coding/CodeableConcept");
+    rule(errors, ValidationMessage.NO_RULE_DATE, IssueType.STRUCTURE, "Binding @ " + path, cd.getElementType() != ElementType.Simple || cd.getBinding() != BindingMethod.Unbound, "Need to provide a binding for code elements");
     if (!isComplex && !externalException(path)) {
       ValueSet vs = cd.getValueSet();
-      if (warning(errors, IssueType.REQUIRED, path, vs != null || cd.hasReference(), "Unable to resolve value set on 'code' Binding")) {
+      if (warning(errors, ValidationMessage.NO_RULE_DATE, IssueType.REQUIRED, path, vs != null || cd.hasReference(), "Unable to resolve value set on 'code' Binding")) {
         if (vs != null) {
-          hint(errors, IssueType.REQUIRED, path, noExternals(vs), "Bindings for code datatypes should only use internally defined codes (" + vs.getUrl() + ")");
+          hint(errors, ValidationMessage.NO_RULE_DATE, IssueType.REQUIRED, path, noExternals(vs), "Bindings for code datatypes should only use internally defined codes (" + vs.getUrl() + ")");
           // don't disable this without discussion on Zulip
         }
       }
@@ -1348,15 +1365,15 @@ public class ResourceValidator extends BaseValidator {
       String s = l.trim();
       if (!Utilities.noString(s) && !s.equals("{def}")) {
         SearchParameterDefn spd = rd.getSearchParams().get(s);
-        if (rule(errors, IssueType.STRUCTURE, "compartment." + cmp.getName() + "." + rd.getName() + "." + s, spd != null, "Search Parameter '" + s + "' not found")) {
-          if (rule(errors, IssueType.STRUCTURE, "compartment." + cmp.getName() + "." + rd.getName() + "." + s, spd.getType() == SearchType.reference, "Search Parameter '" + s + "' not a reference")) {
+        if (rule(errors, ValidationMessage.NO_RULE_DATE, IssueType.STRUCTURE, "compartment." + cmp.getName() + "." + rd.getName() + "." + s, spd != null, "Search Parameter '" + s + "' not found")) {
+          if (rule(errors, ValidationMessage.NO_RULE_DATE, IssueType.STRUCTURE, "compartment." + cmp.getName() + "." + rd.getName() + "." + s, spd.getType() == SearchType.reference, "Search Parameter '" + s + "' not a reference")) {
             boolean ok = false;
             for (String p : spd.getPaths()) {
               ElementDefn ed;
               try {
                 ed = definitions.getElementByPath(p.split("\\."), "matching compartment", true);
               } catch (Exception e) {
-                rule(errors, IssueType.STRUCTURE, "compartment." + cmp.getName() + "." + rd.getName() + "." + s, ok, "Illegal path " + p);
+                rule(errors, ValidationMessage.NO_RULE_DATE, IssueType.STRUCTURE, "compartment." + cmp.getName() + "." + rd.getName() + "." + s, ok, "Illegal path " + p);
                 ed = null;
               }
               if (ed != null) {
@@ -1370,7 +1387,7 @@ public class ResourceValidator extends BaseValidator {
                 }
               }
             }
-            rule(errors, IssueType.STRUCTURE, "compartment." + cmp.getName() + "." + rd.getName() + "." + s, ok, "No target match for " + cmp.getTitle());
+            rule(errors, ValidationMessage.NO_RULE_DATE, IssueType.STRUCTURE, "compartment." + cmp.getName() + "." + rd.getName() + "." + s, ok, "No target match for " + cmp.getTitle());
           }
         }
       }

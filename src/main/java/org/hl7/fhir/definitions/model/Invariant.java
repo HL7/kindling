@@ -35,7 +35,6 @@ public class Invariant {
   private String context;
   private String english;
   private String ocl;
-  private String xpath;
   private String id;
   private String fixedName; // when the invariant is only one one of a set of choices
   private String severity;
@@ -49,7 +48,6 @@ public class Invariant {
     context = inv.context.replace(oname, name);
     english = inv.english;
     ocl = inv.ocl;
-    xpath = inv.xpath;
     id = inv.id.replace("inv", abb);
     fixedName = inv.fixedName;
     severity = inv.severity;
@@ -103,14 +101,6 @@ public class Invariant {
 
   public void setOcl(String ocl) {
     this.ocl = ocl;
-  }
-
-  public String getXpath() {
-    return xpath;
-  }
-
-  public void setXpath(String xpath) {
-    this.xpath = xpath;
   }
 
   public String getFixedName() {

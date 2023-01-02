@@ -54,6 +54,7 @@ import org.hl7.fhir.r5.model.ValueSet;
 import org.hl7.fhir.r5.model.ValueSet.ConceptSetComponent;
 import org.hl7.fhir.r5.utils.BuildExtensions;
 import org.hl7.fhir.r5.utils.ToolingExtensions;
+import org.hl7.fhir.tools.publisher.KindlingUtilities;
 import org.hl7.fhir.utilities.CommaSeparatedStringBuilder;
 import org.hl7.fhir.utilities.Utilities;
 
@@ -478,7 +479,8 @@ public class Regenerator {
       SearchParameter sp = new SearchParameter();
       sp.setId(r.getName()+"-"+spd.getCode());
       bnd.addEntry().setResource(sp);
-
+      KindlingUtilities.makeUniversal(sp);
+      
       sp.setUrl("http://hl7.org/fhir/build/SearchParameter/"+sp.getId());
       sp.setCode(spd.getCode());
       sp.setDescription(spd.getDescription());

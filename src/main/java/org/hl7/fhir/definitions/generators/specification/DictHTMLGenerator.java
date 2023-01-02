@@ -42,8 +42,8 @@ import org.hl7.fhir.definitions.model.BindingSpecification;
 import org.hl7.fhir.definitions.model.Definitions;
 import org.hl7.fhir.definitions.model.ElementDefn;
 import org.hl7.fhir.definitions.model.Invariant;
-import org.hl7.fhir.exceptions.FHIRException;
 import org.hl7.fhir.definitions.model.TypeRef;
+import org.hl7.fhir.exceptions.FHIRException;
 import org.hl7.fhir.r5.conformance.ProfileUtilities;
 import org.hl7.fhir.r5.formats.IParser.OutputStyle;
 import org.hl7.fhir.r5.formats.XmlParser;
@@ -509,9 +509,9 @@ public class DictHTMLGenerator  extends OutputStreamWriter {
 	private void writeEntry(String path, String cardinality, String type, BindingSpecification bs, ElementDefn e, String resourceName, boolean root) throws Exception {
 		write("  <tr><td colspan=\"2\" class=\"structure\"><a name=\""+path.replace("[", "_").replace("]", "_")+"\"> </a><b>"+path+"</b></td></tr>\r\n");
 		if (e.getStandardsStatus() != null && !path.contains("."))
-      tableRowStyled("Standards Status", "versions.html#std-process", getStandardsStatusNote(e.getStandardsStatus(), root), getStandardsStatusStyle(e.getStandardsStatus()));
+      tableRowStyled("Standards Status", "versions.html#std-process", getStandardsStatusNote(e.getStandardsStatus(), e.getStandardsStatusReason(), root), getStandardsStatusStyle(e.getStandardsStatus()));
     if (e.getStandardsStatus() == StandardsStatus.DEPRECATED && path.contains("."))
-      tableRowStyled("Standards Status", "versions.html#std-process", getStandardsStatusNote(e.getStandardsStatus(), root), getStandardsStatusStyle(e.getStandardsStatus()));
+      tableRowStyled("Standards Status", "versions.html#std-process", getStandardsStatusNote(e.getStandardsStatus(), e.getStandardsStatusReason(), root), getStandardsStatusStyle(e.getStandardsStatus()));
     tableRow("Element Id", null, e.getPath());
     tableRowNE("Definition", null, page.processMarkdown(path, e.getDefinition(), prefix));
     tableRow("Short Display", null, e.getShortDefn());
@@ -582,8 +582,12 @@ public class DictHTMLGenerator  extends OutputStreamWriter {
     return "background-color: "+status.getColor();
   }
 
-  private String getStandardsStatusNote(StandardsStatus status, boolean root) {
-    return "This element has a standards status of \""+status.toDisplay()+"\""+ (!root ? " which is different from the status of the whole resource" : "");  
+  private String getStandardsStatusNote(StandardsStatus status, String md, boolean root) throws Exception {
+    String s = "This element has a standards status of \""+status.toDisplay()+"\""+ (!root ? " which is different from the status of the whole resource" : "");
+    if (!Utilities.noString(md)) {
+      s = s + page.processMarkdown("standards status", md, null);
+    }
+    return s;  
   }
 
   private String tasks(List<String> tasks) {

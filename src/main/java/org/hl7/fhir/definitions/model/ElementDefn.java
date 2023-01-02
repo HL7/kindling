@@ -34,7 +34,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.hl7.fhir.definitions.model.TypeRef;
 import org.hl7.fhir.r5.model.DataType;
 import org.hl7.fhir.r5.model.ElementDefinition;
 import org.hl7.fhir.utilities.CommaSeparatedStringBuilder;
@@ -96,7 +95,8 @@ public class ElementDefn {
 	private boolean noBindingAllowed; // note to validator 
 	private boolean translatable;
 	private String orderMeaning;
-	private StandardsStatus standardsStatus; // defaults to container value
+  private StandardsStatus standardsStatus; // defaults to container value
+  private String standardsStatusReason; // defaults to container value
 	private Boolean hierarchy;
 	private boolean abstractType;
 	
@@ -1036,6 +1036,14 @@ public class ElementDefn {
 
   public void setStandardsStatus(StandardsStatus standardsStatus) {
     this.standardsStatus = standardsStatus;
+  }
+  
+  public String getStandardsStatusReason() {
+    return standardsStatusReason;
+  }
+
+  public void setStandardsStatusReason(String standardsStatusReason) {
+    this.standardsStatusReason = standardsStatusReason;
   }
 
   public String getModifierReason() {

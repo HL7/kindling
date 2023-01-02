@@ -36,9 +36,9 @@ import java.util.List;
 
 import org.hl7.fhir.definitions.model.Definitions;
 import org.hl7.fhir.definitions.model.ElementDefn;
+import org.hl7.fhir.definitions.model.MappingSpace;
 import org.hl7.fhir.definitions.model.ResourceDefn;
 import org.hl7.fhir.definitions.model.ResourceDefn.StringPair;
-import org.hl7.fhir.definitions.model.MappingSpace;
 import org.hl7.fhir.r5.model.ElementDefinition;
 import org.hl7.fhir.r5.model.ElementDefinition.ElementDefinitionMappingComponent;
 import org.hl7.fhir.r5.model.StructureDefinition;

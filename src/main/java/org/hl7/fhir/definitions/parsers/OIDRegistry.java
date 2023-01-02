@@ -1,9 +1,7 @@
 package org.hl7.fhir.definitions.parsers;
 import java.io.IOException;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
 
 import org.hl7.fhir.tools.publisher.Publisher;
 import org.hl7.fhir.utilities.IniFile;

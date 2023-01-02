@@ -1,4 +1,5 @@
 package org.hl7.fhir.definitions.model;
+
 import java.io.ByteArrayInputStream;
 /*
 Copyright (c) 2011+, HL7, Inc
@@ -30,8 +31,6 @@ POSSIBILITY OF SUCH DAMAGE.
  */
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.InputStream;
-import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -48,7 +47,6 @@ import org.hl7.fhir.utilities.CSVProcessor;
 import org.hl7.fhir.utilities.TextFile;
 import org.hl7.fhir.utilities.Utilities;
 import org.hl7.fhir.utilities.validation.ValidationMessage;
-import org.hl7.fhir.utilities.xhtml.XhtmlNode;
 import org.hl7.fhir.utilities.xml.XMLUtil;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;

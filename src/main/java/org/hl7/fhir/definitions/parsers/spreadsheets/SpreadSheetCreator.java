@@ -226,7 +226,6 @@ public class SpreadSheetCreator extends SpreadSheetBase {
       addCell(ed.getPath(), row, columnCount++); 
       addCell(inv.getHuman(), row, columnCount++); 
       addCell(inv.getExpression(), row, columnCount++); 
-      addCell(inv.getXpath(), row, columnCount++); // Example
       addCell(ext(inv, BuildExtensions.EXT_BEST_PRACTICE_EXPLANATION), row, columnCount++); // Example
       addCell(ext(inv, BuildExtensions.EXT_COMMITTEE_NOTES), row, columnCount++); // Commitee Notes          
     }

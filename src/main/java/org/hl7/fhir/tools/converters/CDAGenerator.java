@@ -41,6 +41,7 @@ import org.hl7.fhir.r5.utils.ToolingExtensions;
 import org.hl7.fhir.utilities.CommaSeparatedStringBuilder;
 import org.hl7.fhir.utilities.TextFile;
 import org.hl7.fhir.utilities.Utilities;
+import org.hl7.fhir.utilities.VersionUtilities;
 import org.hl7.fhir.utilities.xml.XMLUtil;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -428,7 +429,7 @@ public class CDAGenerator {
       if (primitiveTypes.containsKey(n))
         addValueAttribute(sd.getDifferential().getElement(), n, primitiveTypes.get(n));
       if (n.equals("TS"))
-        edb.addExtension(ToolingExtensions.EXT_TIME_FORMAT, new CodeType("YYYYMMDDHHMMSS.UUUU[+|-ZZzz]"));
+        edb.addExtension(ToolingExtensions.EXT_DATE_FORMAT, new CodeType("YYYYMMDDHHMMSS.UUUU[+|-ZZzz]"));
       if (n.equals("TEL"))
         addValueAttribute(sd.getDifferential().getElement(), n, "uri");
       if (n.equals("SXCM_TS")) {
@@ -593,7 +594,7 @@ public class CDAGenerator {
     else
       ed.addRepresentation(PropertyRepresentation.XMLATTR);
     if (dtn.equals("TS"))
-      ed.addExtension().setUrl("http://www.healthintersections.com.au/fhir/StructureDefinition/elementdefinition-dateformat").setValue(new StringType("v3"));
+      ed.addExtension().setUrl(ToolingExtensions.EXT_DATE_FORMAT).setValue(new StringType("v3"));
     list.add(ed);
   }
 

@@ -1,29 +1,27 @@
 package org.hl7.fhir.rdf;
 
+import static cats.effect.unsafe.implicits.global;
+
+import java.nio.file.Files;
+import java.nio.file.Paths;
+
+import org.apache.jena.rdf.model.Model;
+
 import cats.effect.IO;
 import es.weso.rdf.PrefixMap;
 import es.weso.rdf.RDFBuilder;
-import es.weso.rdf.RDFReader;
 import es.weso.rdf.jena.RDFAsJenaModel;
-import es.weso.rdf.jena.RDFAsJenaModel$;
 import es.weso.rdf.locations.Location;
 import es.weso.rdf.nodes.IRI;
+import es.weso.rdf.nodes.RDFNode;
 import es.weso.rdf.triples.RDFTriple;
 import es.weso.schema.Result;
 import es.weso.schema.Schema;
 import es.weso.schema.ShExSchema$;
-import org.apache.jena.rdf.model.Model;
-import es.weso.rdf.nodes.RDFNode;
 import scala.Option;
 import scala.collection.immutable.Map;
 import scala.collection.immutable.Map$;
 import scala.collection.immutable.Set;
-import scala.Predef$;
-import cats.effect.IO;
-
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import static cats.effect.unsafe.implicits.*;
 
 public class ShExValidator {
 

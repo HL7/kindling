@@ -3,6 +3,7 @@ package org.hl7.fhir.tools.publisher;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.lang3.NotImplementedException;
 import org.hl7.fhir.definitions.generators.specification.SvgGenerator;
 import org.hl7.fhir.definitions.model.Definitions;
 import org.hl7.fhir.definitions.model.ImplementationGuideDefn;
@@ -142,7 +143,7 @@ public class LogicalModelProcessor extends BuildToolScriptedPageProcessor implem
 
   private String genLogicalModelTable(StructureDefinition sd, String prefix) throws Exception {
     ProfileUtilities pu = new ProfileUtilities(page.getWorkerContext(), null, this);
-    XhtmlNode x = pu.generateTable(sd.getId()+"-definitions.html", sd, sd.hasSnapshot() ? false : true, page.getFolders().dstDir, false, sd.getId(), true, prefix, prefix, true, false, null, true, false, rc);
+    XhtmlNode x = pu.generateTable(sd.getId()+"-definitions.html", sd, sd.hasSnapshot() ? false : true, page.getFolders().dstDir, false, sd.getId(), true, prefix, prefix, true, false, null, false, rc);
     return new XhtmlComposer(XhtmlComposer.HTML).compose(x);
   }
 
@@ -213,6 +214,11 @@ public class LogicalModelProcessor extends BuildToolScriptedPageProcessor implem
   public String getLinkForUrl(String corePath, String s) {
     // TODO Auto-generated method stub
     return null;
+  }
+
+  @Override
+  public boolean isPrimitiveType(String typeSimple) {
+    throw new NotImplementedException("Not implemented");
   }
 
 }

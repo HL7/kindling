@@ -43,7 +43,6 @@ import java.util.Map;
 import org.apache.commons.io.IOUtils;
 import org.hl7.fhir.definitions.generators.specification.ProfileGenerator;
 import org.hl7.fhir.definitions.generators.specification.ToolResourceUtilities;
-import org.hl7.fhir.definitions.generators.specification.XPathQueryGenerator;
 import org.hl7.fhir.definitions.model.BindingSpecification;
 import org.hl7.fhir.definitions.model.BindingSpecification.BindingMethod;
 import org.hl7.fhir.definitions.model.CommonSearchParameter;
@@ -84,7 +83,6 @@ import org.hl7.fhir.exceptions.FHIRException;
 import org.hl7.fhir.r5.conformance.ProfileUtilities;
 import org.hl7.fhir.r5.conformance.ProfileUtilities.ProfileKnowledgeProvider;
 import org.hl7.fhir.r5.context.CanonicalResourceManager;
-import org.hl7.fhir.r5.context.IWorkerContext.PackageVersion;
 import org.hl7.fhir.r5.formats.FormatUtilities;
 import org.hl7.fhir.r5.formats.IParser;
 import org.hl7.fhir.r5.formats.IParser.OutputStyle;
@@ -97,24 +95,27 @@ import org.hl7.fhir.r5.model.CodeSystem;
 import org.hl7.fhir.r5.model.CodeType;
 import org.hl7.fhir.r5.model.CodeableConcept;
 import org.hl7.fhir.r5.model.ConceptMap;
-import org.hl7.fhir.r5.model.Constants;
 import org.hl7.fhir.r5.model.ContactPoint.ContactPointSystem;
 import org.hl7.fhir.r5.model.DataType;
 import org.hl7.fhir.r5.model.DateTimeType;
 import org.hl7.fhir.r5.model.DateType;
 import org.hl7.fhir.r5.model.DecimalType;
+import org.hl7.fhir.r5.model.Enumerations.AllResourceTypes;
 import org.hl7.fhir.r5.model.Enumerations.BindingStrength;
 import org.hl7.fhir.r5.model.Enumerations.FHIRVersion;
 import org.hl7.fhir.r5.model.Enumerations.PublicationStatus;
 import org.hl7.fhir.r5.model.Enumerations.QuantityComparator;
 import org.hl7.fhir.r5.model.Enumerations.SearchParamType;
+import org.hl7.fhir.r5.model.Extension;
 import org.hl7.fhir.r5.model.Factory;
 import org.hl7.fhir.r5.model.IdType;
 import org.hl7.fhir.r5.model.Identifier;
 import org.hl7.fhir.r5.model.InstantType;
 import org.hl7.fhir.r5.model.Integer64Type;
 import org.hl7.fhir.r5.model.IntegerType;
+import org.hl7.fhir.r5.model.MarkdownType;
 import org.hl7.fhir.r5.model.OidType;
+import org.hl7.fhir.r5.model.PackageInformation;
 import org.hl7.fhir.r5.model.Period;
 import org.hl7.fhir.r5.model.PositiveIntType;
 import org.hl7.fhir.r5.model.Quantity;
@@ -133,11 +134,11 @@ import org.hl7.fhir.r5.model.UrlType;
 import org.hl7.fhir.r5.model.UuidType;
 import org.hl7.fhir.r5.model.ValueSet;
 import org.hl7.fhir.r5.renderers.utils.RenderingContext;
-import org.hl7.fhir.r5.terminologies.CodeSystemUtilities;
 import org.hl7.fhir.r5.terminologies.ValueSetUtilities;
 import org.hl7.fhir.r5.utils.ToolingExtensions;
 import org.hl7.fhir.tools.converters.MarkDownPreProcessor;
 import org.hl7.fhir.tools.publisher.BuildWorkerContext;
+import org.hl7.fhir.tools.publisher.KindlingUtilities;
 import org.hl7.fhir.utilities.CSFile;
 import org.hl7.fhir.utilities.CSFileInputStream;
 import org.hl7.fhir.utilities.IniFile;
@@ -188,11 +189,11 @@ public class OldSpreadsheetParser {
   private ResourceDefn template;
   private String templateTitle;
   private List<String> errors = new ArrayList<String>();
-  private PackageVersion packageInfo;
+  private PackageInformation packageInfo;
   private RenderingContext rc;
   
 	public OldSpreadsheetParser(String usageContext, InputStream in, String name, String filename, Definitions definitions, String root, Logger log, OIDRegistry registry, FHIRVersion version, BuildWorkerContext context, Calendar genDate, boolean isAbstract, 
-	     ProfileKnowledgeProvider pkp, boolean isType, IniFile ini, WorkGroup committee, Map<String, ConstraintStructure> profileIds, List<FHIRPathUsage> fpUsages, CanonicalResourceManager<ConceptMap> maps, boolean exceptionIfExcelNotNormalised, PackageVersion packageInfo, RenderingContext rc) throws Exception {
+	     ProfileKnowledgeProvider pkp, boolean isType, IniFile ini, WorkGroup committee, Map<String, ConstraintStructure> profileIds, List<FHIRPathUsage> fpUsages, CanonicalResourceManager<ConceptMap> maps, boolean exceptionIfExcelNotNormalised, PackageInformation packageInfo, RenderingContext rc) throws Exception {
 	  this.usageContext = usageContext;
 		this.name = name;
   	xls = new XLSXmlParser(in, filename);
@@ -323,16 +324,11 @@ public class OldSpreadsheetParser {
 		      if (ed.getName().endsWith("[x]") && !inv.getContext().endsWith("[x]"))
 		        inv.setFixedName(inv.getContext().substring(inv.getContext().lastIndexOf(".")+1));
 		      ed.getInvariants().put(inv.getId(), inv);
-		      if (Utilities.noString(inv.getXpath())) {
-		        throw new Exception("Type "+resource.getRoot().getName()+" Invariant "+inv.getId()+" ("+inv.getEnglish()+") has no XPath statement");
-          }
-		      else if (inv.getXpath().contains("\""))
-		        throw new Exception("Type "+resource.getRoot().getName()+" Invariant "+inv.getId()+" ("+inv.getEnglish()+") contains a \" character");
           if (Utilities.noString(inv.getExpression())) {
 				// This has been disabled for now, per Lloyd McKenzie's request via Skype - jamesagnew
             //throw new Exception("Type "+resource.getRoot().getName()+" Invariant "+inv.getId()+" ("+inv.getEnglish()+") has no Expression statement (in FHIRPath format)");
           } else {
-            fpUsages.add(new FHIRPathUsage(inv.getContext(), isResource ? resource.getName() : "DomainResource", inv.getContext(), null, inv.getExpression(), inv.getXpath()));
+            fpUsages.add(new FHIRPathUsage(inv.getContext(), isResource ? resource.getName() : "DomainResource", inv.getContext(), null, inv.getExpression()));
           }
 		    }
 		  }
@@ -781,7 +777,6 @@ public class OldSpreadsheetParser {
 			  inv.setRequirements(sheet.getColumn(row, "Requirements"));
 			  inv.setContext(sheet.getColumn(row, "Context"));
 			  inv.setEnglish(sheet.getColumn(row, "English"));
-        inv.setXpath(sheet.getColumn(row, "XPath"));
         inv.setExpression(sheet.getColumn(row, "Expression"));
         inv.setExplanation(sheet.getColumn(row, "Explanation"));
         if (Utilities.noString(inv.getExpression()))
@@ -820,6 +815,7 @@ public class OldSpreadsheetParser {
         sp.setVersion(version.toCode());
         sp.setName(n);
         sp.setCode(n);
+        KindlingUtilities.makeUniversal(sp);
 
         if (pack.getProfiles().size() > 0 && pack.getProfiles().get(0).getResource() != null) {
           sp.setStatus(pack.getProfiles().get(0).getResource().getStatus());
@@ -1059,12 +1055,12 @@ public class OldSpreadsheetParser {
               sp.setManualTypes(sheet.getColumn(row, "Target Types").split("\\,"));
             }
             sp.setHierarchy(hierarchy);
-            CommonSearchParameter csp = definitions.getCommonSearchParameters().get(root2.getName()+"::"+n);
-            if (csp != null)
-              for (String s : csp.getResources()) {
-                if (!root2.getName().equals(s))
-                  sp.getOtherResources().add(s);
-              }
+//            CommonSearchParameter csp = definitions.getCommonSearchParameters().get(root2.getName()+"::"+n);
+//            if (csp != null)
+//              for (String s : csp.getResources()) {
+//                if (!root2.getName().equals(s))
+//                  sp.getOtherResources().add(s);
+//              }
           }
           root2.getSearchParams().put(n, sp);
         }
@@ -1168,6 +1164,8 @@ public class OldSpreadsheetParser {
         cd.getValueSet().setId(igSuffix(ig)+ref.substring(1));
         cd.getValueSet().setUrl("http://hl7.org/fhir/ValueSet/"+igSuffix(ig)+ref.substring(1));
         cd.getValueSet().setUserData("filename", "valueset-"+cd.getValueSet().getId());
+        KindlingUtilities.makeUniversal(cd.getValueSet());
+
         if (!cd.getValueSet().hasExtension(ToolingExtensions.EXT_WORKGROUP)) {
           cd.getValueSet().addExtension().setUrl(ToolingExtensions.EXT_WORKGROUP).setValue(new CodeType(committee.getCode()));
         } else {
@@ -1575,11 +1573,6 @@ public class OldSpreadsheetParser {
 			    if (ed.getName().endsWith("[x]") && !inv.getContext().endsWith("[x]"))
 			      inv.setFixedName(inv.getContext().substring(inv.getContext().lastIndexOf(".")+1));
 			    ed.getInvariants().put(inv.getId(), inv);
-			    if (Utilities.noString(inv.getXpath())) {
-		        throw new Exception("Type "+resource.getRoot().getName()+" Invariant "+inv.getId()+" ("+inv.getEnglish()+") has no XPath statement");
-          }
-			    else if (inv.getXpath().contains("\""))
-	          throw new Exception("Type "+resource.getRoot().getName()+" Invariant "+inv.getId()+" ("+inv.getEnglish()+") contains a \" character");
 //          if (Utilities.noString(inv.getExpression()))
 //            throw new Exception("Type "+resource.getRoot().getName()+" Invariant "+inv.getId()+" ("+inv.getEnglish()+") has no Expression statement (in FHIRPath format)");
 			  }
@@ -1765,6 +1758,7 @@ public class OldSpreadsheetParser {
 		}
 
     e.setStandardsStatus(StandardsStatus.fromCode(sheet.getColumn(row, "Standards-Status")));
+    e.setStandardsStatusReason(sheet.getColumn(row, "Standards-Status-Reason"));
     e.setNormativeVersion(sheet.getColumn(row, "Normative-Version"));
 
 		if (e.getName().startsWith("@")) {
@@ -2175,6 +2169,7 @@ public class OldSpreadsheetParser {
     if (Utilities.noString(fmm))
       fmm = "1"; // default fmm value for extensions
     ToolingExtensions.addIntegerExtension(ex, ToolingExtensions.EXT_FMM_LEVEL, Integer.parseInt(fmm));
+    ToolingExtensions.setStandardsStatus(ex, StandardsStatus.TRIAL_USE, null);
     
     if (ap.hasMetadata("fmm-level"))
       ToolingExtensions.addIntegerExtension(ex, ToolingExtensions.EXT_FMM_LEVEL, Integer.parseInt(ap.getFmmLevel()));
@@ -2233,6 +2228,15 @@ public class OldSpreadsheetParser {
 	        exe.getInvariants().put(inv.getId(), inv);
 	    }
 	  }
+    String sss = sheet.getColumn(row, "standards-status");
+    if (!Utilities.noString(sss)) {
+      ToolingExtensions.setStandardsStatus(ex, StandardsStatus.fromCode(sss), null);
+      sss = sheet.getColumn(row, "standards-status-reason");
+      if (!Utilities.noString(sss)) {
+        Extension ess = ex.getExtensionByUrl(ToolingExtensions.EXT_STANDARDS_STATUS);
+        ess.getValue().addExtension(ToolingExtensions.EXT_STANDARDS_STATUS_REASON, new MarkdownType(sss));
+      }
+    }    
 
     parseExtensionElement(sheet, row, definitions, exe, false);
     String sl = exe.getShortDefn();
@@ -2573,11 +2577,6 @@ public class OldSpreadsheetParser {
           if (ed.getName().endsWith("[x]") && !inv.getContext().endsWith("[x]"))
             inv.setFixedName(inv.getContext().substring(inv.getContext().lastIndexOf(".")+1));
           ed.getInvariants().put(inv.getId(), inv);
-          if (Utilities.noString(inv.getXpath())) {
-            throw new Exception("Type "+resource.getRoot().getName()+" Invariant "+inv.getId()+" ("+inv.getEnglish()+") has no XPath statement");
-          }
-          else if (inv.getXpath().contains("\""))
-            throw new Exception("Type "+resource.getRoot().getName()+" Invariant "+inv.getId()+" ("+inv.getEnglish()+") contains a \" character");
 //          if (Utilities.noString(inv.getExpression()))
 //            throw new Exception("Type "+resource.getRoot().getName()+" Invariant "+inv.getId()+" ("+inv.getEnglish()+") has no Expression statement (in FHIRPath format)");
         }

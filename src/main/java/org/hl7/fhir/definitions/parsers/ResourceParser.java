@@ -40,7 +40,6 @@ import org.hl7.fhir.exceptions.FHIRException;
 import org.hl7.fhir.exceptions.FHIRFormatError;
 import org.hl7.fhir.r5.conformance.ProfileUtilities;
 import org.hl7.fhir.r5.context.CanonicalResourceManager;
-import org.hl7.fhir.r5.elementmodel.Element;
 import org.hl7.fhir.r5.formats.IParser.OutputStyle;
 import org.hl7.fhir.r5.formats.JsonParser;
 import org.hl7.fhir.r5.formats.XmlParser;
@@ -56,6 +55,7 @@ import org.hl7.fhir.r5.model.ElementDefinition.ElementDefinitionConstraintCompon
 import org.hl7.fhir.r5.model.ElementDefinition.ElementDefinitionMappingComponent;
 import org.hl7.fhir.r5.model.ElementDefinition.PropertyRepresentation;
 import org.hl7.fhir.r5.model.ElementDefinition.TypeRefComponent;
+import org.hl7.fhir.r5.model.Enumerations.FHIRVersion;
 import org.hl7.fhir.r5.model.Enumerations.PublicationStatus;
 import org.hl7.fhir.r5.model.Enumerations.SearchParamType;
 import org.hl7.fhir.r5.model.Extension;
@@ -80,12 +80,12 @@ import org.hl7.fhir.r5.terminologies.ValueSetUtilities;
 import org.hl7.fhir.r5.utils.BuildExtensions;
 import org.hl7.fhir.r5.utils.ToolingExtensions;
 import org.hl7.fhir.tools.publisher.BuildWorkerContext;
+import org.hl7.fhir.tools.publisher.KindlingUtilities;
 import org.hl7.fhir.utilities.CSFile;
 import org.hl7.fhir.utilities.CSFileInputStream;
 import org.hl7.fhir.utilities.StandardsStatus;
 import org.hl7.fhir.utilities.TextFile;
 import org.hl7.fhir.utilities.Utilities;
-import org.w3c.dom.Document;
 
 public class ResourceParser {
 
@@ -226,16 +226,19 @@ public class ResourceParser {
         if (new File(Utilities.path(folder, "structuredefinition-extension-"+rid+".xml")).exists()) {
           sd = (StructureDefinition) parseXml("structuredefinition-extension-"+rid+".xml");
           sd.setUserData("path", "extension-"+sd.getId()+".html");
+          sd.setVersion(context.getVersion());
           p.getExtensions().add(sd);
           context.cacheResource(sd);
         } else {
           ConstraintStructure tp = processProfile(rid, ig.getId().substring(ig.getId().indexOf("-")+1), res, wg);
           sd = tp.getResource();
+          sd.setVersion(context.getVersion());
           sd.setUserData("path", sd.getId()+".html");
           p.getProfiles().add(tp); 
         }
         sd.setUserData(ToolResourceUtilities.NAME_RES_IG, id);
         sd.setVersion(version);
+        sd.setFhirVersion(FHIRVersion.fromCode(version));
         for (ElementDefinition ed : sd.getDifferential().getElement()) {
           if (ed.hasBinding() && ed.getBinding().hasValueSet()) { 
             loadValueSet(ed.getBinding().getValueSet(), true);
@@ -263,6 +266,9 @@ public class ResourceParser {
     if (ig == null ) {
       ig = definitions.getIgs().get("core");
     }
+    sd.setVersion(version);
+    sd.setFhirVersion(FHIRVersion.fromCode(version));
+
     ConstraintStructure cs = new ConstraintStructure(sd, ig, wg == null ? wg(sd) : wg, null, false);
     return cs;
   }
@@ -423,6 +429,7 @@ public class ResourceParser {
         }
       }
     }
+    
     for (SearchParameterComponentComponent comp : src.getComponent()) {
       sp.getComposites().add(new CompositeDefinition(comp.getDefinition(), comp.getExpression()));
     }
@@ -450,6 +457,8 @@ public class ResourceParser {
     StructureDefinition sd = (StructureDefinition) parseXml("structuredefinition-"+t+".xml");
     sdList.put(sd.getUrl(), sd);
     sd.setVersion(version);
+    sd.setFhirVersion(FHIRVersion.fromCode(version));
+
     ResourceDefn r = new ResourceDefn();
     r.setName(sd.getName());
     r.setEnteredInErrorStatus(ToolingExtensions.readStringExtension(sd, BuildExtensions.EXT_ENTERED_IN_ERROR_STATUS));
@@ -552,7 +561,12 @@ public class ResourceParser {
     }
     ed.setOrderMeaning(focus.getOrderMeaning());
     if (BuildExtensions.hasExtension(focus, BuildExtensions.EXT_STANDARDS_STATUS)) {
-      ed.setStandardsStatus(StandardsStatus.fromCode(BuildExtensions.readStringExtension(focus, BuildExtensions.EXT_STANDARDS_STATUS)));
+      Extension sse = BuildExtensions.getExtension(focus, BuildExtensions.EXT_STANDARDS_STATUS);
+      ed.setStandardsStatus(StandardsStatus.fromCode(sse.getValue().primitiveValue()));
+      Extension ssr = sse.getValue().getExtensionByUrl(ToolingExtensions.EXT_STANDARDS_STATUS_REASON);
+      if (ssr != null) {
+        ed.setStandardsStatusReason(ssr.getValue().primitiveValue());
+      }
     }
     if (BuildExtensions.hasExtension(focus, BuildExtensions.EXT_NORMATIVE_VERSION)) {
       ed.setNormativeVersion(BuildExtensions.readStringExtension(focus, BuildExtensions.EXT_NORMATIVE_VERSION));
@@ -565,7 +579,6 @@ public class ResourceParser {
       if (cst.hasExtension(BuildExtensions.EXT_OCL)) {
         inv.setOcl(cst.getExtensionString(BuildExtensions.EXT_OCL));        
       }
-      inv.setXpath(cst.getXpath());
       inv.setId(cst.getKey());
       if (cst.hasExtension(BuildExtensions.EXT_FIXED_NAME)) {
         inv.setFixedName(cst.getExtensionString(BuildExtensions.EXT_FIXED_NAME));        

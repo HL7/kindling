@@ -44,17 +44,19 @@ public class FhirTurtleGenerator {
     private List<ValidationMessage> issues;
     private FHIRResourceFactory fact;
     private Resource value;
+    private String host;
 
     // OWL doesn't recognize xsd:gYear, xsd:gYearMonth or xsd:date.  If true, map all three to xsd:datetime
     private boolean owlTarget = true;
 
 
     public FhirTurtleGenerator(OutputStream destination, Definitions definitions, BuildWorkerContext context,
-                               List<ValidationMessage> issues) {
+                               List<ValidationMessage> issues, String host) {
         this.destination = destination;
         this.definitions = definitions;
         this.context = context;
         this.issues = issues;
+        this.host = host;
         this.fact = new FHIRResourceFactory();
         this.value = fact.fhir_resource("value", OWL2.DatatypeProperty, "fhir:value")
                 .addTitle("Terminal data value")
@@ -115,7 +117,7 @@ public class FhirTurtleGenerator {
     private void genOntologyDefinition() {
         fact.fhir_ontology("fhir.ttl", "FHIR Model Ontology")
                 .addDataProperty(RDFS.comment, "Formal model of FHIR Clinical Resources")
-                .addObjectProperty(OWL2.versionIRI, ResourceFactory.createResource("http://build.fhir.org/fhir.ttl"))
+                .addObjectProperty(OWL2.versionIRI, ResourceFactory.createResource(host+"fhir.ttl"))
                 .addObjectProperty(OWL2.imports, ResourceFactory.createResource("http://hl7.org/fhir/w5.ttl"));
     }
 
