@@ -39,6 +39,8 @@ import org.hl7.fhir.definitions.model.ElementDefn;
 import org.hl7.fhir.definitions.model.MappingSpace;
 import org.hl7.fhir.definitions.model.ResourceDefn;
 import org.hl7.fhir.definitions.model.ResourceDefn.StringPair;
+import org.hl7.fhir.definitions.model.MappingSpace;
+import org.hl7.fhir.exceptions.FHIRException;
 import org.hl7.fhir.r5.model.ElementDefinition;
 import org.hl7.fhir.r5.model.ElementDefinition.ElementDefinitionMappingComponent;
 import org.hl7.fhir.r5.model.StructureDefinition;
@@ -300,10 +302,13 @@ public class MappingsGenerator {
   }
 
 
-  private void listKnownMappings(ElementDefn e, List<String> maps) {
-		for (String s : e.getMappings().keySet())
+  private void listKnownMappings(ElementDefn e, List<String> maps) throws FHIRException {
+		for (String s : e.getMappings().keySet()) {
+            if (definitions.getMapTypes().get(s) == null)
+                throw new FHIRException("Unrecognized map type: " + s + " in element " + e.getPath());
 			if (!maps.contains(s) && definitions.getMapTypes().get(s).isPublish())
 				maps.add(s);
+        }
 		for (ElementDefn c : e.getElements())
 			listKnownMappings(c,  maps);		
 	}

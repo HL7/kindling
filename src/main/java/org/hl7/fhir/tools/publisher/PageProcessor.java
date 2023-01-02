@@ -39,19 +39,7 @@ import java.lang.management.ManagementFactory;
 import java.lang.management.MemoryMXBean;
 import java.net.URISyntaxException;
 import java.text.SimpleDateFormat;
-import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Calendar;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.Date;
-import java.util.Deque;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.UUID;
@@ -68,6 +56,7 @@ import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 
 import org.apache.commons.lang3.NotImplementedException;
+import org.apache.xml.serialize.XMLSerializer;
 import org.fhir.ucum.UcumException;
 import org.hl7.fhir.convertors.SpecDifferenceEvaluator;
 import org.hl7.fhir.convertors.TypeLinkProvider;
@@ -131,6 +120,7 @@ import org.hl7.fhir.r5.conformance.ProfileUtilities;
 import org.hl7.fhir.r5.conformance.ProfileUtilities.ProfileKnowledgeProvider;
 import org.hl7.fhir.r5.context.CanonicalResourceManager;
 import org.hl7.fhir.r5.context.IWorkerContext.ILoggingService;
+import org.hl7.fhir.r5.context.IWorkerContext.PackageVersion;
 import org.hl7.fhir.r5.elementmodel.Element;
 import org.hl7.fhir.r5.formats.FormatUtilities;
 import org.hl7.fhir.r5.formats.IParser;
@@ -261,6 +251,11 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+import org.w3c.dom.bootstrap.DOMImplementationRegistry;
+import org.w3c.dom.ls.DOMImplementationLS;
+import org.w3c.dom.ls.LSSerializer;
 
 
 public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferenceResolver, ILoggingService, TypeLinkProvider, ITypeParser  {
@@ -407,6 +402,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     }
   }
 
+  static final String REASON_UNKNOWN = "Unknown";
   private final List<String> suppressedMessages = new ArrayList<String>();
   private Definitions definitions;
   private FolderManager folders;
@@ -482,7 +478,8 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
 
   public final static String WEB_LOCATION = "http://hl7.org/fhir/{version}/";
   public final static String WEB_SEARCH = WEB_LOCATION+"search.html";
-  public final static String WEB_PUB_NAME = null;
+  public final static String WEB_PUB_NAME = "STU3";
+  public final static String CI_PUB_NAME = "Current Build";
   public final static String WEB_PUB_NOTICE =
       "<p style=\"background-color: #ffefef; border:1px solid maroon; padding: 5px; max-width: 790px;\">\r\n"+
        " This is Preview #2 for FHIR <a href=\"history.html\">R5</a>. <br/>For a full list of available versions, see the <a href=\"http://hl7.org/fhir/directory.html\">Directory of published versions</a>.\r\n"+
@@ -1121,7 +1118,9 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
           src = s1 + ((CodeSystem) resource).present() + s3;
         else
           src = s1 + ((ValueSet) resource).present() + s3;
-      else if (com[0].equals("vsnamed"))
+        if (resource instanceof CodeSystem)
+          src = s1 + ((CodeSystem) resource).getName() + s3;
+        else
         src = s1 + ((ValueSet) resource).getName() + s3;
       else if (com[0].equals("csnamed")) {
         src = s1 + ((CodeSystem) resource).getName() + s3;
@@ -6556,7 +6555,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     return b.toString();
   }
 
-  private String genLogicalMappings(ResourceDefn logical, String genlevel) throws FHIRException {
+  private String genLogicalMappings(ResourceDefn logical, String genlevel) throws Exception {
     String url = logical.getMappingUrl();
     StringBuilder b = new StringBuilder();
     b.append("<table class=\"lmap\">");
@@ -6577,18 +6576,46 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
       ResourceDefn rd = definitions.getResourceByName(s);
       StructureDefinition sd = rd.getProfile();
       String code = null;
+
       for (StructureDefinitionMappingComponent m : sd.getMapping()) {
         if (m.getUri().equals(url))
           code = m.getIdentity();
       }
       if (code != null) {
         if (hasLogicalMapping(sd, logical, code)) {
+          DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+          DocumentBuilder builder = factory.newDocumentBuilder();
+          Document exceptionsDoc = builder.newDocument();
+          Document newExceptionsDoc = builder.newDocument();
+          org.w3c.dom.Element rootException = newExceptionsDoc.createElement("mappingExceptions");
+          newExceptionsDoc.appendChild(rootException);
+          rootException.setAttribute("resource", sd.getName());
+          rootException.setAttribute("pattern", logical.getRoot().getName());
+          String exceptionsPath = Utilities.path(folders.srcDir, sd.getName(), sd.getName().toLowerCase(Locale.ROOT) + "-" + logical.getRoot().getName().toLowerCase(Locale.ROOT) + "-exceptions.xml");
+          CSFile exceptionsFile = new CSFile(exceptionsPath);
+          if (exceptionsFile.exists()) {
+            exceptionsDoc = builder.parse(new CSFileInputStream(exceptionsFile));
+          }
+          Map<String, org.w3c.dom.Element> divergents = new HashMap<String, org.w3c.dom.Element>();
+          NodeList divergentElements = exceptionsDoc.getElementsByTagName("divergentElement");
+          for (int i = 0; i < divergentElements.getLength(); i++) {
+            org.w3c.dom.Element divergent = (org.w3c.dom.Element)divergentElements.item(i);
+            divergents.put(divergent.getAttribute("resource"), divergent);
+          }
+
           b.append(" <tr>\r\n");
           b.append("  <td><a href=\""+rd.getName().toLowerCase()+".html\">"+rd.getName()+"</a></td>\r\n");
           for (ElementDefn e : elements) {
-            populateLogicalMappingColumn(b, logical.getRoot().getName(), rd.getName().toLowerCase()+"-definitions.html#", e, sd, rd.getName(), code, url, null, null, null);
+            populateLogicalMappingColumn(b, logical.getRoot().getName(), rd.getName().toLowerCase()+"-definitions.html#", e, sd, rd.getName(), code, url, null, null, null, rootException, newExceptionsDoc, divergents, exceptionsFile);
           }
           b.append(" </tr>\r\n");
+
+/*          if (!exceptionsFile.exists())
+            exceptionsFile.createNewFile();
+          java.io.Writer writer = new java.io.FileWriter(exceptionsFile);
+          XMLSerializer xml = new XMLSerializer(writer, null);
+          xml.serialize(newExceptionsDoc);
+          writer.close();*/
         }
       }
     }
@@ -6596,7 +6623,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     return b.toString();
   }
 
-  private String genLogicalAnalysis(ResourceDefn logical, String genlevel) throws FHIRException, IOException {
+  private String genLogicalAnalysis(ResourceDefn logical, String genlevel) throws Exception {
     IniFile ini = new IniFile(Utilities.path(getFolders().srcDir, logical.getName(), logical.getName()+"-tasks.ini"));
     String url = logical.getMappingUrl();
     Map<ElementDefn, StringBuilder> bm = new HashMap<>();
@@ -6618,10 +6645,29 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
       }
       if (code != null) {
         if (hasLogicalMapping(sd, logical, code)) {
+          DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+          DocumentBuilder builder = factory.newDocumentBuilder();
+          Document exceptionsDoc = builder.newDocument();
+          Document newExceptionsDoc = builder.newDocument();
+          org.w3c.dom.Element rootException = newExceptionsDoc.createElement("mappingExceptions");
+          newExceptionsDoc.appendChild(rootException);
+          rootException.setAttribute("resource", sd.getName());
+          rootException.setAttribute("pattern", logical.getRoot().getName());
+          String exceptionsPath = Utilities.path(folders.srcDir, sd.getName(), sd.getName().toLowerCase(Locale.ROOT) + "-" + logical.getRoot().getName().toLowerCase(Locale.ROOT) + "-exceptions.xml");
+          CSFile exceptionsFile = new CSFile(exceptionsPath);
+          if (exceptionsFile.exists()) {
+            exceptionsDoc = builder.parse(new CSFileInputStream(exceptionsFile));
+          }
+          Map<String, org.w3c.dom.Element> divergents = new HashMap<String, org.w3c.dom.Element>();
+          NodeList divergentElements = exceptionsDoc.getElementsByTagName("divergentElement");
+          for (int i = 0; i < divergentElements.getLength(); i++) {
+            org.w3c.dom.Element divergent = (org.w3c.dom.Element)divergentElements.item(i);
+            divergents.put(divergent.getAttribute("resource"), divergent);
+          }
           any = true;
           for (ElementDefn e : elements) {
             StringBuilder b2 = bm.get(e);
-            populateLogicalMappingColumn(null, logical.getRoot().getName(), rd.getName().toLowerCase()+"-definitions.html#", e, sd, rd.getName(), code, url, b2, ini, e.getPath());
+            populateLogicalMappingColumn(null, logical.getRoot().getName(), rd.getName().toLowerCase()+"-definitions.html#", e, sd, rd.getName(), code, url, b2, ini, e.getPath(), rootException, newExceptionsDoc, divergents, exceptionsFile);
           }
         }
       }
@@ -6661,9 +6707,27 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     int elementcount;
     CommaSeparatedStringBuilder elementlist = new CommaSeparatedStringBuilder();
     Set<String> extensions = new HashSet<>();
-    boolean nameChanged;
-    TypeMappingStatus typeMismatch = TypeMappingStatus.OK;
-    boolean cardinalityProblem;
+    String nameReason = null;
+    boolean nameChanged() {
+      return nameReason!=null;
+    }
+    TypeMappingStatus typeMismatch() {
+      if (extraTypesReason==null && missingTypesReason==null)
+        return TypeMappingStatus.OK;
+      else
+        return TypeMappingStatus.ERROR;
+    }
+    String extraTypesReason = null;
+    String missingTypesReason = null;
+    String lowerCardReason = null;
+    String upperCardReason = null;
+    String shortReason = null;
+    String definitionReason = null;
+    String requirementsReason = null;
+    String commentReason = null;
+    boolean cardinalityProblem() {
+      return lowerCardReason!=null || upperCardReason!=null;
+    };
     List<String> notes = new ArrayList<String>();
   }
   private final static String LOGICAL_MAPPING_MISMATCH_COLOR = "#ffebe6";
@@ -6672,7 +6736,8 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
   private final static String LOGICAL_MAPPING_MAPPED_COLOR = "#ffffff";
   private final static String LOGICAL_MAPPING_NOTMAPPED_COLOR = "#f2f2f2";
   
-  private void populateLogicalMappingColumn(StringBuilder b, String n, String page, ElementDefn e, StructureDefinition sd, String rn, String code, String url, StringBuilder b2, IniFile ini, String iniPath) throws FHIRException {
+  private void populateLogicalMappingColumn(StringBuilder b, String n, String page, ElementDefn e, StructureDefinition sd, String rn, String code, String url, StringBuilder b2, IniFile ini, String iniPath,
+                                            org.w3c.dom.Element rootException, org.w3c.dom.Document newExceptionsDoc, Map<String,org.w3c.dom.Element> divergents, File exceptionsFile) throws Exception {
     LogicalModelSupportInformation info = new LogicalModelSupportInformation();
 
     for (ElementDefinition ed : sd.getSnapshot().getElement()) { 
@@ -6686,7 +6751,13 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
               cm = cm.trim();
             }
             if (f.equals(e.getPath())) {
-              checkMapping(info, e, ed, b2 == null, cm);
+              org.w3c.dom.Element divergent = divergents.get(e.getPath());
+              org.w3c.dom.Element newDivergent = newExceptionsDoc.createElement("divergentElement");
+              newDivergent.setAttribute("patternPath", e.getPath());
+              newDivergent.setAttribute("resourcePath", ed.getPath());
+              rootException.appendChild(newDivergent);
+              String name = sd.hasTitle() ? sd.getTitle() : String.join(" ", Utilities.splitByCamelCase(sd.getName()));
+              checkMapping(info, e, ed, name.toLowerCase(Locale.ROOT), b2 == null, cm, divergent, newDivergent, newExceptionsDoc);
            }
           }
         }
@@ -6706,7 +6777,9 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
             for (String p : map.split("\\,")) {
               String f = p.contains("{") ? p.substring(0, p.indexOf("{")) : p;
               if (f.equals(e.getPath())) {
-                checkExtMapping(info, e, ext);
+                org.w3c.dom.Element divergent = divergents.get(e.getPath());
+                org.w3c.dom.Element newDivergent = newExceptionsDoc.createElement("divergentElement");
+                checkExtMapping(info, e, ext, divergent, newDivergent, newExceptionsDoc);
               }
             }
           }
@@ -6720,9 +6793,9 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     //   one coor when color extension  
     //   blank for no mapping
     String color;
-    if (info.typeMismatch == TypeMappingStatus.ERROR || info.cardinalityProblem) 
+    if (info.typeMismatch() == TypeMappingStatus.ERROR || info.cardinalityProblem())
       color = LOGICAL_MAPPING_MISMATCH_COLOR;
-    else if (info.nameChanged || info.typeMismatch == TypeMappingStatus.NEEDS_MAPPING) 
+    else if (info.nameChanged() || info.typeMismatch() == TypeMappingStatus.NEEDS_MAPPING)
       color = LOGICAL_MAPPING_NAMECHANGE_COLOR;
     else if (info.extensions.size()> 0) 
       color = LOGICAL_MAPPING_EXTENSION_COLOR;
@@ -6738,7 +6811,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
           ns.append("&#10;");
         ns.append(s);
       }
-      b.append("  <td style=\"background-color: "+color+"\" title=\""+ns.toString()+"\">");
+      b.append("  <td style=\"background-color: "+color+"\" title=\""+Utilities.escapeXml(ns.toString())+"\">");
       if (info.elementcount > 0 || info.extensions.size() > 0) {
         b.append(info.elementcount);
         if (info.extensions.size() > 0) {
@@ -6749,11 +6822,11 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
       b.append(" ");
       if (info.extensions.size() > 0)
         b.append("E");
-      if (info.nameChanged)
+      if (info.nameChanged())
         b.append("N");
-      if (info.typeMismatch == TypeMappingStatus.ERROR)
+      if (info.typeMismatch() == TypeMappingStatus.ERROR)
         b.append("T");
-      if (info.cardinalityProblem)
+      if (info.cardinalityProblem())
         b.append("C");
       b.append("</td>\r\n");
     }
@@ -6770,19 +6843,19 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
       if (info.extensions.size() > 0)
         b2.append(" (as an extension)");
       b2.append("</td><td>");
-      if (info.nameChanged || info.typeMismatch != TypeMappingStatus.OK || info.cardinalityProblem) {
+      if (info.nameChanged() || info.typeMismatch() != TypeMappingStatus.OK || info.cardinalityProblem()) {
         boolean first = true;
-        if (info.nameChanged) {
+        if (info.nameChanged()) {
           b2.append("Names are different. " );
           first = false;
         }
-        if (info.typeMismatch != TypeMappingStatus.OK) {
+        if (info.typeMismatch() != TypeMappingStatus.OK) {
           if (!first)
             b2.append("<br/>");
           b2.append("Type Mismatch. ");
           first = false;
         }
-        if (info.cardinalityProblem) {
+        if (info.cardinalityProblem()) {
           if (!first)
             b2.append("<br/>");
           b2.append("Cardinality Problem. ");
@@ -6825,10 +6898,10 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     return null;
   }
 
-  private void checkMapping(LogicalModelSupportInformation info, ElementDefn logical, ElementDefinition resource, boolean inline, String cm) throws FHIRException {
+  private void checkMapping(LogicalModelSupportInformation info, ElementDefn logical, ElementDefinition resource, String resourceName, boolean inline, String cm, org.w3c.dom.Element exception, org.w3c.dom.Element newException,  org.w3c.dom.Document doc) throws FHIRException {
     info.elementcount++;
     info.elementlist.append(resource.getPath());
-    String s;
+    StringJoiner sj = new StringJoiner("\n  ");
     if (inline)
       s = resource.getPath()+" : "+resource.typeSummary()+" ["+resource.getMin()+".."+resource.getMax()+"]";
     else 
@@ -6854,11 +6927,97 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     }
   }
 
+  private String checkText(String logicalText, String resourceText, String issueName, org.w3c.dom.Element exception, org.w3c.dom.Element newException, org.w3c.dom.Document doc, String name, StringJoiner sj, String elementName) {
+    String adjustLogical = replaceTitle(trimBracketedText(logicalText), elementName).trim();
+    if (adjustLogical==null || adjustLogical.isEmpty() || adjustLogical.equals("."))
+      return "";
+    else if (resourceText != null && resourceText.contains(adjustLogical))
+      return "";
+    return checkElements(exception, newException, false, doc, issueName, adjustLogical, resourceText, elementName + " does not contain the recommended logical text for " + name, sj);
+  }
+
+  private String trimBracketedText(String text) {
+    if (text==null)
+      return "";
+    if (!text.contains("[") || !text.substring(text.indexOf("[")+1).contains("]"))
+      return text;
+    int startPos = text.indexOf("[");
+    int endPos = text.indexOf("]", startPos+1);
+    String s = "";
+    if (startPos!=0)
+      s = text.substring(0, startPos-1);
+    if (endPos < text.length())
+      s += text.substring(endPos+1);
+    return trimBracketedText(s);
+  }
+
+  private String replaceTitle(String text, String title) {
+    return text.replaceAll("\\{\\{title\\}\\}", title);
+  }
+
+  private String checkElements(org.w3c.dom.Element exception, org.w3c.dom.Element newException, boolean asAttribute, org.w3c.dom.Document doc, String path, String patternValue, String resourceValue, String message, StringJoiner sj) {
+    if (patternValue!=null && resourceValue!=null && patternValue.equals(resourceValue))
+      return null;
+
+    String reason = "";
+    String elementName = path.replace("[", "_").replace("]","");
+    org.w3c.dom.Element nameException = doc.createElement(elementName);
+    if (exception != null && exception.getElementsByTagName(elementName).getLength() != 0) {
+      nameException = (org.w3c.dom.Element) exception.getElementsByTagName(elementName).item(0);
+      if ((patternValue==null || patternValue.equals(getException(nameException, "pattern", asAttribute)))
+          && (resourceValue==null || resourceValue.equals(getException(nameException, "resource", asAttribute)))) {
+        reason = nameException.getAttribute("reason");
+      } else {
+        if (patternValue!=null)
+          setException(nameException, "pattern", doc, asAttribute, patternValue);
+        if (resourceValue!=null)
+          setException(nameException, "resource", doc, asAttribute, resourceValue);
+        if (!nameException.getAttribute("reason").equals(REASON_UNKNOWN) && !nameException.getAttribute("reason").equals("Undefined")) {
+          nameException.appendChild(doc.createComment(nameException.getAttribute("reason")));
+          nameException.setAttribute("reason", REASON_UNKNOWN);
+        }
+      }
+    } else {
+      if (patternValue!=null)
+        setException(nameException, "pattern", doc, asAttribute, patternValue);
+      if (resourceValue!=null)
+        setException(nameException, "resource", doc, asAttribute, resourceValue);
+      nameException.setAttribute("reason", REASON_UNKNOWN);
+    }
+    newException.appendChild(nameException);
+    String s = message + " (Pattern: " + patternValue + "; Resource: " + resourceValue + ")";
+    if (reason.equals(REASON_UNKNOWN))
+      s += " - no reason provided";
+    else if (!reason.isEmpty())
+      s += " - " + reason;
+    sj.add(s);
+    return reason;
+  }
+
+  private String getException(org.w3c.dom.Element exception, String name, boolean asAttribute) {
+    if (asAttribute) {
+      return exception.getAttribute(name);
+    } else if (exception.getElementsByTagName(name).getLength()!=0) {
+      return ((org.w3c.dom.Element)exception.getElementsByTagName(name).item(0)).getAttribute("value");
+    }
+    return null;
+  }
+
+  private void setException(org.w3c.dom.Element exception, String name, org.w3c.dom.Document doc, boolean asAttribute, String value) {
+    if (asAttribute) {
+      exception.setAttribute(name, value);
+    } else {
+      org.w3c.dom.Element e = doc.createElement(name);
+      exception.appendChild(e);
+      e.setAttribute("value", value);
+    }
+  }
+
   private Object edPathTail(String path) {
     return path.substring(path.lastIndexOf(".")+1);
   }
 
-  private void checkExtMapping(LogicalModelSupportInformation info, ElementDefn logical, StructureDefinition extension) throws FHIRException {
+  private void checkExtMapping(LogicalModelSupportInformation info, ElementDefn logical, StructureDefinition extension, org.w3c.dom.Element exception, org.w3c.dom.Element newException,  org.w3c.dom.Document doc) throws FHIRException {
     info.extensions.add(tail(extension.getUrl()));
     ElementDefinition e = extension.getSnapshot().getElementFirstRep();
     ElementDefinition v = null;
@@ -6866,17 +7025,12 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
       if ("Extension.value[x]".equals(ed.getBase().getPath()))
         v = ed;
     }
-    String s = "Extension "+tail(extension.getUrl())+" : "+v.typeSummary()+" ["+e.getMin()+".."+e.getMax()+"]";
-    String cardinalityError = checkCardinality(logical, e);
-    if (!Utilities.noString(cardinalityError)) {
-      info.cardinalityProblem = true;
-      s = s + " " +cardinalityError;
-    }
-    String typeError = checkType(logical, v, null);
-    if (!Utilities.noString(typeError)) {
-      info.typeMismatch = TypeMappingStatus.ERROR;
-      s = s + " " +typeError;
-    }
+    StringJoiner sj = new StringJoiner("\n  ");
+    sj.add("Extension "+tail(extension.getUrl())+" : "+v.typeSummary()+" ["+e.getMin()+".."+e.getMax()+"]");
+    checkCardinality(logical, e, info, exception, newException, doc, sj);
+
+    checkType(logical, v, null, info, exception, newException, doc, sj);
+    String s = sj.toString();
     if (!info.notes.contains(s)) {
       info.notes.add(s);
     }
@@ -6884,15 +7038,77 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
 
 
 
-  private String checkType(ElementDefn logical, ElementDefinition resource, String cm) throws FHIRException {
+  private void checkType(ElementDefn logical, ElementDefinition resource, String cm, LogicalModelSupportInformation info, org.w3c.dom.Element exception, org.w3c.dom.Element newException,  org.w3c.dom.Document doc, StringJoiner sj) throws FHIRException {
     String s = "";
+    Map<String,TypeRefComponent> rTypes = new HashMap<String, TypeRefComponent>();
+    List<TypeRef> lTypes = new ArrayList<TypeRef>();
     for (TypeRefComponent rt : resource.getType()) {
+      rTypes.put(rt.getCode(), rt.copy());
+    }
+    for (TypeRef lt : logical.getTypes()) {
+      if (rTypes.containsKey(lt.getName())) {
+        if (lt.getName().equals("canonical") || lt.getName().equals("Reference")) {
+          TypeRefComponent rType = rTypes.get(lt.getName());
+          Map<String, CanonicalType> rProfiles = new HashMap<String, CanonicalType>();
+          List<CanonicalType> rRemoveProfiles = new ArrayList<CanonicalType>();
+          List<String> lProfiles = new ArrayList<String>();
+          for (CanonicalType rp : rType.getTargetProfile()) {
+            rProfiles.put(rp.asStringValue(), rp);
+          }
+          for (String lp : lt.getParams()) {
+            if (rProfiles.containsKey(lp)) {
+              rProfiles.remove(lp);
+              rRemoveProfiles.add(rProfiles.get(lp));
+              lProfiles.add(lp);
+            } else if (lp.equals("Request") || lp.equals("Definition") || lp.equals("Event")) {
+lp = lp;
+            }
+          }
+
+          for (String lp : lProfiles) {
+            lt.getParams().remove(lp);
+          }
+          for (CanonicalType rp : rRemoveProfiles) {
+            rType.getTargetProfile().remove(rp);
+          }
+        } else {
+          rTypes.remove(lt.getName());
+        }
+      } else {
+        lTypes.add(lt);
+      }
+/*      lTypes.add()
       if (!checkType(logical, rt, cm, resource)) {
         String m = "The type '"+rt.getWorkingCode()+"' is not legal according to the pattern ("+resource.typeSummary()+" vs "+logical.typeCode()+") ";
         s = Utilities.noString(s) ? m : s + ", "+m;
-      }
+      }*/
     }
-    return s;
+    StringJoiner unmappedLogicalType = new StringJoiner(", ");
+    StringJoiner unmappedResourceType = new StringJoiner(", ");
+    for (TypeRefComponent rt : rTypes.values()) {
+      String dtName = rt.getName();
+      if (rt.hasTargetProfile()) {
+        StringJoiner profiles = new StringJoiner(",");
+        for (CanonicalType ct : rt.getTargetProfile()) {
+          profiles.add(ct.asStringValue());
+        }
+        dtName += "(" + profiles.toString() + ")";
+      }
+      unmappedResourceType.add(dtName);
+    }
+    for (TypeRef lt : lTypes) {
+      String dtName = lt.getName();
+      if (lt.hasParams()) {
+        dtName += "(" + String.join(",", lt.getParams()) + ")";
+      }
+      unmappedLogicalType.add(dtName);
+    }
+    if (unmappedLogicalType.length()!=0) {
+      info.missingTypesReason = checkElements(exception, newException, false, doc, resource.getPath(), null, unmappedResourceType.toString(), "Resource does not types that are part of the pattern", sj);
+    }
+    if (unmappedResourceType.length()!=0) {
+      info.extraTypesReason = checkElements(exception, newException, false, doc, resource.getPath(), null, unmappedResourceType.toString(), "Resource supports types that are not part of the pattern", sj);
+    }
   }
 
   private boolean checkType(ElementDefn logical, TypeRefComponent rt, String cm, ElementDefinition resource) throws FHIRException {
@@ -6957,13 +7173,9 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     return map;
   }
   
-  private String checkCardinality(ElementDefn logical, ElementDefinition resource) {
-    String s = "";
-    if (resource.getMin() < logical.getMinCardinality())
-      s = "Minimum Cardinality Violation (pattern = 1, resource = 0)";
-    if (!resource.getMax().equals("1") && logical.getMaxCardinality() == 1)
-      s = Utilities.noString(s) ? "Maximum Cardinality Violation (pattern = 1, resource = *)" : s + ", Maximum Cardinality Violation (pattern = 1, resource = *)";
-    return s;
+  private void checkCardinality(ElementDefn logical, ElementDefinition resource, LogicalModelSupportInformation info, org.w3c.dom.Element exception, org.w3c.dom.Element newException,  org.w3c.dom.Document doc, StringJoiner sj) {
+    info.lowerCardReason = checkElements(exception, newException, true, doc, "lowerCardinality", logical.getMinCardinality().toString(), Integer.toString(resource.getMin()), "Minimum Cardinality differs", sj);
+    info.upperCardReason = checkElements(exception, newException, true, doc, "upperCardinality", logical.getMaxCardinality()==0 ? logical.getMaxCardinality().toString() : "*", resource.getMax(), "Maximum Cardinality differs", sj);
   }
 
   private boolean hasLogicalMapping(StructureDefinition sd, ResourceDefn logical, String code) {
