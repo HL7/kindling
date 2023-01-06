@@ -11,9 +11,10 @@ import org.hl7.fhir.definitions.model.ElementDefn;
 import org.hl7.fhir.definitions.model.Invariant;
 import org.hl7.fhir.definitions.model.ProfiledType;
 import org.hl7.fhir.definitions.model.TypeRef;
-import org.hl7.fhir.r5.conformance.ProfileUtilities;
+import org.hl7.fhir.r5.conformance.profile.ProfileUtilities;
 import org.hl7.fhir.r5.model.Enumerations.FHIRVersion;
 import org.hl7.fhir.r5.model.ValueSet;
+import org.hl7.fhir.r5.renderers.StructureDefinitionRenderer;
 import org.hl7.fhir.r5.utils.ToolingExtensions;
 import org.hl7.fhir.tools.publisher.PageProcessor;
 import org.hl7.fhir.utilities.StandardsStatus;
@@ -73,9 +74,9 @@ public class TableGenerator extends BaseGenerator {
       gc.addStyledText("This element is a candidate for being translated", "T", null, null, prefix+"languages.html#translatable", false);
     }
     if (!isRoot && (!e.getInvariants().isEmpty() || !e.getStatedInvariants().isEmpty())) { 
-      Piece p = gc.addText(ProfileUtilities.CONSTRAINT_CHAR);
+      Piece p = gc.addText(StructureDefinitionRenderer.CONSTRAINT_CHAR);
       p.setHint("This element has or is affected by some invariants");
-      p.addStyle(ProfileUtilities.CONSTRAINT_STYLE);
+      p.addStyle(StructureDefinitionRenderer.CONSTRAINT_STYLE);
       p.setReference(prefix+"conformance-rules.html#constraints");      
     }
     if (isInterface) {

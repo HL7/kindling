@@ -3,7 +3,7 @@ package org.hl7.fhir.tools.converters;
 import java.util.List;
 
 import org.hl7.fhir.definitions.model.Definitions;
-import org.hl7.fhir.r5.conformance.ProfileUtilities;
+import org.hl7.fhir.r5.conformance.profile.ProfileUtilities;
 import org.hl7.fhir.r5.model.CodeSystem.ConceptDefinitionComponent;
 import org.hl7.fhir.r5.model.StructureDefinition;
 import org.hl7.fhir.r5.model.ValueSet;
@@ -52,7 +52,7 @@ public class MarkDownPreProcessor {
             System.out.println("Broken link for "+ed.getUrl());
           }
         } 
-        if (Utilities.noString(url)) {
+        if (Utilities.noString(url)) { 
           String[] paths = parts[0].split("\\.");
           StructureDefinition p = new ProfileUtilities(workerContext, null, null).getProfile(null, paths[0]);
           if (p != null) {

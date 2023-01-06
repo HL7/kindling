@@ -18,10 +18,11 @@ import org.hl7.fhir.definitions.model.ProfiledType;
 import org.hl7.fhir.definitions.model.ResourceDefn;
 import org.hl7.fhir.definitions.model.ResourceDefn.PointSpec;
 import org.hl7.fhir.definitions.model.TypeRef;
-import org.hl7.fhir.r5.conformance.ProfileUtilities;
+import org.hl7.fhir.r5.conformance.profile.ProfileUtilities;
 import org.hl7.fhir.r5.model.Enumerations.BindingStrength;
 import org.hl7.fhir.r5.model.Enumerations.FHIRVersion;
 import org.hl7.fhir.r5.model.StructureDefinition;
+import org.hl7.fhir.r5.renderers.StructureDefinitionRenderer;
 import org.hl7.fhir.tools.publisher.PageProcessor;
 import org.hl7.fhir.utilities.IniFile;
 import org.hl7.fhir.utilities.StandardsStatus;
@@ -1308,7 +1309,7 @@ public class SvgGenerator extends BaseGenerator {
       xml.enter("a");
       xml.attribute("id", "n"+(++nc));
       xml.element("title", "This element has or is affected by some invariants");
-      xml.text(ls.see(ProfileUtilities.CONSTRAINT_CHAR));
+      xml.text(ls.see(StructureDefinitionRenderer.CONSTRAINT_CHAR));
       xml.exit("a");      
       xml.text(ls.see(" \u00BB"));
 

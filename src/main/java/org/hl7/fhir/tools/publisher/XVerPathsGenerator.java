@@ -116,7 +116,7 @@ public class XVerPathsGenerator {
     if (ed.getTypes().size() > 0) {
       // leaf
       for (TypeRef tr : ed.getTypes()) {
-        if (r4 == null || !r4.types.contains(tr.summary())) {
+        if (r4 == null || (!r4.types.contains(tr.summary()) && !r4.types.contains("!"+tr.summary()))) {
           ei.types.add(tr.summary());
         } else {
           ei.types.add("!"+tr.summary());          
@@ -124,7 +124,7 @@ public class XVerPathsGenerator {
       }
     } else {
       for (ElementDefn child : ed.getElements()) {
-        if (r4 == null || !r4.elements.contains(child.getName())) {
+        if (r4 == null || (!r4.elements.contains(child.getName()) && !r4.elements.contains("!"+child.getName()))) {
           ei.elements.add(child.getName());
         } else {
           ei.elements.add("!"+child.getName());
@@ -146,20 +146,22 @@ public class XVerPathsGenerator {
   private void loadR4() throws IOException {
     JsonObject r4 = JsonTrackingParser.parseJson(new File(r4Source)); 
     for (Entry<String, JsonElement> e : r4.entrySet()) {
-      JsonObject eo = (JsonObject) e.getValue();
-      ElementInfo ei = new ElementInfo();
-      if (eo.has("types")) {
-        for (JsonElement s : eo.getAsJsonArray("types")) {
-          ei.types.add(s.getAsString());
+      if (e.getValue().isJsonObject()) {
+        JsonObject eo = (JsonObject) e.getValue();
+        ElementInfo ei = new ElementInfo();
+        if (eo.has("types")) {
+          for (JsonElement s : eo.getAsJsonArray("types")) {
+            ei.types.add(s.getAsString());
+          }
         }
-      }
-      if (eo.has("elements")) {
-        for (JsonElement s : eo.getAsJsonArray("elements")) {
-          ei.elements.add(s.getAsString());
+        if (eo.has("elements")) {
+          for (JsonElement s : eo.getAsJsonArray("elements")) {
+            ei.elements.add(s.getAsString());
+          }
         }
-      }
-      if (!ei.elements.isEmpty() || !ei.types.isEmpty()) {
-        r4List.put(e.getKey(), ei);
+        if (!ei.elements.isEmpty() || !ei.types.isEmpty()) {
+          r4List.put(e.getKey(), ei);
+        }
       }
     }
   }
