@@ -31,6 +31,7 @@ import org.hl7.fhir.rdf.FHIRResourceFactory;
 import org.hl7.fhir.rdf.RDFNamespace;
 import org.hl7.fhir.rdf.RDFTypeMap;
 import org.hl7.fhir.tools.publisher.BuildWorkerContext;
+import org.hl7.fhir.tools.publisher.PageProcessor;
 import org.hl7.fhir.utilities.Utilities;
 import org.hl7.fhir.utilities.validation.ValidationMessage;
 
@@ -111,14 +112,19 @@ public class FhirTurtleGenerator {
         commit(true);
     }
 
-    /**
-     * Emit an ontology definition for the file
-     */
+   /**
+    * Emit an ontology definition for the file
+    */
     private void genOntologyDefinition() {
         fact.fhir_ontology("fhir.ttl", "FHIR Model Ontology")
                 .addDataProperty(RDFS.comment, "Formal model of FHIR Clinical Resources")
-                .addObjectProperty(OWL2.versionIRI, ResourceFactory.createResource(host+"fhir.ttl"))
+                .addObjectProperty(OWL2.versionIRI, ResourceFactory.createResource(getOntologyVersionIRI() +"fhir.ttl"))
                 .addObjectProperty(OWL2.imports, ResourceFactory.createResource("http://hl7.org/fhir/w5.ttl"));
+    }
+
+    private String getOntologyVersionIRI() {
+        return host.startsWith("file:") ?
+                PageProcessor.CI_LOCATION : host;
     }
 
     /**

@@ -133,7 +133,7 @@ import org.hl7.fhir.definitions.validation.FHIRPathUsage;
 import org.hl7.fhir.definitions.validation.ResourceValidator;
 import org.hl7.fhir.definitions.validation.XmlValidator;
 import org.hl7.fhir.exceptions.FHIRException;
-import org.hl7.fhir.r5.conformance.ProfileUtilities;
+import org.hl7.fhir.r5.conformance.profile.ProfileUtilities;
 import org.hl7.fhir.r5.conformance.ShExGenerator;
 import org.hl7.fhir.r5.conformance.ShExGenerator.HTMLLinkPolicy;
 import org.hl7.fhir.r5.context.ContextUtilities;
@@ -481,7 +481,7 @@ public class Publisher implements URIResolver, SectionNumberer {
     pub.validateId = getNamedParam(args, "-validate");
     String dir = hasParam(args, "-folder") ? getNamedParam(args, "-folder") : System.getProperty("user.dir");
     pub.outputdir = hasParam(args, "-output") ? getNamedParam(args, "-output") : null; 
-    pub.isCIBuild = dir.contains("/ubuntu/agents/");
+    pub.isCIBuild = dir.contains("/ubuntu/agents/") || dir.contains("azure-pipelines");
     if (pub.isCIBuild) {
       pub.page.setWebLocation(PageProcessor.CI_LOCATION);
       pub.page.setSearchLocation(PageProcessor.CI_SEARCH);
@@ -2394,6 +2394,9 @@ public class Publisher implements URIResolver, SectionNumberer {
             if (p.getId().equals(id))
               return true;
     }
+    if (page.getWorkerContext().hasResource(Resource.class, ref.ref)) {
+      return true;
+    }
     return false;
   }
 
@@ -2516,7 +2519,7 @@ public class Publisher implements URIResolver, SectionNumberer {
     shgen.withComments = false;
     TextFile.stringToFile(shgen.generate(HTMLLinkPolicy.NONE, list), page.getFolders().dstDir+"fhir.shex", false);
 
-    new XVerPathsGenerator(page.getDefinitions(), Utilities.path(page.getFolders().dstDir, "xver-paths-"+Constants.VERSION_MM+".json"), Utilities.path(page.getFolders().rootDir, "tools", "history", "release4", "xver-paths-4.0.json")).execute();
+    new XVerPathsGenerator(page.getDefinitions(), Utilities.path(page.getFolders().dstDir, "xver-paths-"+Constants.VERSION_MM+".json"), Utilities.path(page.getFolders().rootDir, "tools", "history", "release4b", "xver-paths-4.3.json")).execute();
     GraphQLSchemaGenerator gql = new GraphQLSchemaGenerator(page.getWorkerContext(), page.getVersion().toCode());
     gql.generateTypes(new FileOutputStream(Utilities.path(page.getFolders().dstDir, "types.graphql")));
     Set<String> names = new HashSet<String>();
