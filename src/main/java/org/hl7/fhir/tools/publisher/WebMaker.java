@@ -149,7 +149,11 @@ public class WebMaker {
 			  String name = ze.getName();
 			  if (name.endsWith(".html") || name.endsWith(".htm") || name.endsWith(".png") || name.endsWith(".css")) {
 				  InputStream in = zf.getInputStream(ze);
-				  OutputStream out = new FileOutputStream(dest+name);
+       final File zipEntryFile = new File(dest, name);
+       if (!zipEntryFile.toPath().normalize().startsWith(dest)) {
+         throw new RuntimeException("Bad zip entry");
+       }
+				  OutputStream out = new FileOutputStream(zipEntryFile);
 
 				  byte data[] = new byte[BUFFER];
 				  int count;
