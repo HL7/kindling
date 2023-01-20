@@ -1408,8 +1408,13 @@ public class ResourceValidator extends BaseValidator {
       List<String> names = definitions.listAllPatterns(name);
       for (String rn : definitions.sortedResourceNames()) {
         ResourceDefn r = definitions.getResourceByName(rn);
-        if (names.contains(r.getRoot().getMapping(lm.getMappingUrl()))) {
-          lm.getImplementations().add(rn);
+        String wn = r.getRoot().getMapping(lm.getMappingUrl());
+        if (wn != null) {
+          for (String s : wn.split("\\,")) {
+            if (names.contains(s)) {
+              lm.getImplementations().add(rn);
+            }
+          }
         }
       }
     }

@@ -11617,6 +11617,11 @@ private int countContains(List<ValueSetExpansionContainsComponent> list) {
   public void setSearchLocation(String searchLocation) {
     this.searchLocation = searchLocation;
   }
+
+  @Override
+  public boolean isDebugLogging() {
+    return true;
+  }
   
   
 }
