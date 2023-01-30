@@ -26,6 +26,8 @@ that are part of this application can be found at found in https://github.com/ha
 
 ### Prerequisites
 
+You can find detailed instructions on setting up this project in your IDE [here](https://hl7.github.io/docs/kindling/getting-started).
+
 This project uses the [gradle build tool][Link-GradleWebpage] to build, and includes pre-build gradlew wrappers for common build tasks. 
 
 ### Build Commands
