@@ -79,7 +79,6 @@ public class ResourceValidator extends BaseValidator {
   private Translations translations;
   private final CanonicalResourceManager<CodeSystem> codeSystems;
   private SpellChecker speller;
-  private int maxElementLength;
   private List<FHIRPathUsage> fpUsages;
   private List<String> suppressedMessages;
   private IWorkerContext context;
@@ -97,16 +96,6 @@ public class ResourceValidator extends BaseValidator {
     this.context = context;
     patternFinder = new PatternFinder(definitions);
     speller = new SpellChecker(srcFolder, definitions);
-    int l = 0;
-    for (String n : definitions.getTypes().keySet())
-      l = Math.max(l, n.length());
-    for (String n : definitions.getPrimitives().keySet())
-      l = Math.max(l, n.length());
-    for (String n : definitions.getConstraints().keySet())
-      l = Math.max(l, n.length());
-    for (String n : definitions.getInfrastructure().keySet())
-      l = Math.max(l, n.length());
-    maxElementLength = (60 - 7) - l;
     this.suppressedMessages = suppressedMessages;
 //    System.out.println("\n###########################\nDumping Resource Validator ::\n" + this.toString() + "\n\n###########################\n\n");
   }
@@ -652,7 +641,7 @@ public class ResourceValidator extends BaseValidator {
 
     checkPatterns(e);
 
-    rule(errors, ValidationMessage.NO_RULE_DATE, IssueType.STRUCTURE, path, e.getName().length() < maxElementLength, "Name " + e.getName() + " is too long (max element name length = " + Integer.toString(maxElementLength));
+    rule(errors, ValidationMessage.NO_RULE_DATE, IssueType.STRUCTURE, path, e.getName().length() < 64, "Name " + e.getName() + " is too long (max element name length = " + Integer.toString(64));
     rule(errors, ValidationMessage.NO_RULE_DATE, IssueType.STRUCTURE, path, isValidToken(e.getName(), !path.contains(".")), "Name " + e.getName() + " is not a valid element name");
     rule(errors, ValidationMessage.NO_RULE_DATE, IssueType.STRUCTURE, path, e.unbounded() || e.getMaxCardinality() == 1, "Max Cardinality must be 1 or unbounded");
     rule(errors, ValidationMessage.NO_RULE_DATE, IssueType.STRUCTURE, path, e.getMinCardinality() == 0 || e.getMinCardinality() == 1, "Min Cardinality must be 0 or 1");
