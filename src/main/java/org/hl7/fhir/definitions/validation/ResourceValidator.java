@@ -1435,7 +1435,6 @@ public class ResourceValidator extends BaseValidator {
         ",\n translations=" + translations +
         ",\n codeSystems=" + codeSystems +
         ",\n speller=" + speller +
-        ",\n maxElementLength=" + maxElementLength +
         ",\n fpUsages=" + fpUsages +
         ",\n suppressedMessages=" + suppressedMessages +
         ",\n context=" + context +
