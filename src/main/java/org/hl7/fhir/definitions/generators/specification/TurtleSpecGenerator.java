@@ -226,7 +226,7 @@ public class TurtleSpecGenerator extends OutputStreamWriter {
       + "\" class=\"dict\"><span style=\"text-decoration: underline\">");
     else
       write("<a href=\"" + (defPage + "#" + path + "." + en) + "\" title=\"" + Utilities.escapeXml(elem.getDefinition()) + "\" class=\"dict\">");
-    write(path+"."+en);
+    write(en);
     if (defPage == null) 
       write("</span>");
     else if (elem.isModifier() || elem.getMustSupport())
