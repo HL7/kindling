@@ -144,7 +144,7 @@ public class TurtleSpecGenerator extends OutputStreamWriter {
       write(Integer.toString(tl.size()));
       write("\r\n");
       for (TypeRef t : tl) {
-        generateElementType(elem, path, left+"  ", t, elem.getName().replace("[x]", Utilities.capitalize(t.getName())));
+        generateElementType(elem, path, left+"  ", t, elem.getName().replace("[x]", ""));
         write("\r\n");
       }
 		} else if (elem.getTypes().size() == 1){
