@@ -157,11 +157,11 @@ public class FhirTurtleGenerator {
 
 
         // Any element can have an index to assign order in a list
-        FHIRResource index = fact.fhir_dataProperty("index")
-                .addTitle("Ordering value for list")
-                .domain(Element)
-                .range(XSD.nonNegativeInteger);
-        Element.restriction(fact.fhir_cardinality_restriction(index.resource, XSD.nonNegativeInteger, 0, 1));
+//        FHIRResource index = fact.fhir_dataProperty("index")
+//                .addTitle("Ordering value for list")
+//                .domain(Element)
+//                .range(XSD.nonNegativeInteger);
+//        Element.restriction(fact.fhir_cardinality_restriction(index.resource, XSD.nonNegativeInteger, 0, 1));
 
         // References have an optional link
         FHIRResource link = fact.fhir_objectProperty("link").addTitle("URI of a reference");
