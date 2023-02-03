@@ -126,11 +126,10 @@ public class TurtleSpecGenerator extends OutputStreamWriter {
 	}
 
 
-	private void generateCoreElem(ElementDefn elem, int indent,	String path, boolean backbone) throws Exception {
-	  String left = Utilities.padLeft("", ' ', indent*2);
-		
-		if (isChoice(elem)) {
-      write(left+"# ");
+  private void generateCoreElem(ElementDefn elem, int indent, String path, boolean backbone) throws Exception {
+    String left = Utilities.padLeft("", ' ', indent * 2);
+    if (isChoice(elem)) {
+      write(left + "# ");
       String en = elem.getName();
       writeElementName(elem, path, en);
       write(": ");
@@ -144,27 +143,27 @@ public class TurtleSpecGenerator extends OutputStreamWriter {
       write(Integer.toString(tl.size()));
       write("\r\n");
       for (TypeRef t : tl) {
-        generateElementType(elem, path, left+"  ", t, elem.getName().replace("[x]", ""));
+        generateElementType(elem, path, left + "  ", t, elem.getName().replace("[x]", ""));
         write("\r\n");
       }
-		} else if (elem.getTypes().size() == 1){
-		  TypeRef t = elem.getTypes().get(0);
+    } else if (elem.getTypes().size() == 1) {
+      TypeRef t = elem.getTypes().get(0);
       String en = elem.getName();
-		  generateElementType(elem, path, left, t, en);
-	    if (elem.getMaxCardinality() > 1)
-	      write(", ... ; # ");
-	    else
-	      write("; # ");
-	    write(elem.describeCardinality());
+      generateElementType(elem, path, left, t, en);
+      if (elem.getMaxCardinality() > 1)
+        write(" ... ) ; # ");
+      else
+        write(" ; # ");
+      write(elem.describeCardinality());
       writeInvariants(elem);
       write(" <span style=\"color: navy\">");
       write(Utilities.escapeXml(elem.getShortDefn()));
       write("</span>\r\n");
-		} else { // children elements
-      write(left+"fhir:");
+    } else { // children elements
+      write(left + "fhir:");
       String en = elem.getName();
       writeElementName(elem, path, en);
-
+      if (elem.getMaxCardinality() > 1) write("( ");
       write("[ # ");
       write(elem.describeCardinality());
       writeInvariants(elem);
@@ -172,15 +171,14 @@ public class TurtleSpecGenerator extends OutputStreamWriter {
       write(Utilities.escapeXml(elem.getShortDefn()));
       write("</span>\r\n");
       for (ElementDefn child : elem.getElements()) {
-        generateCoreElem(child, indent+1, path+"."+en, backbone);
+        generateCoreElem(child, indent + 1, path + "." + en, backbone);
       }
-      
       if (elem.getMaxCardinality() > 1)
-        write(left+"], ...;\r\n");
+        write(left + "] ... ) ;\r\n");
       else
-        write(left+"];\r\n"); 
-		}
-	}
+        write(left + "] ;\r\n");
+    }
+  }
 
   private void writeInvariants(ElementDefn elem) throws IOException {
     if (elem.getStatedInvariants().size() > 0)
@@ -239,6 +237,7 @@ public class TurtleSpecGenerator extends OutputStreamWriter {
   private void generateElementType(ElementDefn elem, String path, String left, TypeRef t, String en) throws IOException {
     write(left+"fhir:");
     writeElementName(elem, path, en);
+    if (elem.getMaxCardinality() > 1) write(" ( ");
     write("[ ");
     renderType(0, 0, t);
     write(" ]");
