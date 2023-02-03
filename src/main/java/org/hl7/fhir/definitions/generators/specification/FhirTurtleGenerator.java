@@ -45,6 +45,7 @@ public class FhirTurtleGenerator {
     private List<ValidationMessage> issues;
     private FHIRResourceFactory fact;
     private Resource value;
+    private Resource v;
     private String host;
 
     // OWL doesn't recognize xsd:gYear, xsd:gYearMonth or xsd:date.  If true, map all three to xsd:datetime
@@ -61,6 +62,9 @@ public class FhirTurtleGenerator {
         this.fact = new FHIRResourceFactory();
         this.value = fact.fhir_resource("value", OWL2.DatatypeProperty, "fhir:value")
                 .addTitle("Terminal data value")
+                .resource;
+        this.v = fact.fhir_resource("v", OWL2.DatatypeProperty, "fhir:v")
+                .addTitle("Terminal data value for primitive fhir datatypes that can be represented as a RDF literal")
                 .resource;
     }
 
@@ -140,7 +144,7 @@ public class FhirTurtleGenerator {
         fact.fhir_class("Primitive")
                 .addTitle("Types with only a value")
                 .addDefinition("Types with only a value and no additional elements as children")
-                .restriction(fact.fhir_restriction(value, RDFS.Literal));
+                .restriction(fact.fhir_restriction(v, RDFS.Literal));
 
         // A resource can have an optional nodeRole
         FHIRResource treeRoot = fact.fhir_class("treeRoot")
@@ -166,7 +170,7 @@ public class FhirTurtleGenerator {
         // XHTML is an XML Literal -- but it isn't recognized by OWL so we use string
         FHIRResource NarrativeDiv = fact.fhir_dataProperty("Narrative.div");
         fact.fhir_class("xhtml", "Primitive")
-            .restriction(fact.fhir_cardinality_restriction(value, fact.fhir_datatype(XSD.xstring).resource, 1, 1));
+            .restriction(fact.fhir_cardinality_restriction(v, fact.fhir_datatype(XSD.xstring).resource, 1, 1));
     }
 
   /* ==============================================
@@ -185,7 +189,7 @@ public class FhirTurtleGenerator {
                 .addDefinition(pt.getDefinition());
         Resource rdfType = RDFTypeMap.xsd_type_for(ptName, owlTarget);
         if (rdfType != null)
-            ptRes.restriction(fact.fhir_cardinality_restriction(value, fact.fhir_datatype(rdfType).resource, 1, 1));
+            ptRes.restriction(fact.fhir_cardinality_restriction(v, fact.fhir_datatype(rdfType).resource, 1, 1));
     }
 
 
@@ -207,7 +211,7 @@ public class FhirTurtleGenerator {
             if (dspType.endsWith("+")) {
                 List<Resource> facets = new ArrayList<Resource>(1);
                 facets.add(fact.fhir_pattern(dsp.getRegex()));
-                dspRes.restriction(fact.fhir_restriction(value,
+                dspRes.restriction(fact.fhir_restriction(v,
                         fact.fhir_datatype_restriction(dspTypeRes == XSD.xstring ? XSD.normalizedString : dspTypeRes, facets)));
             } else
                 dspRes.restriction(fact.fhir_restriction(value, dspTypeRes));
