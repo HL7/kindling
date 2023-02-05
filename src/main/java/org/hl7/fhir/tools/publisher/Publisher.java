@@ -487,15 +487,18 @@ public class Publisher implements URIResolver, SectionNumberer {
       pub.page.setSearchLocation(PageProcessor.CI_SEARCH);
       pub.page.setPublicationType(PageProcessor.CI_PUB_NAME);
       pub.page.setPublicationNotice(PageProcessor.CI_PUB_NOTICE);
+      pub.page.setExtensionsLocation(PageProcessor.CI_EXTN_LOCATION);
     } else if (pub.web) {
       pub.page.setWebLocation(PageProcessor.WEB_LOCATION);
       pub.page.setSearchLocation(PageProcessor.WEB_SEARCH);
       pub.page.setPublicationType(PageProcessor.WEB_PUB_NAME);
       pub.page.setPublicationNotice(PageProcessor.WEB_PUB_NOTICE);
+      pub.page.setExtensionsLocation(PageProcessor.WEB_EXTN_LOCATION);
     } else {
       pub.page.setWebLocation(PageProcessor.LOCAL_LOCATION);
       pub.page.setSearchLocation(PageProcessor.LOCAL_SEARCH);
       pub.page.setPublicationNotice(PageProcessor.LOCAL_PUB_NOTICE);
+      pub.page.setExtensionsLocation(PageProcessor.LOCAL_EXTN_LOCATION);
     }
 
     if (hasParam(args, "-api-key-file")) {
@@ -2715,15 +2718,15 @@ public class Publisher implements URIResolver, SectionNumberer {
       }
     }
     
-    for (StructureDefinition ed : page.getWorkerContext().getExtensionDefinitions()) {
-      String filename = "extension-"+(ed.getUrl().startsWith("http://fhir-registry.smarthealthit.org/StructureDefinition/") ? ed.getUrl().substring(59).toLowerCase() : ed.getUrl().substring(40).toLowerCase());
-      ed.setUserData("filename", filename);
-      ImplementationGuideDefn ig = page.getDefinitions().getIgs().get(ed.getUserString(ToolResourceUtilities.NAME_RES_IG));
-      if (ig == null) {
-        ig = page.getDefinitions().getIgs().get("core");
-      }
-      ed.setUserData("path", (ig.isCore() ? "" : ig.getCode()+File.separator) + filename+".html");
-    }
+//    for (StructureDefinition ed : page.getWorkerContext().getExtensionDefinitions()) {
+//      String filename = "extension-"+(ed.getUrl().startsWith("http://fhir-registry.smarthealthit.org/StructureDefinition/") ? ed.getUrl().substring(59).toLowerCase() : ed.getUrl().substring(40).toLowerCase());
+//      ed.setUserData("filename", filename);
+//      ImplementationGuideDefn ig = page.getDefinitions().getIgs().get(ed.getUserString(ToolResourceUtilities.NAME_RES_IG));
+//      if (ig == null) {
+//        ig = page.getDefinitions().getIgs().get("core");
+//      }
+//      ed.setUserData("path", (ig.isCore() ? "" : ig.getCode()+File.separator) + filename+".html");
+//    }
 
     page.updateDiffEngineDefinitions();
     
@@ -3569,7 +3572,7 @@ public class Publisher implements URIResolver, SectionNumberer {
         if (e.getResource() instanceof CanonicalResource) {
           CanonicalResource m = (CanonicalResource) e.getResource();
           String url = m.getUrl();
-          if (url != null && url.startsWith("http://hl7.org/fhir") && !SIDUtilities.isKnownSID(url)) {
+          if (url != null && url.startsWith("http://hl7.org/fhir") && !SIDUtilities.isKnownSID(url) && !isExtension(m)) {
             if (!page.getVersion().toCode().equals(m.getVersion())) 
               page.getValidationErrors().add(new ValidationMessage(Source.Publisher, IssueType.INVALID, -1, -1, "Bundle "+bnd.getId(), "definitions in FHIR space should have the correct version (url = "+url+", version = "+m.getVersion()+")", IssueSeverity.ERROR));              
           }
@@ -3578,7 +3581,15 @@ public class Publisher implements URIResolver, SectionNumberer {
     }
   }
 
-  private void produceComparisons() throws Exception {
+  private boolean isExtension(CanonicalResource m) {
+    if (!m.fhirType().equals("StructureDefinition")) {
+      return false;
+    }
+    StructureDefinition sd = (StructureDefinition) m;
+    return "Extension".equals(sd.getType()) && sd.getDerivation() == TypeDerivationRule.CONSTRAINT;
+  }
+
+ private void produceComparisons() throws Exception {
 //    for (String n : page.getIni().getPropertyNames("comparisons")) {
 //      produceComparison(n);
 //    }
@@ -3802,6 +3813,11 @@ public class Publisher implements URIResolver, SectionNumberer {
     if (!ped.contains(ed)) {
       ped.add(ed);
       ImplementationGuideDefn ig = page.getDefinitions().getIgs().get(ed.getUserString(ToolResourceUtilities.NAME_RES_IG));
+      if (ig == null) {
+        return;
+      } else if (true) {
+        throw new Error("Whoops - there should be no extensions in core anymore");
+      }
       String prefix = ig.isCore() ? "" : ig.getCode()+File.separator;
       String filename = ed.getUserString("filename");
       String fName = prefix+filename;
@@ -5854,8 +5870,11 @@ public class Publisher implements URIResolver, SectionNumberer {
 
   private void insertSectionNumbersInNode(XhtmlNode node, SectionTracker st, String link, int level, BooleanHolder registered, XhtmlNode parent, StandardsStatus sstatus) throws Exception {
     // while we're looking, mark external references explicitly
+    String href = node.getAttribute("href");
     if (node.getNodeType() == NodeType.Element && node.getName().equals("a") &&
-        node.getAttribute("href") != null && node.getAttribute("no-external") == null && node.getAttribute("xlink:type") == null && (node.getAttribute("href").startsWith("http:") || node.getAttribute("href").startsWith("https:"))) {
+        href != null && node.getAttribute("no-external") == null && node.getAttribute("xlink:type") == null &&
+        (href.startsWith("http:") || href.startsWith("https:")) &&
+        !node.getAttribute("href").startsWith(page.getExtensionsLocation())) {
       node.addText(" ");
       XhtmlNode img = node.addTag("img");
       String s = "external.png";

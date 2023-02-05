@@ -2182,6 +2182,9 @@ public class OldSpreadsheetParser {
 	  if (Utilities.noString(name))
 	    throw new Exception("No code found on Extension at "+getLocation(row));
 
+    if (true) {
+      throw new Error("found Extension '"+name+"' at "+getLocation(row)+". Extensions have been moved to the fhir-extension ig");
+    }
 	  if (name.contains(".")) {
 	    if (Utilities.isAbsoluteUrl(name)) {
 	      ex.setUrl(name);

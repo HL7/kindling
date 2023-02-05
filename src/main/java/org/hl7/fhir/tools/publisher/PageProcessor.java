@@ -457,6 +457,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
   private Map<String, List<SearchParameter>> extensionSearchParameterMap;
   private String webLocation;
   private String searchLocation;
+  private String extensionsLocation;
   
   private String getComputerName()
   {
@@ -483,6 +484,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
   }
 
   public final static String WEB_LOCATION = "http://hl7.org/fhir/{version}/";
+  public final static String WEB_EXTN_LOCATION = "http://hl7.org/fhir/extensions/";
   public final static String WEB_SEARCH = WEB_LOCATION+"search.html";
   public final static String WEB_PUB_NAME = null;
   public final static String WEB_PUB_NOTICE =
@@ -491,6 +493,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
       "</p>\r\n"; 
 
   public final static String CI_SEARCH = "http://build.fhir.org/search-build.html";
+  public final static String CI_EXTN_LOCATION = "https://build.fhir.org/ig/HL7/fhir-extensions/";
   public final static String CI_LOCATION = "http://build.fhir.org/";
   public final static String CI_PUB_NAME = "FHIR CI-Build";
   public final static String CI_PUB_NOTICE =
@@ -499,6 +502,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
           "</p>\r\n";
   
   public final static String LOCAL_SEARCH = "http://build.fhir.org/search-build.html";
+  public final static String LOCAL_EXTN_LOCATION = "https://build.fhir.org/ig/HL7/fhir-extensions/";
   public final static String LOCAL_LOCATION = "file:{dest}";
 //  public final static String LOCAL_PUB_NAME = "FHIR Local Build";
   public final static String LOCAL_PUB_NOTICE =
@@ -1386,6 +1390,8 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
         src = s1+genJiralink(file, null)+s3;
       } else if (com[0].equals("search-location")) {
           src = s1+searchLocation+s3;
+      } else if (com[0].equals("extensions-location")) {
+        src = s1+extensionsLocation+s3;
       } else if (com[0].equals("multi-language-resources")) { 
         src = s1+getMultiLanguageResourceList()+s3;        
       } else if (macros.containsKey(com[0])) {
@@ -2747,7 +2753,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
         if (extension==null)
           s.append(Utilities.escapeXml(ec.getExpression()));
         else {
-          s.append("<a href=\""+extension.getUserData("filename")+".html\">"+ec.getExpression()+"</a>");
+          s.append("<a href=\""+extension.getUserData("path")+"\">Extension "+extension.present()+"</a>");
         }
       } else
         throw new Error("Not done yet");
@@ -4644,7 +4650,8 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     b.append(makeHeaderTab("Detailed Descriptions", n+"-definitions.html", "definitions".equals(mode)));
     if (!isAbstract)
       b.append(makeHeaderTab("Mappings", n+"-mappings.html", "mappings".equals(mode)));
-    b.append(makeHeaderTab("Profiles &amp; Extensions", n+"-profiles.html", "profiles".equals(mode)));
+    b.append(makeHeaderTab("Profiles", n+"-profiles.html", "profiles".equals(mode)));
+    b.append(makeHeaderTab("Extensions", extensionsLocation+"extensions-"+ title+".html", "extensions".equals(mode)));
 //    if (!isAbstract)
 //      b.append(makeHeaderTab("HTML Form", n+"-questionnaire.html", "questionnaire".equals(mode)));
     if (hasOps)
@@ -6488,6 +6495,8 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
         src = s1+resource.getName()+s3;
       else if (com[0].equals("search-location"))
         src = s1+searchLocation+s3;
+      else if (com[0].equals("extensions-location")) 
+        src = s1+extensionsLocation+s3;
       else if (com[0].equals("resurl")) {
         if (isAggregationEndpoint(resource.getName()))
           src = s1+s3;
@@ -8774,6 +8783,8 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
          src = s1+definitions.getResources().size()+s3;        
        } else if (com[0].equals("search-location")) {
          src = s1+searchLocation+s3;
+       } else if (com[0].equals("extensions-location")) {
+         src = s1+extensionsLocation+s3;
        } else if (macros.containsKey(com[0])) {
          src = s1+macros.get(com[0])+s3;
        } else if (com[0].equals("jira-link")) { 
@@ -9283,6 +9294,8 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
         src = s1 + crOids(ed) + s3;        
       } else if (com[0].equals("search-location")) {
         src = s1+searchLocation+s3;
+      } else if (com[0].equals("extensions-location")) {
+        src = s1+extensionsLocation+s3;
       } else if (macros.containsKey(com[0])) {
         src = s1+macros.get(com[0])+s3;
       } else if (com[0].equals("jira-link")) { 
@@ -9704,15 +9717,16 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     log("Load UTG Terminology", LogMessageType.Process);
     NpmPackage utg = new FilesystemPackageCacheManager(true, ToolsVersion.TOOLS_VERSION).loadPackage("hl7.terminology");
     workerContext.loadFromPackage(utg, new R4ToR5Loader(BuildWorkerContext.defaultTypesToLoad(), new UTGLoader(utg.version()), workerContext.getVersion()));
+    log("Load Extensions", LogMessageType.Process);
+    NpmPackage ext = new FilesystemPackageCacheManager(true, ToolsVersion.TOOLS_VERSION).loadPackage("hl7.fhir.uv.extensions", "current");
+    workerContext.loadFromPackage(ext, new R4ToR5Loader(BuildWorkerContext.extensionTypesToLoad(), new ExtensionsLoader(ext.version(), extensionsLocation), workerContext.getVersion()));
     log("Load DICOM Terminology", LogMessageType.Process);
     NpmPackage dicom = new FilesystemPackageCacheManager(true, ToolsVersion.TOOLS_VERSION).loadPackage("fhir.dicom");
     workerContext.loadFromPackage(dicom, new R4ToR5Loader(BuildWorkerContext.defaultTypesToLoad(), new DICOMLoader(utg.version()), workerContext.getVersion()));
     log("Load IHE Format Codes", LogMessageType.Process);
     NpmPackage ihe = new FilesystemPackageCacheManager(true, ToolsVersion.TOOLS_VERSION).loadPackage("ihe.formatcode.fhir");
     workerContext.loadFromPackage(ihe, new R4ToR5Loader(BuildWorkerContext.defaultTypesToLoad(), new IHELoader(), workerContext.getVersion()));
-
     
-
     log("  .. loaded", LogMessageType.Process);
     vsValidator = new ValueSetValidator(workerContext, definitions.getVsFixups(), definitions.getStyleExemptions());
     breadCrumbManager.setContext(workerContext);
@@ -10238,6 +10252,8 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
         src = s1+getSearch(pack)+s3;
       else if (com[0].equals("search-location"))
         src = s1+searchLocation+s3;
+      else if (com[0].equals("extensions-location")) 
+        src = s1+extensionsLocation+s3;
       else if (com[0].startsWith("!"))
         src = s1 + s3;
       else if (com[0].equals("wg")) {
@@ -10861,9 +10877,9 @@ private int countContains(List<ValueSetExpansionContainsComponent> list) {
     for (StructureDefinition sd : profiles.getList())
       if (sd.getUrl().startsWith("http://hl7.org/fhir") && !definitions.getResourceTemplates().containsKey(sd.getName()))
         definitions.addNs(sd.getUrl(), "Profile "+sd.getName(), sd.getUserString("path"));
-    for (StructureDefinition sd : workerContext.getExtensionDefinitions())
-      if (sd.getUrl().startsWith("http://hl7.org/fhir"))
-        definitions.addNs(sd.getUrl(), "Profile "+sd.getName(), sd.getUserString("path"));
+//    for (StructureDefinition sd : workerContext.getExtensionDefinitions())
+//      if (sd.getUrl().startsWith("http://hl7.org/fhir"))
+//        definitions.addNs(sd.getUrl(), "Profile "+sd.getName(), sd.getUserString("path"));
     for (NamingSystem nss : definitions.getNamingSystems()) {
       String url = null;
       definitions.addNs("http://hl7.org/fhir/NamingSystem/"+nss.getId(), "System "+nss.getName(), nss.getUserString("path"));
@@ -11616,6 +11632,15 @@ private int countContains(List<ValueSetExpansionContainsComponent> list) {
 
   public void setSearchLocation(String searchLocation) {
     this.searchLocation = searchLocation;
+  }
+
+  
+  public String getExtensionsLocation() {
+    return extensionsLocation;
+  }
+
+  public void setExtensionsLocation(String extensionsLocation) {
+    this.extensionsLocation = extensionsLocation;
   }
 
   @Override

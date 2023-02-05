@@ -236,6 +236,9 @@ public class ResourceParser {
           sd.setUserData("path", sd.getId()+".html");
           p.getProfiles().add(tp); 
         }
+        if (ProfileUtilities.isExtensionDefinition(sd)) {
+          throw new FHIRException("Extension found at "+res.getReference().getReference()+" - this is an error since extensions have moved to https://github.com/HL7/fhir-extensions");
+        }
         sd.setUserData(ToolResourceUtilities.NAME_RES_IG, id);
         sd.setVersion(version);
         sd.setFhirVersion(FHIRVersion.fromCode(version));
