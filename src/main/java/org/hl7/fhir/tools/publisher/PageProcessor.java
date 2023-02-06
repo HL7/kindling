@@ -5927,6 +5927,8 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
         src = s1+getMultiLanguageResourceList()+s3;        
       } else if (macros.containsKey(com[0])) {
         src = s1+macros.get(com[0])+s3;
+      } else if (com[0].equals("extensions-location")) { 
+          src = s1+extensionsLocation+s3;
       } else
         throw new Exception("Instruction <%"+s2+"%> not understood parsing page "+file);
     }
