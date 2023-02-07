@@ -143,13 +143,13 @@ public class TurtleSpecGenerator extends OutputStreamWriter {
       write(Integer.toString(tl.size()));
       write("\r\n");
       for (TypeRef t : tl) {
-        generateElementType(elem, path, left + "  ", t, elem.getName().replace("[x]", ""));
+        generateElementType(elem, path, left + "  ", t, elem.getName().replace("[x]", ""), true);
         write("\r\n");
       }
     } else if (elem.getTypes().size() == 1) {
       TypeRef t = elem.getTypes().get(0);
       String en = elem.getName();
-      generateElementType(elem, path, left, t, en);
+      generateElementType(elem, path, left, t, en, false);
       if (elem.getMaxCardinality() > 1)
         write(" ... ) ; # ");
       else
@@ -234,11 +234,12 @@ public class TurtleSpecGenerator extends OutputStreamWriter {
     write("<a name=\"ttl-"+en+"\"> </a>");
   }
 
-  private void generateElementType(ElementDefn elem, String path, String left, TypeRef t, String en) throws IOException {
+  private void generateElementType(ElementDefn elem, String path, String left, TypeRef t, String en, boolean insertTypeTriple) throws IOException {
     write(left+"fhir:");
     writeElementName(elem, path, en);
     if (elem.getMaxCardinality() > 1) write(" ( ");
     write("[ ");
+    if (insertTypeTriple) write(" a fhir:" + t.getName() + " ; ");
     renderType(0, 0, t);
     write(" ]");
   }
