@@ -22,6 +22,7 @@ import org.hl7.fhir.r5.model.CodeSystem;
 import org.hl7.fhir.r5.model.ValueSet;
 import org.hl7.fhir.rdf.RDFNamespace;
 import org.hl7.fhir.tools.publisher.BuildWorkerContext;
+import org.hl7.fhir.tools.publisher.PageProcessor;
 import org.hl7.fhir.utilities.validation.ValidationMessage;
 
 /**
@@ -61,7 +62,7 @@ public class W5TurtleGenerator {
         w5.addProperty(RDFS.label, "W5 Categorization");
         w5.addProperty(RDFS.comment, "FHIR W5 categorization is a preliminary classification of the fhir property");
         w5.addVersionInfo("FHIR W5 categorization (Preliminary)");
-        w5.addProperty(OWL2.versionIRI, host+"w5.ttl");
+        w5.addProperty(OWL2.versionIRI, getOntologyVersionIRI()+"w5.ttl");
 
         // The only way to differentiate predicates from classes is the existence of subclasses -- if something
         // has subclasses or is a subclass then it is a class.  Otherwise it is a predicate...
@@ -109,6 +110,11 @@ public class W5TurtleGenerator {
         commit(model, true);
     }
 
+
+    private String getOntologyVersionIRI() {
+        return host.startsWith("file:") ?
+                PageProcessor.CI_LOCATION : host;
+    }
     public void commit(OntModel model, boolean header) throws Exception {
         RDFDataMgr.write(destination, model, RDFFormat.TURTLE_PRETTY);
         destination.flush();

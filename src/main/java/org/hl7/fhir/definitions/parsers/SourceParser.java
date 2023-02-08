@@ -110,6 +110,7 @@ import org.hl7.fhir.r5.model.StructureDefinition.StructureDefinitionContextCompo
 import org.hl7.fhir.r5.model.StructureDefinition.TypeDerivationRule;
 import org.hl7.fhir.r5.model.ValueSet;
 import org.hl7.fhir.r5.terminologies.CodeSystemUtilities;
+import org.hl7.fhir.r5.terminologies.ValueSetUtilities;
 import org.hl7.fhir.r5.utils.ToolingExtensions;
 import org.hl7.fhir.tools.publisher.BuildWorkerContext;
 import org.hl7.fhir.tools.publisher.PageProcessor;
@@ -934,12 +935,17 @@ public class SourceParser {
   private void loadValueSet(String n) throws FileNotFoundException, Exception {
     XmlParser xml = new XmlParser();
     ValueSet vs = (ValueSet) xml.parse(new CSFileInputStream(srcDir+ini.getStringProperty("valuesets", n).replace('\\', File.separatorChar)));
-    new CodeSystemConvertor(definitions.getCodeSystems(), registry).convert(xml, vs, srcDir+ini.getStringProperty("valuesets", n).replace('\\', File.separatorChar), page.packageInfo());
     vs.setId(FormatUtilities.makeId(n));
     vs.setUrl("http://hl7.org/fhir/ValueSet/"+vs.getId());
-    if (!vs.hasVersion() || vs.getUrl().startsWith("http://hl7.org/fhir"))
+    if (!vs.hasVersion() || vs.getUrl().startsWith("http://hl7.org/fhir")) {
       vs.setVersion(version.toCode());
-
+    }
+    if (!vs.hasPublisher()) {
+      vs.setPublisher("HL7, International");
+    }
+    ValueSetUtilities.makeShareable(vs);
+    new CodeSystemConvertor(definitions.getCodeSystems(), registry).convert(xml, vs, srcDir+ini.getStringProperty("valuesets", n).replace('\\', File.separatorChar), page.packageInfo());
+    
     vs.setExperimental(false);
     vs.setUserData("path", "valueset-"+vs.getId()+".html");
     vs.setUserData("filename", "valueset-"+vs.getId());

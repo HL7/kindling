@@ -487,15 +487,18 @@ public class Publisher implements URIResolver, SectionNumberer {
       pub.page.setSearchLocation(PageProcessor.CI_SEARCH);
       pub.page.setPublicationType(PageProcessor.CI_PUB_NAME);
       pub.page.setPublicationNotice(PageProcessor.CI_PUB_NOTICE);
+      pub.page.setExtensionsLocation(PageProcessor.CI_EXTN_LOCATION);
     } else if (pub.web) {
       pub.page.setWebLocation(PageProcessor.WEB_LOCATION);
       pub.page.setSearchLocation(PageProcessor.WEB_SEARCH);
       pub.page.setPublicationType(PageProcessor.WEB_PUB_NAME);
       pub.page.setPublicationNotice(PageProcessor.WEB_PUB_NOTICE);
+      pub.page.setExtensionsLocation(PageProcessor.WEB_EXTN_LOCATION);
     } else {
       pub.page.setWebLocation(PageProcessor.LOCAL_LOCATION);
       pub.page.setSearchLocation(PageProcessor.LOCAL_SEARCH);
       pub.page.setPublicationNotice(PageProcessor.LOCAL_PUB_NOTICE);
+      pub.page.setExtensionsLocation(PageProcessor.LOCAL_EXTN_LOCATION);
     }
 
     if (hasParam(args, "-api-key-file")) {
@@ -2589,7 +2592,7 @@ public class Publisher implements URIResolver, SectionNumberer {
   private void loadR4Definitions() throws FileNotFoundException, FHIRException, IOException {
     loadR4DefinitionBundle(page.getDiffEngine().getOriginal().getTypes(), Utilities.path(page.getFolders().rootDir, "tools", "history", "release4", "profiles-types.xml"));
     loadR4DefinitionBundle(page.getDiffEngine().getOriginal().getResources(), Utilities.path(page.getFolders().rootDir, "tools", "history", "release4", "profiles-resources.xml"));
-    loadR4DefinitionBundle(page.getDiffEngine().getOriginal().getExtensions(), Utilities.path(page.getFolders().rootDir, "tools", "history", "release4", "extension-definitions.xml"));
+//    loadR4DefinitionBundle(page.getDiffEngine().getOriginal().getExtensions(), Utilities.path(page.getFolders().rootDir, "tools", "history", "release4", "extension-definitions.xml"));
     loadR4DefinitionBundle(page.getDiffEngine().getOriginal().getProfiles(), Utilities.path(page.getFolders().rootDir, "tools", "history", "release4", "profiles-others.xml"));
     loadValueSetBundle(page.getDiffEngine().getOriginal().getExpansions(), Utilities.path(page.getFolders().rootDir, "tools", "history", "release4", "expansions.xml"));
     loadValueSetBundle(page.getDiffEngine().getOriginal().getValuesets(), Utilities.path(page.getFolders().rootDir, "tools", "history", "release4", "valuesets.xml"));
@@ -2715,15 +2718,15 @@ public class Publisher implements URIResolver, SectionNumberer {
       }
     }
     
-    for (StructureDefinition ed : page.getWorkerContext().getExtensionDefinitions()) {
-      String filename = "extension-"+(ed.getUrl().startsWith("http://fhir-registry.smarthealthit.org/StructureDefinition/") ? ed.getUrl().substring(59).toLowerCase() : ed.getUrl().substring(40).toLowerCase());
-      ed.setUserData("filename", filename);
-      ImplementationGuideDefn ig = page.getDefinitions().getIgs().get(ed.getUserString(ToolResourceUtilities.NAME_RES_IG));
-      if (ig == null) {
-        ig = page.getDefinitions().getIgs().get("core");
-      }
-      ed.setUserData("path", (ig.isCore() ? "" : ig.getCode()+File.separator) + filename+".html");
-    }
+//    for (StructureDefinition ed : page.getWorkerContext().getExtensionDefinitions()) {
+//      String filename = "extension-"+(ed.getUrl().startsWith("http://fhir-registry.smarthealthit.org/StructureDefinition/") ? ed.getUrl().substring(59).toLowerCase() : ed.getUrl().substring(40).toLowerCase());
+//      ed.setUserData("filename", filename);
+//      ImplementationGuideDefn ig = page.getDefinitions().getIgs().get(ed.getUserString(ToolResourceUtilities.NAME_RES_IG));
+//      if (ig == null) {
+//        ig = page.getDefinitions().getIgs().get("core");
+//      }
+//      ed.setUserData("path", (ig.isCore() ? "" : ig.getCode()+File.separator) + filename+".html");
+//    }
 
     page.updateDiffEngineDefinitions();
     
@@ -2887,21 +2890,21 @@ public class Publisher implements URIResolver, SectionNumberer {
       page.getTypeBundle().getEntry().sort(new ProfileBundleSorter());
       serializeResource(page.getTypeBundle(), "profiles-types", false);
       
-      Bundle extensionsFeed = new Bundle();
-      extensionsFeed.setId("extensions");
-      extensionsFeed.setType(BundleType.COLLECTION);
-      extensionsFeed.setMeta(new Meta().setLastUpdated(page.getResourceBundle().getMeta().getLastUpdated()));
-      Set<String> urls = new HashSet<String>();
-      for (StructureDefinition ed : page.getWorkerContext().getExtensionDefinitions()) {
-        if (!urls.contains(ed.getUrl())) {
-          urls.add(ed.getUrl());
-          extensionsFeed.getEntry().add(new BundleEntryComponent().setResource(ed).setFullUrl("http://hl7.org/fhir/"+ed.fhirType()+"/"+ed.getId()));
-        }
-      }
-      checkBundleURLs(extensionsFeed);
-      checkStructureDefinitions(extensionsFeed);
-      serializeResource(extensionsFeed, "extension-definitions", false);
-      Utilities.copyFile(page.getFolders().dstDir + "extension-definitions.xml", page.getFolders().dstDir + "examples" + File.separator + "extension-definitions.xml");
+//      Bundle extensionsFeed = new Bundle();
+//      extensionsFeed.setId("extensions");
+//      extensionsFeed.setType(BundleType.COLLECTION);
+//      extensionsFeed.setMeta(new Meta().setLastUpdated(page.getResourceBundle().getMeta().getLastUpdated()));
+//      Set<String> urls = new HashSet<String>();
+//      for (StructureDefinition ed : page.getWorkerContext().getExtensionDefinitions()) {
+//        if (!urls.contains(ed.getUrl())) {
+//          urls.add(ed.getUrl());
+//          extensionsFeed.getEntry().add(new BundleEntryComponent().setResource(ed).setFullUrl("http://hl7.org/fhir/"+ed.fhirType()+"/"+ed.getId()));
+//        }
+//      }
+//      checkBundleURLs(extensionsFeed);
+//      checkStructureDefinitions(extensionsFeed);
+//      serializeResource(extensionsFeed, "extension-definitions", false);
+//      Utilities.copyFile(page.getFolders().dstDir + "extension-definitions.xml", page.getFolders().dstDir + "examples" + File.separator + "extension-definitions.xml");
 
       serializeResource(searchParamsFeed, "search-parameters", false);
       Utilities.copyFile(page.getFolders().dstDir + "search-parameters.xml", page.getFolders().dstDir + "examples" + File.separator + "search-parameters.xml");
@@ -3009,7 +3012,6 @@ public class Publisher implements URIResolver, SectionNumberer {
       zip.addFileName("profiles-types.xml", page.getFolders().dstDir + "profiles-types.xml", false);
       zip.addFileName("profiles-resources.xml", page.getFolders().dstDir + "profiles-resources.xml", false);
       zip.addFileName("profiles-others.xml", page.getFolders().dstDir + "profiles-others.xml", false);
-      zip.addFileName("extension-definitions.xml", page.getFolders().dstDir + "extension-definitions.xml", false);
       zip.addFileName("search-parameters.xml", page.getFolders().dstDir + "search-parameters.xml", false);
       zip.addFileName("valuesets.xml", page.getFolders().dstDir + "valuesets.xml", false);
       zip.addFileName("conceptmaps.xml", page.getFolders().dstDir + "conceptmaps.xml", false);
@@ -3022,7 +3024,7 @@ public class Publisher implements URIResolver, SectionNumberer {
       zip.addFileName("profiles-types.json", page.getFolders().dstDir + "profiles-types.json", false);
       zip.addFileName("profiles-resources.json", page.getFolders().dstDir + "profiles-resources.json", false);
       zip.addFileName("profiles-others.json", page.getFolders().dstDir + "profiles-others.json", false);
-      zip.addFileName("extension-definitions.json", page.getFolders().dstDir + "extension-definitions.json", false);
+//      zip.addFileName("extension-definitions.json", page.getFolders().dstDir + "extension-definitions.json", false);
       zip.addFileName("search-parameters.json", page.getFolders().dstDir + "search-parameters.json", false);
       zip.addFileName("valuesets.json", page.getFolders().dstDir + "valuesets.json", false);
       zip.addFileName("conceptmaps.json", page.getFolders().dstDir + "conceptmaps.json", false);
@@ -3042,7 +3044,7 @@ public class Publisher implements URIResolver, SectionNumberer {
       zip.addFileName("profiles-types.json", page.getFolders().dstDir + "profiles-types.json", false);
       zip.addFileName("profiles-resources.json", page.getFolders().dstDir + "profiles-resources.json", false);
       zip.addFileName("profiles-others.json", page.getFolders().dstDir + "profiles-others.json", false);
-      zip.addFileName("extension-definitions.json", page.getFolders().dstDir + "extension-definitions.json", false);
+//      zip.addFileName("extension-definitions.json", page.getFolders().dstDir + "extension-definitions.json", false);
       zip.addFileName("valuesets.json", page.getFolders().dstDir + "valuesets.json", false);
       zip.addFileName("conceptmaps.json", page.getFolders().dstDir + "conceptmaps.json", false);
       // native schema
@@ -3056,7 +3058,6 @@ public class Publisher implements URIResolver, SectionNumberer {
       dstu3.convert(page.getFolders().dstDir + "profiles-types.xml", page.getFolders().tmpDir + "profiles-types-r3.xml");
       dstu3.convert(page.getFolders().dstDir + "profiles-resources.xml", page.getFolders().tmpDir + "profiles-resources-r3.xml");
       dstu3.convert(page.getFolders().dstDir + "profiles-others.xml", page.getFolders().tmpDir + "profiles-others-r3.xml");
-      dstu3.convert(page.getFolders().dstDir + "extension-definitions.xml", page.getFolders().tmpDir + "extension-definitions-r3.xml");
       dstu3.convert(page.getFolders().dstDir + "search-parameters.xml", page.getFolders().tmpDir + "search-parameters-r3.xml");
       dstu3.convert(page.getFolders().dstDir + "valuesets.xml", page.getFolders().tmpDir + "valuesets-r3.xml");
       dstu3.convert(page.getFolders().dstDir + "conceptmaps.xml", page.getFolders().tmpDir + "conceptmaps-r3.xml");
@@ -3066,7 +3067,6 @@ public class Publisher implements URIResolver, SectionNumberer {
       zip.addFileName("profiles-types.xml", page.getFolders().tmpDir + "profiles-types-r3.xml", false);
       zip.addFileName("profiles-resources.xml", page.getFolders().tmpDir + "profiles-resources-r3.xml", false);
       zip.addFileName("profiles-others.xml", page.getFolders().tmpDir + "profiles-others-r3.xml", false);
-      zip.addFileName("extension-definitions.xml", page.getFolders().tmpDir + "extension-definitions-r3.xml", false);
       zip.addFileName("search-parameters.xml", page.getFolders().tmpDir + "search-parameters-r3.xml", false);
       zip.addFileName("valuesets.xml", page.getFolders().tmpDir + "valuesets-r3.xml", false);
       zip.addFileName("conceptmaps.xml", page.getFolders().tmpDir + "conceptmaps-r3.xml", false);
@@ -3077,7 +3077,6 @@ public class Publisher implements URIResolver, SectionNumberer {
       dstu3.convertJ(page.getFolders().dstDir + "profiles-types.xml", page.getFolders().tmpDir + "profiles-types-r3.json");
       dstu3.convertJ(page.getFolders().dstDir + "profiles-resources.xml", page.getFolders().tmpDir + "profiles-resources-r3.json");
       dstu3.convertJ(page.getFolders().dstDir + "profiles-others.xml", page.getFolders().tmpDir + "profiles-others-r3.json");
-      dstu3.convertJ(page.getFolders().dstDir + "extension-definitions.xml", page.getFolders().tmpDir + "extension-definitions-r3.json");
       dstu3.convertJ(page.getFolders().dstDir + "search-parameters.xml", page.getFolders().tmpDir + "search-parameters-r3.json");
       dstu3.convertJ(page.getFolders().dstDir + "valuesets.xml", page.getFolders().tmpDir + "valuesets-r3.json");
       dstu3.convertJ(page.getFolders().dstDir + "conceptmaps.xml", page.getFolders().tmpDir + "conceptmaps-r3.json");
@@ -3087,7 +3086,7 @@ public class Publisher implements URIResolver, SectionNumberer {
       zip.addFileName("profiles-types.json", page.getFolders().tmpDir + "profiles-types-r3.json", false);
       zip.addFileName("profiles-resources.json", page.getFolders().tmpDir + "profiles-resources-r3.json", false);
       zip.addFileName("profiles-others.json", page.getFolders().tmpDir + "profiles-others-r3.json", false);
-      zip.addFileName("extension-definitions.json", page.getFolders().tmpDir + "extension-definitions-r3.json", false);
+//      zip.addFileName("extension-definitions.json", page.getFolders().tmpDir + "extension-definitions-r3.json", false);
       zip.addFileName("search-parameters.json", page.getFolders().tmpDir + "search-parameters-r3.json", false);
       zip.addFileName("valuesets.json", page.getFolders().tmpDir + "valuesets-r3.json", false);
       zip.addFileName("conceptmaps.json", page.getFolders().tmpDir + "conceptmaps-r3.json", false);
@@ -3121,7 +3120,6 @@ public class Publisher implements URIResolver, SectionNumberer {
       zip.addFileName("profiles-types.xml", page.getFolders().dstDir + "profiles-types.xml", false);
       zip.addFileName("profiles-resources.xml", page.getFolders().dstDir + "profiles-resources.xml", false);
       zip.addFileName("profiles-others.xml", page.getFolders().dstDir + "profiles-others.xml", false);
-      zip.addFileName("extension-definitions.xml", page.getFolders().dstDir + "extension-definitions.xml", false);
       zip.addFileName("search-parameters.xml", page.getFolders().dstDir + "search-parameters.xml", false);
       zip.addFileName("valuesets.xml", page.getFolders().dstDir + "valuesets.xml", false);
       zip.addFileName("conceptmaps.xml", page.getFolders().dstDir + "conceptmaps.xml", false);
@@ -3569,16 +3567,24 @@ public class Publisher implements URIResolver, SectionNumberer {
         if (e.getResource() instanceof CanonicalResource) {
           CanonicalResource m = (CanonicalResource) e.getResource();
           String url = m.getUrl();
-          if (url != null && url.startsWith("http://hl7.org/fhir") && !SIDUtilities.isKnownSID(url)) {
+          if (url != null && url.startsWith("http://hl7.org/fhir") && !SIDUtilities.isKnownSID(url) && !isExtension(m)) {
             if (!page.getVersion().toCode().equals(m.getVersion())) 
-              page.getValidationErrors().add(new ValidationMessage(Source.Publisher, IssueType.INVALID, -1, -1, "Bundle "+bnd.getId(), "definitions in FHIR space should have the correct version (url = "+url+", version = "+m.getVersion()+")", IssueSeverity.ERROR));              
+              page.getValidationErrors().add(new ValidationMessage(Source.Publisher, IssueType.INVALID, -1, -1, "Bundle "+bnd.getId(), "definitions in FHIR space should have the correct version (url = "+url+", version = "+m.getVersion()+" not "+page.getVersion()+")", IssueSeverity.ERROR));              
           }
         }
       }
     }
   }
 
-  private void produceComparisons() throws Exception {
+  private boolean isExtension(CanonicalResource m) {
+    if (!m.fhirType().equals("StructureDefinition")) {
+      return false;
+    }
+    StructureDefinition sd = (StructureDefinition) m;
+    return "Extension".equals(sd.getType()) && sd.getDerivation() == TypeDerivationRule.CONSTRAINT;
+  }
+
+ private void produceComparisons() throws Exception {
 //    for (String n : page.getIni().getPropertyNames("comparisons")) {
 //      produceComparison(n);
 //    }
@@ -3802,6 +3808,11 @@ public class Publisher implements URIResolver, SectionNumberer {
     if (!ped.contains(ed)) {
       ped.add(ed);
       ImplementationGuideDefn ig = page.getDefinitions().getIgs().get(ed.getUserString(ToolResourceUtilities.NAME_RES_IG));
+      if (ig == null) {
+        return;
+      } else if (true) {
+        throw new Error("Whoops - there should be no extensions in core anymore");
+      }
       String prefix = ig.isCore() ? "" : ig.getCode()+File.separator;
       String filename = ed.getUserString("filename");
       String fName = prefix+filename;
@@ -5854,8 +5865,11 @@ public class Publisher implements URIResolver, SectionNumberer {
 
   private void insertSectionNumbersInNode(XhtmlNode node, SectionTracker st, String link, int level, BooleanHolder registered, XhtmlNode parent, StandardsStatus sstatus) throws Exception {
     // while we're looking, mark external references explicitly
+    String href = node.getAttribute("href");
     if (node.getNodeType() == NodeType.Element && node.getName().equals("a") &&
-        node.getAttribute("href") != null && node.getAttribute("no-external") == null && node.getAttribute("xlink:type") == null && (node.getAttribute("href").startsWith("http:") || node.getAttribute("href").startsWith("https:"))) {
+        href != null && node.getAttribute("no-external") == null && node.getAttribute("xlink:type") == null &&
+        (href.startsWith("http:") || href.startsWith("https:")) &&
+        !node.getAttribute("href").startsWith(page.getExtensionsLocation())) {
       node.addText(" ");
       XhtmlNode img = node.addTag("img");
       String s = "external.png";

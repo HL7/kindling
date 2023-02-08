@@ -236,6 +236,9 @@ public class ResourceParser {
           sd.setUserData("path", sd.getId()+".html");
           p.getProfiles().add(tp); 
         }
+        if (ProfileUtilities.isExtensionDefinition(sd)) {
+          throw new FHIRException("Extension found at "+res.getReference().getReference()+" - this is an error since extensions have moved to https://github.com/HL7/fhir-extensions");
+        }
         sd.setUserData(ToolResourceUtilities.NAME_RES_IG, id);
         sd.setVersion(version);
         sd.setFhirVersion(FHIRVersion.fromCode(version));
@@ -302,7 +305,7 @@ public class ResourceParser {
         processExample(examples, ex.getExtensionString(BuildExtensions.EXT_OP_EXAMPLE_CONTENT), "true".equals(ex.getExtensionString(BuildExtensions.EXT_OP_EXAMPLE_RESPONSE)));
       }
     }
-    Operation op = new Operation(src.getName(), src.getSystem(), src.getType(), src.getInstance(), src.getKind().toCode(), src.getTitle(), src.getDescription(), 
+    Operation op = new Operation(src.getCode(), src.getSystem(), src.getType(), src.getInstance(), src.getKind().toCode(), src.getTitle(), src.getDescription(), 
         BuildExtensions.readStringExtension(src, BuildExtensions.EXT_FOOTER), examples, !src.getAffectsState());
     op.getExamples2().addAll(examples2);
     op.setResource(src);
@@ -814,6 +817,9 @@ public class ResourceParser {
       if (cs.hasStatus()) {
         cs.setStatus(PublicationStatus.ACTIVE);
       }
+      if (!cs.hasPublisher()) {
+        cs.setPublisher("HL7 International");
+      }
       cs.setVersion(version);
       if (!cs.hasExtension(ToolingExtensions.EXT_WORKGROUP)) {
         cs.addExtension().setUrl(ToolingExtensions.EXT_WORKGROUP).setValue(new CodeType(committee.getCode()));
@@ -837,6 +843,7 @@ public class ResourceParser {
           CodeSystemUtilities.setOID(cs, "urn:oid:"+oid);
         }
       }
+      CodeSystemUtilities.makeShareable(cs);
       if (save) {
         saveXml(cs, "codesystem-"+id+".xml");
       }
@@ -869,6 +876,9 @@ public class ResourceParser {
           if (oid != null) {
             ConceptMapUtilities.setOID(cm, "urn:oid:"+oid);
           }
+        }
+        if (!cm.hasPublisher()) {
+          cm.setPublisher("HL7 International");
         }
         maps.see(cm, null);
       }
@@ -909,6 +919,11 @@ public class ResourceParser {
         if (!ec.equals(committee.getCode()))
           System.out.println("ValueSet "+vs.getUrl()+" WG mismatch 4b: is "+ec+", want to set to "+committee.getCode());
       } 
+      if (!vs.hasPublisher()) {
+        vs.setPublisher("HL7 International");
+      }
+      ValueSetUtilities.makeShareable(vs);
+
       vs.setUserData("path", "valueset-"+vs.getId()+".html");
       if (!ValueSetUtilities.hasOID(vs)) {
         String oid = registry.getOID(vs.getUrl());

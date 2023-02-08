@@ -26,6 +26,8 @@ that are part of this application can be found at found in https://github.com/ha
 
 ### Prerequisites
 
+You can find detailed instructions on setting up this project in your IDE [here](https://hl7.github.io/docs/kindling/getting-started).
+
 This project uses the [gradle build tool][Link-GradleWebpage] to build, and includes pre-build gradlew wrappers for common build tasks. 
 
 ### Build Commands
@@ -74,3 +76,6 @@ This project is maintained by [Grahame Grieve][Link-grahameGithub], [David Otase
 [Badge-BuildPipeline]: https://dev.azure.com/fhir-pipelines/kindling/_apis/build/status/Main%20Branch%20Pipeline?branchName=main
 [Badge-SonatypeSnapshots]: https://img.shields.io/nexus/s/https/oss.sonatype.org/org.hl7.fhir/kindling.svg "Sonatype Snapshots"
 
+## Extensions
+
+The FHIR IG 'fhir-extensions' is tightly integrated into this build.
