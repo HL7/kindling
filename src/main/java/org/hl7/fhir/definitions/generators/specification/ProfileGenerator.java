@@ -120,6 +120,7 @@ import org.hl7.fhir.r5.model.OperationDefinition;
 import org.hl7.fhir.r5.model.OperationDefinition.OperationDefinitionParameterBindingComponent;
 import org.hl7.fhir.r5.model.OperationDefinition.OperationDefinitionParameterComponent;
 import org.hl7.fhir.r5.model.OperationDefinition.OperationKind;
+import org.hl7.fhir.r5.model.PositiveIntType;
 import org.hl7.fhir.r5.model.SearchParameter;
 import org.hl7.fhir.r5.model.SearchParameter.SearchComparator;
 import org.hl7.fhir.r5.model.StringType;
@@ -129,6 +130,7 @@ import org.hl7.fhir.r5.model.StructureDefinition.StructureDefinitionKind;
 import org.hl7.fhir.r5.model.StructureDefinition.StructureDefinitionMappingComponent;
 import org.hl7.fhir.r5.model.StructureDefinition.StructureDefinitionSnapshotComponent;
 import org.hl7.fhir.r5.model.StructureDefinition.TypeDerivationRule;
+import org.hl7.fhir.r5.model.UnsignedIntType;
 import org.hl7.fhir.r5.model.UriType;
 import org.hl7.fhir.r5.renderers.OperationDefinitionRenderer;
 import org.hl7.fhir.r5.renderers.utils.RenderingContext;
@@ -493,6 +495,14 @@ public class ProfileGenerator {
     if (type.getCode().equals("integer64")) {
       ed.setMinValue(new Integer64Type(-9223372036854775808L));
       ed.setMaxValue(new Integer64Type(9223372036854775807L));       
+    }
+    if (type.getCode().equals("unsignedInt")) {
+      ed.setMinValue(new UnsignedIntType(0));
+      ed.setMaxValue(new UnsignedIntType(9223372036854775807L));       
+    }
+    if (type.getCode().equals("positiveInt")) {
+      ed.setMinValue(new PositiveIntType(1));
+      ed.setMaxValue(new PositiveIntType(9223372036854775807L));       
     }
     if (type.getCode().equals("string")) {
       ed.setMaxLength(1024 * 1024);
