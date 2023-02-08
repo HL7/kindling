@@ -110,6 +110,7 @@ import org.hl7.fhir.r5.model.StructureDefinition.StructureDefinitionContextCompo
 import org.hl7.fhir.r5.model.StructureDefinition.TypeDerivationRule;
 import org.hl7.fhir.r5.model.ValueSet;
 import org.hl7.fhir.r5.terminologies.CodeSystemUtilities;
+import org.hl7.fhir.r5.terminologies.ValueSetUtilities;
 import org.hl7.fhir.r5.utils.ToolingExtensions;
 import org.hl7.fhir.tools.publisher.BuildWorkerContext;
 import org.hl7.fhir.tools.publisher.PageProcessor;
@@ -939,6 +940,10 @@ public class SourceParser {
     if (!vs.hasVersion() || vs.getUrl().startsWith("http://hl7.org/fhir")) {
       vs.setVersion(version.toCode());
     }
+    if (!vs.hasPublisher()) {
+      vs.setPublisher("HL7, International");
+    }
+    ValueSetUtilities.makeShareable(vs);
     new CodeSystemConvertor(definitions.getCodeSystems(), registry).convert(xml, vs, srcDir+ini.getStringProperty("valuesets", n).replace('\\', File.separatorChar), page.packageInfo());
     
     vs.setExperimental(false);
