@@ -341,7 +341,7 @@ public class ProfileGenerator {
     if (!Utilities.noString(type.getRegex())) {
       ToolingExtensions.addStringExtension(t, ToolingExtensions.EXT_REGEX, type.getRegex());
     }
-    addSpecificDetails(type, ec);
+    addSpecificDetails(type.getCode(), ec);
 
     reset();
     // now. the snapshot
@@ -394,7 +394,7 @@ public class ProfileGenerator {
     ToolingExtensions.addUrlExtension(t, ToolingExtensions.EXT_FHIR_TYPE, type.getCode());
     if (!Utilities.noString(type.getRegex()))
       ToolingExtensions.addStringExtension(t, ToolingExtensions.EXT_REGEX, type.getRegex());
-    addSpecificDetails(type, ec3);
+    addSpecificDetails(type.getCode(), ec3);
     generateElementDefinition(p, ec3, ec);
 
     containedSlices.clear();
@@ -487,24 +487,24 @@ public class ProfileGenerator {
     }
   }
   
-  private void addSpecificDetails(PrimitiveType type, ElementDefinition ed) throws FHIRFormatError {
-    if (type.getCode().equals("integer")) {
+  private void addSpecificDetails(String type, ElementDefinition ed) throws FHIRFormatError {
+    if (type.equals("integer")) {
       ed.setMinValue(new IntegerType(-2147483648));
       ed.setMaxValue(new IntegerType(2147483647));       
     }
-    if (type.getCode().equals("integer64")) {
+    if (type.equals("integer64")) {
       ed.setMinValue(new Integer64Type(-9223372036854775808L));
       ed.setMaxValue(new Integer64Type(9223372036854775807L));       
     }
-    if (type.getCode().equals("unsignedInt")) {
+    if (type.equals("unsignedInt")) {
       ed.setMinValue(new UnsignedIntType(0));
-      ed.setMaxValue(new UnsignedIntType(9223372036854775807L));       
+      ed.setMaxValue(new UnsignedIntType(2147483647));       
     }
-    if (type.getCode().equals("positiveInt")) {
+    if (type.equals("positiveInt")) {
       ed.setMinValue(new PositiveIntType(1));
-      ed.setMaxValue(new PositiveIntType(9223372036854775807L));       
+      ed.setMaxValue(new PositiveIntType(2147483647));       
     }
-    if (type.getCode().equals("string")) {
+    if (type.equals("string")) {
       ed.setMaxLength(1024 * 1024);
     }    
   }
@@ -689,6 +689,8 @@ public class ProfileGenerator {
     ec2.setId(type.getCode()+".value");
     ec2.setPath(type.getCode()+".value");
     ec2.addRepresentation(PropertyRepresentation.XMLATTR);
+
+    addSpecificDetails(type.getCode(), ec2);
 
     ec2.setShort("Primitive value for " +type.getCode());
     ec2.setDefinition("Primitive value for " +type.getCode());
