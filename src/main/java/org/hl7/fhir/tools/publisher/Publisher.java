@@ -4171,7 +4171,17 @@ public class Publisher implements URIResolver, SectionNumberer {
         if (f.isJson()) {
           org.hl7.fhir.r5.elementmodel.JsonParser p = new org.hl7.fhir.r5.elementmodel.JsonParser(page.getWorkerContext());
           p.setupValidation(ValidationPolicy.QUICK, null);
-          p.parse(base.getTextContent(), type);
+          String src = base.getTextContent();
+          if (src.trim().startsWith("\"")) {
+            src = "{"+src+"}";
+          }
+          
+          try {
+            p.parse(src, type);
+          } catch (Exception e) {
+            page.getValidationErrors().add(new ValidationMessage(Source.Publisher, IssueType.STRUCTURE, f.getPage(), "Fragment Error in page " + f.getPage() +(f.id != null ? "#"+f.id : "")
+                + ": " + e.getMessage()+" from "+src.replace("\r", " ").replace("\n", " "), IssueSeverity.ERROR));            
+          }
         } else {
           org.hl7.fhir.r5.elementmodel.XmlParser p = new org.hl7.fhir.r5.elementmodel.XmlParser(page.getWorkerContext());
           p.setupValidation(ValidationPolicy.QUICK, null);

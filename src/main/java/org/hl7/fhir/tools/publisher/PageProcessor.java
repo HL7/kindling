@@ -671,7 +671,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     String name = file.substring(0,file.lastIndexOf("."));
     String searchAdditions = "";
     Map<String, Integer> resDesc = new HashMap<>();
-
+    ExampleStatusTracker est = new ExampleStatusTracker();
 
     while (src.contains("<%") || src.contains("[%"))
     {
@@ -1394,6 +1394,16 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
         src = s1+extensionsLocation+s3;
       } else if (com[0].equals("multi-language-resources")) { 
         src = s1+getMultiLanguageResourceList()+s3;        
+      } else if (com[0].equals("example-start")) { 
+        src = s1+est.start()+s3;        
+      } else if (com[0].equals("example-json")) { 
+        src = s1+est.json()+s3;        
+      } else if (com[0].equals("example-end")) { 
+        src = s1+est.end()+s3;        
+      } else if (com[0].equals("example-init")) { 
+        src = s1+est.init()+s3;        
+      } else if (com[0].equals("example-change")) { 
+        src = s1+est.change()+s3;        
       } else if (macros.containsKey(com[0])) {
         src = s1+macros.get(com[0])+s3;
       } else
@@ -5459,7 +5469,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     boolean even = false;
     List<String> tabs = new ArrayList<String>();
     Map<String, Integer> resDesc = new HashMap<>();
-
+    ExampleStatusTracker est = new ExampleStatusTracker();
 
     while (src.contains("<%") || src.contains("[%"))
 	  {
@@ -5925,6 +5935,16 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
         src = s1+TEST_SERVER_URL+s3;        
       } else if (com[0].equals("multi-language-resources")) { 
         src = s1+getMultiLanguageResourceList()+s3;        
+      } else if (com[0].equals("example-start")) { 
+        src = s1+est.start()+s3;        
+      } else if (com[0].equals("example-json")) { 
+        src = s1+est.json()+s3;        
+      } else if (com[0].equals("example-end")) { 
+        src = s1+est.end()+s3;        
+      } else if (com[0].equals("example-init")) { 
+        src = s1+est.init()+s3;        
+      } else if (com[0].equals("example-change")) { 
+        src = s1+est.change()+s3;        
       } else if (macros.containsKey(com[0])) {
         src = s1+macros.get(com[0])+s3;
       } else if (com[0].equals("extensions-location")) { 
@@ -11649,6 +11669,5 @@ private int countContains(List<ValueSetExpansionContainsComponent> list) {
   public boolean isDebugLogging() {
     return true;
   }
-  
   
 }
