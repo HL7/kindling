@@ -978,6 +978,8 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
         src = s1+getStandardsStatusNote(genlevel(level), com[1], com[2], com.length == 4 ? com[3] : null)+s3;
       } else if (com[0].equals("circular-references")) {
         src = s1+buildCircularReferenceList(com[1].equals("null") ? null : Boolean.valueOf(com[1]))+s3;
+      } else if (com[0].equals("regex")) {
+        src = s1 + regex(com[1]) + s3;
       } else if (com[0].equals("shortparameterlist")) {
         src = s1+buildShortParameterList(com[1])+s3;
       } else if (com[0].equals("op-example-link")) {
@@ -1229,8 +1231,6 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
         src = s1 + genOperationList() + s3;
       else if (com[0].equals("example.profile.link"))
         src = s1 + genExampleProfileLink(resource) + s3;
-      else if (com[0].equals("id_regex"))
-        src = s1 + FormatUtilities.ID_REGEX + s3;
       else if (com[0].equals("resourcecount"))
         src = s1 + Integer.toString(definitions.getResources().size()) + s3;
       else if (others != null && others.containsKey(com[0]))
@@ -5637,6 +5637,8 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
       } else if (com[0].equals("extension-diff")) {
         StructureDefinition ed = workerContext.fetchResource(StructureDefinition.class, com[1]);
         src = s1+generateExtensionTable(ed, "extension-"+com[1], "false", genlevel(level))+s3;
+      } else if (com[0].equals("regex")) {
+        src = s1 + regex(com[1]) + s3;
       } else if (com[0].equals("setlevel")) {
         level = Integer.parseInt(com[1]);
         src = s1+s3;
@@ -5851,8 +5853,6 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
         src = s1 + genIGProfilelist() + s3;
       else if (com[0].equals("operationslist"))
         src = s1 + genOperationList() + s3;
-      else if (com[0].equals("id_regex"))
-        src = s1 + FormatUtilities.ID_REGEX + s3;
       else if (com[0].equals("allparams"))
         src = s1 + allParamlist() + s3;
       else if (com[0].equals("resourcecount"))
@@ -5953,6 +5953,20 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
         throw new Exception("Instruction <%"+s2+"%> not understood parsing page "+file);
     }
     return src;
+  }
+
+  private String regex(String name) {
+    DefinedCode dt = definitions.getPrimitives().get(name);
+    if (dt != null) {
+      String s = Utilities.escapeXml(dt.getRegex());
+      int i = 95;
+      while (s.length() > i) {
+        s = s.substring(0, i)+"<br/>"+s.substring(i);
+        i = i + 100;
+      }
+      return s;
+    }
+    throw new Error("Unknown type in regex: "+name);
   }
 
   private String checkTitle(String title) {
