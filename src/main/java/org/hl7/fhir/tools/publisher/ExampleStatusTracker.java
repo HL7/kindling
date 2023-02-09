@@ -1,5 +1,11 @@
 package org.hl7.fhir.tools.publisher;
 
+/**
+ * Create tabs for examples on the fly 
+ * 
+ * @author grahamegrieve
+ *
+ */
 public class ExampleStatusTracker {
 
   private int id = 0;
