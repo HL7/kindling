@@ -988,6 +988,8 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
         src = s1+buildPatternList(com[1])+s3;       
       } else if (com[0].equals("dtstatus")) {
         src = s1+buildDTStatus(com[1])+s3;       
+      } else if (com[0].equals("extension")) {
+        src = s1+extensionLink(com[1])+s3;       
       } else if (com[0].equals("diff-analysis")) {
         if ("*".equals(com[1])) {
           updateDiffEngineDefinitions();
@@ -1410,6 +1412,15 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
         throw new Exception("Instruction <%"+s2+"%> not understood parsing page "+file);
     }
     return src;
+  }
+
+  private String extensionLink(String url) {
+    StructureDefinition sd = workerContext.fetchResource(StructureDefinition.class, url);
+    if (sd != null && sd.hasUserData("path")) {
+      return "<a href=\""+sd.getUserString("path")+"\">"+sd.present()+"</a>";
+    } else {
+      return null;
+    }
   }
 
   private String crOids(CanonicalResource resource) {
@@ -5666,6 +5677,8 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
         src = s1+getStandardsStatusNote(genlevel(level), com[1], com[2], com.length == 4 ? com[3] : null)+s3;
       } else if (com[0].equals("dtstatus")) {
         src = s1+buildDTStatus(com[1])+s3;       
+      } else if (com[0].equals("extension")) {
+        src = s1+extensionLink(com[1])+s3;       
       } else if (com[0].equals("dtxheader")) {
           src = s1+dtxHeader(com.length > 1 ? com[1] : null, com.length > 2 ? com[2] : null)+s3;
       } else if (com[0].equals("diff-analysis")) {
