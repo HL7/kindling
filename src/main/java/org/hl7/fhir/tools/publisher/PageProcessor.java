@@ -1419,7 +1419,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     if (sd != null && sd.hasUserData("path")) {
       return "<a href=\""+sd.getUserString("path")+"\">"+sd.present()+"</a>";
     } else {
-      return null;
+      return "Extension <code>"+url+"</code>";
     }
   }
 
