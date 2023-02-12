@@ -1388,7 +1388,7 @@ public class ProfileGenerator {
 //        if (xpath.contains("[x]"))
 //          xpath = convertToXpath(xpath);
 ////        sp.setXpath(xpath);
-//        sp.setXpathUsage(spd.getxPathUsage());
+        sp.setProcessingMode(spd.getProcessingMode());
 //      }
       if (sp.getType() == SearchParamType.COMPOSITE) {
         for (CompositeDefinition cs : spd.getComposites()) {
@@ -1417,8 +1417,8 @@ public class ProfileGenerator {
 //          xpath = convertToXpath(xpath);
 //        if (sp.getXpath() != null && !sp.getXpath().contains(xpath)) 
 //          sp.setXpath(sp.getXpath()+" | " +xpath);
-//        if (sp.getXpathUsage() != spd.getxPathUsage()) 
-//          throw new FHIRException("Usage mismatch on common parameter: expected "+sp.getXpathUsage().toCode()+" but found "+spd.getxPathUsage().toCode());
+        if (spd.getProcessingMode() != null && sp.getProcessingMode() != spd.getProcessingMode()) 
+          throw new FHIRException("Usage mismatch on common parameter: expected "+sp.getProcessingMode().toCode()+" but found "+spd.getProcessingMode().toCode());
 //      }
       StandardsStatus sst = ToolingExtensions.getStandardsStatus(sp);
       if (sst == null || (spd.getStandardsStatus() == null && spd.getStandardsStatus().isLowerThan(sst))) {
@@ -1572,7 +1572,11 @@ public class ProfileGenerator {
     ElementDefinitionBindingComponent dst = new ElementDefinitionBindingComponent();
     dst.setDescription(src.getDescription());
     if (!Utilities.noString(src.getDefinition())) {
-      dst.addExtension().setUrl(BuildExtensions.EXT_BINDING_DEFINITION).setValue(new StringType(src.getDefinition()));      
+      dst.addExtension().setUrl(BuildExtensions.EXT_BINDING_DEFINITION).setValue(new StringType(src.getDefinition()));
+      if (!dst.hasDescription()) {
+        dst.setDescription(src.getDefinition());
+      }
+        
     }
     if (src.getBinding() != BindingMethod.Unbound) {
       dst.setStrength(src.getStrength());    
@@ -1583,7 +1587,9 @@ public class ProfileGenerator {
     } else {
       dst.setStrength(BindingStrength.EXAMPLE);    
     }
-    dst.addExtension().setUrl(ToolingExtensions.EXT_BINDING_NAME).setValue(new StringType(src.getName()));
+    if (!Utilities.noString(src.getName())) {
+      dst.addExtension().setUrl(ToolingExtensions.EXT_BINDING_NAME).setValue(new StringType(src.getName()));
+    }
     if (src.isShared())
       dst.addExtension().setUrl("http://hl7.org/fhir/StructureDefinition/elementdefinition-isCommonBinding").setValue(new BooleanType(true));
     return dst;

@@ -242,6 +242,7 @@ import org.hl7.fhir.tools.converters.CDAGenerator;
 import org.hl7.fhir.tools.converters.DSTU3ValidationConvertor;
 import org.hl7.fhir.tools.converters.SpecNPMPackageGenerator;
 import org.hl7.fhir.tools.publisher.ExampleInspector.EValidationFailed;
+import org.hl7.fhir.tools.publisher.Publisher.ValidationInformation;
 import org.hl7.fhir.utilities.CSFile;
 import org.hl7.fhir.utilities.CSFileInputStream;
 import org.hl7.fhir.utilities.CloseProtectedZipInputStream;
@@ -290,6 +291,41 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 
 public class Publisher implements URIResolver, SectionNumberer {
+
+  public class ValidationInformation {
+
+    private String resourceName;
+    private Example example;
+    private StructureDefinition profile;
+
+    public ValidationInformation(String resourceName) {
+      this.resourceName = resourceName;
+    }
+
+    public ValidationInformation(String resourceName, Example e) {
+      this.resourceName = resourceName;
+      this.example = e;
+    }
+
+    public ValidationInformation(String resourceName, Example e, StructureDefinition profile) {
+      this.resourceName = resourceName;
+      this.example = e;
+      this.profile = profile;
+    }
+
+    public String getResourceName() {
+      return resourceName;
+    }
+
+    public Example getExample() {
+      return example;
+    }
+
+    public StructureDefinition getProfile() {
+      return profile;
+    }
+
+  }
 
   public static final boolean WANT_REQUIRE_OIDS = false;
   
@@ -411,7 +447,6 @@ public class Publisher implements URIResolver, SectionNumberer {
   private static final String HTTP_separator = "/";
 
   private static final long GB_12 = 12 * 1024 * 1024 * 1024;
-
 
   private Calendar execTime = Calendar.getInstance();
   private String outputdir;
@@ -1440,7 +1475,7 @@ public class Publisher implements URIResolver, SectionNumberer {
   private void populateFHIRTypesCodeSystem() {
     CodeSystem cs = page.getWorkerContext().fetchCodeSystem("http://hl7.org/fhir/fhir-types");
     List<StructureDefinition> types = new ContextUtilities(page.getWorkerContext()).allStructures();
-    addTypes(cs, page.getWorkerContext().fetchTypeDefinition("Base"), cs.getConcept(), types);
+    addTypes(cs, page.getWorkerContext().fetchTypeDefinition("Base"), cs.getConcept(), types, new HashSet<>());
     CodeSystemUtilities.sortAllCodes(cs);
     
     // we're also going to fill out the value sets
@@ -1505,7 +1540,11 @@ public class Publisher implements URIResolver, SectionNumberer {
     }    
   }
 
-  private void addTypes(CodeSystem cs, StructureDefinition sd, List<ConceptDefinitionComponent> list, List<StructureDefinition> types) {
+  private void addTypes(CodeSystem cs, StructureDefinition sd, List<ConceptDefinitionComponent> list, List<StructureDefinition> types, Set<String> added) {
+    if (added.contains(sd.getType())) {
+      return;
+    }
+    added.add(sd.getType());
     ConceptDefinitionComponent cd = new ConceptDefinitionComponent();
     cd.setCode(sd.getType());
     cd.setDisplay(sd.getType());
@@ -1522,7 +1561,7 @@ public class Publisher implements URIResolver, SectionNumberer {
     list.add(cd);
     for (StructureDefinition t : types) {
       if (t.hasBaseDefinition() && t.getBaseDefinition().equals(sd.getUrl()) && (t.getDerivation() == TypeDerivationRule.SPECIALIZATION || Utilities.existsInList(t.getName(), "SimpleQuantity", "MoneyQuantity"))) {
-        addTypes(cs, t, cd.getConcept(), types);
+        addTypes(cs, t, cd.getConcept(), types, added);
       }
     }
     
@@ -6001,24 +6040,48 @@ public class Publisher implements URIResolver, SectionNumberer {
   }
 
   private void validationProcess() throws Exception {
-
+    
     if (!isPostPR) {
       page.log("Validating Examples", LogMessageType.Process);
+      Map<String, ValidationInformation> filesToValidate = new HashMap<>();      
+      Set<String> txList = new HashSet<String>();
       ei.prepare2();
-      
+
       for (String rname : page.getDefinitions().sortedResourceNames()) {
         ResourceDefn r = page.getDefinitions().getResources().get(rname);
         if (wantBuild(rname)) {
+          if (validateId == null) {
+            filesToValidate.put(rname.toLowerCase()+".profile", new ValidationInformation("StructureDefinition"));
+            for (ElementDefinition ed : r.getProfile().getSnapshot().getElement()) {
+              if (ed.hasBinding() && ed.getBinding().hasValueSet()) {
+                if (!txList.contains(ed.getBinding().getValueSet())) {
+                  txList.add(ed.getBinding().getValueSet());
+                  ValueSet vs = page.getWorkerContext().fetchResource(ValueSet.class, ed.getBinding().getValueSet());
+                  if (vs != null && !vs.hasUserData("external.url")) {
+                    filesToValidate.put("valueset-"+vs.getId(), new ValidationInformation("ValueSet"));
+                    if (vs.hasCompose()) {
+                      for (ConceptSetComponent inc : vs.getCompose().getInclude()) {
+                        if (inc.hasSystem() && !txList.contains(inc.getSystem())) {
+                          txList.add(inc.getSystem());
+                          CodeSystem cs = page.getWorkerContext().fetchCodeSystem(inc.getSystem());
+                          if (cs != null && !cs.hasUserData("external.url")) {
+                            filesToValidate.put("codesystem-"+cs.getId(), new ValidationInformation("ValueSet"));                        
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
           for (Example e : r.getExamples()) {
             String n = e.getTitle();
             ImplementationGuideDefn ig = e.getIg() == null ? null : page.getDefinitions().getIgs().get(e.getIg());
             if (ig != null)
               n = ig.getCode()+File.separator+n;
             if (validateId == null || validateId.equals(n)) {
-              ei.validate(n, rname);
-              for (ValidationMessage vm : ei.getErrors()) {
-                e.getErrors().add(vm);
-              }
+              filesToValidate.put(n, new ValidationInformation("ValueSet", e));                        
             }
           }
 
@@ -6027,8 +6090,9 @@ public class Publisher implements URIResolver, SectionNumberer {
               ImplementationGuideDefn ig = en.getIg() == null ? null : page.getDefinitions().getIgs().get(en.getIg());
               String prefix = (ig == null || ig.isCore()) ? "" : ig.getCode()+File.separator;
               String n = prefix+Utilities.changeFileExt(en.getTitle(), "");
-              if (validateId == null || validateId.equals(n))
-                ei.validate(n, rname, e.getProfiles().get(0).getResource());
+              if (validateId == null || validateId.equals(n)) {
+                filesToValidate.put(n, new ValidationInformation(rname, en, e.getProfiles().get(0).getResource()));
+              }
             }
           }
         }
@@ -6039,29 +6103,66 @@ public class Publisher implements URIResolver, SectionNumberer {
         for (Example ex : ig.getExamples()) {
           String n = ex.getTitle();
           ei.validate(prefix+n, ex.getResourceName());
+          filesToValidate.put(prefix+n, new ValidationInformation(ex.getResourceName()));
         }
         for (Profile pck : ig.getProfiles()) {
           for (Example en : pck.getExamples()) {
-            ei.validate(prefix+Utilities.changeFileExt(en.getTitle(), ""), en.getResourceName(), pck.getProfiles().get(0).getResource());
+            filesToValidate.put(prefix+Utilities.changeFileExt(en.getTitle(), ""), new ValidationInformation(en.getResourceName(), en, pck.getProfiles().get(0).getResource()));
           }
         }
       }
-      if (buildFlags.get("all") && validateBundles) {
-        if (validateId == null || validateId.equals("valuesets"))
-          ei.validate("valuesets", "Bundle");
-        if (validateId == null || validateId.equals("conceptmaps"))
-          ei.validate("conceptmaps", "Bundle");
-        if (validateId == null || validateId.equals("profiles-types"))
-          ei.validate("profiles-types", "Bundle");
-        if (validateId == null || validateId.equals("profiles-resources"))
-          ei.validate("profiles-resources", "Bundle");
-        if (validateId == null || validateId.equals("profiles-others"))
-          ei.validate("profiles-others", "Bundle");
-        if (validateId == null || validateId.equals("search-parameters"))
-          ei.validate("search-parameters", "Bundle");
-        if (validateId == null || validateId.equals("extension-definitions"))
-          ei.validate("extension-definitions", "Bundle");
+      
+      if (true || (buildFlags.get("all") && validateBundles)) {
+        for (File f : new File(page.getFolders().dstDir).listFiles()) {
+          if (f.getName().startsWith("codesystem-") && f.getName().endsWith(".json") && !f.getName().endsWith(".canonical.json") && !f.getName().endsWith("-questionnaire.json")) {
+            filesToValidate.put(Utilities.changeFileExt(f.getName(), ""), new ValidationInformation("CodeSystem"));            
+          }
+          if (f.getName().startsWith("valueset-") && f.getName().endsWith(".json") && !f.getName().endsWith(".canonical.json") && !f.getName().endsWith("-questionnaire.json")) {
+            filesToValidate.put(Utilities.changeFileExt(f.getName(), ""), new ValidationInformation("ValueSet"));            
+          }
+          if (f.getName().startsWith("conceptmap-") && f.getName().endsWith(".json") && !f.getName().endsWith(".canonical.json") && !f.getName().endsWith("-questionnaire.json")) {
+            filesToValidate.put(Utilities.changeFileExt(f.getName(), ""), new ValidationInformation("ConceptMap"));            
+          }          
+          if (f.getName().endsWith(".profile.json")) {
+            filesToValidate.put(Utilities.changeFileExt(f.getName(), ""), new ValidationInformation("StructureDefinition"));            
+          }          
+        }
+        
+//        
+//        
+//        if (validateId == null || validateId.equals("valuesets"))
+//          ei.validate("valuesets", "Bundle");
+//        if (validateId == null || validateId.equals("conceptmaps"))
+//          ei.validate("conceptmaps", "Bundle");
+//        if (validateId == null || validateId.equals("profiles-types"))
+//          ei.validate("profiles-types", "Bundle");
+//        if (validateId == null || validateId.equals("profiles-resources"))
+//          ei.validate("profiles-resources", "Bundle");
+//        if (validateId == null || validateId.equals("profiles-others"))
+//          ei.validate("profiles-others", "Bundle");
+//        if (validateId == null || validateId.equals("search-parameters"))
+//          ei.validate("search-parameters", "Bundle");
       }
+
+      page.log("Validating "+filesToValidate.size()+" files", LogMessageType.Process);
+      
+      for (String n : Utilities.sorted(filesToValidate.keySet())) {
+        ValidationInformation vi = filesToValidate.get(n);
+        if (vi.getExample() == null) {
+          ei.validate(n, vi.getResourceName());
+        } else if (vi.getProfile() == null) {
+          ei.validate(n, vi.getResourceName());
+          for (ValidationMessage vm : ei.getErrors()) {
+            vi.getExample().getErrors().add(vm);
+          }
+        } else {
+          ei.validate(n, vi.getResourceName(), vi.getProfile());
+          for (ValidationMessage vm : ei.getErrors()) {
+            vi.getExample().getErrors().add(vm);
+          }
+        }
+      }
+            
       ei.summarise();
 
       if (buildFlags.get("all") && isGenerate)

@@ -752,6 +752,9 @@ public class ResourceParser {
     }
     if (binding.hasExtension(BuildExtensions.EXT_BINDING_DEFINITION)) {
       bs.setDefinition(binding.getExtensionString(BuildExtensions.EXT_BINDING_DEFINITION));
+      if (!binding.hasDescription()) {
+        bs.setDescription(bs.getDefinition());
+      }
     }
     if (binding.hasExtension(BuildExtensions.EXT_URI)) {
       bs.setUri(binding.getExtensionString(BuildExtensions.EXT_URI));
