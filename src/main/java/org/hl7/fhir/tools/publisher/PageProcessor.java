@@ -87,6 +87,7 @@ import org.hl7.fhir.definitions.generators.specification.ToolResourceUtilities;
 import org.hl7.fhir.definitions.generators.specification.TurtleSpecGenerator;
 import org.hl7.fhir.definitions.generators.specification.XmlSpecGenerator;
 import org.hl7.fhir.definitions.model.BindingSpecification;
+import org.hl7.fhir.definitions.model.BindingSpecification.AdditionalBinding;
 import org.hl7.fhir.definitions.model.BindingSpecification.BindingMethod;
 import org.hl7.fhir.definitions.model.CommonSearchParameter;
 import org.hl7.fhir.definitions.model.Compartment;
@@ -203,6 +204,7 @@ import org.hl7.fhir.r5.model.ValueSet.ConceptSetComponent;
 import org.hl7.fhir.r5.model.ValueSet.ConceptSetFilterComponent;
 import org.hl7.fhir.r5.model.ValueSet.ValueSetExpansionContainsComponent;
 import org.hl7.fhir.r5.renderers.DataRenderer;
+import org.hl7.fhir.r5.renderers.IMarkdownProcessor;
 import org.hl7.fhir.r5.renderers.RendererFactory;
 import org.hl7.fhir.r5.renderers.StructureDefinitionRenderer;
 import org.hl7.fhir.r5.renderers.utils.DOMWrappers;
@@ -265,7 +267,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 
 
-public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferenceResolver, ILoggingService, TypeLinkProvider, ITypeParser  {
+public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferenceResolver, ILoggingService, TypeLinkProvider, ITypeParser, IMarkdownProcessor  {
 
   public enum PageInfoType { PAGE, RESOURCE, OPERATION, VALUESET, CODESYSTEM;
     
@@ -3999,8 +4001,12 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     if (e.hasBinding() && e.getBinding().getValueSet() == vs) {
       addItem(items, "<li>"+type+": <a href=\""+prefix+ref+"#"+path+"\">"+path+"</a> "+getBSTypeDesc(e, e.getBinding(), prefix)+"</li>\r\n");
     }
-    if (e.hasBinding() && e.getBinding().getMaxValueSet() == vs) {
-      addItem(items, "<li>"+type+": <a href=\""+prefix+ref+"#"+path+"\">"+path+"</a> <a href=\"extension-elementdefinition-maxvalueset.html\">Max ValueSet</a></li>\r\n");
+    if (e.hasBinding()) {
+      for (AdditionalBinding ab : e.getBinding().getAdditionalBindings() ) {
+        if (ab.getValueSet() == vs) {
+          addItem(items, "<li>"+type+": <a href=\""+prefix+ref+"#"+path+"\">"+path+"</a> <a href=\"extension-elementdefinition-maxvalueset.html\">"+ab.getPurpose()+" ValueSet</a></li>\r\n");
+        }
+      }
     }
     for (ElementDefn c : e.getElements()) {
       scanForUsage(items, vs, c, path, ref, prefix, type);
@@ -11696,5 +11702,22 @@ private int countContains(List<ValueSetExpansionContainsComponent> list) {
   public boolean isDebugLogging() {
     return true;
   }
-  
+
+  @Override
+  public String processMarkdown(String location, org.hl7.fhir.r5.model.PrimitiveType md) throws FHIRException {
+    try {
+      return processMarkdown(location, md.asStringValue(), "");
+    } catch (Exception e) {
+      throw new FHIRException(e);
+    }
+  }
+
+  @Override
+  public String processMarkdown(String location, String text) throws FHIRException {
+    try {
+      return processMarkdown(location, text, "");
+    } catch (Exception e) {
+      throw new FHIRException(e);
+    }
+  }  
 }

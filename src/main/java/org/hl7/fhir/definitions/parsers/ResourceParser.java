@@ -15,6 +15,7 @@ import java.util.Set;
 
 import org.hl7.fhir.definitions.generators.specification.ToolResourceUtilities;
 import org.hl7.fhir.definitions.model.BindingSpecification;
+import org.hl7.fhir.definitions.model.BindingSpecification.AdditionalBinding;
 import org.hl7.fhir.definitions.model.BindingSpecification.BindingMethod;
 import org.hl7.fhir.definitions.model.ConstraintStructure;
 import org.hl7.fhir.definitions.model.Definitions;
@@ -50,6 +51,7 @@ import org.hl7.fhir.r5.model.CodeSystem;
 import org.hl7.fhir.r5.model.CodeType;
 import org.hl7.fhir.r5.model.ConceptMap;
 import org.hl7.fhir.r5.model.ElementDefinition;
+import org.hl7.fhir.r5.model.ElementDefinition.ElementDefinitionBindingAdditionalComponent;
 import org.hl7.fhir.r5.model.ElementDefinition.ElementDefinitionBindingComponent;
 import org.hl7.fhir.r5.model.ElementDefinition.ElementDefinitionConstraintComponent;
 import org.hl7.fhir.r5.model.ElementDefinition.ElementDefinitionMappingComponent;
@@ -698,10 +700,9 @@ public class ResourceParser {
     }
 
     if (binding.hasExtension(ToolingExtensions.EXT_MAX_VALUESET)) {
-      bs.setMaxReference(binding.getExtensionString(ToolingExtensions.EXT_MAX_VALUESET));
-      bs.setMaxValueSet(loadValueSet(bs.getMaxReference(), false));
+      bs.getAdditionalBindings().add(new AdditionalBinding("maximum", binding.getExtensionString(ToolingExtensions.EXT_MAX_VALUESET), loadValueSet(binding.getExtensionString(ToolingExtensions.EXT_MAX_VALUESET), false)));
     }
-
+    
     if (binding.hasExtension(BuildExtensions.EXT_V2_MAP)) {
       bs.setV2Map(binding.getExtensionString(BuildExtensions.EXT_V2_MAP));
     }
@@ -740,8 +741,10 @@ public class ResourceParser {
       bs.setValueSet(loadValueSet(bs.getReference(), false));
     }
     if (binding.hasExtension(ToolingExtensions.EXT_MAX_VALUESET)) {
-      bs.setMaxReference(binding.getExtensionString(ToolingExtensions.EXT_MAX_VALUESET));
-      bs.setMaxValueSet(loadValueSet(bs.getMaxReference(), false));
+      bs.getAdditionalBindings().add(new AdditionalBinding("maximum", binding.getExtensionString(ToolingExtensions.EXT_MAX_VALUESET), loadValueSet(binding.getExtensionString(ToolingExtensions.EXT_MAX_VALUESET), false)));
+    }
+    for (ElementDefinitionBindingAdditionalComponent add : binding.getAdditional()) {
+      bs.getAdditionalBindings().add(new AdditionalBinding(add.getPurpose().toCode(), add.getValueSet(), loadValueSet(add.getValueSet(), false)).setDoco(add.getDocumentation()));      
     }
 
     if (binding.hasExtension(BuildExtensions.EXT_V2_MAP)) {
@@ -776,6 +779,9 @@ public class ResourceParser {
   }
 
   private ValueSet loadValueSet(String reference, boolean ext) throws IOException {
+    if (reference == null) {
+      return null;
+    }
     if (reference.contains("|")) {
       reference = reference.substring(0, reference.indexOf("|"));
     }

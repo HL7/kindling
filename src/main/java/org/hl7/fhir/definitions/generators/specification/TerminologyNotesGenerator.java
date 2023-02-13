@@ -39,11 +39,13 @@ import java.util.List;
 import java.util.Map;
 
 import org.hl7.fhir.definitions.model.BindingSpecification;
+import org.hl7.fhir.definitions.model.BindingSpecification.AdditionalBinding;
 import org.hl7.fhir.definitions.model.BindingSpecification.BindingMethod;
 import org.hl7.fhir.definitions.model.ConstraintStructure;
 import org.hl7.fhir.definitions.model.ElementDefn;
 import org.hl7.fhir.r5.model.ElementDefinition.ElementDefinitionBindingComponent;
 import org.hl7.fhir.r5.model.Enumerations.BindingStrength;
+import org.hl7.fhir.r5.conformance.AdditionalBindingsRenderer;
 import org.hl7.fhir.r5.model.StructureDefinition;
 import org.hl7.fhir.r5.model.ValueSet;
 import org.hl7.fhir.r5.terminologies.CodeSystemUtilities;
@@ -167,7 +169,7 @@ public class TerminologyNotesGenerator extends OutputStreamWriter {
 		  write("<h3>\r\nTerminology Bindings\r\n</h3>\r\n");
 		// 1. new form
     write("<table class=\"grid\">\r\n");
-    write(" <tr><th>Path</th><th>Definition</th><th>Type</th><th>Reference</th></tr>\r\n");
+    write(" <tr><th>Path</th><th>ValueSet</th><th>Type</th><th>Documentation</th></tr>\r\n");
     for (BindingSpecification cd : cds) {
       String path;
       List<CDUsage> list = txusages.get(cd);
@@ -185,26 +187,9 @@ public class TerminologyNotesGenerator extends OutputStreamWriter {
         write(list.get(i).path);          
       }
       write(" </td>");
-      if (cd.getValueSet() != null) {
-        write("<td valign=\"top\">");
-        write(page.processMarkdown("vs.description", cd.getValueSet().getDescription(), ""));
-        write("</td>");
-      } else {
-        write("<td valign=\"top\">"+Utilities.escapeXml(cd.getDefinition())+"</td>");
-      }
       if (cd.getBinding() == BindingMethod.Unbound)
         write("<td>Unknown</td><td valign=\"top\">No details provided yet</td>");
       else { 
-        if (cd.hasMax()) {
-          ValueSet vs = cd.getMaxValueSet();
-          if (vs == null) {
-            write("<td><a href=\""+prefix+"terminologies.html#"+cd.getStrength().toCode()+"\">"+cd.getStrength().getDisplay()+"</a>, but limited to <a href=\""+cd.getMaxReference()+"\">"+cd.getMaxReference()+"</a></td>");
-          } else {
-            String pp = vs.hasUserData("external.url") ? vs.getUserString("external.url") : vs.getUserString("path");
-            write("<td><a href=\""+prefix+"terminologies.html#"+cd.getStrength().toCode()+"\">"+cd.getStrength().getDisplay()+"</a>, but limited to <a href=\""+prefix+pp.replace(File.separatorChar, '/')+"\">"+vs.getName()+"</a></td>");
-          }
-        } else
-          write("<td><a href=\""+prefix+"terminologies.html#"+cd.getStrength().toCode()+"\">"+cd.getStrength().getDisplay()+"</a></td>");
         write("<td valign=\"top\">");
         if (cd.getBinding() == BindingSpecification.BindingMethod.Special) {
           if (name.equals("MessageEvent"))
@@ -274,7 +259,30 @@ public class TerminologyNotesGenerator extends OutputStreamWriter {
 
         write("</td>");
       }
+      write("<td><a href=\""+prefix+"terminologies.html#"+cd.getStrength().toCode()+"\">"+cd.getStrength().getDisplay()+"</a></td>");
+      if (cd.getValueSet() != null) {
+        write("<td valign=\"top\">");
+        write(page.processMarkdown("vs.description", cd.getValueSet().getDescription(), ""));
+        write("</td>");
+      } else {
+        write("<td valign=\"top\">"+Utilities.escapeXml(cd.getDefinition())+"</td>");
+      }
       write(" </tr>\r\n");
+      for (AdditionalBinding ab : cd.getAdditionalBindings()) {
+        write(" <tr>\r\n");
+        write("   <td>&nbsp;</td>\r\n");
+        if (ab.getValueSet() != null) {          
+          write("   <td><a href=\""+ab.getValueSet().getUserString("path")+"\">"+Utilities.escapeXml(ab.getValueSet().present())+"</a></td>\r\n");
+        } else {
+          write("   <td><code>"+Utilities.escapeXml(ab.getRef())+"</code></td>\r\n");
+        }
+        write("   <td><a href=\"codesystem-additional-binding-purpose.html#additional-binding-purpose-"+ab.getPurpose()+"\">"+ab.getPurpose()+"</a></td>\r\n");
+        write("<td valign=\"top\">");
+        write(page.processMarkdown("vs.description", cd.getValueSet().getDescription(), ""));
+        write("</td>");
+        write(" </tr>\r\n");
+      } 
+
     }
     write("</table>\r\n<p> </p>\r\n");		
 	}
@@ -348,13 +356,23 @@ public class TerminologyNotesGenerator extends OutputStreamWriter {
         throw new Exception("Unknown special type "+cd.getValueSet().getName());
     }
     String mx = "";
-    if (cd.hasMax()) {
-      if (cd.getMaxValueSet() == null)
-        mx = " but limited to ??";
-      else {
-        String pp = cd.getMaxValueSet().hasUserData("external.url") ? cd.getMaxValueSet().getUserString("external.url") : cd.getMaxValueSet().getUserString("path");
-        mx = " but limited to <a href=\""+prefix+pp.replace(File.separatorChar, '/')+"\">"+cd.getMaxValueSet().present()+"</a>";
+    if (cd.getAdditionalBindings().size() > 0) {
+      AdditionalBindingsRenderer abr = new AdditionalBindingsRenderer(page, "", null, "", page.getRc(), page, null);
+      for (AdditionalBinding ab : cd.getAdditionalBindings()) {
+        if (ab.getValueSet() != null) {
+          abr.seeAdditionalBinding(ab.getPurpose(), ab.getDoco(), ab.getValueSet());
+        } else {
+          abr.seeAdditionalBinding(ab.getPurpose(), ab.getDoco(), ab.getRef());
+        }
       }
+      //abr.render(gen, cc);
+//      if (cd.getMaxValueSet() == null)
+//        mx = " but limited to ??";
+//      else {
+//        String pp = cd.getMaxValueSet().hasUserData("external.url") ? cd.getMaxValueSet().getUserString("external.url") : cd.getMaxValueSet().getUserString("path");
+//        mx = " but limited to <a href=\""+prefix+pp.replace(File.separatorChar, '/')+"\">"+cd.getMaxValueSet().present()+"</a>";
+//      }
+      mx = "Additional bindings todo!";
     }
 
     String bs = "<a href=\""+prefix+"terminologies.html#"+cd.getStrength().toCode()+"\">"+cd.getStrength().getDisplay()+"</a>";
@@ -385,8 +403,8 @@ public class TerminologyNotesGenerator extends OutputStreamWriter {
       write("  <li>"+path+" <i>"+Utilities.escapeXml(cd.getName())+"</i>: \""+Utilities.escapeXml(cd.getDefinition())+"\". (not bound to any codes)</li>\r\n");
     } else if (cd.getBinding() == BindingSpecification.BindingMethod.CodeList) {
       String sid = "";
-      if (cd.hasMax())
-        throw new Error("Max binding not handled yet");
+      if (cd.getAdditionalBindings().size() > 0)
+        throw new Error("Additional bindings not handled yet");
       String bs = "<a href=\"terminologies.html#"+cd.getStrength().toCode()+"\">"+cd.getStrength().getDisplay()+"</a>";
       if (!isCode) {
         sid = "\"<a href=\""+cd.getReference().substring(1)+".html\">http://hl7.org/fhir/"+cd.getReference().substring(1)+"\"</a>";

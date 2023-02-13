@@ -28,7 +28,10 @@ POSSIBILITY OF SUCH DAMAGE.
 
 */
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.hl7.fhir.definitions.generators.specification.ToolResourceUtilities;
 import org.hl7.fhir.r5.context.CanonicalResourceManager;
@@ -54,6 +57,65 @@ import org.hl7.fhir.utilities.StandardsStatus;
  */
 public class BindingSpecification {
     
+  public static class AdditionalBinding {
+    private String purpose;
+    private String doco;
+    private String ref;
+    private ValueSet vs;
+    
+    public AdditionalBinding(String purpose, String ref, ValueSet vs) {
+      super();
+      this.purpose = purpose;
+      this.ref = ref;
+      this.vs = vs;
+      if (ref == null && vs == null) {
+        System.out.println("what?");
+      }
+    }
+
+    public AdditionalBinding(String purpose, String ref) {
+      super();
+      this.purpose = purpose;
+      this.ref = ref;
+      if (ref == null && vs == null) {
+        System.out.println("what?");
+      }
+    }
+    
+    public AdditionalBinding(String purpose, ValueSet vs) {
+      super();
+      this.purpose = purpose;
+      this.vs = vs;
+      if (ref == null && vs == null) {
+        System.out.println("what?");
+      }
+    }
+
+    
+    public String getPurpose() {
+      return purpose;
+    }
+
+    public String getRef() {
+      return ref;
+    }
+
+    public ValueSet getValueSet() {
+      return vs;
+    }
+
+    public String getDoco() {
+      return doco;
+    }
+
+    public AdditionalBinding setDoco(String doco) {
+      this.doco = doco;
+      return this;
+    }    
+    
+    
+  }
+
   public enum BindingMethod {
     Unbound,
     CodeList, 
@@ -84,8 +146,7 @@ public class BindingSpecification {
   private String description;
   private String reference;
   private ValueSet valueSet;
-  private String maxReference;
-  private ValueSet maxValueSet;
+  private List<AdditionalBinding> additional = new ArrayList<>();
     
   // to move into valueset 
 	private String definition;
@@ -409,24 +470,18 @@ public class BindingSpecification {
     return valueSet == null ? shared : valueSet.getUserData("build.shared") != null;
   }
 
-  public String getMaxReference() {
-    return maxReference;
-  }
-
-  public void setMaxReference(String maxReference) {
-    this.maxReference = maxReference;
-  }
-
-  public ValueSet getMaxValueSet() {
-    return maxValueSet;
-  }
-
-  public void setMaxValueSet(ValueSet maxValueSet) {
-    this.maxValueSet = maxValueSet;
+  public List<AdditionalBinding> getAdditionalBindings() {
+    return additional;
   }
 
   public boolean hasMax() {
-    return maxValueSet != null || maxReference != null;
-  }  
-    
+    for (AdditionalBinding ab : additional) {
+      if ("maximum".equals(ab.getPurpose())) {
+        return true;
+      }
+    }
+    return false;
+  }
+   
+  
 }

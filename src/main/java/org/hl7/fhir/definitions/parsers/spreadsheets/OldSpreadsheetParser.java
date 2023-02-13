@@ -44,6 +44,7 @@ import org.apache.commons.io.IOUtils;
 import org.hl7.fhir.definitions.generators.specification.ProfileGenerator;
 import org.hl7.fhir.definitions.generators.specification.ToolResourceUtilities;
 import org.hl7.fhir.definitions.model.BindingSpecification;
+import org.hl7.fhir.definitions.model.BindingSpecification.AdditionalBinding;
 import org.hl7.fhir.definitions.model.BindingSpecification.BindingMethod;
 import org.hl7.fhir.definitions.model.CommonSearchParameter;
 import org.hl7.fhir.definitions.model.ConstraintStructure;
@@ -1177,11 +1178,14 @@ public class OldSpreadsheetParser {
         if (oid != null) {
           ValueSetUtilities.setOID(cd.getValueSet(), oid);
         }
-        if (cd.getMaxValueSet() != null) {
-           oid = registry.getOID(cd.getMaxValueSet().getUrl());
-           if (oid != null) {
-             ValueSetUtilities.setOID(cd.getMaxValueSet(), oid);
-           }          
+
+        for (AdditionalBinding vsc : cd .getAdditionalBindings()) {
+          if (vsc.getValueSet() != null) {
+            oid = registry.getOID(vsc.getValueSet().getUrl());
+            if (oid != null) {
+              ValueSetUtilities.setOID(vsc.getValueSet(), oid);
+            }
+          }
         }
         if (ig != null) {
           cd.getValueSet().setUserDataINN(ToolResourceUtilities.NAME_RES_IG, ig);
@@ -1267,11 +1271,13 @@ public class OldSpreadsheetParser {
       cd.setV3Map(checkV3Mapping(sheet.getColumn(row, "v3")));
 
       String max = sheet.getColumn(row, "Max");
-      if (!Utilities.noString(max))
+      if (!Utilities.noString(max)) {
         if (max.startsWith("http:")) {
-          cd.setMaxReference(max); // will sort this out later
-        } else
-          cd.setMaxValueSet(loadValueSet(max));
+          cd.getAdditionalBindings().add(new AdditionalBinding("maximum", max)); // will sort this out later
+        } else {
+          cd.getAdditionalBindings().add(new AdditionalBinding("maximum", loadValueSet(max)));
+        }
+      }
       
 			bindings.put(cd.getName(), cd);
 	    if (cd.getValueSet() != null) {

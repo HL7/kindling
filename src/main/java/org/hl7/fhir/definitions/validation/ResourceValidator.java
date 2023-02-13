@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.hl7.fhir.definitions.model.BindingSpecification;
+import org.hl7.fhir.definitions.model.BindingSpecification.AdditionalBinding;
 import org.hl7.fhir.definitions.model.BindingSpecification.BindingMethod;
 import org.hl7.fhir.definitions.model.BindingSpecification.ElementType;
 import org.hl7.fhir.definitions.model.Compartment;
@@ -784,8 +785,10 @@ public class ResourceValidator extends BaseValidator {
             ValueSetUtilities.markStatus(cd.getValueSet(), parent.getWg().getCode(), null, null, null, context, null);
           else
             ValueSetUtilities.markStatus(cd.getValueSet(), parent.getWg().getCode(), parent.getStatus(), parent.getNormativePackage(), parent.getFmmLevel(), context, parent.getNormativeVersion());
-          if (cd.getMaxValueSet() != null) {
-            ValueSetUtilities.markStatus(cd.getMaxValueSet(), parent.getWg().getCode(), parent.getStatus(), parent.getNormativePackage(), parent.getFmmLevel(), context, parent.getNormativeVersion());
+          for (AdditionalBinding vsc : cd.getAdditionalBindings()) {
+            if (vsc.getValueSet() != null) {
+              ValueSetUtilities.markStatus(vsc.getValueSet(), parent.getWg().getCode(), parent.getStatus(), parent.getNormativePackage(), parent.getFmmLevel(), context, parent.getNormativeVersion());
+            }
           }
           Integer w = (Integer) cd.getValueSet().getUserData("warnings");
           if (w != null && w > 0 && !vsWarns.contains(cd.getValueSet().getId())) {
@@ -1190,7 +1193,7 @@ public class ResourceValidator extends BaseValidator {
         cd.setElementType(ElementType.Complex);
       else
         cd.setElementType(ElementType.Simple);
-    } else if (isComplex && !cd.hasMax())
+    } else if (isComplex && cd.getAdditionalBindings().size() == 0)
       rule(errors, ValidationMessage.NO_RULE_DATE, IssueType.STRUCTURE, path, cd.getElementType() == ElementType.Complex, "Cannot use a binding from both code and Coding/CodeableConcept elements");
     else
       rule(errors, ValidationMessage.NO_RULE_DATE, IssueType.STRUCTURE, path, cd.getElementType() == ElementType.Simple, "Cannot use a binding from both code and Coding/CodeableConcept elements");
@@ -1253,7 +1256,7 @@ public class ResourceValidator extends BaseValidator {
     if (vs == null) {
       return true;
     }
-    if (Utilities.existsInList(vs.getUrl(), "http://hl7.org/fhir/ValueSet/mimetypes", "http://hl7.org/fhir/ValueSet/languages"))
+    if (Utilities.existsInList(vs.getUrl(), "http://hl7.org/fhir/ValueSet/mimetypes", "http://hl7.org/fhir/ValueSet/languages", "http://hl7.org/fhir/ValueSet/all-languages"))
       return true;
 
     for (ConceptSetComponent inc : vs.getCompose().getInclude()) {

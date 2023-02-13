@@ -42,6 +42,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.hl7.fhir.definitions.model.BindingSpecification;
+import org.hl7.fhir.definitions.model.BindingSpecification.AdditionalBinding;
 import org.hl7.fhir.definitions.model.BindingSpecification.BindingMethod;
 import org.hl7.fhir.definitions.model.CommonSearchParameter;
 import org.hl7.fhir.definitions.model.ConstraintStructure;
@@ -87,10 +88,12 @@ import org.hl7.fhir.r5.model.ContactDetail;
 import org.hl7.fhir.r5.model.ContactPoint;
 import org.hl7.fhir.r5.model.ContactPoint.ContactPointSystem;
 import org.hl7.fhir.r5.model.ElementDefinition;
+import org.hl7.fhir.r5.model.ElementDefinition.AdditionalBindingPurposeVS;
 import org.hl7.fhir.r5.model.ElementDefinition.AggregationMode;
 import org.hl7.fhir.r5.model.ElementDefinition.ConstraintSeverity;
 import org.hl7.fhir.r5.model.ElementDefinition.DiscriminatorType;
 import org.hl7.fhir.r5.model.ElementDefinition.ElementDefinitionBaseComponent;
+import org.hl7.fhir.r5.model.ElementDefinition.ElementDefinitionBindingAdditionalComponent;
 import org.hl7.fhir.r5.model.ElementDefinition.ElementDefinitionBindingComponent;
 import org.hl7.fhir.r5.model.ElementDefinition.ElementDefinitionConstraintComponent;
 import org.hl7.fhir.r5.model.ElementDefinition.ElementDefinitionMappingComponent;
@@ -1581,8 +1584,11 @@ public class ProfileGenerator {
     if (src.getBinding() != BindingMethod.Unbound) {
       dst.setStrength(src.getStrength());    
       dst.setValueSet(buildValueSetReference(src));
-      if (src.hasMax()) {
-        dst.addExtension().setUrl("http://hl7.org/fhir/StructureDefinition/elementdefinition-maxValueSet").setValue(new CanonicalType(src.getMaxReference() != null ? src.getMaxReference() : src.getMaxValueSet().getUrl()));
+      for (AdditionalBinding n : src.getAdditionalBindings()) {
+        ElementDefinitionBindingAdditionalComponent add = dst.addAdditional();
+        add.setPurpose(AdditionalBindingPurposeVS.fromCode(n.getPurpose()));
+        add.setDocumentation(n.getDoco());
+        add.setValueSet(n.getValueSet() != null ? n.getValueSet().getUrl() : n.getRef());
       }
     } else {
       dst.setStrength(BindingStrength.EXAMPLE);    
@@ -2555,7 +2561,7 @@ public class ProfileGenerator {
     pp.setMin(p.getMin());
     pp.setMax(p.getMax());
     if (p.getBs() != null) {
-      if (p.getBs().hasMax())
+      if (p.getBs().getAdditionalBindings().size() > 0)
         throw new Error("Max binding not handled yet");
       pp.setBinding(new OperationDefinitionParameterBindingComponent().setStrength(p.getBs().getStrength()).setValueSet(buildValueSetReference(p.getBs())));
       if (!Utilities.noString(p.getBinding().getName())) {

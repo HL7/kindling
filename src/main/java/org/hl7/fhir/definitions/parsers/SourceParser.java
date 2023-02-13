@@ -82,6 +82,7 @@ import org.hl7.fhir.definitions.model.TypeDefn;
 import org.hl7.fhir.definitions.model.TypeRef;
 import org.hl7.fhir.definitions.model.W5Entry;
 import org.hl7.fhir.definitions.model.WorkGroup;
+import org.hl7.fhir.definitions.model.BindingSpecification.AdditionalBinding;
 import org.hl7.fhir.definitions.parsers.spreadsheets.BindingsParser;
 import org.hl7.fhir.definitions.parsers.spreadsheets.OldSpreadsheetParser;
 import org.hl7.fhir.definitions.parsers.spreadsheets.SpreadSheetCreator;
@@ -1094,9 +1095,12 @@ public class SourceParser {
       } else if (cd.getReference() != null && cd.getReference().startsWith("http:")) {
         definitions.getUnresolvedBindings().add(cd);
       }
-      if (cd.getMaxValueSet() != null) {
-        vsGen.updateHeader(cd, cd.getMaxValueSet());
-        definitions.getBoundValueSets().put(cd.getMaxValueSet().getUrl(), cd.getMaxValueSet());
+
+      for (AdditionalBinding vsc : cd .getAdditionalBindings()) {
+        if (vsc.getValueSet() != null) {
+          vsGen.updateHeader(cd, vsc.getValueSet());
+          definitions.getBoundValueSets().put(vsc.getValueSet().getUrl(), vsc.getValueSet());
+        }
       }
     }
 //    if (!page.getDefinitions().getBoundValueSets().containsKey("http://hl7.org/fhir/ValueSet/data-absent-reason"))

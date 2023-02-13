@@ -10,6 +10,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Set;
 
+import org.hl7.fhir.definitions.model.BindingSpecification.AdditionalBinding;
 import org.hl7.fhir.definitions.model.BindingSpecification.BindingMethod;
 import org.hl7.fhir.definitions.model.ConstraintStructure;
 import org.hl7.fhir.definitions.model.Definitions;
@@ -361,24 +362,22 @@ public class Regenerator {
         fn.setLastModified(r.getTimestamp());            
       }
 
-      vs = ed.getBinding().getMaxValueSet();
-      if (vs != null) {
-        fn = new File(Utilities.path(root, vs.fhirType().toLowerCase()+"-"+vs.getId()+".gen.xml"));
-        new XmlParser().setOutputStyle(OutputStyle.PRETTY).compose(new FileOutputStream(fn), vs);
-        fn.setLastModified(r.getTimestamp());        
-        csl = fetchCodeSystemsForValueSet(vs);
-        for (CodeSystem cs : csl) {
-          fn = new File(Utilities.path(root, cs.fhirType().toLowerCase()+"-"+cs.getId()+".gen.xml"));
-          new XmlParser().setOutputStyle(OutputStyle.PRETTY).compose(new FileOutputStream(fn), cs);
-          fn.setLastModified(r.getTimestamp());            
+      for (AdditionalBinding vsc : ed.getBinding().getAdditionalBindings()) {
+        if (vsc.getValueSet() != null) {
+          vs = vsc.getValueSet();
+          fn = new File(Utilities.path(root, vs.fhirType().toLowerCase()+"-"+vs.getId()+".gen.xml"));
+          new XmlParser().setOutputStyle(OutputStyle.PRETTY).compose(new FileOutputStream(fn), vs);
+          fn.setLastModified(r.getTimestamp());        
+          csl = fetchCodeSystemsForValueSet(vs);
+          for (CodeSystem cs : csl) {
+            fn = new File(Utilities.path(root, cs.fhirType().toLowerCase()+"-"+cs.getId()+".gen.xml"));
+            new XmlParser().setOutputStyle(OutputStyle.PRETTY).compose(new FileOutputStream(fn), cs);
+            fn.setLastModified(r.getTimestamp());            
+          }
         }
       }
     }
     
-    // in ElementDefinition.binding 
-    // private ValueSet valueSet;
-    // private ValueSet maxValueSet;
-      
   }
 
   private List<CodeSystem> fetchCodeSystemsForValueSet(ValueSet vs) {
