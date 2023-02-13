@@ -178,7 +178,7 @@ public class TerminologyNotesGenerator extends OutputStreamWriter {
           throw new Exception("Mixed types on one concept domain in one type - not yet supported by the build process for binding "+cd.getName()+" ("+list.get(i).element.typeCode()+" vs "+list.get(1).element.typeCode()+")");
       }
       String name = cd.getValueSet() != null ? cd.getValueSet().present() : cd.getName();
-      write(" <tr><td valign=\"top\" title=\""+name+"\">");
+      write(" <tr><td "+(cd.getAdditionalBindings().size() == 0 ? "" : "style=\"border-bottom: none\" ")+"valign=\"top\" title=\""+name+"\">");
       boolean first = true;
       for (int i = 1; i < list.size(); i++) {
         if (!first)
@@ -190,7 +190,7 @@ public class TerminologyNotesGenerator extends OutputStreamWriter {
       if (cd.getBinding() == BindingMethod.Unbound)
         write("<td>Unknown</td><td valign=\"top\">No details provided yet</td>");
       else { 
-        write("<td valign=\"top\">");
+        write("<td "+(cd.getAdditionalBindings().size() == 0 ? "" : "style=\"border-bottom: 1px silver dotted\" ")+"valign=\"top\">");
         if (cd.getBinding() == BindingSpecification.BindingMethod.Special) {
           if (name.equals("MessageEvent"))
             write("<a href=\""+prefix+"valueset-message-events.html\">Message Events</a>");
@@ -259,26 +259,26 @@ public class TerminologyNotesGenerator extends OutputStreamWriter {
 
         write("</td>");
       }
-      write("<td><a href=\""+prefix+"terminologies.html#"+cd.getStrength().toCode()+"\">"+cd.getStrength().getDisplay()+"</a></td>");
+      write("<td"+(cd.getAdditionalBindings().size() == 0 ? "" : " style=\"border-bottom: 1px silver dotted\"")+"><a href=\""+prefix+"terminologies.html#"+cd.getStrength().toCode()+"\">"+cd.getStrength().getDisplay()+"</a></td>");
       if (cd.getValueSet() != null) {
-        write("<td valign=\"top\">");
+        write("<td"+(cd.getAdditionalBindings().size() == 0 ? "" : " style=\"border-bottom: 1px silver dotted\"")+" valign=\"top\">");
         write(page.processMarkdown("vs.description", cd.getValueSet().getDescription(), ""));
         write("</td>");
       } else {
-        write("<td valign=\"top\">"+Utilities.escapeXml(cd.getDefinition())+"</td>");
+        write("<td"+(cd.getAdditionalBindings().size() == 0 ? "" : " style=\"border-bottom: 1px silver dotted\"")+" valign=\"top\">"+Utilities.escapeXml(cd.getDefinition())+"</td>");
       }
       write(" </tr>\r\n");
       for (AdditionalBinding ab : cd.getAdditionalBindings()) {
         write(" <tr>\r\n");
-        write("   <td>&nbsp;</td>\r\n");
+        write("   <td style=\"border-top: none\">&nbsp;</td>\r\n");
         if (ab.getValueSet() != null) {          
-          write("   <td><a href=\""+ab.getValueSet().getUserString("path")+"\">"+Utilities.escapeXml(ab.getValueSet().present())+"</a></td>\r\n");
+          write("   <td"+(cd.getAdditionalBindings().size() == 0 ? "" : " style=\"border-top: 1px silver dotted\"")+"><a href=\""+ab.getValueSet().getUserString("path")+"\">"+Utilities.escapeXml(ab.getValueSet().present())+"</a></td>\r\n");
         } else {
-          write("   <td><code>"+Utilities.escapeXml(ab.getRef())+"</code></td>\r\n");
+          write("   <td"+(cd.getAdditionalBindings().size() == 0 ? "" : " style=\"border-top: 1px silver dotted\"")+"><code>"+Utilities.escapeXml(ab.getRef())+"</code></td>\r\n");
         }
-        write("   <td><a href=\"codesystem-additional-binding-purpose.html#additional-binding-purpose-"+ab.getPurpose()+"\">"+ab.getPurpose()+"</a></td>\r\n");
-        write("<td valign=\"top\">");
-        write(page.processMarkdown("vs.description", cd.getValueSet().getDescription(), ""));
+        write("   <td"+(cd.getAdditionalBindings().size() == 0 ? "" : " style=\"border-top: 1px silver dotted\"")+"><a href=\"codesystem-additional-binding-purpose.html#additional-binding-purpose-"+ab.getPurpose()+"\">"+ab.getPurpose()+"</a></td>\r\n");
+        write("<td"+(cd.getAdditionalBindings().size() == 0 ? "" : " style=\"border-top: 1px silver dotted\"")+" valign=\"top\">");
+        write(page.processMarkdown("vs.description", ab.getDoco(), ""));
         write("</td>");
         write(" </tr>\r\n");
       } 
@@ -365,33 +365,26 @@ public class TerminologyNotesGenerator extends OutputStreamWriter {
           abr.seeAdditionalBinding(ab.getPurpose(), ab.getDoco(), ab.getRef());
         }
       }
-      //abr.render(gen, cc);
-//      if (cd.getMaxValueSet() == null)
-//        mx = " but limited to ??";
-//      else {
-//        String pp = cd.getMaxValueSet().hasUserData("external.url") ? cd.getMaxValueSet().getUserString("external.url") : cd.getMaxValueSet().getUserString("path");
-//        mx = " but limited to <a href=\""+prefix+pp.replace(File.separatorChar, '/')+"\">"+cd.getMaxValueSet().present()+"</a>";
-//      }
-      mx = "Additional bindings todo!";
+      mx = abr.render();
     }
 
     String bs = "<a href=\""+prefix+"terminologies.html#"+cd.getStrength().toCode()+"\">"+cd.getStrength().getDisplay()+"</a>";
     if (cd.getValueSet() != null) {
       ValueSet vs = cd.getValueSet();
       String pp = vs.hasUserData("external.url") ? vs.getUserString("external.url") : vs.getUserString("path");
-      return "<a href=\""+prefix+pp.replace(File.separatorChar, '/')+"\">"+cd.getValueSet().present()+"</a> ("+bs+mx+")";      
+      return "<a href=\""+prefix+pp.replace(File.separatorChar, '/')+"\">"+cd.getValueSet().present()+"</a> ("+bs+")"+mx;      
     } else if (cd.getBinding() == BindingSpecification.BindingMethod.ValueSet) {
       if (Utilities.noString(cd.getReference())) 
         return cd.getDescription();
       else if (cd.getValueSet() == null)
-        return bs+": <a href=\""+(cd.getReference().startsWith("http") ? cd.getReference() : prefix+cd.getReference()+".html")+"\">See "+cd.getDescription()+"</a> ("+cd.getDefinition()+mx+")";
+        return bs+": <a href=\""+(cd.getReference().startsWith("http") ? cd.getReference() : prefix+cd.getReference()+".html")+"\">See "+cd.getDescription()+"</a> ("+cd.getDefinition()+")"+mx;
       else
         return bs+": <a href=\""+prefix+cd.getReference()+".html\">See "+cd.getValueSet().getUrl()+"</a> ("+cd.getDefinition()+mx+")";
     } else if (cd.getBinding() == BindingSpecification.BindingMethod.CodeList) {
       if (Utilities.noString(cd.getReference())) 
-        return bs+": "+cd.getDescription()+" ("+cd.getDefinition()+mx+")";
+        return bs+": "+cd.getDescription()+" ("+cd.getDefinition()+")"+mx;
       else
-        return bs+": <a href=\""+prefix+"valueset-"+cd.getReference().substring(1)+".html\">http://hl7.org/fhir/"+cd.getReference().substring(1)+"</a> ("+cd.getDefinition()+mx+")";
+        return bs+": <a href=\""+prefix+"valueset-"+cd.getReference().substring(1)+".html\">http://hl7.org/fhir/"+cd.getReference().substring(1)+"</a> ("+cd.getDefinition()+")"+mx;
     }
     return "??";
   }
