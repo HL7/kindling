@@ -243,6 +243,7 @@ import org.hl7.fhir.tools.converters.DSTU3ValidationConvertor;
 import org.hl7.fhir.tools.converters.SpecNPMPackageGenerator;
 import org.hl7.fhir.tools.publisher.ExampleInspector.EValidationFailed;
 import org.hl7.fhir.tools.publisher.Publisher.ValidationInformation;
+import org.hl7.fhir.tools.publisher.Publisher.ValidationMode;
 import org.hl7.fhir.utilities.CSFile;
 import org.hl7.fhir.utilities.CSFileInputStream;
 import org.hl7.fhir.utilities.CloseProtectedZipInputStream;
@@ -291,6 +292,21 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 
 public class Publisher implements URIResolver, SectionNumberer {
+
+  public enum ValidationMode {
+    NORMAL, NONE, EXTENDED;
+
+    static ValidationMode fromCode(String v) {
+      if (v == null) {
+        return NORMAL;
+      }
+      switch (v.toLowerCase()) {
+      case "extended": return EXTENDED;
+      case "none" : return NONE;
+      default: return NORMAL;
+      }
+    }
+  }
 
   public class ValidationInformation {
 
@@ -501,7 +517,9 @@ public class Publisher implements URIResolver, SectionNumberer {
     pub.diffProgram = getNamedParam(args, "-diff");
     pub.noSound =  (args.length > 1 && hasParam(args, "-nosound"));
     pub.noPartialBuild = (args.length > 1 && hasParam(args, "-nopartial"));
-    pub.validateBundles = hasParam(args, "-validate-bundles");
+    if (hasParam(args, "-validation-mode")) {
+      pub.validationMode = ValidationMode.fromCode(getNamedParam(args, "-validation-mode"));
+    }
     pub.isPostPR = (args.length > 1 && hasParam(args, "-post-pr"));
     if (hasParam(args, "-resource"))
       pub.singleResource = getNamedParam(args, "-resource");
@@ -732,6 +750,7 @@ public class Publisher implements URIResolver, SectionNumberer {
       page.loadUcum();
       buildFeedsAndMaps();
       prsr.setExternals(externals);
+      page.makeRenderingContext();
 
       prsr.parse(page.getGenDate(), page.getValidationErrors());
       for (String n : page.getDefinitions().sortedResourceNames())
@@ -756,7 +775,6 @@ public class Publisher implements URIResolver, SectionNumberer {
       if (buildFlags.get("all")) {
         copyStaticContent();
       }
-      page.makeRenderingContext();
       loadValueSets1();
 
       generateSCMaps();
@@ -4655,13 +4673,12 @@ public class Publisher implements URIResolver, SectionNumberer {
 
   private Set<String> examplesProcessed = new HashSet<String>();
 
-  private boolean validateBundles;
+  private ValidationMode validationMode = ValidationMode.NORMAL;
 
   private ExampleInspector ei;
 
   private ProfileValidator pv;
 
-  
   private void processExample(Example e, ResourceDefn resn, StructureDefinition profile, Profile pack, ImplementationGuideDefn ig) throws Exception {
     if (e.getType() == ExampleType.Tool)
       return;
@@ -6041,7 +6058,7 @@ public class Publisher implements URIResolver, SectionNumberer {
 
   private void validationProcess() throws Exception {
     
-    if (!isPostPR) {
+    if (!isPostPR && validationMode != ValidationMode.NONE) {
       page.log("Validating Examples", LogMessageType.Process);
       Map<String, ValidationInformation> filesToValidate = new HashMap<>();      
       Set<String> txList = new HashSet<String>();
@@ -6050,7 +6067,7 @@ public class Publisher implements URIResolver, SectionNumberer {
       for (String rname : page.getDefinitions().sortedResourceNames()) {
         ResourceDefn r = page.getDefinitions().getResources().get(rname);
         if (wantBuild(rname)) {
-          if (validateId == null) {
+          if (validateId == null && buildFlags.get("all") && validationMode == ValidationMode.EXTENDED) {
             filesToValidate.put(rname.toLowerCase()+".profile", new ValidationInformation("StructureDefinition"));
             for (ElementDefinition ed : r.getProfile().getSnapshot().getElement()) {
               if (ed.hasBinding() && ed.getBinding().hasValueSet()) {
@@ -6112,7 +6129,7 @@ public class Publisher implements URIResolver, SectionNumberer {
         }
       }
       
-      if (true || (buildFlags.get("all") && validateBundles)) {
+      if (validateId == null && buildFlags.get("all") && validationMode == ValidationMode.EXTENDED) {
         for (File f : new File(page.getFolders().dstDir).listFiles()) {
           if (f.getName().startsWith("codesystem-") && f.getName().endsWith(".json") && !f.getName().endsWith(".canonical.json") && !f.getName().endsWith("-questionnaire.json")) {
             filesToValidate.put(Utilities.changeFileExt(f.getName(), ""), new ValidationInformation("CodeSystem"));            
@@ -6127,21 +6144,7 @@ public class Publisher implements URIResolver, SectionNumberer {
             filesToValidate.put(Utilities.changeFileExt(f.getName(), ""), new ValidationInformation("StructureDefinition"));            
           }          
         }
-        
-//        
-//        
-//        if (validateId == null || validateId.equals("valuesets"))
-//          ei.validate("valuesets", "Bundle");
-//        if (validateId == null || validateId.equals("conceptmaps"))
-//          ei.validate("conceptmaps", "Bundle");
-//        if (validateId == null || validateId.equals("profiles-types"))
-//          ei.validate("profiles-types", "Bundle");
-//        if (validateId == null || validateId.equals("profiles-resources"))
-//          ei.validate("profiles-resources", "Bundle");
-//        if (validateId == null || validateId.equals("profiles-others"))
-//          ei.validate("profiles-others", "Bundle");
-//        if (validateId == null || validateId.equals("search-parameters"))
-//          ei.validate("search-parameters", "Bundle");
+        filesToValidate.put("search-parameters", new ValidationInformation("Bundle"));            
       }
 
       page.log("Validating "+filesToValidate.size()+" files", LogMessageType.Process);
@@ -6149,7 +6152,7 @@ public class Publisher implements URIResolver, SectionNumberer {
       for (String n : Utilities.sorted(filesToValidate.keySet())) {
         ValidationInformation vi = filesToValidate.get(n);
         if (vi.getExample() == null) {
-          ei.validate(n, vi.getResourceName());
+        ei.validate(n, vi.getResourceName());
         } else if (vi.getProfile() == null) {
           ei.validate(n, vi.getResourceName());
           for (ValidationMessage vm : ei.getErrors()) {
@@ -6684,7 +6687,7 @@ private String csCounter() {
             ",\n validateId='" + validateId + '\'' +
             ",\n ped=" + ped +
             ",\n examplesProcessed=" + examplesProcessed +
-            ",\n validateBundles=" + validateBundles +
+            ",\n validationMode=" + validationMode +
             '}';
   }
 }

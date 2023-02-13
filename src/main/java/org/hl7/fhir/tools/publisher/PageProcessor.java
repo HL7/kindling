@@ -4004,7 +4004,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     if (e.hasBinding()) {
       for (AdditionalBinding ab : e.getBinding().getAdditionalBindings() ) {
         if (ab.getValueSet() == vs) {
-          addItem(items, "<li>"+type+": <a href=\""+prefix+ref+"#"+path+"\">"+path+"</a> <a href=\"extension-elementdefinition-maxvalueset.html\">"+ab.getPurpose()+" ValueSet</a></li>\r\n");
+          addItem(items, "<li>"+type+": <a href=\""+prefix+ref+"#"+path+"\">"+path+"</a> <a href=\"valueset-additional-binding-purpose.html#additional-binding-purpose-maximum\">"+ab.getPurpose()+" ValueSet</a></li>\r\n");
         }
       }
     }
