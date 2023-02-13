@@ -68,27 +68,18 @@ public class BindingSpecification {
       this.purpose = purpose;
       this.ref = ref;
       this.vs = vs;
-      if (ref == null && vs == null) {
-        System.out.println("what?");
-      }
     }
 
     public AdditionalBinding(String purpose, String ref) {
       super();
       this.purpose = purpose;
       this.ref = ref;
-      if (ref == null && vs == null) {
-        System.out.println("what?");
-      }
     }
     
     public AdditionalBinding(String purpose, ValueSet vs) {
       super();
       this.purpose = purpose;
       this.vs = vs;
-      if (ref == null && vs == null) {
-        System.out.println("what?");
-      }
     }
 
     
