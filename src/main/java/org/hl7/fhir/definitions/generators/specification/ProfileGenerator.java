@@ -420,11 +420,12 @@ public class ProfileGenerator {
     }
   }
 
-
   private void populateCharacteristic(StructureDefinition p, String s) {
-    Extension ext = new Extension(ToolingExtensions.EXT_TYPE_CHARACTERISTICS);
-    ext.setValue(new CodeType(s));  
-    p.getExtension().add(ext);
+    if (!Utilities.noString(s)) {
+      Extension ext = new Extension(ToolingExtensions.EXT_TYPE_CHARACTERISTICS);
+      ext.setValue(new CodeType(s));  
+      p.getExtension().add(ext);
+    }
   }
 
 
