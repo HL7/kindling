@@ -945,11 +945,15 @@ public class SourceParser {
       vs.setPublisher("HL7, International");
     }
     ValueSetUtilities.makeShareable(vs);
-    new CodeSystemConvertor(definitions.getCodeSystems(), registry).convert(xml, vs, srcDir+ini.getStringProperty("valuesets", n).replace('\\', File.separatorChar), page.packageInfo());
+    CodeSystem cs= new CodeSystemConvertor(definitions.getCodeSystems(), registry).convert(xml, vs, srcDir+ini.getStringProperty("valuesets", n).replace('\\', File.separatorChar), page.packageInfo());
+    if (cs != null) {
+      page.getWorkerContext().cacheResource(cs);
+    }
     
     vs.setExperimental(false);
     vs.setUserData("path", "valueset-"+vs.getId()+".html");
     vs.setUserData("filename", "valueset-"+vs.getId());
+    page.getWorkerContext().cacheResource(vs);
     definitions.getExtraValuesets().put(n, vs) ;
     definitions.getExtraValuesets().put(vs.getUrl(), vs);
   }
