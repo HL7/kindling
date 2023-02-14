@@ -123,6 +123,7 @@ import org.hl7.fhir.r5.model.OperationDefinition;
 import org.hl7.fhir.r5.model.OperationDefinition.OperationDefinitionParameterBindingComponent;
 import org.hl7.fhir.r5.model.OperationDefinition.OperationDefinitionParameterComponent;
 import org.hl7.fhir.r5.model.OperationDefinition.OperationKind;
+import org.hl7.fhir.r5.model.OperationDefinition.OperationParameterScope;
 import org.hl7.fhir.r5.model.PositiveIntType;
 import org.hl7.fhir.r5.model.SearchParameter;
 import org.hl7.fhir.r5.model.SearchParameter.SearchComparator;
@@ -2562,6 +2563,9 @@ public class ProfileGenerator {
     pp.setMax(p.getMax());
     if (p.getStatus() != null) {
       ToolingExtensions.setStandardsStatus(pp, p.getStatus(), null);
+    }
+    for (String s : p.getScopes()) {
+      pp.addScope(OperationParameterScope.fromCode(s));
     }
     if (p.getBs() != null) {
       if (p.getBs().getAdditionalBindings().size() > 0)

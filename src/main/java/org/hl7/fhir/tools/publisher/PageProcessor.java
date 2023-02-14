@@ -184,6 +184,7 @@ import org.hl7.fhir.r5.model.ImplementationGuide.ImplementationGuideDefinitionRe
 import org.hl7.fhir.r5.model.NamingSystem;
 import org.hl7.fhir.r5.model.NamingSystem.NamingSystemIdentifierType;
 import org.hl7.fhir.r5.model.NamingSystem.NamingSystemUniqueIdComponent;
+import org.hl7.fhir.r5.model.OperationDefinition.OperationParameterScope;
 import org.hl7.fhir.r5.model.Narrative;
 import org.hl7.fhir.r5.model.OperationDefinition;
 import org.hl7.fhir.r5.model.PackageInformation;
@@ -7367,9 +7368,11 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
   }
 
   private void genParameterHeader(StringBuilder b, String mode) {
-    b.append("<tr><td colspan=\"6\"><b>").append(mode).append(" Parameters:</b></td></tr>\r\n");
+    b.append("<tr><td colspan=\"7\"><b>").append(mode).append(" Parameters:</b></td></tr>\r\n");
     b.append("<tr><td>");
     b.append("<b>Name</b>");
+    b.append("</td><td>");
+    b.append("<b>Scope</b>");
     b.append("</td><td>");
     b.append("<b>Cardinality</b>");
     b.append("</td><td>");
@@ -7396,6 +7399,12 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
       b.append(ss.getAbbrev());
       b.append("</a>");
     }
+    b.append("</td><td>");
+    CommaSeparatedStringBuilder bc = new CommaSeparatedStringBuilder();
+    for (String s : p.getScopes()) {
+      bc.append(s);
+    }
+    b.append(bc.toString());
     b.append("</td><td>");
     b.append(p.describeCardinality());
     b.append("</td><td>");

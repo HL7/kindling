@@ -5179,8 +5179,9 @@ public class Publisher implements URIResolver, SectionNumberer {
     maybeFixResourceId(vs, filename);
     if (vs.getId() == null)
       throw new Exception("Resource has no id: "+vs.getName()+" ("+vs.getUrl()+")");
-    if (ResourceUtilities.getById(dest, ResourceType.ValueSet, vs.getId()) != null)
+    if (ResourceUtilities.getById(dest, ResourceType.ValueSet, vs.getId()) != null) {
       throw new Exception("Attempt to add duplicate value set " + vs.getId()+" ("+vs.getName()+")");
+    }
     if (!vs.hasText() || !vs.getText().hasDiv()) {
       RendererFactory.factory(vs, page.getRc().copy()).render(vs);
     }
@@ -6406,7 +6407,9 @@ public class Publisher implements URIResolver, SectionNumberer {
     for (String s : page.getDefinitions().getExtraValuesets().keySet()) {
       if (!s.startsWith("http:")) {
         ValueSet vs = page.getDefinitions().getExtraValuesets().get(s);
-        generateValueSetPart2(vs);
+        if (!page.getDefinitions().getBoundValueSets().containsKey(vs.getUrl())) {
+          generateValueSetPart2(vs);
+        }
       }
     }
   }

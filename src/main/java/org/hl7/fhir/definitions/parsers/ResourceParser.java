@@ -57,6 +57,7 @@ import org.hl7.fhir.r5.model.ElementDefinition.ElementDefinitionConstraintCompon
 import org.hl7.fhir.r5.model.ElementDefinition.ElementDefinitionMappingComponent;
 import org.hl7.fhir.r5.model.ElementDefinition.PropertyRepresentation;
 import org.hl7.fhir.r5.model.ElementDefinition.TypeRefComponent;
+import org.hl7.fhir.r5.model.Enumeration;
 import org.hl7.fhir.r5.model.Enumerations.FHIRVersion;
 import org.hl7.fhir.r5.model.Enumerations.PublicationStatus;
 import org.hl7.fhir.r5.model.Enumerations.SearchParamType;
@@ -69,6 +70,7 @@ import org.hl7.fhir.r5.model.ListResource.ListResourceEntryComponent;
 import org.hl7.fhir.r5.model.OperationDefinition;
 import org.hl7.fhir.r5.model.OperationDefinition.OperationDefinitionParameterBindingComponent;
 import org.hl7.fhir.r5.model.OperationDefinition.OperationDefinitionParameterComponent;
+import org.hl7.fhir.r5.model.OperationDefinition.OperationParameterScope;
 import org.hl7.fhir.r5.model.Resource;
 import org.hl7.fhir.r5.model.SearchParameter;
 import org.hl7.fhir.r5.model.SearchParameter.SearchParameterComponentComponent;
@@ -400,6 +402,9 @@ public class ResourceParser {
         ToolingExtensions.getStandardsStatus(psrc));
     if (psrc.hasBinding()) {
       p.setBs(parseBinding(psrc.getBinding()));
+    }
+    for (Enumeration<OperationParameterScope> s : psrc.getScope()) {
+      p.getScopes().add(s.asStringValue());
     }
     for (OperationDefinitionParameterComponent pc : psrc.getPart()) {
       p.getParts().add(convertOperationParameter(pc, true));

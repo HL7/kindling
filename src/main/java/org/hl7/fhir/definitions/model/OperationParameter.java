@@ -18,6 +18,7 @@ public class OperationParameter {
   private List<OperationParameter> parts;
   private BindingSpecification bs;
   private StandardsStatus status;
+  private List<String> scopes = new ArrayList<>();
 
   public OperationParameter(String name, String use, String doco, int min, String max, String fhirType, String searchType, String profile, StandardsStatus status) {
     this.name = name; 
@@ -127,6 +128,10 @@ public class OperationParameter {
 
   public StandardsStatus getStatus() {
     return status;
+  }
+
+  public List<String> getScopes() {
+    return scopes;
   }
 
 }
