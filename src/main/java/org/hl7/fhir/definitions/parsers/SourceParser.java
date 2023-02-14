@@ -944,7 +944,14 @@ public class SourceParser {
     if (!vs.hasPublisher()) {
       vs.setPublisher("HL7, International");
     }
+    if (!ValueSetUtilities.hasOID(vs)) {
+      String oid = registry.getOID(vs.getUrl());
+      if (oid != null) {
+        ValueSetUtilities.setOID(vs, "urn:oid:"+oid);
+      }
+    }
     ValueSetUtilities.makeShareable(vs);
+    
     CodeSystem cs= new CodeSystemConvertor(definitions.getCodeSystems(), registry).convert(xml, vs, srcDir+ini.getStringProperty("valuesets", n).replace('\\', File.separatorChar), page.packageInfo());
     if (cs != null) {
       page.getWorkerContext().cacheResource(cs);
@@ -1135,6 +1142,7 @@ public class SourceParser {
     prim.setRegex(sheet.getColumn(row, "RegEx"));
     prim.setV2(sheet.getColumn(row, "v2"));
     prim.setV3(sheet.getColumn(row, "v3"));
+    prim.loadCharacteristics(ini.getStringProperty("type-characteristics", prim.getCode()));
     TypeRef td = new TypeRef();
     td.setName(prim.getCode());
     definitions.getKnownTypes().add(td);
@@ -1150,6 +1158,7 @@ public class SourceParser {
     prim.setSchema(sheet.getColumn(row, "Schema"));
     prim.setJsonType(sheet.getColumn(row, "Json"));
     prim.setBase(sheet.getColumn(row, "Base"));
+    prim.loadCharacteristics(ini.getStringProperty("type-characteristics", prim.getCode()));
     TypeRef td = new TypeRef();
     td.setName(prim.getCode());
     definitions.getKnownTypes().add(td);
@@ -1230,6 +1239,7 @@ public class SourceParser {
             }
             pt.setName(n);
             pt.setBaseType(p);
+            pt.loadCharacteristics(ini.getStringProperty("type-characteristics", p));
             pt.setInvariant(inv);
             definitions.getConstraints().put(n, pt);
           }
@@ -1301,7 +1311,7 @@ public class SourceParser {
         map.put(root.getName(), root);
       }
       if (!isTemplate) {
-        definitions.getKnownResources().put(root.getName(), new DefinedCode(root.getName(), root.getRoot().getDefinition(), n));
+        definitions.getKnownResources().put(root.getName(), new DefinedCode(root.getName(), root.getRoot().getDefinition(), n, null));
         context.getResourceNames().add(root.getName());
       }
       if (root.getNormativeVersion() != null || root.getNormativePackage() != null) {
@@ -1326,7 +1336,7 @@ public class SourceParser {
         parseSvgFile(f, rootNew.getLayout(), f.getName());
       }
       if (!isTemplate) {
-        definitions.getKnownResources().put(rootNew.getName(), new DefinedCode(rootNew.getName(), rootNew.getRoot().getDefinition(), n));
+        definitions.getKnownResources().put(rootNew.getName(), new DefinedCode(rootNew.getName(), rootNew.getRoot().getDefinition(), n, null));
         context.getResourceNames().add(rootNew.getName());
       }
       if (f.exists()) { 

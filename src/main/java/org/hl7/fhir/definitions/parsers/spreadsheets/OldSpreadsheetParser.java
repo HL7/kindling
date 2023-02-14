@@ -1748,7 +1748,7 @@ public class OldSpreadsheetParser {
 				throw new Exception("Definitions in " + getLocation(row)+ " contain two roots: " + path + " in "+ root.getName());
 
 			root.setName(path);
-			e = new TypeDefn();
+			e = new TypeDefn(ini.getStringProperty("type-characteristics", path));
 			e.setName(path);
 			root.setRoot((TypeDefn) e);
 			if (template != null)

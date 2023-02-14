@@ -510,7 +510,7 @@ public class ResourceParser {
 
 
   private TypeDefn parseTypeDefinition(ProfileUtilities pu, ElementDefinition focus, StructureDefinition sd) throws IOException {
-    TypeDefn ed = new TypeDefn();
+    TypeDefn ed = new TypeDefn(null);
     parseED(pu, ed, focus, sd, "");
     return ed;
   }

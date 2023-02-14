@@ -306,7 +306,7 @@ public class ProfileGenerator {
     p.setVersion(version.toCode());
     ToolingExtensions.setStandardsStatus(p, StandardsStatus.NORMATIVE, "4.0.0");
     KindlingUtilities.makeUniversal(p);
-
+    populateCharacteristics(p, type.getCharacteristics());
     
     ToolResourceUtilities.updateUsage(p, "core");
     p.setName(type.getCode());
@@ -414,8 +414,20 @@ public class ProfileGenerator {
     return p;
   }
 
+  private void populateCharacteristics(StructureDefinition p, List<String> list) {
+    for (String s : list) {
+      populateCharacteristic(p, s);
+    }
+  }
 
-  
+
+  private void populateCharacteristic(StructureDefinition p, String s) {
+    Extension ext = new Extension(ToolingExtensions.EXT_TYPE_CHARACTERISTICS);
+    ext.setValue(new CodeType(s));  
+    p.getExtension().add(ext);
+  }
+
+
   public void genUml(PrimitiveType type) {
     UMLClass c = uml.getClassByNameCreate(type.getCode());
     c.setDocumentation(type.getDefinition());
@@ -530,6 +542,7 @@ public class ProfileGenerator {
     p.setVersion(version.toCode());
     ToolingExtensions.setStandardsStatus(p, StandardsStatus.NORMATIVE, "4.0.0");
     KindlingUtilities.makeUniversal(p);
+    populateCharacteristic(p, "has-size");
 
     
     ToolResourceUtilities.updateUsage(p, "core");
@@ -664,6 +677,7 @@ public class ProfileGenerator {
 
     ToolingExtensions.setStandardsStatus(p, StandardsStatus.NORMATIVE, "4.0.0");
     KindlingUtilities.makeUniversal(p);
+    populateCharacteristics(p, type.getCharacteristics());
 
     ToolResourceUtilities.updateUsage(p, "core");
     p.setName(type.getCode());
@@ -795,6 +809,7 @@ public class ProfileGenerator {
     p.setVersion(version.toCode());
     ToolingExtensions.setStandardsStatus(p, t.getStandardsStatus(), t.getNormativeVersion());
     KindlingUtilities.makeUniversal(p);
+    populateCharacteristics(p, t.getCharacteristics());
 
     ToolResourceUtilities.updateUsage(p, "core");
     p.setName(t.getName());
@@ -917,6 +932,7 @@ public class ProfileGenerator {
     ToolingExtensions.setStandardsStatus(p, StandardsStatus.NORMATIVE, "4.0.0");
     p.setStatus(PublicationStatus.fromCode("active")); 
     KindlingUtilities.makeUniversal(p);
+    populateCharacteristics(p, pt.getCharacteristics());
 
     ToolResourceUtilities.updateUsage(p, "core");
     p.setName(pt.getName());
