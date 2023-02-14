@@ -24,8 +24,6 @@ public class TypeDefn extends ElementDefn {
       }
     }
   }
-
-
   
   public StructureDefinition getProfile() {
     return profile;
