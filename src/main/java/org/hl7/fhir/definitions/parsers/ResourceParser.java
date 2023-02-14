@@ -396,7 +396,8 @@ public class ResourceParser {
     } else {
       t = "Tuple";
     }
-    OperationParameter p = new OperationParameter(psrc.getName(), part ? null : psrc.getUse().toCode(), psrc.getDocumentation(), psrc.getMin(), psrc.getMax(), t, psrc.hasSearchType() ? psrc.getSearchType().toCode() : null, null);
+    OperationParameter p = new OperationParameter(psrc.getName(), part ? null : psrc.getUse().toCode(), psrc.getDocumentation(), psrc.getMin(), psrc.getMax(), t, psrc.hasSearchType() ? psrc.getSearchType().toCode() : null, null,
+        ToolingExtensions.getStandardsStatus(psrc));
     if (psrc.hasBinding()) {
       p.setBs(parseBinding(psrc.getBinding()));
     }

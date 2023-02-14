@@ -618,7 +618,7 @@ public class OldSpreadsheetParser {
             String profile = sheet.getColumn(row, "Profile");
             String min = sheet.getColumn(row, "Min");
             String max = sheet.getColumn(row, "Max");
-            OperationParameter p = new OperationParameter(pname, use, doco, Integer.parseInt(min), max, type, sheet.getColumn(row, "Search Type"), profile);
+            OperationParameter p = new OperationParameter(pname, use, doco, Integer.parseInt(min), max, type, sheet.getColumn(row, "Search Type"), profile, null);
             String bs = sheet.getColumn(row, "Binding");
             if (!Utilities.noString(bs))
               p.setBs(bindings.get(bs));

@@ -7389,6 +7389,13 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
 
     b.append("<tr><td>");
     b.append(path+p.getName());
+
+    StandardsStatus ss = p.getStatus();
+    if (ss != null) {
+      b.append(" <a href=\"versions.html#std-process\" title=\"Standards Status = "+ss.toDisplay()+"\" style=\"padding-left: 3px; padding-right: 3px; border: 1px grey solid; font-weight: bold; color: black; background-color: "+ss.getColor()+"\">");
+      b.append(ss.getAbbrev());
+      b.append("</a>");
+    }
     b.append("</td><td>");
     b.append(p.describeCardinality());
     b.append("</td><td>");

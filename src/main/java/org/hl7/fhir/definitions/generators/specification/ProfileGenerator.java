@@ -2560,6 +2560,9 @@ public class ProfileGenerator {
     pp.setDocumentation(preProcessMarkdown(p.getDoc(), "Operation Parameter Doco"));
     pp.setMin(p.getMin());
     pp.setMax(p.getMax());
+    if (p.getStatus() != null) {
+      ToolingExtensions.setStandardsStatus(pp, p.getStatus(), null);
+    }
     if (p.getBs() != null) {
       if (p.getBs().getAdditionalBindings().size() > 0)
         throw new Error("Max binding not handled yet");
