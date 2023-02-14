@@ -15,6 +15,7 @@ import java.util.Set;
 
 import org.hl7.fhir.definitions.generators.specification.ToolResourceUtilities;
 import org.hl7.fhir.definitions.model.BindingSpecification;
+import org.hl7.fhir.definitions.model.BindingSpecification.AdditionalBinding;
 import org.hl7.fhir.definitions.model.BindingSpecification.BindingMethod;
 import org.hl7.fhir.definitions.model.ConstraintStructure;
 import org.hl7.fhir.definitions.model.Definitions;
@@ -50,11 +51,13 @@ import org.hl7.fhir.r5.model.CodeSystem;
 import org.hl7.fhir.r5.model.CodeType;
 import org.hl7.fhir.r5.model.ConceptMap;
 import org.hl7.fhir.r5.model.ElementDefinition;
+import org.hl7.fhir.r5.model.ElementDefinition.ElementDefinitionBindingAdditionalComponent;
 import org.hl7.fhir.r5.model.ElementDefinition.ElementDefinitionBindingComponent;
 import org.hl7.fhir.r5.model.ElementDefinition.ElementDefinitionConstraintComponent;
 import org.hl7.fhir.r5.model.ElementDefinition.ElementDefinitionMappingComponent;
 import org.hl7.fhir.r5.model.ElementDefinition.PropertyRepresentation;
 import org.hl7.fhir.r5.model.ElementDefinition.TypeRefComponent;
+import org.hl7.fhir.r5.model.Enumeration;
 import org.hl7.fhir.r5.model.Enumerations.FHIRVersion;
 import org.hl7.fhir.r5.model.Enumerations.PublicationStatus;
 import org.hl7.fhir.r5.model.Enumerations.SearchParamType;
@@ -67,6 +70,7 @@ import org.hl7.fhir.r5.model.ListResource.ListResourceEntryComponent;
 import org.hl7.fhir.r5.model.OperationDefinition;
 import org.hl7.fhir.r5.model.OperationDefinition.OperationDefinitionParameterBindingComponent;
 import org.hl7.fhir.r5.model.OperationDefinition.OperationDefinitionParameterComponent;
+import org.hl7.fhir.r5.model.OperationDefinition.OperationParameterScope;
 import org.hl7.fhir.r5.model.Resource;
 import org.hl7.fhir.r5.model.SearchParameter;
 import org.hl7.fhir.r5.model.SearchParameter.SearchParameterComponentComponent;
@@ -394,9 +398,13 @@ public class ResourceParser {
     } else {
       t = "Tuple";
     }
-    OperationParameter p = new OperationParameter(psrc.getName(), part ? null : psrc.getUse().toCode(), psrc.getDocumentation(), psrc.getMin(), psrc.getMax(), t, psrc.hasSearchType() ? psrc.getSearchType().toCode() : null, null);
+    OperationParameter p = new OperationParameter(psrc.getName(), part ? null : psrc.getUse().toCode(), psrc.getDocumentation(), psrc.getMin(), psrc.getMax(), t, psrc.hasSearchType() ? psrc.getSearchType().toCode() : null, null,
+        ToolingExtensions.getStandardsStatus(psrc));
     if (psrc.hasBinding()) {
       p.setBs(parseBinding(psrc.getBinding()));
+    }
+    for (Enumeration<OperationParameterScope> s : psrc.getScope()) {
+      p.getScopes().add(s.asStringValue());
     }
     for (OperationDefinitionParameterComponent pc : psrc.getPart()) {
       p.getParts().add(convertOperationParameter(pc, true));
@@ -502,7 +510,7 @@ public class ResourceParser {
 
 
   private TypeDefn parseTypeDefinition(ProfileUtilities pu, ElementDefinition focus, StructureDefinition sd) throws IOException {
-    TypeDefn ed = new TypeDefn();
+    TypeDefn ed = new TypeDefn(null);
     parseED(pu, ed, focus, sd, "");
     return ed;
   }
@@ -698,10 +706,9 @@ public class ResourceParser {
     }
 
     if (binding.hasExtension(ToolingExtensions.EXT_MAX_VALUESET)) {
-      bs.setMaxReference(binding.getExtensionString(ToolingExtensions.EXT_MAX_VALUESET));
-      bs.setMaxValueSet(loadValueSet(bs.getMaxReference(), false));
+      bs.getAdditionalBindings().add(new AdditionalBinding("maximum", binding.getExtensionString(ToolingExtensions.EXT_MAX_VALUESET), loadValueSet(binding.getExtensionString(ToolingExtensions.EXT_MAX_VALUESET), false)));
     }
-
+    
     if (binding.hasExtension(BuildExtensions.EXT_V2_MAP)) {
       bs.setV2Map(binding.getExtensionString(BuildExtensions.EXT_V2_MAP));
     }
@@ -740,8 +747,10 @@ public class ResourceParser {
       bs.setValueSet(loadValueSet(bs.getReference(), false));
     }
     if (binding.hasExtension(ToolingExtensions.EXT_MAX_VALUESET)) {
-      bs.setMaxReference(binding.getExtensionString(ToolingExtensions.EXT_MAX_VALUESET));
-      bs.setMaxValueSet(loadValueSet(bs.getMaxReference(), false));
+      bs.getAdditionalBindings().add(new AdditionalBinding("maximum", binding.getExtensionString(ToolingExtensions.EXT_MAX_VALUESET), loadValueSet(binding.getExtensionString(ToolingExtensions.EXT_MAX_VALUESET), false)));
+    }
+    for (ElementDefinitionBindingAdditionalComponent add : binding.getAdditional()) {
+      bs.getAdditionalBindings().add(new AdditionalBinding(add.getPurpose().toCode(), add.getValueSet(), loadValueSet(add.getValueSet(), false)).setDoco(add.getDocumentation()));      
     }
 
     if (binding.hasExtension(BuildExtensions.EXT_V2_MAP)) {
@@ -752,6 +761,9 @@ public class ResourceParser {
     }
     if (binding.hasExtension(BuildExtensions.EXT_BINDING_DEFINITION)) {
       bs.setDefinition(binding.getExtensionString(BuildExtensions.EXT_BINDING_DEFINITION));
+      if (!binding.hasDescription()) {
+        bs.setDescription(bs.getDefinition());
+      }
     }
     if (binding.hasExtension(BuildExtensions.EXT_URI)) {
       bs.setUri(binding.getExtensionString(BuildExtensions.EXT_URI));
@@ -773,6 +785,9 @@ public class ResourceParser {
   }
 
   private ValueSet loadValueSet(String reference, boolean ext) throws IOException {
+    if (reference == null) {
+      return null;
+    }
     if (reference.contains("|")) {
       reference = reference.substring(0, reference.indexOf("|"));
     }

@@ -3,6 +3,8 @@ package org.hl7.fhir.definitions.model;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.hl7.fhir.utilities.StandardsStatus;
+
 public class OperationParameter {
 
   private String name;
@@ -15,8 +17,10 @@ public class OperationParameter {
   private String profile;
   private List<OperationParameter> parts;
   private BindingSpecification bs;
+  private StandardsStatus status;
+  private List<String> scopes = new ArrayList<>();
 
-  public OperationParameter(String name, String use, String doco, int min, String max, String fhirType, String searchType, String profile) {
+  public OperationParameter(String name, String use, String doco, int min, String max, String fhirType, String searchType, String profile, StandardsStatus status) {
     this.name = name; 
     this.use = use;
     this.doc = doco; 
@@ -25,6 +29,7 @@ public class OperationParameter {
     this.fhirType = fhirType;
     this.searchType = searchType;
     this.profile = profile;
+    this.status = status;
     if (fhirType.equals("Tuple"))
       parts = new ArrayList<OperationParameter>();
   }
@@ -119,6 +124,14 @@ public class OperationParameter {
 
   public BindingSpecification getBinding() {
     return bs;
+  }
+
+  public StandardsStatus getStatus() {
+    return status;
+  }
+
+  public List<String> getScopes() {
+    return scopes;
   }
 
 }

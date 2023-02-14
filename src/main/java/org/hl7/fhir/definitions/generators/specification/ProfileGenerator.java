@@ -42,6 +42,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.hl7.fhir.definitions.model.BindingSpecification;
+import org.hl7.fhir.definitions.model.BindingSpecification.AdditionalBinding;
 import org.hl7.fhir.definitions.model.BindingSpecification.BindingMethod;
 import org.hl7.fhir.definitions.model.CommonSearchParameter;
 import org.hl7.fhir.definitions.model.ConstraintStructure;
@@ -87,10 +88,12 @@ import org.hl7.fhir.r5.model.ContactDetail;
 import org.hl7.fhir.r5.model.ContactPoint;
 import org.hl7.fhir.r5.model.ContactPoint.ContactPointSystem;
 import org.hl7.fhir.r5.model.ElementDefinition;
+import org.hl7.fhir.r5.model.ElementDefinition.AdditionalBindingPurposeVS;
 import org.hl7.fhir.r5.model.ElementDefinition.AggregationMode;
 import org.hl7.fhir.r5.model.ElementDefinition.ConstraintSeverity;
 import org.hl7.fhir.r5.model.ElementDefinition.DiscriminatorType;
 import org.hl7.fhir.r5.model.ElementDefinition.ElementDefinitionBaseComponent;
+import org.hl7.fhir.r5.model.ElementDefinition.ElementDefinitionBindingAdditionalComponent;
 import org.hl7.fhir.r5.model.ElementDefinition.ElementDefinitionBindingComponent;
 import org.hl7.fhir.r5.model.ElementDefinition.ElementDefinitionConstraintComponent;
 import org.hl7.fhir.r5.model.ElementDefinition.ElementDefinitionMappingComponent;
@@ -120,6 +123,7 @@ import org.hl7.fhir.r5.model.OperationDefinition;
 import org.hl7.fhir.r5.model.OperationDefinition.OperationDefinitionParameterBindingComponent;
 import org.hl7.fhir.r5.model.OperationDefinition.OperationDefinitionParameterComponent;
 import org.hl7.fhir.r5.model.OperationDefinition.OperationKind;
+import org.hl7.fhir.r5.model.OperationDefinition.OperationParameterScope;
 import org.hl7.fhir.r5.model.PositiveIntType;
 import org.hl7.fhir.r5.model.SearchParameter;
 import org.hl7.fhir.r5.model.SearchParameter.SearchComparator;
@@ -302,7 +306,7 @@ public class ProfileGenerator {
     p.setVersion(version.toCode());
     ToolingExtensions.setStandardsStatus(p, StandardsStatus.NORMATIVE, "4.0.0");
     KindlingUtilities.makeUniversal(p);
-
+    populateCharacteristics(p, type.getCharacteristics());
     
     ToolResourceUtilities.updateUsage(p, "core");
     p.setName(type.getCode());
@@ -410,8 +414,21 @@ public class ProfileGenerator {
     return p;
   }
 
+  private void populateCharacteristics(StructureDefinition p, List<String> list) {
+    for (String s : list) {
+      populateCharacteristic(p, s);
+    }
+  }
 
-  
+  private void populateCharacteristic(StructureDefinition p, String s) {
+    if (!Utilities.noString(s)) {
+      Extension ext = new Extension(ToolingExtensions.EXT_TYPE_CHARACTERISTICS);
+      ext.setValue(new CodeType(s));  
+      p.getExtension().add(ext);
+    }
+  }
+
+
   public void genUml(PrimitiveType type) {
     UMLClass c = uml.getClassByNameCreate(type.getCode());
     c.setDocumentation(type.getDefinition());
@@ -526,6 +543,7 @@ public class ProfileGenerator {
     p.setVersion(version.toCode());
     ToolingExtensions.setStandardsStatus(p, StandardsStatus.NORMATIVE, "4.0.0");
     KindlingUtilities.makeUniversal(p);
+    populateCharacteristic(p, "has-size");
 
     
     ToolResourceUtilities.updateUsage(p, "core");
@@ -660,6 +678,7 @@ public class ProfileGenerator {
 
     ToolingExtensions.setStandardsStatus(p, StandardsStatus.NORMATIVE, "4.0.0");
     KindlingUtilities.makeUniversal(p);
+    populateCharacteristics(p, type.getCharacteristics());
 
     ToolResourceUtilities.updateUsage(p, "core");
     p.setName(type.getCode());
@@ -791,6 +810,7 @@ public class ProfileGenerator {
     p.setVersion(version.toCode());
     ToolingExtensions.setStandardsStatus(p, t.getStandardsStatus(), t.getNormativeVersion());
     KindlingUtilities.makeUniversal(p);
+    populateCharacteristics(p, t.getCharacteristics());
 
     ToolResourceUtilities.updateUsage(p, "core");
     p.setName(t.getName());
@@ -913,6 +933,7 @@ public class ProfileGenerator {
     ToolingExtensions.setStandardsStatus(p, StandardsStatus.NORMATIVE, "4.0.0");
     p.setStatus(PublicationStatus.fromCode("active")); 
     KindlingUtilities.makeUniversal(p);
+    populateCharacteristics(p, pt.getCharacteristics());
 
     ToolResourceUtilities.updateUsage(p, "core");
     p.setName(pt.getName());
@@ -1388,7 +1409,7 @@ public class ProfileGenerator {
 //        if (xpath.contains("[x]"))
 //          xpath = convertToXpath(xpath);
 ////        sp.setXpath(xpath);
-//        sp.setXpathUsage(spd.getxPathUsage());
+        sp.setProcessingMode(spd.getProcessingMode());
 //      }
       if (sp.getType() == SearchParamType.COMPOSITE) {
         for (CompositeDefinition cs : spd.getComposites()) {
@@ -1417,8 +1438,8 @@ public class ProfileGenerator {
 //          xpath = convertToXpath(xpath);
 //        if (sp.getXpath() != null && !sp.getXpath().contains(xpath)) 
 //          sp.setXpath(sp.getXpath()+" | " +xpath);
-//        if (sp.getXpathUsage() != spd.getxPathUsage()) 
-//          throw new FHIRException("Usage mismatch on common parameter: expected "+sp.getXpathUsage().toCode()+" but found "+spd.getxPathUsage().toCode());
+        if (spd.getProcessingMode() != null && sp.getProcessingMode() != spd.getProcessingMode()) 
+          throw new FHIRException("Usage mismatch on common parameter: expected "+sp.getProcessingMode().toCode()+" but found "+spd.getProcessingMode().toCode());
 //      }
       StandardsStatus sst = ToolingExtensions.getStandardsStatus(sp);
       if (sst == null || (spd.getStandardsStatus() == null && spd.getStandardsStatus().isLowerThan(sst))) {
@@ -1572,18 +1593,27 @@ public class ProfileGenerator {
     ElementDefinitionBindingComponent dst = new ElementDefinitionBindingComponent();
     dst.setDescription(src.getDescription());
     if (!Utilities.noString(src.getDefinition())) {
-      dst.addExtension().setUrl(BuildExtensions.EXT_BINDING_DEFINITION).setValue(new StringType(src.getDefinition()));      
+      dst.addExtension().setUrl(BuildExtensions.EXT_BINDING_DEFINITION).setValue(new StringType(src.getDefinition()));
+      if (!dst.hasDescription()) {
+        dst.setDescription(src.getDefinition());
+      }
+        
     }
     if (src.getBinding() != BindingMethod.Unbound) {
       dst.setStrength(src.getStrength());    
       dst.setValueSet(buildValueSetReference(src));
-      if (src.hasMax()) {
-        dst.addExtension().setUrl("http://hl7.org/fhir/StructureDefinition/elementdefinition-maxValueSet").setValue(new CanonicalType(src.getMaxReference() != null ? src.getMaxReference() : src.getMaxValueSet().getUrl()));
+      for (AdditionalBinding n : src.getAdditionalBindings()) {
+        ElementDefinitionBindingAdditionalComponent add = dst.addAdditional();
+        add.setPurpose(AdditionalBindingPurposeVS.fromCode(n.getPurpose()));
+        add.setDocumentation(n.getDoco());
+        add.setValueSet(n.getValueSet() != null ? n.getValueSet().getUrl() : n.getRef());
       }
     } else {
       dst.setStrength(BindingStrength.EXAMPLE);    
     }
-    dst.addExtension().setUrl(ToolingExtensions.EXT_BINDING_NAME).setValue(new StringType(src.getName()));
+    if (!Utilities.noString(src.getName())) {
+      dst.addExtension().setUrl(ToolingExtensions.EXT_BINDING_NAME).setValue(new StringType(src.getName()));
+    }
     if (src.isShared())
       dst.addExtension().setUrl("http://hl7.org/fhir/StructureDefinition/elementdefinition-isCommonBinding").setValue(new BooleanType(true));
     return dst;
@@ -2548,8 +2578,14 @@ public class ProfileGenerator {
     pp.setDocumentation(preProcessMarkdown(p.getDoc(), "Operation Parameter Doco"));
     pp.setMin(p.getMin());
     pp.setMax(p.getMax());
+    if (p.getStatus() != null) {
+      ToolingExtensions.setStandardsStatus(pp, p.getStatus(), null);
+    }
+    for (String s : p.getScopes()) {
+      pp.addScope(OperationParameterScope.fromCode(s));
+    }
     if (p.getBs() != null) {
-      if (p.getBs().hasMax())
+      if (p.getBs().getAdditionalBindings().size() > 0)
         throw new Error("Max binding not handled yet");
       pp.setBinding(new OperationDefinitionParameterBindingComponent().setStrength(p.getBs().getStrength()).setValueSet(buildValueSetReference(p.getBs())));
       if (!Utilities.noString(p.getBinding().getName())) {

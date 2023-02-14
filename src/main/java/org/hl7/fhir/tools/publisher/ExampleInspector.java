@@ -310,7 +310,7 @@ public class ExampleInspector implements IValidatorResourceFetcher, IValidationP
   
   public void doValidate(String n, String rt, StructureDefinition profile) {
     errorsInt.clear();
-    logger.log(" ...validate " + n, LogMessageType.Process);
+    logger.log(" ...validate " + n+" ("+Utilities.describeSize(fileSize(n))+")", LogMessageType.Process);
 
     try {
       Element e = validateLogical(Utilities.path(rootDir, n+".xml"), profile, FhirFormat.XML);
@@ -342,6 +342,14 @@ public class ExampleInspector implements IValidatorResourceFetcher, IValidationP
     Runtime.getRuntime().gc();
   }
  
+  private long fileSize(String n) {
+    try {
+      return new File(Utilities.path(rootDir, n+".xml")).length();
+    } catch (IOException e) {
+      return 0;
+    }
+  }
+
   private Element validateLogical(String f, StructureDefinition profile, FhirFormat fmt) throws Exception {
     Element e = Manager.parseSingle(context, new CSFileInputStream(f), fmt);
     new DefinitionsUsageTracker(definitions).updateUsage(e);

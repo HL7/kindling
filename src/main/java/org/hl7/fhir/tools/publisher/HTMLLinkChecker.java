@@ -329,13 +329,13 @@ public class HTMLLinkChecker implements FileNotifier {
 
   private boolean isValidExtensionLink(String target) {
     if (target.startsWith("extension-")) {
-      String id = target.substring(10);
-      id = id.substring(0, id.indexOf("."));
-      for (StructureDefinition sd : extensions) {
-        if (sd.getId().equalsIgnoreCase(id)) {
-          return true;
-        }
-      }
+//      String id = target.substring(10);
+//      id = id.substring(0, id.indexOf("."));
+//      for (StructureDefinition sd : extensions) {
+//        if (sd.getId().equalsIgnoreCase(id)) 
+//          return true;
+//        }
+//      }
       return false;
     } else {
       return false;
