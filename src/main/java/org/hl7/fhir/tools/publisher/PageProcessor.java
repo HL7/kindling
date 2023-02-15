@@ -7657,7 +7657,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
         b.append("</td>");
         b.append("</tr>"); 
         b.append("<tr>");
-        b.append("<td style=\"border-top: 1px black solid\">&nbsp;</td>");
+        b.append("<td style=\"border-top: 1px black solid; background-color: #eeeeee\">&nbsp;</td>");
         b.append("</tr>"); 
 
         // expression + usage + targets (+components)
@@ -7709,7 +7709,8 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
       
       String md = stripSimplePara(processMarkdown("SearchParameter.description", p.getDescription(), ""));
       
-      b.append("<tr><td><a name=\"sp-").append(p.getCode()).append("\"> </a>").append(p.getCode()).append(sst).append("</td><td><a href=\"search.html#").append(p.getType()).append("\">").append(p.getType()).append("</a></td><td>")
+      b.append("<tr><td><a name=\"sp-").append(p.getCode()).append("\"> </a><a href=\"").append(resource.getName().toLowerCase()).append("-search.html#").append(p.getResource().getId())
+              .append("\">").append(p.getCode()).append("</a>").append(sst).append("</td><td><a href=\"search.html#").append(p.getType()).append("\">").append(p.getType()).append("</a></td><td>")
               .append(md).append("</td><td>").append(p.getType() == SearchType.composite ? getCompositeExpression(p) : Utilities.escapeXml(p.getExpression())).append(p.getType() == SearchType.reference ? p.getTargetTypesAsText() : "")
               .append("</td><td>").append(presentOthers(p)).append("</td></tr>\r\n");
     }
