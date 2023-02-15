@@ -1,5 +1,7 @@
 package org.hl7.fhir.tools.publisher;
 
+import java.awt.image.renderable.RenderContext;
+
 /*
 Copyright (c) 2011+, HL7, Inc
 All rights reserved.
@@ -7619,16 +7621,11 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
 
   private String getSearchParamTable(ResourceDefn resource, String searchAdditions) throws Exception {
     if (resource.getSearchParams().size() == 0)
-      return "";
+      return "<p>(No search parameters for this resource)</p>";
     else {
       StandardsStatus st = resource.getStatus();
       
       StringBuilder b = new StringBuilder();
-      b.append("<h2>Search Parameters</h2>\r\n");
-      if (resource.getName().equals("Query"))
-        b.append("<p>Search parameter list for this resource. The <a href=\"#all\">common parameters</a> also apply.</p>\r\n");
-      else
-        b.append("<p>Search parameter list for this resource. The <a href=\"search.html#all\">common parameters</a> also apply. See <a href=\"search.html\">Searching</a> for more information about searching in REST, messaging, and services.</p>\r\n");
       b.append("<table class=\"grid\" width=\"60%\">\r\n");
 //      b.append("<tr><td><b>Name</b></td><td><b>Type</b></td><td><b>Description</b></td><td><b>Expression</b></td><td><b>In Common</b></td></tr>\r\n");
       Map<String, SearchParameter> spmap = new HashMap<>();
@@ -7647,10 +7644,15 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
         b.append("<tr>");
         b.append("<td style=\"border-top: 1px black solid\"><code>"+pp.getUrl()+"</code><a name=\""+pp.getId()+"\"></a></td>");
         b.append("</tr>"); 
+        if (pp.hasUserData("common-id")) {
+          String commonId = pp.getUserString("common-id");
+          b.append("<tr><td>This search parameter is part of the <a href=\"searchparameter-registry.html#"+commonId+"\">common search parameter "+commonId+"</a></td></tr>");           
+        }
         b.append("<tr>");
         b.append("<td style=\"border-bottom: 1px black solid\">");
         XhtmlNode div = new XhtmlNode(NodeType.Element, "div");
-        RendererFactory.factory(pp, rc).render(div, pp);
+        RenderingContext lrc = rc.copy().setDefaultStandardsStatus(st);
+        RendererFactory.factory(pp, lrc).render(div, pp);
         b.append(new XhtmlComposer(false).compose(div));
         b.append("</td>");
         b.append("</tr>"); 
@@ -7677,13 +7679,11 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
 
   private String getSearch(ResourceDefn resource, String searchAdditions) throws Exception {
     if (resource.getSearchParams().size() == 0)
-      return "";
+      return "<p>(No search parameters for this resource)</p>";
     else {
        StandardsStatus st = resource.getStatus();
       
       StringBuilder b = new StringBuilder();
-      b.append("<h2>Search Parameters</h2>\r\n");
-      b.append("<p>Search parameters for this resource. The <a href=\"search.html#all\">common parameters</a> also apply. See <a href=\"search.html\">Searching</a> for more information about searching in REST, messaging, and services.</p>\r\n");
       b.append("<table class=\"list\">\r\n");
       b.append("<tr><td><b>Name</b></td><td><b>Type</b></td><td><b>Description</b></td><td><b>Expression</b></td><td><b>In Common</b></td></tr>\r\n");
       if (resource.getName().equals("MetadataResource")) {        

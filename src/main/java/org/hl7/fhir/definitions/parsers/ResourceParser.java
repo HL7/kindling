@@ -431,6 +431,7 @@ public class ResourceParser {
     r.getSearchParams().put(sp.getCode(), sp);
     sp.setExpression(src.getExpression());
     sp.setResource(src);
+    sp.setBase(r.getName());
     String s = BuildExtensions.readStringExtension(src, BuildExtensions.EXT_PATH);
     if (!Utilities.noString(s)) {
       for (String p : s.split("\\,")) {
