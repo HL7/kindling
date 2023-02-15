@@ -10,8 +10,8 @@ import org.hl7.fhir.utilities.xhtml.XhtmlNode;
 
 public class ResourceTableGenerator extends TableGenerator {
   
-  public ResourceTableGenerator(String dest, PageProcessor page, String pageName, boolean inlineGraphics, FHIRVersion version) throws Exception {
-    super(dest, page, pageName == null ? null : pageName.toLowerCase(), inlineGraphics, version);
+  public ResourceTableGenerator(String dest, PageProcessor page, String pageName, boolean inlineGraphics, FHIRVersion version, String linkPrefix) throws Exception {
+    super(dest, page, pageName == null ? null : pageName.toLowerCase(), inlineGraphics, version, linkPrefix);
   }
 
   public XhtmlNode generate(ResourceDefn r, String prefix, boolean isActive) throws Exception {

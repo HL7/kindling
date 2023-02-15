@@ -45,8 +45,10 @@ public class TableGenerator extends BaseGenerator {
   protected String pageName;
   protected boolean inlineGraphics;
   protected FHIRVersion version;
+
+  private String linkPrefix;
   
-  public TableGenerator(String dest, PageProcessor page, String pageName, boolean inlineGraphics, FHIRVersion version) throws Exception {
+  public TableGenerator(String dest, PageProcessor page, String pageName, boolean inlineGraphics, FHIRVersion version, String prefix) throws Exception {
     super();
     this.dest = dest;
     this.definitions = page.getDefinitions();
@@ -54,7 +56,7 @@ public class TableGenerator extends BaseGenerator {
     this.pageName = pageName;
     this.inlineGraphics = inlineGraphics; 
     this.version = version;
-
+    this.linkPrefix = prefix;
   }
   
   protected boolean dictLinks() {
@@ -63,7 +65,7 @@ public class TableGenerator extends BaseGenerator {
   protected Row genElement(ElementDefn e, HierarchicalTableGenerator gen, boolean resource, String path, boolean isProfile, String prefix, RenderMode mode, boolean isRoot, StandardsStatus rootStatus, StructureDefinition sd, boolean isAbstract, boolean isInterface) throws Exception {
     Row row = gen.new Row();
 
-    row.setAnchor(path);
+    row.setAnchor(linkPrefix+path);
     boolean isProfiledExtension = isProfile && (e.getName().equals("extension") || e.getName().equals("modifierExtension"));
     row.getCells().add(gen.new Cell(null, dictLinks() ? pageName+"#"+path.replace("[", "_").replace("]", "_") : null, e.getName(), path+" : "+e.getDefinition(), null));
     Cell gc = gen.new Cell();
@@ -136,7 +138,7 @@ public class TableGenerator extends BaseGenerator {
         Cell c;
         if (t.startsWith("@")) {
           row.setIcon("icon_reuse.png", HierarchicalTableGenerator.TEXT_ICON_REUSE);
-          c = gen.new Cell("see ", "#"+t.substring(1), t.substring(t.lastIndexOf(".")+1), t.substring(1), null);
+          c = gen.new Cell("see ", "#"+linkPrefix+t.substring(1), t.substring(t.lastIndexOf(".")+1), t.substring(1), null);
         } else if (isReference(t)) {
           row.setIcon("icon_reference.png", HierarchicalTableGenerator.TEXT_ICON_REFERENCE);
           c = gen.new Cell();

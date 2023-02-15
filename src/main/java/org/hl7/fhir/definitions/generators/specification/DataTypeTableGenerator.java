@@ -10,8 +10,8 @@ import org.hl7.fhir.utilities.xhtml.HierarchicalTableGenerator.TableModel;
 import org.hl7.fhir.utilities.xhtml.XhtmlNode;
 
 public class DataTypeTableGenerator extends TableGenerator {
-  public DataTypeTableGenerator(String dest, PageProcessor page, String pageName, boolean inlineGraphics, FHIRVersion version) throws Exception {    
-    super(dest, page, page.getDefinitions().getSrcFile(pageName)+"-definitions.html", inlineGraphics, version);
+  public DataTypeTableGenerator(String dest, PageProcessor page, String pageName, boolean inlineGraphics, FHIRVersion version, String linkPrefix) throws Exception {    
+    super(dest, page, page.getDefinitions().getSrcFile(pageName)+"-definitions.html", inlineGraphics, version, linkPrefix);
   }
 
   public XhtmlNode generate(ElementDefn e, Set<String> outputTracker, boolean isActive) throws Exception {

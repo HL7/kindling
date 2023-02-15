@@ -570,8 +570,8 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
 	  return val;
   }
 
-  private String treeForDt(String dt) throws Exception {
-    DataTypeTableGenerator gen = new DataTypeTableGenerator(folders.dstDir, this, dt, false, version);
+  private String treeForDt(String dt, String linkPrefix) throws Exception {
+    DataTypeTableGenerator gen = new DataTypeTableGenerator(folders.dstDir, this, dt, false, version, linkPrefix);
     return new XhtmlComposer(XhtmlComposer.HTML).compose(gen.generate(definitions.getElementDefn(dt), null, true));
   }
 
@@ -696,15 +696,15 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
       } else if (com.length == 4 && com[0].equals("edt")) {
         if (tabs != null)
           tabs.add("tabs-"+com[1]);
-        src = s1+orgDT(com[1], xmlForDt(com[1], com[2]), treeForDt(com[1]), umlForDt(com[1], com[3]), umlForDt(com[1], com[3]+"b"), profileRef(com[1]), tsForDt(com[1]), jsonForDt(com[1], com[2]), ttlForDt(com[1], com[2]), diffForDt(com[1], com[2]))+s3;
+        src = s1+orgDT(com[1], xmlForDt(com[1], com[2]), treeForDt(com[1], ""), umlForDt(com[1], com[3]), umlForDt(com[1], com[3]+"b"), profileRef(com[1]), tsForDt(com[1]), jsonForDt(com[1], com[2]), ttlForDt(com[1], com[2]), diffForDt(com[1], com[2]))+s3;
       } else if (com.length == 3 && com[0].equals("dt")) {
         if (tabs != null)
           tabs.add("tabs-"+com[1]);
-        src = s1+orgDT(com[1], xmlForDt(com[1], file), treeForDt(com[1]), umlForDt(com[1], com[2]), umlForDt(com[1], com[2]+"b"), profileRef(com[1]), tsForDt(com[1]), jsonForDt(com[1], file), ttlForDt(com[1], file), diffForDt(com[1], file))+s3;
+        src = s1+orgDT(com[1], xmlForDt(com[1], file), treeForDt(com[1], ""), umlForDt(com[1], com[2]), umlForDt(com[1], com[2]+"b"), profileRef(com[1]), tsForDt(com[1]), jsonForDt(com[1], file), ttlForDt(com[1], file), diffForDt(com[1], file))+s3;
       } else if (com.length == 3 && com[0].equals("adt")) {
         if (tabs != null)
           tabs.add("tabs-"+com[1]);
-        src = s1+orgADT(com[1], treeForDt(com[1]), umlForDt(com[1], com[2]), umlForDt(com[1], com[2]+"b"), diffForDt(com[1], file))+s3;
+        src = s1+orgADT(com[1], treeForDt(com[1], "A"), umlForDt(com[1], com[2]), umlForDt(com[1], com[2]+"b"), diffForDt(com[1], file))+s3;
       } else if (com.length == 2 && com[0].equals("dt.constraints"))
         src = s1+genConstraints(com[1], genlevel(level))+s3;
       else if (com.length == 2 && com[0].equals("dt.restrictions"))
@@ -875,7 +875,9 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
       } else if (com[0].equals("profileheader")) {
         src = s1+profileHeader(((StructureDefinition) resource).getId().toLowerCase(), com[1], hasExamples((StructureDefinition) resource, ig))+s3;
       } else if (com[0].equals("resource-table")) {
-        src = s1+genResourceTable(definitions.getResourceByName(com[1]), genlevel(level))+s3;
+        src = s1+genResourceTable(definitions.getResourceByName(com[1]), genlevel(level), "X")+s3;
+      } else if (com[0].equals("resource-table-all")) {
+        src = s1+genResourceTable(definitions.getResourceByName(com[1]), genlevel(level), "A")+s3;
       } else if (com[0].equals("dtextras")) {
         src = s1+produceDataTypeExtras(com[1], false)+s3;
       } else if (com[0].equals("dtextensions")) {
@@ -4105,8 +4107,8 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
       return "";
   }
 
-  private String genResourceTable(ResourceDefn res, String prefix) throws Exception {
-    ResourceTableGenerator gen = new ResourceTableGenerator(folders.dstDir, this, res.getName()+"-definitions.html", false, version);
+  private String genResourceTable(ResourceDefn res, String prefix, String linkPrefix) throws Exception {
+    ResourceTableGenerator gen = new ResourceTableGenerator(folders.dstDir, this, res.getName()+"-definitions.html", false, version, linkPrefix);
     return new XhtmlComposer(XhtmlComposer.HTML).compose(gen.generate(res, prefix, true))+(!res.isAbstract() && !res.isPattern() ? "<p><a href=\""+res.getName().toLowerCase()+"-profiles.html#extensions\">See the Extensions</a> for this resource</p>" : "");
   }
 
@@ -5102,7 +5104,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
       if (com.length == 3 && com[0].equals("edt")) {
         if (tabs != null)
           tabs.add("tabs-"+com[1]);
-        src = s1+orgDT(com[1], xmlForDt(com[1], com[2]), treeForDt(com[1]), umlForDt(com[1], com[2]), umlForDt(com[1], com[2]+"b"), profileRef(com[1]), tsForDt(com[1]), jsonForDt(com[1], com[2]), ttlForDt(com[1], com[2]), diffForDt(com[1], com[2]))+s3;
+        src = s1+orgDT(com[1], xmlForDt(com[1], com[2]), treeForDt(com[1], ""), umlForDt(com[1], com[2]), umlForDt(com[1], com[2]+"b"), profileRef(com[1]), tsForDt(com[1]), jsonForDt(com[1], com[2]), ttlForDt(com[1], com[2]), diffForDt(com[1], com[2]))+s3;
       } else if (com.length == 2 && com[0].equals("dt")) {
         if (tabs != null)
           tabs.add("tabs-"+com[1]);
@@ -5511,7 +5513,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
       } else if (com.length == 3 && com[0].equals("edt")) {
         if (tabs != null)
           tabs.add("tabs-"+com[1]);
-        src = s1+orgDT(com[1], xmlForDt(com[1], com[2]), treeForDt(com[1]), umlForDt(com[1], com[2]), umlForDt(com[1], com[2]+"b"), profileRef(com[1]), tsForDt(com[1]), jsonForDt(com[1], com[2]), ttlForDt(com[1], com[2]), diffForDt(com[1], com[2]))+s3;
+        src = s1+orgDT(com[1], xmlForDt(com[1], com[2]), treeForDt(com[1], ""), umlForDt(com[1], com[2]), umlForDt(com[1], com[2]+"b"), profileRef(com[1]), tsForDt(com[1]), jsonForDt(com[1], com[2]), ttlForDt(com[1], com[2]), diffForDt(com[1], com[2]))+s3;
       } else if (com.length == 3 && com[0].equals("dt")) {
         if (tabs != null)
           tabs.add("tabs-"+com[1]);
@@ -5646,7 +5648,9 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
       } else if (com[0].equals("dtextensions")) {
         src = s1+produceDataTypeExtras(com[1], false)+s3;
       } else if (com[0].equals("resource-table")) {
-        src = s1+genResourceTable(definitions.getResourceByName(com[1]), genlevel(level))+s3;
+        src = s1+genResourceTable(definitions.getResourceByName(com[1]), genlevel(level), "X")+s3;
+      } else if (com[0].equals("resource-table-all")) {
+        src = s1+genResourceTable(definitions.getResourceByName(com[1]), genlevel(level), "A")+s3;
       } else if (com[0].equals("profile-diff")) {
         ConstraintStructure p = definitions.findProfile(com[1]);
         src = s1 + generateProfileStructureTable(p, true, com[1]+".html", com[1], genlevel(level)) + s3;
@@ -6458,7 +6462,9 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
       else if (com[0].equals("inv"))
         src = s1+genResourceConstraints(resource, genlevel(level))+s3;
       else if (com[0].equals("resource-table"))
-        src = s1+genResourceTable(resource, genlevel(level))+s3;
+        src = s1+genResourceTable(resource, genlevel(level), "X")+s3;
+      else if (com[0].equals("resource-table-all"))
+        src = s1+genResourceTable(resource, genlevel(level), "A")+s3;
       else if (com[0].equals("plural"))
         src = s1+Utilities.pluralizeMe(name)+s3;
       else if (com[0].equals("dictionary"))
