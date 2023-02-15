@@ -3742,7 +3742,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
 
     for (String s : entries) {
       TocEntry t = toc.get(s);
-      if (!s.startsWith("?")) {
+      if (!s.startsWith("?") && !t.getLink().contains("broken-link")) {
         String nd = s;
         while (nd.endsWith(".0"))
           nd = nd.substring(0, nd.length()-2);
