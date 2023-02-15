@@ -3252,6 +3252,25 @@ public class Publisher implements URIResolver, SectionNumberer {
       zip.close();
       npm.finish();
       
+      page.log(" ...search package", LogMessageType.Process);
+
+      ImplementationGuide spIg = new ImplementationGuide();
+      spIg.addFhirVersion(page.getVersion());
+      spIg.setPackageId(pidRoot()+".search");
+      spIg.setVersion(page.getVersion().toCode());
+      spIg.setLicense(ImplementationGuide.SPDXLicense.CC01_0);
+      spIg.setTitle("FHIR "+page.getVersion().getDisplay()+" package : ungrouped search parameters");
+      exIg.setDescription("FHIR "+page.getVersion().getDisplay()+" package : Search Parameters (break out combined parmaeters for server execution convenience)");
+      npm = new NPMPackageGenerator(Utilities.path(page.getFolders().dstDir, pidRoot()+".search.tgz"), "http://hl7.org/fhir", "http://hl7.org/fhir", PackageType.EXAMPLES, exIg, page.getGenDate().getTime(), true);
+      for (ResourceDefn r : page.getDefinitions().getBaseResources().values()) {
+        addToSearchPackage(r, npm);
+      }
+      for (ResourceDefn r : page.getDefinitions().getResources().values()) {
+        addToSearchPackage(r, npm);
+      }
+      npm.finish();
+
+      
       NDJsonWriter ndjson = new NDJsonWriter(page.getFolders().dstDir + "examples-ndjson.zip", page.getFolders().tmpDir);
       ndjson.addFilesFiltered(page.getFolders().dstDir, ".json", new String[] {".schema.json", ".canonical.json", ".diff.json", "expansions.json", "package.json"});
       ndjson.close();
@@ -3266,6 +3285,14 @@ public class Publisher implements URIResolver, SectionNumberer {
       checkAllOk();
     } else
       page.log("Partial Build - terminating now", LogMessageType.Error);
+  }
+
+  private void addToSearchPackage(ResourceDefn r, NPMPackageGenerator npm) throws IOException {
+    for (SearchParameterDefn spd : r.getSearchParams().values()) {
+      SearchParameter sp = spd.getResource().copy();
+      sp.setId(r.getName()+"-"+sp.getCode().replace("_", ""));
+      npm.addFile(Category.RESOURCE, sp.fhirType()+"-"+sp.getId()+".json", new JsonParser().composeBytes(sp));
+    }    
   }
 
   private String pidRoot() {
