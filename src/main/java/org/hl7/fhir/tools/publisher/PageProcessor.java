@@ -1363,9 +1363,12 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
         src = s1+"<a href=\"https://gforge.hl7.org/gf/project/fhir/tracker/?action=TrackerItemEdit&amp;tracker_item_id="+com[0].substring(3)+"\">"+com[0]+"</a>"+s3;      
       else if (com[0].startsWith("GFT#"))
         src = s1+"<a href=\"https://gforge.hl7.org/gf/project/fhir/tracker/?action=TrackerItemEdit&amp;tracker_item_id="+com[0].substring(3)+"\">Task</a>"+s3;      
-      else if (com[0].equals("operation")) {
+      else if (com[0].equals("operation.1")) {
         Operation op = (Operation) object;
-        src = s1+genOperation(op, rd.getName(), rd.getName().toLowerCase(), false, rd.getStatus(), genlevel(level), rd.getNormativePackage())+s3;
+        src = s1+genOperation1(op, rd.getName(), rd.getName().toLowerCase(), false, rd.getStatus(), genlevel(level), rd.getNormativePackage())+s3;
+      } else if (com[0].equals("operation.2")) {
+        Operation op = (Operation) object;
+        src = s1+genOperation2(op, rd.getName(), rd.getName().toLowerCase(), false, rd.getStatus(), genlevel(level), rd.getNormativePackage())+s3;
       } else if (com[0].equals("past-narrative-link")) {
        if (object == null || !(object instanceof Boolean))  
          src = s1 + s3;
@@ -1417,6 +1420,8 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
         src = s1+includeOperationFile((OperationDefinition) resource, "introduction")+s3;        
       } else if (com[0].equals("operation.intro.notes")) { 
         src = s1+includeOperationFile((OperationDefinition) resource, "notes")+s3;        
+      } else if (com[0].equals("operation.intro.footnotes")) { 
+        src = s1+includeOperationFile((OperationDefinition) resource, "footnotes")+s3;        
       } else if (macros.containsKey(com[0])) {
         src = s1+macros.get(com[0])+s3;
       } else
@@ -7195,10 +7200,17 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     return b.toString();
   }
   
-  private String genOperation(Operation op, String n, String id, boolean mixed, StandardsStatus resStatus, String prefix, String np) throws Exception {
+  private String genOperation1(Operation op, String n, String id, boolean mixed, StandardsStatus resStatus, String prefix, String np) throws Exception {
    
     StringBuilder b = new StringBuilder();
-    genOperationInner(n, id, mixed, resStatus, prefix, np, b, op, false);
+    genOperationInner1(n, id, mixed, resStatus, prefix, np, b, op, false);
+    return b.toString();
+  }
+
+  private String genOperation2(Operation op, String n, String id, boolean mixed, StandardsStatus resStatus, String prefix, String np) throws Exception {
+    
+    StringBuilder b = new StringBuilder();
+    genOperationInner2(n, id, mixed, resStatus, prefix, np, b, op, false);
     return b.toString();
   }
 
@@ -7206,12 +7218,13 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     
     StringBuilder b = new StringBuilder();
     for (Operation op : oplist) {
-      genOperationInner(n, id, mixed, resStatus, prefix, np, b, op, true);
+      genOperationInner1(n, id, mixed, resStatus, prefix, np, b, op, true);
+      genOperationInner2(n, id, mixed, resStatus, prefix, np, b, op, true);
     }
     return b.toString();
   }
 
-  public void genOperationInner(String n, String id, boolean mixed, StandardsStatus resStatus, String prefix, String np, StringBuilder b, Operation op, boolean header) throws Exception {
+  public void genOperationInner1(String n, String id, boolean mixed, StandardsStatus resStatus, String prefix, String np, StringBuilder b, Operation op, boolean header) throws Exception {
     if (header)
       b.append("<h3>").append(Utilities.escapeXml(op.getTitle())).append("<a name=\"").append(op.getName()).append("\"> </a></h3>\r\n");
     if (mixed)
@@ -7244,6 +7257,9 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
       b.append("</table>\r\n");
     }
     b.append(processMarkdown(n, op.getFooter(), prefix)).append("\r\n");
+  }
+
+  public void genOperationInner2(String n, String id, boolean mixed, StandardsStatus resStatus, String prefix, String np, StringBuilder b, Operation op, boolean header) throws Exception {
     if (op.hasExamples()) {
       b.append("<a name=\"examples\"> </a>\r\n<h4>Examples</h4>\r\n");
       if (op.getRequestExamples().size() == op.getResponseExamples().size() && op.getRequestExamples().get(0).getComment() != null && op.getRequestExamples().get(0).getComment().trim().startsWith("#1")) {
