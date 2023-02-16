@@ -190,8 +190,8 @@ public class ResourceValidator extends BaseValidator {
     //        hint(errors, ValidationMessage.NO_RULE_DATE, IssueType.REQUIRED, rd.getName(), !Utilities.noString(s), "RIM Mapping is required");
 
     for (Operation op : rd.getOperations()) {
-      warning(errors, ValidationMessage.NO_RULE_DATE, IssueType.BUSINESSRULE, rd.getName() + ".$" + op.getName(), hasOpExample(op.getExamples(), false), "Operation must have an example request");
-      warning(errors, ValidationMessage.NO_RULE_DATE, IssueType.BUSINESSRULE, rd.getName() + ".$" + op.getName(), hasOpExample(op.getExamples(), true), "Operation must have an example response");
+      warning(errors, ValidationMessage.NO_RULE_DATE, IssueType.BUSINESSRULE, rd.getName() + ".$" + op.getName(), hasOpExample(op.getAllExamples1(), false), "Operation must have an example request");
+      warning(errors, ValidationMessage.NO_RULE_DATE, IssueType.BUSINESSRULE, rd.getName() + ".$" + op.getName(), hasOpExample(op.getAllExamples1(), true), "Operation must have an example response");
     }
     List<String> vsWarns = new ArrayList<String>();
     int vsWarnings = checkElement(errors, rd.getName(), rd.getRoot(), rd, null, s == null || !s.equalsIgnoreCase("n/a"), false, hasSummary(rd.getRoot()), vsWarns, true, rd.getStatus(), invIds);

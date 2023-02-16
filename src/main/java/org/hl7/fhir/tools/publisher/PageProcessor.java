@@ -1560,7 +1560,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
       ResourceDefn rd = definitions.getResources().get(rn);
       for (Operation op : rd.getOperations()) {
         boolean ok = false;
-        for (OperationExample ex : op.getExamples()) {
+        for (OperationExample ex : op.getAllExamples1()) {
           if (ex.getContent().contains("&lt;"+rt) || ex.getContent().contains("\""+rt+"\""))
             ok = true;
         }
@@ -7240,24 +7240,31 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
       b.append("</table>\r\n");
     }
     b.append(processMarkdown(n, op.getFooter(), prefix)).append("\r\n");
-    if (op.getExamples().size() > 0) {
+    if (op.hasExamples()) {
       b.append("<a name=\"examples\"> </a>\r\n<h4>Examples</h4>\r\n");
-      boolean needsHr = false;
-      boolean hasHr = false;
-      for (OperationExample ex : op.getExamples())
-        if (!ex.isResponse()) {
+      if (op.getRequestExamples().size() == op.getResponseExamples().size() && op.getRequestExamples().get(0).getComment() != null && op.getRequestExamples().get(0).getComment().trim().startsWith("#1")) {
+        b.append("<hr/>\r\n");
+        for (int i = 0; i < op.getRequestExamples().size(); i++) {
+          renderExample(b, op.getRequestExamples().get(i), "Request");
+          renderExample(b, op.getResponseExamples().get(i), "Response to request");
+          b.append("<hr/>\r\n");
+        }
+      } else {
+        boolean needsHr = false;
+        for (OperationExample ex : op.getRequestExamples()) {
+          if (needsHr) {
+            b.append("<hr/>\r\n");
+          }
           needsHr = true;
           renderExample(b, ex, "Request");
         }
-     
-      for (OperationExample ex : op.getExamples())
-        if (ex.isResponse()) {
-          if (needsHr && !hasHr) {
-            hasHr = true;
+        for (OperationExample ex : op.getResponseExamples()) {
+          if (needsHr) {
             b.append("<hr/>\r\n");
           }
           renderExample(b, ex, "Response");
         }
+      }
     }
     if (!Utilities.noString(op.getFooter2())) {
       b.append(processMarkdown(n, op.getFooter2(), prefix)).append("\r\n");
