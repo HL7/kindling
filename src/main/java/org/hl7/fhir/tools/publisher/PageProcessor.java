@@ -8870,6 +8870,10 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
          src = s1+searchLocation+s3;
        } else if (com[0].equals("extensions-location")) {
          src = s1+extensionsLocation+s3;
+       } else if (com[0].equals("profile.intro.include")) {
+         src = s1+includeProfileFile(pack, profile, "introduction")+s3;         
+       } else if (com[0].equals("profile.notes.include")) {
+         src = s1+includeProfileFile(pack, profile, "notes")+s3;         
        } else if (macros.containsKey(com[0])) {
          src = s1+macros.get(com[0])+s3;
        } else if (com[0].equals("jira-link")) { 
@@ -8878,6 +8882,16 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
          throw new Exception("Instruction <%"+s2+"%> not understood parsing resource "+filename);
     }
     return src;
+  }
+
+  private String includeProfileFile(Profile pack, ConstraintStructure profile, String ftype) throws IOException {
+    String rt = profile.getResource().getType();
+    String src = Utilities.path(folders.srcDir, rt.toLowerCase(), "profile-"+profile.getId()+"-"+ftype+".xml");
+    if (new File(src).exists()) {
+      return TextFile.fileToString(src);
+    } else {
+      return "";
+    }
   }
 
   private String getProfileContext(CanonicalResource mr, String prefix) throws DefinitionException {
