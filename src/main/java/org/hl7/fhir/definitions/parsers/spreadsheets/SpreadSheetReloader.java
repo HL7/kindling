@@ -17,6 +17,7 @@ import org.hl7.fhir.definitions.model.TypeRef;
 import org.hl7.fhir.definitions.parsers.TypeParser;
 import org.hl7.fhir.exceptions.FHIRException;
 import org.hl7.fhir.exceptions.FHIRFormatError;
+import org.hl7.fhir.r5.conformance.profile.ProfileUtilities;
 import org.hl7.fhir.r5.context.BaseWorkerContext;
 import org.hl7.fhir.r5.model.BooleanType;
 import org.hl7.fhir.r5.model.Bundle;
@@ -115,6 +116,7 @@ public class SpreadSheetReloader extends SpreadSheetBase {
         readElementDefinition(row, cols, ed, bindings, invariants);
       }
     }   
+    new ProfileUtilities(context, null, null).setIds(sd, false);
     saveXml(fnSD(), sd);
   }
 

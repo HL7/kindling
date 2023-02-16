@@ -319,7 +319,11 @@ public class ExampleInspector implements IValidatorResourceFetcher, IValidationP
       validateLogical(Utilities.path(rootDir, n+".json"), profile, FhirFormat.JSON);
       validateJson(Utilities.path(rootDir, n+".json"), profile == null ? null : profile.getId());
       validateRDF(Utilities.path(rootDir, n+".ttl"), Utilities.path(rootDir, n+".jsonld"), rt);
-      
+
+//      if (new File(Utilities.path(rootDir, n+".ttl")).exists()) {
+//        validateLogical(Utilities.path(rootDir, n+".ttl"), profile, FhirFormat.TURTLE);
+//      }
+
       checkSearchParameters(e, e);
     } catch (Exception e) {
       e.printStackTrace();
