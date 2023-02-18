@@ -687,19 +687,21 @@ public class ExampleInspector implements IValidatorResourceFetcher, IValidationP
   }
 
 
-  public void testInvariants(String srcDir, ResourceDefn rd) throws IOException {
+  public boolean testInvariants(String srcDir, ResourceDefn rd) throws IOException {
+    boolean result = true;
     File testsDir = new File(Utilities.path(srcDir, rd.getName().toLowerCase(), "invariant-tests"));
     if (testsDir.exists()) {
       for (File f : testsDir.listFiles()) {
         if (f.getName().endsWith(".json")) {
-          testInvariant(rd, f);
+          result = testInvariant(rd, f) && result;
         }
       }
     }
+    return result;
   }
 
 
-  private void testInvariant(ResourceDefn rd, File f) throws FHIRException, FileNotFoundException {
+  private boolean testInvariant(ResourceDefn rd, File f) throws FHIRException, FileNotFoundException {
     String inv = f.getName();
     inv = inv.substring(0, inv.indexOf("."));
     Invariant con = rd.findInvariant(inv);
@@ -715,8 +717,13 @@ public class ExampleInspector implements IValidatorResourceFetcher, IValidationP
         }
       }
       con.setTestOutcome(f.getName().contains(".pass") ? !fail : fail);
+      if (!con.getTestOutcome()) {
+        System.out.println("Test case '"+f.getName()+"' Invariant failed: "+con.getId());
+      }
+      return fail;
     } else {
       System.out.println("Didn't find invariant for "+f.getName());
+      return false;
     }
   }
 

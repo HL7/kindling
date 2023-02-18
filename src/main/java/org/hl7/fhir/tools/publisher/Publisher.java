@@ -183,6 +183,7 @@ import org.hl7.fhir.r5.model.ContactPoint.ContactPointSystem;
 import org.hl7.fhir.r5.model.DomainResource;
 import org.hl7.fhir.r5.model.ElementDefinition;
 import org.hl7.fhir.r5.model.ElementDefinition.ElementDefinitionBindingComponent;
+import org.hl7.fhir.r5.model.ElementDefinition.ElementDefinitionConstraintComponent;
 import org.hl7.fhir.r5.model.ElementDefinition.TypeRefComponent;
 import org.hl7.fhir.r5.model.Enumerations.BindingStrength;
 import org.hl7.fhir.r5.model.Enumerations.CapabilityStatementKind;
@@ -192,6 +193,7 @@ import org.hl7.fhir.r5.model.Enumerations.FHIRVersion;
 import org.hl7.fhir.r5.model.Enumerations.PublicationStatus;
 import org.hl7.fhir.r5.model.Enumerations.SearchParamType;
 import org.hl7.fhir.r5.model.Factory;
+import org.hl7.fhir.r5.model.IdType;
 import org.hl7.fhir.r5.model.ImplementationGuide;
 import org.hl7.fhir.r5.model.ImplementationGuide.ImplementationGuideDefinitionPageComponent;
 import org.hl7.fhir.r5.model.Library;
@@ -787,7 +789,6 @@ public class Publisher implements URIResolver, SectionNumberer {
         produceSpecification();
         checkAllOk();
       } 
-      testInvariants();
 
       if (doValidate)
         validationProcess();
@@ -921,10 +922,87 @@ public class Publisher implements URIResolver, SectionNumberer {
   }
 
   private void testInvariants() throws FHIRException, IOException {
+    page.log("... check invariants", LogMessageType.Process);
+    // first part: compile the invariants to check them 
+    // second part: run the invariants
+    boolean ok = true;
+    FHIRPathEngine fpe = new FHIRPathEngine(page.getWorkerContext());
+    Set<String> set = new HashSet<>();
+    for (StructureDefinition sd : page.getWorkerContext().fetchResourcesByType(StructureDefinition.class)) {
+      if (sd.getDerivation() == TypeDerivationRule.SPECIALIZATION && !set.contains(sd.getUrl())) {
+        set.add(sd.getUrl());
+        ok = checkInvariants(fpe, sd) && ok;
+      }
+    }
+    
     for (String rname : page.getDefinitions().sortedResourceNames()) {
-      ei.testInvariants(page.getFolders().srcDir, page.getDefinitions().getResourceByName(rname));
+      ok = ei.testInvariants(page.getFolders().srcDir, page.getDefinitions().getResourceByName(rname)) && ok;
+    }
+    if (!ok) {
+      throw new Error("Some invariants failed testing");
     }
   }
+  
+  private boolean checkInvariants(FHIRPathEngine fpe, StructureDefinition sd) {
+    boolean result = true;
+    Map<String, ElementDefinition> map = new HashMap<>();
+    for (ElementDefinition ed : sd.getDifferential().getElement()) {
+      map.put(ed.getPath(), ed);
+    }
+    for (ElementDefinition ed : sd.getDifferential().getElement()) {
+      for (ElementDefinitionConstraintComponent inv : ed.getConstraint()) {
+        if (inv.hasExpression()) {
+          try {
+            Set<ElementDefinition> set = new HashSet<>();
+            if (sd.getKind() == StructureDefinitionKind.RESOURCE) {
+              fpe.check(null, sd.getType(), ed.getPath(), fpe.parse(inv.getExpression()), set);
+            } else {
+              fpe.check(null, "Resource", ed.getPath(), fpe.parse(inv.getExpression()), set);
+            }
+            for (ElementDefinition edt : set) {
+              if (!edt.getPath().equals(ed.getPath()) && map.containsKey(edt.getPath())) {
+                IdType cnd = null;
+                for (IdType t : map.get(edt.getPath()).getCondition()) {
+                  if (t.getValue().equals(inv.getKey())) {
+                    cnd = t;
+                  }
+                }
+                if (cnd == null) {
+                  System.out.println("The invariant "+sd.getType()+"#"+inv.getKey()+" touches "+edt.getPath()+" but isn't listed as a condition");
+                  result = false;
+                } else {
+                  cnd.setUserData("validated", true);
+                }
+              }
+            }
+          } catch (Exception e) {
+            System.out.println ("Invariant error processing "+sd.getType()+"#"+inv.getKey()+": "+e.getMessage());
+            if (!isKnownBadInvariant(inv.getKey(), e.getMessage())) {
+              result = false;
+            }
+          }
+        }
+      }
+    }
+    for (ElementDefinition ed : sd.getDifferential().getElement()) {
+      for (IdType t : ed.getCondition()) {
+        if (!t.hasUserData("validated") && !isKnownBadInvariant(t.primitiveValue())) {
+          System.out.println("The element "+ed.getPath()+" claims that the invariant "+t.primitiveValue()+" affects it, but it isn't touched by that invariant");
+          result = false;
+        }        
+      }
+    }
+    return result;
+  }
+
+  private boolean isKnownBadInvariant(String key, String message) {
+    return message.equals(page.getDefinitions().getBadInvariants().get(key));
+  }
+
+  private boolean isKnownBadInvariant(String key) {
+    return page.getDefinitions().getBadInvariants().containsKey(key);
+  }
+
   private String getGitBuildId() {
     String version = "";
     try {
@@ -3055,6 +3133,7 @@ public class Publisher implements URIResolver, SectionNumberer {
       
       serializeResource(expansionFeed, "expansions", false);
 
+      testInvariants();
 
       produceComparisons();
       produceSpecMap();

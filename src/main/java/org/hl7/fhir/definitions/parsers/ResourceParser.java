@@ -513,6 +513,33 @@ public class ResourceParser {
 
 
   private TypeDefn parseTypeDefinition(ProfileUtilities pu, ElementDefinition focus, StructureDefinition sd) throws IOException {
+    for (ElementDefinition edt : sd.getDifferential().getElement()) {
+      for (ElementDefinitionConstraintComponent cst : edt.getConstraint()) {
+        Invariant inv = new Invariant();
+        inv.setContext(focus.getPath());
+        inv.setEnglish(cst.getHuman());
+        if (cst.hasExtension(BuildExtensions.EXT_OCL)) {
+          inv.setOcl(cst.getExtensionString(BuildExtensions.EXT_OCL));        
+        }
+        inv.setId(cst.getKey());
+        if (cst.hasExtension(BuildExtensions.EXT_FIXED_NAME)) {
+          inv.setFixedName(cst.getExtensionString(BuildExtensions.EXT_FIXED_NAME));        
+        }
+        inv.setSeverity(cst.getSeverity().toCode());
+        if (cst.hasExtension(BuildExtensions.EXT_BEST_PRACTICE)) {
+          inv.setSeverity("best-practice");
+        }
+        if (cst.hasExtension(BuildExtensions.EXT_TURTLE)) {
+          inv.setTurtle(cst.getExtensionString(BuildExtensions.EXT_TURTLE));        
+        }
+        inv.setRequirements(cst.getRequirements());
+        inv.setExpression(cst.getExpression());
+        if (cst.hasExtension(BuildExtensions.EXT_BEST_PRACTICE_EXPLANATION)) {
+          inv.setExplanation(cst.getExtensionString(BuildExtensions.EXT_BEST_PRACTICE_EXPLANATION));        
+        }
+        invariants.put(inv.getId(), inv);
+      }
+    }
     TypeDefn ed = new TypeDefn(null);
     parseED(pu, ed, focus, sd, "");
     return ed;
@@ -587,30 +614,8 @@ public class ResourceParser {
     }
 
     for (ElementDefinitionConstraintComponent cst : focus.getConstraint()) {
-      Invariant inv = new Invariant();
-      inv.setContext(focus.getPath());
-      inv.setEnglish(cst.getHuman());
-      if (cst.hasExtension(BuildExtensions.EXT_OCL)) {
-        inv.setOcl(cst.getExtensionString(BuildExtensions.EXT_OCL));        
-      }
-      inv.setId(cst.getKey());
-      if (cst.hasExtension(BuildExtensions.EXT_FIXED_NAME)) {
-        inv.setFixedName(cst.getExtensionString(BuildExtensions.EXT_FIXED_NAME));        
-      }
-      inv.setSeverity(cst.getSeverity().toCode());
-      if (cst.hasExtension(BuildExtensions.EXT_BEST_PRACTICE)) {
-        inv.setSeverity("best-practice");
-      }
-      if (cst.hasExtension(BuildExtensions.EXT_TURTLE)) {
-        inv.setTurtle(cst.getExtensionString(BuildExtensions.EXT_TURTLE));        
-      }
-      inv.setRequirements(cst.getRequirements());
-      inv.setExpression(cst.getExpression());
-      if (cst.hasExtension(BuildExtensions.EXT_BEST_PRACTICE_EXPLANATION)) {
-        inv.setExplanation(cst.getExtensionString(BuildExtensions.EXT_BEST_PRACTICE_EXPLANATION));        
-      }
+      Invariant inv = invariants.get(cst.getKey());
       ed.getInvariants().put(inv.getId(), inv);
-      invariants.put(inv.getId(), inv);
     }
 
     for (IdType cnd : focus.getCondition()) {

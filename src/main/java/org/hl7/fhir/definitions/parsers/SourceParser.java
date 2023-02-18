@@ -358,7 +358,11 @@ public class SourceParser {
         }
       }        
     }
-    closeTemplates();    
+    closeTemplates();
+    
+    for (String s : ini.getProperties("allowed-bad-invariants").keySet()) {
+      definitions.getBadInvariants().put(s, ini.getStringProperty("allowed-bad-invariants", s));
+    }
   }
 
   private String getFmmForType(String n, String def) {
