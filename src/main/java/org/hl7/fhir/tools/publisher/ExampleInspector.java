@@ -720,7 +720,7 @@ public class ExampleInspector implements IValidatorResourceFetcher, IValidationP
       if (!con.getTestOutcome()) {
         System.out.println("Test case '"+f.getName()+"' Invariant failed: "+con.getId());
       }
-      return fail;
+      return con.getTestOutcome();
     } else {
       System.out.println("Didn't find invariant for "+f.getName());
       return false;

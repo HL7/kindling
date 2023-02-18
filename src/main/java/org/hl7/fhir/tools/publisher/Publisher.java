@@ -931,12 +931,16 @@ public class Publisher implements URIResolver, SectionNumberer {
     for (StructureDefinition sd : page.getWorkerContext().fetchResourcesByType(StructureDefinition.class)) {
       if (sd.getDerivation() == TypeDerivationRule.SPECIALIZATION && !set.contains(sd.getUrl())) {
         set.add(sd.getUrl());
-        ok = checkInvariants(fpe, sd) && ok;
+        if (!checkInvariants(fpe, sd)) {
+          ok = false;
+        }
       }
     }
     
     for (String rname : page.getDefinitions().sortedResourceNames()) {
-      ok = ei.testInvariants(page.getFolders().srcDir, page.getDefinitions().getResourceByName(rname)) && ok;
+      if (!ei.testInvariants(page.getFolders().srcDir, page.getDefinitions().getResourceByName(rname))) {
+        ok = false;
+      }
     }
     if (!ok) {
       throw new Error("Some invariants failed testing");
@@ -952,34 +956,8 @@ public class Publisher implements URIResolver, SectionNumberer {
     for (ElementDefinition ed : sd.getDifferential().getElement()) {
       for (ElementDefinitionConstraintComponent inv : ed.getConstraint()) {
         if (inv.hasExpression()) {
-          try {
-            Set<ElementDefinition> set = new HashSet<>();
-            if (sd.getKind() == StructureDefinitionKind.RESOURCE) {
-              fpe.check(null, sd.getType(), ed.getPath(), fpe.parse(inv.getExpression()), set);
-            } else {
-              fpe.check(null, "Resource", ed.getPath(), fpe.parse(inv.getExpression()), set);
-            }
-            for (ElementDefinition edt : set) {
-              if (!edt.getPath().equals(ed.getPath()) && map.containsKey(edt.getPath())) {
-                IdType cnd = null;
-                for (IdType t : map.get(edt.getPath()).getCondition()) {
-                  if (t.getValue().equals(inv.getKey())) {
-                    cnd = t;
-                  }
-                }
-                if (cnd == null) {
-                  System.out.println("The invariant "+sd.getType()+"#"+inv.getKey()+" touches "+edt.getPath()+" but isn't listed as a condition");
-                  result = false;
-                } else {
-                  cnd.setUserData("validated", true);
-                }
-              }
-            }
-          } catch (Exception e) {
-            System.out.println ("Invariant error processing "+sd.getType()+"#"+inv.getKey()+": "+e.getMessage());
-            if (!isKnownBadInvariant(inv.getKey(), e.getMessage())) {
-              result = false;
-            }
+          if (!checkInvariant(fpe, sd, map, ed, inv)) {
+            result = false;
           }
         }
       }
@@ -990,6 +968,41 @@ public class Publisher implements URIResolver, SectionNumberer {
           System.out.println("The element "+ed.getPath()+" claims that the invariant "+t.primitiveValue()+" affects it, but it isn't touched by that invariant");
           result = false;
         }        
+      }
+    }
+    return result;
+  }
+
+  private boolean checkInvariant(FHIRPathEngine fpe, StructureDefinition sd, 
+      Map<String, ElementDefinition> map, ElementDefinition ed, ElementDefinitionConstraintComponent inv) {
+    boolean result = true;
+    try {
+      Set<ElementDefinition> set = new HashSet<>();
+      if (sd.getKind() == StructureDefinitionKind.RESOURCE) {
+        fpe.check(null, sd.getType(), ed.getPath(), fpe.parse(inv.getExpression()), set);
+      } else {
+        fpe.check(null, "Resource", ed.getPath(), fpe.parse(inv.getExpression()), set);
+      }
+      for (ElementDefinition edt : set) {
+        if (!edt.getPath().equals(ed.getPath()) && map.containsKey(edt.getPath())) {
+          IdType cnd = null;
+          for (IdType t : map.get(edt.getPath()).getCondition()) {
+            if (t.getValue().equals(inv.getKey())) {
+              cnd = t;
+            }
+          }
+          if (cnd == null) {
+            System.out.println("The invariant "+sd.getType()+"#"+inv.getKey()+" touches "+edt.getPath()+" but isn't listed as a condition");
+            result = false;
+          } else {
+            cnd.setUserData("validated", true);
+          }
+        }
+      }
+    } catch (Exception e) {
+      System.out.println ("Invariant error processing "+sd.getType()+"#"+inv.getKey()+": "+e.getMessage());
+      if (!isKnownBadInvariant(inv.getKey(), e.getMessage())) {
+        result = false;
       }
     }
     return result;
