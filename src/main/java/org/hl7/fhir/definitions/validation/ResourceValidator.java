@@ -1364,6 +1364,9 @@ public class ResourceValidator extends BaseValidator {
               ElementDefn ed;
               try {
                 ed = definitions.getElementByPath(p.split("\\."), "matching compartment", true);
+                if (ed == null && Utilities.endsWithInList(p, ".reference", ".concept")) {
+                  ed = definitions.getElementByPath((p.substring(0, p.lastIndexOf("."))).split("\\."), "matching compartment", true);
+                }
               } catch (Exception e) {
                 rule(errors, ValidationMessage.NO_RULE_DATE, IssueType.STRUCTURE, "compartment." + cmp.getName() + "." + rd.getName() + "." + s, ok, "Illegal path " + p);
                 ed = null;
