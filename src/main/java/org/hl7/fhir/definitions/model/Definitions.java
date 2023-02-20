@@ -188,6 +188,7 @@ public class Definitions {
   private Map<String, CommonSearchParameter> commonSearchParameters = new HashMap<String, CommonSearchParameter>();
   private Map<String, NamespacePair> redirectList = new HashMap<String, NamespacePair>();
   private Map<String, String> badInvariants = new HashMap<>();
+  private Map<String, String> allowedSearchTypes = new HashMap<>();
   
   // Returns the root TypeDefn of a CompositeType or Resource,
 	// excluding future Resources (as they don't have definitions yet).
@@ -992,5 +993,9 @@ public class Definitions {
   public Map<String, String> getBadInvariants() {
     return badInvariants;
   }
+  
 
+  public Map<String, String> getAllowedSearchTypes() {
+    return allowedSearchTypes;
+  }
 }

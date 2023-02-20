@@ -213,6 +213,7 @@ import org.hl7.fhir.r5.model.StringType;
 import org.hl7.fhir.r5.model.StructureDefinition;
 import org.hl7.fhir.r5.model.StructureDefinition.StructureDefinitionKind;
 import org.hl7.fhir.r5.model.StructureDefinition.TypeDerivationRule;
+import org.hl7.fhir.r5.model.TypeDetails;
 import org.hl7.fhir.r5.model.UriType;
 import org.hl7.fhir.r5.model.ValueSet;
 import org.hl7.fhir.r5.model.ValueSet.ConceptSetComponent;
@@ -921,12 +922,116 @@ public class Publisher implements URIResolver, SectionNumberer {
 
   }
 
+  private void testSearchParameters() {
+    boolean ok = true;
+    for (ResourceDefn rd : page.getDefinitions().getBaseResources().values()) {
+      ok = testSearchParameters(rd) && ok;
+    }
+    
+    for (ResourceDefn rd : page.getDefinitions().getResources().values()) {
+      ok = testSearchParameters(rd) && ok;
+    }    
+
+    if (!ok) {
+      throw new Error("Some invariants failed testing");
+    }
+  }
+
+  private boolean testSearchParameters(ResourceDefn rd) {
+    if (fpe == null) {
+      fpe = new FHIRPathEngine(page.getWorkerContext());
+    }
+    boolean ok = true;
+    for (SearchParameterDefn spd : rd.getSearchParams().values()) {
+      ok = testSearchParameter(spd.getResource(), rd.getProfile()) && ok;
+    }
+    return ok;
+  }
+
+  private boolean testSearchParameter(SearchParameter sp, StructureDefinition rd) {
+    boolean result = true;
+    if (sp.hasExpression()) {
+      try {
+        Set<ElementDefinition> set = new HashSet<>();
+        String exp = sp.getExpression().replace("{{name}}", rd.getType()); // for templates  
+        TypeDetails td = null;
+        if (sp.getBase().size() > 1) {
+          td = fpe.check(null, rd.getType(), page.getWorkerContext().getResourceNames(), fpe.parse(exp), set);
+        } else {
+          td = fpe.check(null, rd.getType(), rd.getType(), fpe.parse(exp), set);
+        }
+        if (!Utilities.existsInList(sp.getCode(), "_id", "_in") && sp.getType() != SearchParamType.COMPOSITE) {
+          String types = page.getDefinitions().getAllowedSearchTypes().get(sp.getType().toCode());
+          boolean ok = false;
+          for (String t : types.split("\\,")) {
+            if (td.hasType(t)) {
+              ok = true;
+              break;
+            }
+          }
+          if (!ok) {
+            System.out.println("The search parameter "+rd.getType()+":"+sp.getCode()+" has an invalid expression: the type "+td.toString()+" is not valid for the search parameter type "+sp.getType().toCode());
+            result = false;
+          }
+        }
+        StandardsStatus ssCeiling = determineStandardsStatus(rd, set);
+        StandardsStatus ssStated = sp.getStandardsStatus();
+        if (ssStated == null) {
+          ssStated = ssCeiling;
+          sp.setStandardsStatus(ssStated); 
+        }
+        if (ssCeiling.isLowerThan(ssStated)) {
+          if (sp.getBase().size() > 1) {
+            StandardsStatus high = null;
+            for (CodeType b : sp.getBase()) {
+              if (b.primitiveValue().equals(rd.getType())) {
+                b.setStandardsStatus(ssCeiling);
+              }
+              StandardsStatus ss = b.getStandardsStatus();
+              if (ss == null) {
+                ss = ssStated;
+              }
+              if (high == null) {
+                high = ss;
+              } else if (high.isLowerThan(ss)) {
+                high = ss;
+              }
+            }
+            if (high != ssStated) {
+              sp.setStandardsStatus(high);
+            }
+          } else { 
+            sp.setStandardsStatus(ssCeiling);
+          }          
+        }        
+      } catch (Exception e) {
+        System.out.println("The search parameter "+rd.getType()+":"+sp.getCode()+" has an invalid expression: " +e.getMessage());
+        result = false;
+        e.printStackTrace();
+      }
+    }
+    return result;
+  }
+
+  private StandardsStatus determineStandardsStatus(StructureDefinition rd, Set<ElementDefinition> set) {
+    StandardsStatus result = rd.getStandardsStatus();
+    for (ElementDefinition ed : set) {
+      StandardsStatus status = ed.getStandardsStatus();
+      if (status != null && status.isLowerThan(result)) {
+        result = status;
+      }
+    }
+    return result;
+  }
+
   private void testInvariants() throws FHIRException, IOException {
     page.log("... check invariants", LogMessageType.Process);
     // first part: compile the invariants to check them 
     // second part: run the invariants
     boolean ok = true;
-    FHIRPathEngine fpe = new FHIRPathEngine(page.getWorkerContext());
+    if (fpe == null) {
+      fpe = new FHIRPathEngine(page.getWorkerContext());
+    }
     Set<String> set = new HashSet<>();
     for (StructureDefinition sd : page.getWorkerContext().fetchResourcesByType(StructureDefinition.class)) {
       if (sd.getDerivation() == TypeDerivationRule.SPECIALIZATION && !set.contains(sd.getUrl())) {
@@ -2649,6 +2754,9 @@ public class Publisher implements URIResolver, SectionNumberer {
   private void produceSpecification() throws Exception {
     populateFHIRTypesCodeSystem();
 
+    testInvariants();
+    testSearchParameters();
+    
     processCDA();
     page.log("Generate RDF", LogMessageType.Process);
     processRDF();
@@ -2930,6 +3038,8 @@ public class Publisher implements URIResolver, SectionNumberer {
     Regenerator regen = new Regenerator(page.getFolders().srcDir, page.getDefinitions(), page.getWorkerContext());
     regen.generate();
     
+
+    
     Bundle searchParamsFeed = new Bundle();
     searchParamsFeed.setId("searchParams");
     searchParamsFeed.setType(BundleType.COLLECTION);
@@ -3000,6 +3110,7 @@ public class Publisher implements URIResolver, SectionNumberer {
         //}
       }
 
+      
       produceUml();
       page.getVsValidator().checkDuplicates(page.getValidationErrors());
 
@@ -3013,6 +3124,7 @@ public class Publisher implements URIResolver, SectionNumberer {
       }
 
       checkAllOk();
+
 
       page.log(" ...collections ", LogMessageType.Process);
 
@@ -3146,7 +3258,6 @@ public class Publisher implements URIResolver, SectionNumberer {
       
       serializeResource(expansionFeed, "expansions", false);
 
-      testInvariants();
 
       produceComparisons();
       produceSpecMap();
@@ -3381,6 +3492,7 @@ public class Publisher implements URIResolver, SectionNumberer {
     } else
       page.log("Partial Build - terminating now", LogMessageType.Error);
   }
+
 
   private void addToSearchPackage(ResourceDefn r, NPMPackageGenerator npm) throws IOException {
     for (SearchParameterDefn spd : r.getSearchParams().values()) {
@@ -4800,6 +4912,8 @@ public class Publisher implements URIResolver, SectionNumberer {
   private ExampleInspector ei;
 
   private ProfileValidator pv;
+
+  private FHIRPathEngine fpe;
 
   private void processExample(Example e, ResourceDefn resn, StructureDefinition profile, Profile pack, ImplementationGuideDefn ig) throws Exception {
     if (e.getType() == ExampleType.Tool)

@@ -363,6 +363,9 @@ public class SourceParser {
     for (String s : ini.getProperties("allowed-bad-invariants").keySet()) {
       definitions.getBadInvariants().put(s, ini.getStringProperty("allowed-bad-invariants", s));
     }
+    for (String s : ini.getProperties("allowed-search-types").keySet()) {
+      definitions.getAllowedSearchTypes().put(s, ini.getStringProperty("allowed-search-types", s));
+    }
   }
 
   private String getFmmForType(String n, String def) {
