@@ -973,6 +973,41 @@ public class Publisher implements URIResolver, SectionNumberer {
             System.out.println("The search parameter "+rd.getType()+":"+sp.getCode()+" has an invalid expression: the type "+td.toString()+" is not valid for the search parameter type "+sp.getType().toCode());
             result = false;
           }
+          if (sp.getType() == SearchParamType.REFERENCE) {
+            sp.getTarget().clear();
+            if (td.getTargets() == null) {
+              System.out.println("The search parameter "+rd.getType()+":"+sp.getCode()+" has a problem: the search parameter type "+sp.getType().toCode()+" but no targets were identified from the expression outcome of "+td.toString());
+              if (td.hasType("Reference")) {
+                td.addTarget("Resource");                  
+              } else if (td.hasType("canonical")) {
+                td.addTarget("CanonicalResource");   
+              } else if (td.hasType("Composition")) {
+                td.addTarget("Composition");
+              } else if (td.hasType("MessageHeader")) {
+                td.addTarget("MessageHeader");
+              } else {
+                throw new Error("What?");
+              }
+            }
+            for (String t : td.getTargets()) {
+              String tn = tail(t);
+              if (tn.equals("Resource")) {
+                for (String s : cu.getConcreteResources()) {
+                  if (!sp.hasTarget(s)) {
+                    sp.addTarget(s);
+                  }
+                }
+              } else if (tn.equals("CanonicalResource")) {
+                for (String s : cu.getCanonicalResourceNames()) {
+                  if (!sp.hasTarget(s)) {
+                    sp.addTarget(s);
+                  }
+                }
+              } else if (!sp.hasTarget(tn)) { 
+                sp.addTarget(tn);
+              }
+            }
+          }
         }
         StandardsStatus ssCeiling = determineStandardsStatus(rd, set);
         StandardsStatus ssStated = sp.getStandardsStatus();
@@ -2753,6 +2788,8 @@ public class Publisher implements URIResolver, SectionNumberer {
 
   private void produceSpecification() throws Exception {
     populateFHIRTypesCodeSystem();
+
+    cu = new ContextUtilities(page.getWorkerContext());
 
     testInvariants();
     testSearchParameters();
@@ -4914,6 +4951,8 @@ public class Publisher implements URIResolver, SectionNumberer {
   private ProfileValidator pv;
 
   private FHIRPathEngine fpe;
+
+  private ContextUtilities cu;
 
   private void processExample(Example e, ResourceDefn resn, StructureDefinition profile, Profile pack, ImplementationGuideDefn ig) throws Exception {
     if (e.getType() == ExampleType.Tool)

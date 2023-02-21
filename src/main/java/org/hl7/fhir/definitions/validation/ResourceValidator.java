@@ -31,6 +31,7 @@ import org.hl7.fhir.definitions.model.W5Entry;
 import org.hl7.fhir.exceptions.FHIRException;
 import org.hl7.fhir.r5.context.CanonicalResourceManager;
 import org.hl7.fhir.r5.context.IWorkerContext;
+import org.hl7.fhir.r5.model.CanonicalType;
 import org.hl7.fhir.r5.model.CodeSystem;
 import org.hl7.fhir.r5.model.CodeSystem.ConceptDefinitionComponent;
 import org.hl7.fhir.r5.model.Enumerations.BindingStrength;
@@ -1260,12 +1261,17 @@ public class ResourceValidator extends BaseValidator {
       return true;
 
     for (ConceptSetComponent inc : vs.getCompose().getInclude()) {
-      if (inc.hasValueSet())
-        throw new Error("not handled yet");
-      if (inc.getSystem().startsWith("http://terminology.hl7.org/CodeSystem/v2-") || inc.getSystem().startsWith("http://terminology.hl7.org/CodeSystem/v3-"))
-        return false;
-      if (!Utilities.existsInList(inc.getSystem(), "urn:iso:std:iso:4217", "urn:ietf:bcp:13", "http://unitsofmeasure.org") && !inc.getSystem().startsWith("http://hl7.org/fhir/"))
-        return false;
+      if (inc.hasValueSet()) {
+        for (CanonicalType s : inc.getValueSet()) {
+          ValueSet ivs = context.fetchResource(ValueSet.class, s.primitiveValue());
+          noExternals(ivs);
+        }
+      } else {
+        if (inc.getSystem().startsWith("http://terminology.hl7.org/CodeSystem/v2-") || inc.getSystem().startsWith("http://terminology.hl7.org/CodeSystem/v3-"))
+          return false;
+        if (!Utilities.existsInList(inc.getSystem(), "urn:iso:std:iso:4217", "urn:ietf:bcp:13", "http://unitsofmeasure.org") && !inc.getSystem().startsWith("http://hl7.org/fhir/"))
+          return false;
+      }
     }
     return true;
   }

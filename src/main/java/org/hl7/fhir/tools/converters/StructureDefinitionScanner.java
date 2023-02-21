@@ -36,6 +36,8 @@ public class StructureDefinitionScanner {
     new StructureDefinitionScanner().run(new File(args[0]));
   }
 
+  int count = 0;
+  
   private void run(File file) throws FHIRException, IOException {
     System.out.println("Loading");
     FilesystemPackageCacheManager pcm = new FilesystemPackageCacheManager(true);
@@ -44,35 +46,12 @@ public class StructureDefinitionScanner {
     fpe = new FHIRPathEngine(context);
     System.out.println("Loaded");
     fix(file);
-//    report(sdExt, "Extensions on StructureDefinition");
-//    report(sdExtM, "Modifier Extensions on StructureDefinition");
-//    report(edExt, "Extensions on ElementDefinition");
-//    report(edExtM, "Modifier Extensions on ElementDefinition");
-//    report(tdExt, "Extensions on Type Definition");
-//    report(sdExt, "Extensions on Binding Definition");
+    System.out.println(count);
   }
 
-//  private void report(Set<String> set, String title) {
-//    System.out.println(title);
-//    if (set.size() == 0) {
-//      System.out.println("  (none)");      
-//    } else {
-//      for (String s : set) {
-//        System.out.println("* "+s);            
-//      }
-//    }    
-//    System.out.println("");      
-//  }
 
   private IWorkerContext context;
   private FHIRPathEngine fpe;
-
-//  private Set<String> sdExt = new HashSet<>();
-//  private Set<String> edExt = new HashSet<>();
-//  private Set<String> sdExtM = new HashSet<>();
-//  private Set<String> edExtM = new HashSet<>();
-//  private Set<String> tdExt = new HashSet<>();
-//  private Set<String> bdExt = new HashSet<>();
 
   private void fix(File file) {
 
@@ -103,40 +82,35 @@ public class StructureDefinitionScanner {
     boolean result = false;
     if (res instanceof StructureDefinition) {
       StructureDefinition sd = (StructureDefinition) res;
-      if (sd.getDerivation() == TypeDerivationRule.CONSTRAINT) {
-        return false;
-      }
-      System.out.println(sd.getType());
-      Map<String, ElementDefinition> map = new HashMap<>();
+
       for (ElementDefinition ed : sd.getDifferential().getElement()) {
-        if (!ed.getCondition().isEmpty()) {
-          ed.getCondition().clear();
+        if (ed.getShort().endsWith(".")) {
           result = true;
+          ed.setShort(ed.getShort().substring(0, ed.getShort().length()-1));
         }
-        map.put(ed.getPath(), ed);
-      }
-      for (ElementDefinition ed : sd.getDifferential().getElement()) {
         for (ElementDefinitionConstraintComponent inv : ed.getConstraint()) {
           if (inv.hasExpression()) {
-            try {
-              if ("cnl-1".equals(inv.getKey())) {
-                inv.setExpression("exists() implies matches('([^|#])*')");
-              }
-              Set<ElementDefinition> set = new HashSet<>();
-              fpe.check(null, sd.getType(), ed.getPath(), fpe.parse(inv.getExpression()), set);
-              for (ElementDefinition edt : set) {
-                if (!edt.getPath().equals(ed.getPath()) && map.containsKey(edt.getPath())) {
-                  map.get(edt.getPath()).getCondition().add(new IdType(inv.getKey()));
-                  result = true;
-                }
-              }
-            } catch (Exception e) {
-              System.out.println ("Exception processing "+inv.getKey()+": "+e.getMessage());
-            }
+//            try {
+              count++;
+            
+//              if ("cnl-1".equals(inv.getKey())) {
+//                inv.setExpression("exists() implies matches('([^|#])*')");
+//              }
+//              Set<ElementDefinition> set = new HashSet<>();
+//              fpe.check(null, sd.getType(), ed.getPath(), fpe.parse(inv.getExpression()), set);
+//              for (ElementDefinition edt : set) {
+//                if (!edt.getPath().equals(ed.getPath()) && map.containsKey(edt.getPath())) {
+//                  map.get(edt.getPath()).getCondition().add(new IdType(inv.getKey()));
+//                  result = true;
+//                }
+//              }
+//            } catch (Exception e) {
+//              System.out.println ("Exception processing "+inv.getKey()+": "+e.getMessage());
+//            }
           }
         }
       }
-      return result;
+//      return result;
     } 
     return result;
   }
