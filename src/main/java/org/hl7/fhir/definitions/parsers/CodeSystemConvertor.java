@@ -46,7 +46,7 @@ public class CodeSystemConvertor {
     this.registry = registry;
   }
 
-  public void convert(IParser p, ValueSet vs, String name, PackageInformation packageInfo) throws Exception {
+  public CodeSystem convert(IParser p, ValueSet vs, String name, PackageInformation packageInfo) throws Exception {
     String nname = name.replace("valueset-", "codesystem-");
     if (nname.equals(name))
       nname = Utilities.changeFileExt(name, "-cs.xml");
@@ -66,7 +66,9 @@ public class CodeSystemConvertor {
         }
       }
       codeSystems.see(cs, packageInfo);
+      return cs;
     }    
+    return null;
   }
 
   public static void populate(CodeSystem cs, ValueSet vs) {

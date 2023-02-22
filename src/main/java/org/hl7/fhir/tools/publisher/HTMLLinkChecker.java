@@ -8,6 +8,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.hl7.fhir.r5.model.Enumerations.FHIRVersion;
+import org.hl7.fhir.r5.model.StructureDefinition;
+import org.hl7.fhir.r5.model.StructureDefinition.TypeDerivationRule;
 import org.hl7.fhir.utilities.FileNotifier;
 import org.hl7.fhir.utilities.TextFile;
 import org.hl7.fhir.utilities.Utilities;
@@ -66,6 +68,7 @@ public class HTMLLinkChecker implements FileNotifier {
   private List<ValidationMessage> issues;
   private String webPath;
   private FHIRVersion version;
+  private List<StructureDefinition> extensions = new ArrayList<>();
 
   
   public HTMLLinkChecker(PageProcessor page, List<ValidationMessage> issues, String webPath) {
@@ -83,6 +86,14 @@ public class HTMLLinkChecker implements FileNotifier {
     this.version = version;
   }
 
+  public void init() {
+    for (StructureDefinition sd : page.getWorkerContext().fetchResourcesByType(StructureDefinition.class)) {
+      if (sd.getType().equals("Extension") && sd.getDerivation() == TypeDerivationRule.CONSTRAINT) {
+        extensions.add(sd);
+      }
+    }
+  }
+  
   public void registerExternal(String filename) {
     if (filename.startsWith("\\"))
       throw new Error("wrong path?");
@@ -114,6 +125,7 @@ public class HTMLLinkChecker implements FileNotifier {
 
   public void produce() throws FileNotFoundException, Exception {
     if (WANT_CHECK) {
+      init();
       build();
     }
   }
@@ -277,7 +289,7 @@ public class HTMLLinkChecker implements FileNotifier {
         return; 
       String target = collapse(base, path, source);
       if (target.endsWith(".xml") || target.endsWith(".json") || target.endsWith(".jsonld") || target.endsWith(".xsd") || target.endsWith(".shex") || target.endsWith(".txt") || target.endsWith(".sch") || target.endsWith(".pdf") || target.endsWith(".epub")) {
-        if (!(new File(Utilities.path(page.getFolders().dstDir, target)).exists()))
+        if (!(new File(Utilities.path(page.getFolders().dstDir, target)).exists()) && !isValidExtensionLink(target))
           reportError(base, "Broken Link (1) in "+base+": '"+href+"' not found at \""+Utilities.path(page.getFolders().dstDir, target)+"\" ("+node.allText()+")");
         node.setAttribute("href", webPath+"/"+target.replace(File.separatorChar, '/'));
         e = null;
@@ -291,6 +303,9 @@ public class HTMLLinkChecker implements FileNotifier {
             return;
           if (target.endsWith(".zip") || target.endsWith(".ttl") || target.endsWith(".jar") || target.endsWith(".cfm") || target.endsWith(".tgz") || target.endsWith(".xlsx"))
             return;
+          if (isValidExtensionLink(target)) {
+            return;
+          }
           reportError(base, "Broken Link (2) in "+base+": '"+href+"' not found at \""+target+"\"("+node.allText()+")");
           return;
         } else if (!e.include) {
@@ -309,6 +324,21 @@ public class HTMLLinkChecker implements FileNotifier {
 //td        if (!e.anchors.contains(anchor))
 //td          reportError("Broken Link in "+base+": '"+href+"' anchor not found ("+node.allText()+")");
       }
+    }
+  }
+
+  private boolean isValidExtensionLink(String target) {
+    if (target.startsWith("extension-")) {
+//      String id = target.substring(10);
+//      id = id.substring(0, id.indexOf("."));
+//      for (StructureDefinition sd : extensions) {
+//        if (sd.getId().equalsIgnoreCase(id)) 
+//          return true;
+//        }
+//      }
+      return false;
+    } else {
+      return false;
     }
   }
 

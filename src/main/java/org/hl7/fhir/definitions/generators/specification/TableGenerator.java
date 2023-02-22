@@ -6,14 +6,21 @@ import java.util.Comparator;
 import java.util.List;
 
 import org.hl7.fhir.definitions.model.BindingSpecification;
+import org.hl7.fhir.definitions.model.BindingSpecification.AdditionalBinding;
 import org.hl7.fhir.definitions.model.BindingSpecification.BindingMethod;
 import org.hl7.fhir.definitions.model.ElementDefn;
 import org.hl7.fhir.definitions.model.Invariant;
 import org.hl7.fhir.definitions.model.ProfiledType;
 import org.hl7.fhir.definitions.model.TypeRef;
+import org.hl7.fhir.r4b.renderers.utils.RenderingContext;
+import org.hl7.fhir.r5.conformance.AdditionalBindingsRenderer;
+import org.hl7.fhir.r5.conformance.profile.ProfileKnowledgeProvider;
 import org.hl7.fhir.r5.conformance.profile.ProfileUtilities;
 import org.hl7.fhir.r5.model.Enumerations.FHIRVersion;
+import org.hl7.fhir.r5.model.StructureDefinition;
 import org.hl7.fhir.r5.model.ValueSet;
+import org.hl7.fhir.r5.renderers.CodeResolver;
+import org.hl7.fhir.r5.renderers.IMarkdownProcessor;
 import org.hl7.fhir.r5.renderers.StructureDefinitionRenderer;
 import org.hl7.fhir.r5.utils.ToolingExtensions;
 import org.hl7.fhir.tools.publisher.PageProcessor;
@@ -38,8 +45,10 @@ public class TableGenerator extends BaseGenerator {
   protected String pageName;
   protected boolean inlineGraphics;
   protected FHIRVersion version;
+
+  private String linkPrefix;
   
-  public TableGenerator(String dest, PageProcessor page, String pageName, boolean inlineGraphics, FHIRVersion version) throws Exception {
+  public TableGenerator(String dest, PageProcessor page, String pageName, boolean inlineGraphics, FHIRVersion version, String prefix) throws Exception {
     super();
     this.dest = dest;
     this.definitions = page.getDefinitions();
@@ -47,16 +56,16 @@ public class TableGenerator extends BaseGenerator {
     this.pageName = pageName;
     this.inlineGraphics = inlineGraphics; 
     this.version = version;
-
+    this.linkPrefix = prefix;
   }
   
   protected boolean dictLinks() {
     return pageName != null;
   }
-  protected Row genElement(ElementDefn e, HierarchicalTableGenerator gen, boolean resource, String path, boolean isProfile, String prefix, RenderMode mode, boolean isRoot, StandardsStatus rootStatus, boolean isAbstract, boolean isInterface) throws Exception {
+  protected Row genElement(ElementDefn e, HierarchicalTableGenerator gen, boolean resource, String path, boolean isProfile, String prefix, RenderMode mode, boolean isRoot, StandardsStatus rootStatus, StructureDefinition sd, boolean isAbstract, boolean isInterface) throws Exception {
     Row row = gen.new Row();
 
-    row.setAnchor(path);
+    row.setAnchor(linkPrefix+path);
     boolean isProfiledExtension = isProfile && (e.getName().equals("extension") || e.getName().equals("modifierExtension"));
     row.getCells().add(gen.new Cell(null, dictLinks() ? pageName+"#"+path.replace("[", "_").replace("]", "_") : null, e.getName(), path+" : "+e.getDefinition(), null));
     Cell gc = gen.new Cell();
@@ -129,7 +138,7 @@ public class TableGenerator extends BaseGenerator {
         Cell c;
         if (t.startsWith("@")) {
           row.setIcon("icon_reuse.png", HierarchicalTableGenerator.TEXT_ICON_REUSE);
-          c = gen.new Cell("see ", "#"+t.substring(1), t.substring(t.lastIndexOf(".")+1), t.substring(1), null);
+          c = gen.new Cell("see ", "#"+linkPrefix+t.substring(1), t.substring(t.lastIndexOf(".")+1), t.substring(1), null);
         } else if (isReference(t)) {
           row.setIcon("icon_reference.png", HierarchicalTableGenerator.TEXT_ICON_REFERENCE);
           c = gen.new Cell();
@@ -179,21 +188,24 @@ public class TableGenerator extends BaseGenerator {
     if (e.hasBinding() && e.getBinding() != null && e.getBinding().getBinding() != BindingMethod.Unbound) {
       if (cc.getPieces().size() == 1)
         cc.addPiece(gen.new Piece("br"));
+      cc.getPieces().add(gen.new Piece(null, "Binding: ", null));
       cc.getPieces().add(gen.new Piece(getBindingLink(prefix, e, page), e.getBinding().getValueSet() != null ? e.getBinding().getValueSet().present() : e.getBinding().getName(), 
             e.getBinding().getDefinition()));
       cc.getPieces().add(gen.new Piece(null, " (", null));
       BindingSpecification b = e.getBinding();
-      if (b.hasMax() ) {
-        cc.getPieces().add(gen.new Piece(prefix+"terminologies.html#"+b.getStrength().toCode(), b.getStrength().getDisplay(),  b.getStrength().getDefinition()));
-        cc.getPieces().add(gen.new Piece(null, " but limited to ", null));
-        ValueSet vs = b.getMaxValueSet();
-        if (vs == null)
-          cc.getPieces().add(gen.new Piece(b.getMaxReference(), b.getMaxReference(), null));
-        else
-          cc.getPieces().add(gen.new Piece(vs.hasUserData("external.url") ? vs.getUserString("external.url") : vs.getUserString("path"), vs.getName(), null));
-      }  else
-        cc.getPieces().add(gen.new Piece(prefix+"terminologies.html#"+b.getStrength().toCode(), b.getStrength().getDisplay(),  b.getStrength().getDefinition()));
+      cc.getPieces().add(gen.new Piece(prefix+"terminologies.html#"+b.getStrength().toCode(), b.getStrength().getDisplay(),  b.getStrength().getDefinition()));
       cc.getPieces().add(gen.new Piece(null, ")", null));
+      if (b.getAdditionalBindings().size() > 0 ) {
+        AdditionalBindingsRenderer abr = new AdditionalBindingsRenderer(page, "", sd, path, page.getRc(), page, null);
+        for (AdditionalBinding ab : b.getAdditionalBindings()) {
+          if (ab.getValueSet() != null) {
+            abr.seeAdditionalBinding(ab.getPurpose(), ab.getDoco(), ab.getValueSet());
+          } else {
+            abr.seeAdditionalBinding(ab.getPurpose(), ab.getDoco(), ab.getRef());
+          }
+        }
+        abr.render(gen, cc);
+      }
     }
     List<String> invs = new ArrayList<String>(e.getInvariants().keySet());
     Collections.sort(invs, new ConstraintsSorter());
@@ -345,7 +357,7 @@ public class TableGenerator extends BaseGenerator {
       }
     } else
       for (ElementDefn c : e.getElements()) {
-        row.getSubRows().add(genElement(c, gen, false, path+'.'+c.getName(), isProfile, prefix, mode, false, null, false, false));
+        row.getSubRows().add(genElement(c, gen, false, path+'.'+c.getName(), isProfile, prefix, mode, false, null, sd, false, false));
       }
     return row; 
   }      

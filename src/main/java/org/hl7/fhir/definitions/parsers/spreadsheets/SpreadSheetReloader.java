@@ -17,6 +17,7 @@ import org.hl7.fhir.definitions.model.TypeRef;
 import org.hl7.fhir.definitions.parsers.TypeParser;
 import org.hl7.fhir.exceptions.FHIRException;
 import org.hl7.fhir.exceptions.FHIRFormatError;
+import org.hl7.fhir.r5.conformance.profile.ProfileUtilities;
 import org.hl7.fhir.r5.context.BaseWorkerContext;
 import org.hl7.fhir.r5.model.BooleanType;
 import org.hl7.fhir.r5.model.Bundle;
@@ -115,6 +116,7 @@ public class SpreadSheetReloader extends SpreadSheetBase {
         readElementDefinition(row, cols, ed, bindings, invariants);
       }
     }   
+    new ProfileUtilities(context, null, null).setIds(sd, false);
     saveXml(fnSD(), sd);
   }
 
@@ -530,7 +532,6 @@ public class SpreadSheetReloader extends SpreadSheetBase {
     sp.setType(SearchParamType.fromCode(getValue(row, cols, CN_TYPE)));
     sp.setExpression(getValue(row, cols, CN_EXPRESSION));
     sp.setDescription(getValue(row, cols, CN_DESCRIPTION));
-//    sp.setXpath(getValue(row, cols, CN_X_PATH));
     sp.getTarget().clear();
     for (String s : splitValue(row, cols, CN_TARGET_TYPES, "\\|")) {
       sp.getTarget().add(new CodeType(s));

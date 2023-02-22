@@ -87,6 +87,7 @@ public class SearchParameterDefn {
   private StandardsStatus standardsStatus;
   private String url;
   private Set<String> manualTypes = new HashSet<String>();
+  private String base;
   
   // operational tracking
   private boolean works; // marked by the testing routines if this search parameter yields results for any of the examples
@@ -274,7 +275,6 @@ public class SearchParameterDefn {
     this.url = url;
   }
 
-
   public String getNormativeVersion() {
     return normativeVersion;
   }
@@ -298,6 +298,14 @@ public class SearchParameterDefn {
 
   public Set<String> getManualTargets() {
     return manualTargets;
+  }
+
+  public String getBase() {
+    return base;
+  }
+
+  public void setBase(String base) {
+    this.base = base;
   }
     
 }

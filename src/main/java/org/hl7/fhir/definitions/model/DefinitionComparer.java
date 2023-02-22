@@ -361,12 +361,12 @@ public class DefinitionComparer {
       }
     }
     
-    if (left.getExamples().size() != right.getExamples().size()) {
+    if (left.getAllExamples1().size() != right.getAllExamples1().size()) {
       res = false;
-      System.out.println("Definitions differ @"+path+": examples.count = "+left.getExamples().size()+" vs "+right.getExamples().size());      
+      System.out.println("Definitions differ @"+path+": examples.count = "+left.getAllExamples1().size()+" vs "+right.getAllExamples1().size());      
     } else {
-      for (int i = 0; i < left.getExamples().size(); i++) {
-        if (!compareOperationExamples(path+".#examples["+i+"]", left.getExamples().get(i), right.getExamples().get(i))) {
+      for (int i = 0; i < left.getAllExamples1().size(); i++) {
+        if (!compareOperationExamples(path+".#examples["+i+"]", left.getAllExamples1().get(i), right.getAllExamples1().get(i))) {
           res = false; 
         }
       }

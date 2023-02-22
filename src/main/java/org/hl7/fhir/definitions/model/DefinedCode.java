@@ -52,14 +52,27 @@ public class DefinedCode {
   private String v3Map;
 	private Map<String, String> langs = new HashMap<String, String>();
   private StructureDefinition profile;
-	
-	public DefinedCode(String code, String definition, String comment) {
-		super();
-		this.code = code;
-		this.definition = definition;
-		this.comment = comment;
+  private List<String> characteristics = new ArrayList<>();
+  
+  
+	public DefinedCode(String code, String definition, String comment, String charList) {
+	  super();
+	  this.code = code;
+	  this.definition = definition;
+	  this.comment = comment;
+	  loadCharacteristics(charList);
 	}
-	
+
+  public void loadCharacteristics(String charList) {
+    if (charList != null) {
+	    for (String c : charList.split("\\,")) {
+	      if (!Utilities.noString(c)) {
+	        characteristics.add(c);
+	      }
+	    }
+	  }
+  }
+
 	public DefinedCode() {
 		super();
 	}
@@ -195,7 +208,9 @@ public class DefinedCode {
   public void setDeprecated(boolean deprecated) {
     this.deprecated = deprecated;
   }
-  
-  
+
+  public List<String> getCharacteristics() {
+    return characteristics;
+  }  
   
 }

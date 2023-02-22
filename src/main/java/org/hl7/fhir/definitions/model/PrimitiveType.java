@@ -41,8 +41,8 @@ public class PrimitiveType extends DefinedCode {
     super();
   }
 
-  public PrimitiveType(String code, String definition, String comment) {
-    super(code, definition, comment);
+  public PrimitiveType(String code, String definition, String comment, String charList) {
+    super(code, definition, comment, charList);
   }
 
   public void setSchemaType(String value) {

@@ -39,6 +39,7 @@ import java.util.Set;
 
 import org.apache.commons.io.IOUtils;
 import org.hl7.fhir.definitions.model.BindingSpecification;
+import org.hl7.fhir.definitions.model.BindingSpecification.AdditionalBinding;
 import org.hl7.fhir.definitions.model.BindingSpecification.BindingMethod;
 import org.hl7.fhir.definitions.model.Definitions;
 import org.hl7.fhir.definitions.parsers.CodeListToValueSetParser;
@@ -161,12 +162,6 @@ public class BindingsParser {
         if (oid != null) {
           ValueSetUtilities.setOID(cd.getValueSet(), oid);
         }
-        if (cd.getMaxValueSet() != null) {
-          oid = registry.getOID(cd.getMaxValueSet().getUrl());
-          if (oid != null) {
-            ValueSetUtilities.setOID(cd.getMaxValueSet(), oid);
-          }          
-        }
         new CodeListToValueSetParser(cs, ref.substring(1), cd.getValueSet(), version, codeSystems, maps, packageInfo, registry).execute(sheet.getColumn(row, "v2"), sheet.getColumn(row, "v3"), utg);
       } else if (cd.getBinding() == BindingMethod.ValueSet) {
         if (ref.startsWith("http:")) {
@@ -174,16 +169,35 @@ public class BindingsParser {
         } else
           cd.setValueSet(loadValueSet(ref, sheet.getColumn(row, "Committee").toLowerCase()));
         String max = sheet.getColumn(row, "Max");
-        if (!Utilities.noString(max))
+        if (!Utilities.noString(max)) {
           if (max.startsWith("http:")) {
-            cd.setMaxReference(max); // will sort this out later
-          } else
-            cd.setMaxValueSet(loadValueSet(max, sheet.getColumn(row, "Committee").toLowerCase()));
+            cd.getAdditionalBindings().add(new AdditionalBinding("maximum", max)); // will sort this out later
+          } else {
+            cd.getAdditionalBindings().add(new AdditionalBinding("maximum", loadValueSet(max, sheet.getColumn(row, "Committee").toLowerCase())));
+          }
+        }
+        for (String add : sheet.getColumn(row, "Additional").split("\\,")) {
+          String[] p = add.split("\\=");
+          if (p.length == 2)
+            if (p[1].startsWith("http:")) {
+              cd.getAdditionalBindings().add(new AdditionalBinding(p[0], p[1])); // will sort this out later
+            } else {
+              cd.getAdditionalBindings().add(new AdditionalBinding(p[0], loadValueSet(p[1], sheet.getColumn(row, "Committee").toLowerCase())));
+            }
+        }
+        for (AdditionalBinding vsc : cd .getAdditionalBindings()) {
+          if (vsc.getValueSet() != null) {
+            String oid = registry.getOID(vsc.getValueSet().getUrl());
+            if (oid != null) {
+              ValueSetUtilities.setOID(vsc.getValueSet(), oid);
+            }
+          }
+        }
       } else if (cd.getBinding() == BindingMethod.Special) {
         if ("#operation-outcome".equals(sheet.getColumn(row, "Reference"))) {
-          loadOperationOutcomeValueSet(cd);
-        } else {
-          cd.setValueSet(new ValueSet());
+        loadOperationOutcomeValueSet(cd);
+      } else {
+        cd.setValueSet(new ValueSet());
           cd.getValueSet().setId(ref.substring(1));
           cd.getValueSet().setUrl("http://hl7.org/fhir/ValueSet/"+ref.substring(1));
           cd.getValueSet().setVersion(version);
@@ -199,9 +213,11 @@ public class BindingsParser {
         touchVS(cd.getValueSet());
         ValueSetUtilities.markStatus(cd.getValueSet(), Utilities.noString(sheet.getColumn(row, "Committee")) ? "vocab" : sheet.getColumn(row, "Committee").toLowerCase(), null, null, Utilities.noString(sheet.getColumn(row, "FMM")) ? null : sheet.getColumn(row, "FMM"), null, Utilities.noString(sheet.getColumn(row, "Normative-Version")) ? null : sheet.getColumn(row, "Normative-Version"));
       }
-      if (cd.getMaxValueSet() != null) {
-        touchVS(cd.getMaxValueSet());
-        ValueSetUtilities.markStatus(cd.getMaxValueSet(), Utilities.noString(sheet.getColumn(row, "Committee")) ? "vocab" : sheet.getColumn(row, "Committee").toLowerCase(), null, null, Utilities.noString(sheet.getColumn(row, "FMM")) ? null : sheet.getColumn(row, "FMM"), null, Utilities.noString(sheet.getColumn(row, "Max-Normative-Version")) ? null : sheet.getColumn(row, "Max-Normative-Version"));
+      for (AdditionalBinding vsc : cd .getAdditionalBindings()) {
+        if (vsc.getValueSet() != null) {
+          touchVS(vsc.getValueSet());
+          ValueSetUtilities.markStatus(vsc.getValueSet(), Utilities.noString(sheet.getColumn(row, "Committee")) ? "vocab" : sheet.getColumn(row, "Committee").toLowerCase(), null, null, Utilities.noString(sheet.getColumn(row, "FMM")) ? null : sheet.getColumn(row, "FMM"), null, Utilities.noString(sheet.getColumn(row, "Max-Normative-Version")) ? null : sheet.getColumn(row, "Max-Normative-Version"));
+        }
       }
 
       cd.setDescription(sheet.getColumn(row, "Description"));

@@ -782,6 +782,12 @@ public class BuildWorkerContext extends BaseWorkerContext implements IWorkerCont
     return new String[] {"CodeSystem", "ValueSet", "ConceptMap", "NamingSystem"};
   }
 
+
+  public static String[] extensionTypesToLoad() {
+    // there's no penalty for listing resources that don't exist, so we just all the relevant possibilities for all versions 
+    return new String[] {"CodeSystem", "ValueSet", "ConceptMap", "NamingSystem", "StructureDefinition", "SearchParameter"};
+  }
+
   @Override
   public int loadFromPackageAndDependencies(NpmPackage pi, IContextResourceLoader loader, BasePackageCacheManager pcm) throws FileNotFoundException, IOException, FHIRException {
     throw new Error("Not implemented yet");

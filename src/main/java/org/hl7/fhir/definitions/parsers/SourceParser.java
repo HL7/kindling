@@ -82,6 +82,7 @@ import org.hl7.fhir.definitions.model.TypeDefn;
 import org.hl7.fhir.definitions.model.TypeRef;
 import org.hl7.fhir.definitions.model.W5Entry;
 import org.hl7.fhir.definitions.model.WorkGroup;
+import org.hl7.fhir.definitions.model.BindingSpecification.AdditionalBinding;
 import org.hl7.fhir.definitions.parsers.spreadsheets.BindingsParser;
 import org.hl7.fhir.definitions.parsers.spreadsheets.OldSpreadsheetParser;
 import org.hl7.fhir.definitions.parsers.spreadsheets.SpreadSheetCreator;
@@ -110,6 +111,7 @@ import org.hl7.fhir.r5.model.StructureDefinition.StructureDefinitionContextCompo
 import org.hl7.fhir.r5.model.StructureDefinition.TypeDerivationRule;
 import org.hl7.fhir.r5.model.ValueSet;
 import org.hl7.fhir.r5.terminologies.CodeSystemUtilities;
+import org.hl7.fhir.r5.terminologies.ValueSetUtilities;
 import org.hl7.fhir.r5.utils.ToolingExtensions;
 import org.hl7.fhir.tools.publisher.BuildWorkerContext;
 import org.hl7.fhir.tools.publisher.PageProcessor;
@@ -356,7 +358,14 @@ public class SourceParser {
         }
       }        
     }
-    closeTemplates();    
+    closeTemplates();
+    
+    for (String s : ini.getProperties("allowed-bad-invariants").keySet()) {
+      definitions.getBadInvariants().put(s, ini.getStringProperty("allowed-bad-invariants", s));
+    }
+    for (String s : ini.getProperties("allowed-search-types").keySet()) {
+      definitions.getAllowedSearchTypes().put(s, ini.getStringProperty("allowed-search-types", s));
+    }
   }
 
   private String getFmmForType(String n, String def) {
@@ -934,15 +943,31 @@ public class SourceParser {
   private void loadValueSet(String n) throws FileNotFoundException, Exception {
     XmlParser xml = new XmlParser();
     ValueSet vs = (ValueSet) xml.parse(new CSFileInputStream(srcDir+ini.getStringProperty("valuesets", n).replace('\\', File.separatorChar)));
-    new CodeSystemConvertor(definitions.getCodeSystems(), registry).convert(xml, vs, srcDir+ini.getStringProperty("valuesets", n).replace('\\', File.separatorChar), page.packageInfo());
     vs.setId(FormatUtilities.makeId(n));
     vs.setUrl("http://hl7.org/fhir/ValueSet/"+vs.getId());
-    if (!vs.hasVersion() || vs.getUrl().startsWith("http://hl7.org/fhir"))
+    if (!vs.hasVersion() || vs.getUrl().startsWith("http://hl7.org/fhir")) {
       vs.setVersion(version.toCode());
-
+    }
+    if (!vs.hasPublisher()) {
+      vs.setPublisher("HL7, International");
+    }
+    if (!ValueSetUtilities.hasOID(vs)) {
+      String oid = registry.getOID(vs.getUrl());
+      if (oid != null) {
+        ValueSetUtilities.setOID(vs, "urn:oid:"+oid);
+      }
+    }
+    ValueSetUtilities.makeShareable(vs);
+    
+    CodeSystem cs= new CodeSystemConvertor(definitions.getCodeSystems(), registry).convert(xml, vs, srcDir+ini.getStringProperty("valuesets", n).replace('\\', File.separatorChar), page.packageInfo());
+    if (cs != null) {
+      page.getWorkerContext().cacheResource(cs);
+    }
+    
     vs.setExperimental(false);
     vs.setUserData("path", "valueset-"+vs.getId()+".html");
     vs.setUserData("filename", "valueset-"+vs.getId());
+    page.getWorkerContext().cacheResource(vs);
     definitions.getExtraValuesets().put(n, vs) ;
     definitions.getExtraValuesets().put(vs.getUrl(), vs);
   }
@@ -1088,9 +1113,12 @@ public class SourceParser {
       } else if (cd.getReference() != null && cd.getReference().startsWith("http:")) {
         definitions.getUnresolvedBindings().add(cd);
       }
-      if (cd.getMaxValueSet() != null) {
-        vsGen.updateHeader(cd, cd.getMaxValueSet());
-        definitions.getBoundValueSets().put(cd.getMaxValueSet().getUrl(), cd.getMaxValueSet());
+
+      for (AdditionalBinding vsc : cd .getAdditionalBindings()) {
+        if (vsc.getValueSet() != null) {
+          vsGen.updateHeader(cd, vsc.getValueSet());
+          definitions.getBoundValueSets().put(vsc.getValueSet().getUrl(), vsc.getValueSet());
+        }
       }
     }
 //    if (!page.getDefinitions().getBoundValueSets().containsKey("http://hl7.org/fhir/ValueSet/data-absent-reason"))
@@ -1121,6 +1149,7 @@ public class SourceParser {
     prim.setRegex(sheet.getColumn(row, "RegEx"));
     prim.setV2(sheet.getColumn(row, "v2"));
     prim.setV3(sheet.getColumn(row, "v3"));
+    prim.loadCharacteristics(ini.getStringProperty("type-characteristics", prim.getCode()));
     TypeRef td = new TypeRef();
     td.setName(prim.getCode());
     definitions.getKnownTypes().add(td);
@@ -1136,6 +1165,7 @@ public class SourceParser {
     prim.setSchema(sheet.getColumn(row, "Schema"));
     prim.setJsonType(sheet.getColumn(row, "Json"));
     prim.setBase(sheet.getColumn(row, "Base"));
+    prim.loadCharacteristics(ini.getStringProperty("type-characteristics", prim.getCode()));
     TypeRef td = new TypeRef();
     td.setName(prim.getCode());
     definitions.getKnownTypes().add(td);
@@ -1147,7 +1177,7 @@ public class SourceParser {
     try {
       profile = new ProfileGenerator(definitions, context, page, genDate, version, null, fpUsages, page.getFolders().rootDir, page.getUml(), page.getRc()).generate(t);
       t.setProfile(profile);
-      DataTypeTableGenerator dtg = new DataTypeTableGenerator(dstDir, page, t.getName(), true, version);
+      DataTypeTableGenerator dtg = new DataTypeTableGenerator(dstDir, page, t.getName(), true, version, "");
       t.getProfile().getText().setDiv(new XhtmlNode(NodeType.Element, "div"));
       t.getProfile().getText().getDiv().getChildNodes().add(dtg.generate(t, null, false));
       context.cacheResource(t.getProfile());
@@ -1216,6 +1246,7 @@ public class SourceParser {
             }
             pt.setName(n);
             pt.setBaseType(p);
+            pt.loadCharacteristics(ini.getStringProperty("type-characteristics", p));
             pt.setInvariant(inv);
             definitions.getConstraints().put(n, pt);
           }
@@ -1287,7 +1318,7 @@ public class SourceParser {
         map.put(root.getName(), root);
       }
       if (!isTemplate) {
-        definitions.getKnownResources().put(root.getName(), new DefinedCode(root.getName(), root.getRoot().getDefinition(), n));
+        definitions.getKnownResources().put(root.getName(), new DefinedCode(root.getName(), root.getRoot().getDefinition(), n, null));
         context.getResourceNames().add(root.getName());
       }
       if (root.getNormativeVersion() != null || root.getNormativePackage() != null) {
@@ -1312,7 +1343,7 @@ public class SourceParser {
         parseSvgFile(f, rootNew.getLayout(), f.getName());
       }
       if (!isTemplate) {
-        definitions.getKnownResources().put(rootNew.getName(), new DefinedCode(rootNew.getName(), rootNew.getRoot().getDefinition(), n));
+        definitions.getKnownResources().put(rootNew.getName(), new DefinedCode(rootNew.getName(), rootNew.getRoot().getDefinition(), n, null));
         context.getResourceNames().add(rootNew.getName());
       }
       if (f.exists()) { 

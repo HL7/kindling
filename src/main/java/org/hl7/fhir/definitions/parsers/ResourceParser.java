@@ -15,6 +15,7 @@ import java.util.Set;
 
 import org.hl7.fhir.definitions.generators.specification.ToolResourceUtilities;
 import org.hl7.fhir.definitions.model.BindingSpecification;
+import org.hl7.fhir.definitions.model.BindingSpecification.AdditionalBinding;
 import org.hl7.fhir.definitions.model.BindingSpecification.BindingMethod;
 import org.hl7.fhir.definitions.model.ConstraintStructure;
 import org.hl7.fhir.definitions.model.Definitions;
@@ -50,11 +51,13 @@ import org.hl7.fhir.r5.model.CodeSystem;
 import org.hl7.fhir.r5.model.CodeType;
 import org.hl7.fhir.r5.model.ConceptMap;
 import org.hl7.fhir.r5.model.ElementDefinition;
+import org.hl7.fhir.r5.model.ElementDefinition.ElementDefinitionBindingAdditionalComponent;
 import org.hl7.fhir.r5.model.ElementDefinition.ElementDefinitionBindingComponent;
 import org.hl7.fhir.r5.model.ElementDefinition.ElementDefinitionConstraintComponent;
 import org.hl7.fhir.r5.model.ElementDefinition.ElementDefinitionMappingComponent;
 import org.hl7.fhir.r5.model.ElementDefinition.PropertyRepresentation;
 import org.hl7.fhir.r5.model.ElementDefinition.TypeRefComponent;
+import org.hl7.fhir.r5.model.Enumeration;
 import org.hl7.fhir.r5.model.Enumerations.FHIRVersion;
 import org.hl7.fhir.r5.model.Enumerations.PublicationStatus;
 import org.hl7.fhir.r5.model.Enumerations.SearchParamType;
@@ -67,6 +70,7 @@ import org.hl7.fhir.r5.model.ListResource.ListResourceEntryComponent;
 import org.hl7.fhir.r5.model.OperationDefinition;
 import org.hl7.fhir.r5.model.OperationDefinition.OperationDefinitionParameterBindingComponent;
 import org.hl7.fhir.r5.model.OperationDefinition.OperationDefinitionParameterComponent;
+import org.hl7.fhir.r5.model.OperationDefinition.OperationParameterScope;
 import org.hl7.fhir.r5.model.Resource;
 import org.hl7.fhir.r5.model.SearchParameter;
 import org.hl7.fhir.r5.model.SearchParameter.SearchParameterComponentComponent;
@@ -236,6 +240,9 @@ public class ResourceParser {
           sd.setUserData("path", sd.getId()+".html");
           p.getProfiles().add(tp); 
         }
+        if (ProfileUtilities.isExtensionDefinition(sd)) {
+          throw new FHIRException("Extension found at "+res.getReference().getReference()+" - this is an error since extensions have moved to https://github.com/HL7/fhir-extensions");
+        }
         sd.setUserData(ToolResourceUtilities.NAME_RES_IG, id);
         sd.setVersion(version);
         sd.setFhirVersion(FHIRVersion.fromCode(version));
@@ -293,17 +300,19 @@ public class ResourceParser {
 
   private Operation convertOperation(OperationDefinition src) throws FileNotFoundException, FHIRException, IOException, Exception {
 
-    List<OperationExample> examples = new ArrayList<>();
+    List<OperationExample> reqExamples = new ArrayList<>();
+    List<OperationExample> respExamples = new ArrayList<>();
     List<OperationExample> examples2 = new ArrayList<>();
     for (Extension ex : src.getExtensionsByUrl(BuildExtensions.EXT_OP_EXAMPLE)) {
+      boolean isResp = "true".equals(ex.getExtensionString(BuildExtensions.EXT_OP_EXAMPLE_RESPONSE));
       if ("2".equals(ex.getExtensionString(BuildExtensions.EXT_OP_EXAMPLE_LIST))) {
-        processExample(examples2, ex.getExtensionString(BuildExtensions.EXT_OP_EXAMPLE_CONTENT), "true".equals(ex.getExtensionString(BuildExtensions.EXT_OP_EXAMPLE_RESPONSE)));
+        processExample(examples2, ex.getExtensionString(BuildExtensions.EXT_OP_EXAMPLE_CONTENT), isResp);
       } else {
-        processExample(examples, ex.getExtensionString(BuildExtensions.EXT_OP_EXAMPLE_CONTENT), "true".equals(ex.getExtensionString(BuildExtensions.EXT_OP_EXAMPLE_RESPONSE)));
+        processExample(isResp ? respExamples : reqExamples, ex.getExtensionString(BuildExtensions.EXT_OP_EXAMPLE_CONTENT), isResp);
       }
     }
-    Operation op = new Operation(src.getName(), src.getSystem(), src.getType(), src.getInstance(), src.getKind().toCode(), src.getTitle(), src.getDescription(), 
-        BuildExtensions.readStringExtension(src, BuildExtensions.EXT_FOOTER), examples, !src.getAffectsState());
+    Operation op = new Operation(src.getCode(), src.getSystem(), src.getType(), src.getInstance(), src.getKind().toCode(), src.getTitle(), src.getDescription(), 
+        BuildExtensions.readStringExtension(src, BuildExtensions.EXT_FOOTER), reqExamples, respExamples, !src.getAffectsState());
     op.getExamples2().addAll(examples2);
     op.setResource(src);
     op.setStandardsStatus(StandardsStatus.fromCode(BuildExtensions.readStringExtension(src, BuildExtensions.EXT_STANDARDS_STATUS)));
@@ -316,7 +325,7 @@ public class ResourceParser {
   }
 
   private void processExample(List<OperationExample> examples, String file, boolean response) throws FileNotFoundException, IOException, Exception {
-    for (String s : TextFile.fileToString(Utilities.path(folder, file)).split("\r\n--------------------------------------\r\n"))
+    for (String s : TextFile.fileToString(Utilities.path(folder, file)).split("\r?\n--------------------------------------\r?\n"))
       examples.add(convertToExample(s, response));
   }
 
@@ -391,9 +400,13 @@ public class ResourceParser {
     } else {
       t = "Tuple";
     }
-    OperationParameter p = new OperationParameter(psrc.getName(), part ? null : psrc.getUse().toCode(), psrc.getDocumentation(), psrc.getMin(), psrc.getMax(), t, psrc.hasSearchType() ? psrc.getSearchType().toCode() : null, null);
+    OperationParameter p = new OperationParameter(psrc.getName(), part ? null : psrc.getUse().toCode(), psrc.getDocumentation(), psrc.getMin(), psrc.getMax(), t, psrc.hasSearchType() ? psrc.getSearchType().toCode() : null, null,
+        ToolingExtensions.getStandardsStatus(psrc));
     if (psrc.hasBinding()) {
       p.setBs(parseBinding(psrc.getBinding()));
+    }
+    for (Enumeration<OperationParameterScope> s : psrc.getScope()) {
+      p.getScopes().add(s.asStringValue());
     }
     for (OperationDefinitionParameterComponent pc : psrc.getPart()) {
       p.getParts().add(convertOperationParameter(pc, true));
@@ -420,6 +433,7 @@ public class ResourceParser {
     r.getSearchParams().put(sp.getCode(), sp);
     sp.setExpression(src.getExpression());
     sp.setResource(src);
+    sp.setBase(r.getName());
     String s = BuildExtensions.readStringExtension(src, BuildExtensions.EXT_PATH);
     if (!Utilities.noString(s)) {
       for (String p : s.split("\\,")) {
@@ -499,7 +513,34 @@ public class ResourceParser {
 
 
   private TypeDefn parseTypeDefinition(ProfileUtilities pu, ElementDefinition focus, StructureDefinition sd) throws IOException {
-    TypeDefn ed = new TypeDefn();
+    for (ElementDefinition edt : sd.getDifferential().getElement()) {
+      for (ElementDefinitionConstraintComponent cst : edt.getConstraint()) {
+        Invariant inv = new Invariant();
+        inv.setContext(focus.getPath());
+        inv.setEnglish(cst.getHuman());
+        if (cst.hasExtension(BuildExtensions.EXT_OCL)) {
+          inv.setOcl(cst.getExtensionString(BuildExtensions.EXT_OCL));        
+        }
+        inv.setId(cst.getKey());
+        if (cst.hasExtension(BuildExtensions.EXT_FIXED_NAME)) {
+          inv.setFixedName(cst.getExtensionString(BuildExtensions.EXT_FIXED_NAME));        
+        }
+        inv.setSeverity(cst.getSeverity().toCode());
+        if (cst.hasExtension(BuildExtensions.EXT_BEST_PRACTICE)) {
+          inv.setSeverity("best-practice");
+        }
+        if (cst.hasExtension(BuildExtensions.EXT_TURTLE)) {
+          inv.setTurtle(cst.getExtensionString(BuildExtensions.EXT_TURTLE));        
+        }
+        inv.setRequirements(cst.getRequirements());
+        inv.setExpression(cst.getExpression());
+        if (cst.hasExtension(BuildExtensions.EXT_BEST_PRACTICE_EXPLANATION)) {
+          inv.setExplanation(cst.getExtensionString(BuildExtensions.EXT_BEST_PRACTICE_EXPLANATION));        
+        }
+        invariants.put(inv.getId(), inv);
+      }
+    }
+    TypeDefn ed = new TypeDefn(null);
     parseED(pu, ed, focus, sd, "");
     return ed;
   }
@@ -573,30 +614,8 @@ public class ResourceParser {
     }
 
     for (ElementDefinitionConstraintComponent cst : focus.getConstraint()) {
-      Invariant inv = new Invariant();
-      inv.setContext(focus.getPath());
-      inv.setEnglish(cst.getHuman());
-      if (cst.hasExtension(BuildExtensions.EXT_OCL)) {
-        inv.setOcl(cst.getExtensionString(BuildExtensions.EXT_OCL));        
-      }
-      inv.setId(cst.getKey());
-      if (cst.hasExtension(BuildExtensions.EXT_FIXED_NAME)) {
-        inv.setFixedName(cst.getExtensionString(BuildExtensions.EXT_FIXED_NAME));        
-      }
-      inv.setSeverity(cst.getSeverity().toCode());
-      if (cst.hasExtension(BuildExtensions.EXT_BEST_PRACTICE)) {
-        inv.setSeverity("best-practice");
-      }
-      if (cst.hasExtension(BuildExtensions.EXT_TURTLE)) {
-        inv.setTurtle(cst.getExtensionString(BuildExtensions.EXT_TURTLE));        
-      }
-      inv.setRequirements(cst.getRequirements());
-      inv.setExpression(cst.getExpression());
-      if (cst.hasExtension(BuildExtensions.EXT_BEST_PRACTICE_EXPLANATION)) {
-        inv.setExplanation(cst.getExtensionString(BuildExtensions.EXT_BEST_PRACTICE_EXPLANATION));        
-      }
+      Invariant inv = invariants.get(cst.getKey());
       ed.getInvariants().put(inv.getId(), inv);
-      invariants.put(inv.getId(), inv);
     }
 
     for (IdType cnd : focus.getCondition()) {
@@ -695,10 +714,9 @@ public class ResourceParser {
     }
 
     if (binding.hasExtension(ToolingExtensions.EXT_MAX_VALUESET)) {
-      bs.setMaxReference(binding.getExtensionString(ToolingExtensions.EXT_MAX_VALUESET));
-      bs.setMaxValueSet(loadValueSet(bs.getMaxReference(), false));
+      bs.getAdditionalBindings().add(new AdditionalBinding("maximum", binding.getExtensionString(ToolingExtensions.EXT_MAX_VALUESET), loadValueSet(binding.getExtensionString(ToolingExtensions.EXT_MAX_VALUESET), false)));
     }
-
+    
     if (binding.hasExtension(BuildExtensions.EXT_V2_MAP)) {
       bs.setV2Map(binding.getExtensionString(BuildExtensions.EXT_V2_MAP));
     }
@@ -737,8 +755,10 @@ public class ResourceParser {
       bs.setValueSet(loadValueSet(bs.getReference(), false));
     }
     if (binding.hasExtension(ToolingExtensions.EXT_MAX_VALUESET)) {
-      bs.setMaxReference(binding.getExtensionString(ToolingExtensions.EXT_MAX_VALUESET));
-      bs.setMaxValueSet(loadValueSet(bs.getMaxReference(), false));
+      bs.getAdditionalBindings().add(new AdditionalBinding("maximum", binding.getExtensionString(ToolingExtensions.EXT_MAX_VALUESET), loadValueSet(binding.getExtensionString(ToolingExtensions.EXT_MAX_VALUESET), false)));
+    }
+    for (ElementDefinitionBindingAdditionalComponent add : binding.getAdditional()) {
+      bs.getAdditionalBindings().add(new AdditionalBinding(add.getPurpose().toCode(), add.getValueSet(), loadValueSet(add.getValueSet(), false)).setDoco(add.getDocumentation()));      
     }
 
     if (binding.hasExtension(BuildExtensions.EXT_V2_MAP)) {
@@ -749,6 +769,9 @@ public class ResourceParser {
     }
     if (binding.hasExtension(BuildExtensions.EXT_BINDING_DEFINITION)) {
       bs.setDefinition(binding.getExtensionString(BuildExtensions.EXT_BINDING_DEFINITION));
+      if (!binding.hasDescription()) {
+        bs.setDescription(bs.getDefinition());
+      }
     }
     if (binding.hasExtension(BuildExtensions.EXT_URI)) {
       bs.setUri(binding.getExtensionString(BuildExtensions.EXT_URI));
@@ -770,6 +793,9 @@ public class ResourceParser {
   }
 
   private ValueSet loadValueSet(String reference, boolean ext) throws IOException {
+    if (reference == null) {
+      return null;
+    }
     if (reference.contains("|")) {
       reference = reference.substring(0, reference.indexOf("|"));
     }
@@ -814,6 +840,9 @@ public class ResourceParser {
       if (cs.hasStatus()) {
         cs.setStatus(PublicationStatus.ACTIVE);
       }
+      if (!cs.hasPublisher()) {
+        cs.setPublisher("HL7 International");
+      }
       cs.setVersion(version);
       if (!cs.hasExtension(ToolingExtensions.EXT_WORKGROUP)) {
         cs.addExtension().setUrl(ToolingExtensions.EXT_WORKGROUP).setValue(new CodeType(committee.getCode()));
@@ -837,6 +866,7 @@ public class ResourceParser {
           CodeSystemUtilities.setOID(cs, "urn:oid:"+oid);
         }
       }
+      CodeSystemUtilities.makeShareable(cs);
       if (save) {
         saveXml(cs, "codesystem-"+id+".xml");
       }
@@ -869,6 +899,9 @@ public class ResourceParser {
           if (oid != null) {
             ConceptMapUtilities.setOID(cm, "urn:oid:"+oid);
           }
+        }
+        if (!cm.hasPublisher()) {
+          cm.setPublisher("HL7 International");
         }
         maps.see(cm, null);
       }
@@ -909,6 +942,11 @@ public class ResourceParser {
         if (!ec.equals(committee.getCode()))
           System.out.println("ValueSet "+vs.getUrl()+" WG mismatch 4b: is "+ec+", want to set to "+committee.getCode());
       } 
+      if (!vs.hasPublisher()) {
+        vs.setPublisher("HL7 International");
+      }
+      ValueSetUtilities.makeShareable(vs);
+
       vs.setUserData("path", "valueset-"+vs.getId()+".html");
       if (!ValueSetUtilities.hasOID(vs)) {
         String oid = registry.getOID(vs.getUrl());

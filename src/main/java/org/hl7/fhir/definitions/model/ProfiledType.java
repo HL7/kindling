@@ -1,9 +1,12 @@
 package org.hl7.fhir.definitions.model;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.hl7.fhir.r5.model.StructureDefinition;
+import org.hl7.fhir.utilities.Utilities;
 
 public class ProfiledType {
   private String name;
@@ -11,6 +14,8 @@ public class ProfiledType {
   private String description;
   private String baseType;
   private Map<String, String> rules = new HashMap<String, String>();
+  private List<String> characteristics = new ArrayList<>();
+  
   
   private Invariant invariant;
   private StructureDefinition profile;
@@ -58,7 +63,18 @@ public class ProfiledType {
     return rules;
   }
 
+  public void loadCharacteristics(String charList) {
+    if (charList != null) {
+      for (String c : charList.split("\\,")) {
+        if (!Utilities.noString(c)) {
+          characteristics.add(c);
+        }
+      }
+    }
+  }
 
-  
+  public List<String> getCharacteristics() {
+    return characteristics;
+  }  
   
 }

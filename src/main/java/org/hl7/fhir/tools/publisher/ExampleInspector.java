@@ -310,7 +310,7 @@ public class ExampleInspector implements IValidatorResourceFetcher, IValidationP
   
   public void doValidate(String n, String rt, StructureDefinition profile) {
     errorsInt.clear();
-    logger.log(" ...validate " + n, LogMessageType.Process);
+    logger.log(" ...validate " + n+" ("+Utilities.describeSize(fileSize(n))+")", LogMessageType.Process);
 
     try {
       Element e = validateLogical(Utilities.path(rootDir, n+".xml"), profile, FhirFormat.XML);
@@ -319,7 +319,11 @@ public class ExampleInspector implements IValidatorResourceFetcher, IValidationP
       validateLogical(Utilities.path(rootDir, n+".json"), profile, FhirFormat.JSON);
       validateJson(Utilities.path(rootDir, n+".json"), profile == null ? null : profile.getId());
       validateRDF(Utilities.path(rootDir, n+".ttl"), Utilities.path(rootDir, n+".jsonld"), rt);
-      
+
+//      if (new File(Utilities.path(rootDir, n+".ttl")).exists()) {
+//        validateLogical(Utilities.path(rootDir, n+".ttl"), profile, FhirFormat.TURTLE);
+//      }
+
       checkSearchParameters(e, e);
     } catch (Exception e) {
       e.printStackTrace();
@@ -342,6 +346,14 @@ public class ExampleInspector implements IValidatorResourceFetcher, IValidationP
     Runtime.getRuntime().gc();
   }
  
+  private long fileSize(String n) {
+    try {
+      return new File(Utilities.path(rootDir, n+".xml")).length();
+    } catch (IOException e) {
+      return 0;
+    }
+  }
+
   private Element validateLogical(String f, StructureDefinition profile, FhirFormat fmt) throws Exception {
     Element e = Manager.parseSingle(context, new CSFileInputStream(f), fmt);
     new DefinitionsUsageTracker(definitions).updateUsage(e);
@@ -675,19 +687,21 @@ public class ExampleInspector implements IValidatorResourceFetcher, IValidationP
   }
 
 
-  public void testInvariants(String srcDir, ResourceDefn rd) throws IOException {
+  public boolean testInvariants(String srcDir, ResourceDefn rd) throws IOException {
+    boolean result = true;
     File testsDir = new File(Utilities.path(srcDir, rd.getName().toLowerCase(), "invariant-tests"));
     if (testsDir.exists()) {
       for (File f : testsDir.listFiles()) {
         if (f.getName().endsWith(".json")) {
-          testInvariant(rd, f);
+          result = testInvariant(rd, f) && result;
         }
       }
     }
+    return result;
   }
 
 
-  private void testInvariant(ResourceDefn rd, File f) throws FHIRException, FileNotFoundException {
+  private boolean testInvariant(ResourceDefn rd, File f) throws FHIRException, FileNotFoundException {
     String inv = f.getName();
     inv = inv.substring(0, inv.indexOf("."));
     Invariant con = rd.findInvariant(inv);
@@ -703,10 +717,16 @@ public class ExampleInspector implements IValidatorResourceFetcher, IValidationP
         }
       }
       con.setTestOutcome(f.getName().contains(".pass") ? !fail : fail);
+      if (!con.getTestOutcome()) {
+        System.out.println("Test case '"+f.getName()+"' Invariant failed: "+con.getId());
+      }
+      return con.getTestOutcome();
     } else {
       System.out.println("Didn't find invariant for "+f.getName());
+      return false;
     }
   }
+
 
 }
 

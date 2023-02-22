@@ -183,6 +183,7 @@ import org.hl7.fhir.r5.model.ContactPoint.ContactPointSystem;
 import org.hl7.fhir.r5.model.DomainResource;
 import org.hl7.fhir.r5.model.ElementDefinition;
 import org.hl7.fhir.r5.model.ElementDefinition.ElementDefinitionBindingComponent;
+import org.hl7.fhir.r5.model.ElementDefinition.ElementDefinitionConstraintComponent;
 import org.hl7.fhir.r5.model.ElementDefinition.TypeRefComponent;
 import org.hl7.fhir.r5.model.Enumerations.BindingStrength;
 import org.hl7.fhir.r5.model.Enumerations.CapabilityStatementKind;
@@ -192,6 +193,7 @@ import org.hl7.fhir.r5.model.Enumerations.FHIRVersion;
 import org.hl7.fhir.r5.model.Enumerations.PublicationStatus;
 import org.hl7.fhir.r5.model.Enumerations.SearchParamType;
 import org.hl7.fhir.r5.model.Factory;
+import org.hl7.fhir.r5.model.IdType;
 import org.hl7.fhir.r5.model.ImplementationGuide;
 import org.hl7.fhir.r5.model.ImplementationGuide.ImplementationGuideDefinitionPageComponent;
 import org.hl7.fhir.r5.model.Library;
@@ -211,6 +213,7 @@ import org.hl7.fhir.r5.model.StringType;
 import org.hl7.fhir.r5.model.StructureDefinition;
 import org.hl7.fhir.r5.model.StructureDefinition.StructureDefinitionKind;
 import org.hl7.fhir.r5.model.StructureDefinition.TypeDerivationRule;
+import org.hl7.fhir.r5.model.TypeDetails;
 import org.hl7.fhir.r5.model.UriType;
 import org.hl7.fhir.r5.model.ValueSet;
 import org.hl7.fhir.r5.model.ValueSet.ConceptSetComponent;
@@ -242,6 +245,8 @@ import org.hl7.fhir.tools.converters.CDAGenerator;
 import org.hl7.fhir.tools.converters.DSTU3ValidationConvertor;
 import org.hl7.fhir.tools.converters.SpecNPMPackageGenerator;
 import org.hl7.fhir.tools.publisher.ExampleInspector.EValidationFailed;
+import org.hl7.fhir.tools.publisher.Publisher.ValidationInformation;
+import org.hl7.fhir.tools.publisher.Publisher.ValidationMode;
 import org.hl7.fhir.utilities.CSFile;
 import org.hl7.fhir.utilities.CSFileInputStream;
 import org.hl7.fhir.utilities.CloseProtectedZipInputStream;
@@ -290,6 +295,56 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 
 public class Publisher implements URIResolver, SectionNumberer {
+
+  public enum ValidationMode {
+    NORMAL, NONE, EXTENDED;
+
+    static ValidationMode fromCode(String v) {
+      if (v == null) {
+        return NORMAL;
+      }
+      switch (v.toLowerCase()) {
+      case "extended": return EXTENDED;
+      case "none" : return NONE;
+      default: return NORMAL;
+      }
+    }
+  }
+
+  public class ValidationInformation {
+
+    private String resourceName;
+    private Example example;
+    private StructureDefinition profile;
+
+    public ValidationInformation(String resourceName) {
+      this.resourceName = resourceName;
+    }
+
+    public ValidationInformation(String resourceName, Example e) {
+      this.resourceName = resourceName;
+      this.example = e;
+    }
+
+    public ValidationInformation(String resourceName, Example e, StructureDefinition profile) {
+      this.resourceName = resourceName;
+      this.example = e;
+      this.profile = profile;
+    }
+
+    public String getResourceName() {
+      return resourceName;
+    }
+
+    public Example getExample() {
+      return example;
+    }
+
+    public StructureDefinition getProfile() {
+      return profile;
+    }
+
+  }
 
   public static final boolean WANT_REQUIRE_OIDS = false;
   
@@ -412,7 +467,6 @@ public class Publisher implements URIResolver, SectionNumberer {
 
   private static final long GB_12 = 12 * 1024 * 1024 * 1024;
 
-
   private Calendar execTime = Calendar.getInstance();
   private String outputdir;
 
@@ -466,7 +520,9 @@ public class Publisher implements URIResolver, SectionNumberer {
     pub.diffProgram = getNamedParam(args, "-diff");
     pub.noSound =  (args.length > 1 && hasParam(args, "-nosound"));
     pub.noPartialBuild = (args.length > 1 && hasParam(args, "-nopartial"));
-    pub.validateBundles = hasParam(args, "-validate-bundles");
+    if (hasParam(args, "-validation-mode")) {
+      pub.validationMode = ValidationMode.fromCode(getNamedParam(args, "-validation-mode"));
+    }
     pub.isPostPR = (args.length > 1 && hasParam(args, "-post-pr"));
     if (hasParam(args, "-resource"))
       pub.singleResource = getNamedParam(args, "-resource");
@@ -487,15 +543,18 @@ public class Publisher implements URIResolver, SectionNumberer {
       pub.page.setSearchLocation(PageProcessor.CI_SEARCH);
       pub.page.setPublicationType(PageProcessor.CI_PUB_NAME);
       pub.page.setPublicationNotice(PageProcessor.CI_PUB_NOTICE);
+      pub.page.setExtensionsLocation(PageProcessor.CI_EXTN_LOCATION);
     } else if (pub.web) {
       pub.page.setWebLocation(PageProcessor.WEB_LOCATION);
       pub.page.setSearchLocation(PageProcessor.WEB_SEARCH);
       pub.page.setPublicationType(PageProcessor.WEB_PUB_NAME);
       pub.page.setPublicationNotice(PageProcessor.WEB_PUB_NOTICE);
+      pub.page.setExtensionsLocation(PageProcessor.WEB_EXTN_LOCATION);
     } else {
       pub.page.setWebLocation(PageProcessor.LOCAL_LOCATION);
       pub.page.setSearchLocation(PageProcessor.LOCAL_SEARCH);
       pub.page.setPublicationNotice(PageProcessor.LOCAL_PUB_NOTICE);
+      pub.page.setExtensionsLocation(PageProcessor.LOCAL_EXTN_LOCATION);
     }
 
     if (hasParam(args, "-api-key-file")) {
@@ -694,6 +753,7 @@ public class Publisher implements URIResolver, SectionNumberer {
       page.loadUcum();
       buildFeedsAndMaps();
       prsr.setExternals(externals);
+      page.makeRenderingContext();
 
       prsr.parse(page.getGenDate(), page.getValidationErrors());
       for (String n : page.getDefinitions().sortedResourceNames())
@@ -718,7 +778,6 @@ public class Publisher implements URIResolver, SectionNumberer {
       if (buildFlags.get("all")) {
         copyStaticContent();
       }
-      page.makeRenderingContext();
       loadValueSets1();
 
       generateSCMaps();
@@ -861,9 +920,240 @@ public class Publisher implements URIResolver, SectionNumberer {
     ei = new ExampleInspector(page.getWorkerContext(), page, page.getFolders().dstDir, Utilities.path(page.getFolders().rootDir, "tools", "schematron"), page.getValidationErrors(), page.getDefinitions(), page.getVersion());
     ei.prepare();
 
-    for (String rname : page.getDefinitions().sortedResourceNames()) {
-      ei.testInvariants(page.getFolders().srcDir, page.getDefinitions().getResourceByName(rname));
+  }
+
+  private void testSearchParameters() {
+    boolean ok = true;
+    for (ResourceDefn rd : page.getDefinitions().getBaseResources().values()) {
+      ok = testSearchParameters(rd) && ok;
     }
+    
+    for (ResourceDefn rd : page.getDefinitions().getResources().values()) {
+      ok = testSearchParameters(rd) && ok;
+    }    
+
+    if (!ok) {
+      throw new Error("Some invariants failed testing");
+    }
+  }
+
+  private boolean testSearchParameters(ResourceDefn rd) {
+    if (fpe == null) {
+      fpe = new FHIRPathEngine(page.getWorkerContext());
+    }
+    boolean ok = true;
+    for (SearchParameterDefn spd : rd.getSearchParams().values()) {
+      ok = testSearchParameter(spd.getResource(), rd.getProfile()) && ok;
+    }
+    return ok;
+  }
+
+  private boolean testSearchParameter(SearchParameter sp, StructureDefinition rd) {
+    boolean result = true;
+    if (sp.hasExpression()) {
+      try {
+        Set<ElementDefinition> set = new HashSet<>();
+        String exp = sp.getExpression().replace("{{name}}", rd.getType()); // for templates  
+        TypeDetails td = null;
+        if (sp.getBase().size() > 1) {
+          td = fpe.check(null, rd.getType(), page.getWorkerContext().getResourceNames(), fpe.parse(exp), set);
+        } else {
+          td = fpe.check(null, rd.getType(), rd.getType(), fpe.parse(exp), set);
+        }
+        if (!Utilities.existsInList(sp.getCode(), "_id", "_in") && sp.getType() != SearchParamType.COMPOSITE) {
+          String types = page.getDefinitions().getAllowedSearchTypes().get(sp.getType().toCode());
+          boolean ok = false;
+          for (String t : types.split("\\,")) {
+            if (td.hasType(t)) {
+              ok = true;
+              break;
+            }
+          }
+          if (!ok) {
+            System.out.println("The search parameter "+rd.getType()+":"+sp.getCode()+" has an invalid expression: the type "+td.toString()+" is not valid for the search parameter type "+sp.getType().toCode());
+            result = false;
+          }
+          if (sp.getType() == SearchParamType.REFERENCE) {
+            sp.getTarget().clear();
+            if (td.getTargets() == null) {
+              System.out.println("The search parameter "+rd.getType()+":"+sp.getCode()+" has a problem: the search parameter type "+sp.getType().toCode()+" but no targets were identified from the expression outcome of "+td.toString());
+              if (td.hasType("Reference")) {
+                td.addTarget("Resource");                  
+              } else if (td.hasType("canonical")) {
+                td.addTarget("CanonicalResource");   
+              } else if (td.hasType("Composition")) {
+                td.addTarget("Composition");
+              } else if (td.hasType("MessageHeader")) {
+                td.addTarget("MessageHeader");
+              } else {
+                throw new Error("What?");
+              }
+            }
+            for (String t : td.getTargets()) {
+              String tn = tail(t);
+              if (tn.equals("Resource")) {
+                for (String s : cu.getConcreteResources()) {
+                  if (!sp.hasTarget(s)) {
+                    sp.addTarget(s);
+                  }
+                }
+              } else if (tn.equals("CanonicalResource")) {
+                for (String s : cu.getCanonicalResourceNames()) {
+                  if (!sp.hasTarget(s)) {
+                    sp.addTarget(s);
+                  }
+                }
+              } else if (!sp.hasTarget(tn)) { 
+                sp.addTarget(tn);
+              }
+            }
+          }
+        }
+        StandardsStatus ssCeiling = determineStandardsStatus(rd, set);
+        StandardsStatus ssStated = sp.getStandardsStatus();
+        if (ssStated == null) {
+          ssStated = ssCeiling;
+          sp.setStandardsStatus(ssStated); 
+        }
+        if (ssCeiling.isLowerThan(ssStated)) {
+          if (sp.getBase().size() > 1) {
+            StandardsStatus high = null;
+            for (CodeType b : sp.getBase()) {
+              if (b.primitiveValue().equals(rd.getType())) {
+                b.setStandardsStatus(ssCeiling);
+              }
+              StandardsStatus ss = b.getStandardsStatus();
+              if (ss == null) {
+                ss = ssStated;
+              }
+              if (high == null) {
+                high = ss;
+              } else if (high.isLowerThan(ss)) {
+                high = ss;
+              }
+            }
+            if (high != ssStated) {
+              sp.setStandardsStatus(high);
+            }
+          } else { 
+            sp.setStandardsStatus(ssCeiling);
+          }          
+        }        
+      } catch (Exception e) {
+        System.out.println("The search parameter "+rd.getType()+":"+sp.getCode()+" has an invalid expression: " +e.getMessage());
+        result = false;
+        e.printStackTrace();
+      }
+    }
+    return result;
+  }
+
+  private StandardsStatus determineStandardsStatus(StructureDefinition rd, Set<ElementDefinition> set) {
+    StandardsStatus result = rd.getStandardsStatus();
+    for (ElementDefinition ed : set) {
+      StandardsStatus status = ed.getStandardsStatus();
+      if (status != null && status.isLowerThan(result)) {
+        result = status;
+      }
+    }
+    return result;
+  }
+
+  private void testInvariants() throws FHIRException, IOException {
+    page.log("... check invariants", LogMessageType.Process);
+    // first part: compile the invariants to check them 
+    // second part: run the invariants
+    boolean ok = true;
+    if (fpe == null) {
+      fpe = new FHIRPathEngine(page.getWorkerContext());
+    }
+    Set<String> set = new HashSet<>();
+    for (StructureDefinition sd : page.getWorkerContext().fetchResourcesByType(StructureDefinition.class)) {
+      if (sd.getDerivation() == TypeDerivationRule.SPECIALIZATION && !set.contains(sd.getUrl())) {
+        set.add(sd.getUrl());
+        if (!checkInvariants(fpe, sd)) {
+          ok = false;
+        }
+      }
+    }
+    
+    for (String rname : page.getDefinitions().sortedResourceNames()) {
+      if (!ei.testInvariants(page.getFolders().srcDir, page.getDefinitions().getResourceByName(rname))) {
+        ok = false;
+      }
+    }
+    if (!ok) {
+      throw new Error("Some invariants failed testing");
+    }
+  }
+  
+  private boolean checkInvariants(FHIRPathEngine fpe, StructureDefinition sd) {
+    boolean result = true;
+    Map<String, ElementDefinition> map = new HashMap<>();
+    for (ElementDefinition ed : sd.getDifferential().getElement()) {
+      map.put(ed.getPath(), ed);
+    }
+    for (ElementDefinition ed : sd.getDifferential().getElement()) {
+      for (ElementDefinitionConstraintComponent inv : ed.getConstraint()) {
+        if (inv.hasExpression()) {
+          if (!checkInvariant(fpe, sd, map, ed, inv)) {
+            result = false;
+          }
+        }
+      }
+    }
+    for (ElementDefinition ed : sd.getDifferential().getElement()) {
+      for (IdType t : ed.getCondition()) {
+        if (!t.hasUserData("validated") && !isKnownBadInvariant(t.primitiveValue())) {
+          System.out.println("The element "+ed.getPath()+" claims that the invariant "+t.primitiveValue()+" affects it, but it isn't touched by that invariant");
+          result = false;
+        }        
+      }
+    }
+    return result;
+  }
+
+  private boolean checkInvariant(FHIRPathEngine fpe, StructureDefinition sd, 
+      Map<String, ElementDefinition> map, ElementDefinition ed, ElementDefinitionConstraintComponent inv) {
+    boolean result = true;
+    try {
+      Set<ElementDefinition> set = new HashSet<>();
+      if (sd.getKind() == StructureDefinitionKind.RESOURCE) {
+        fpe.check(null, sd.getType(), ed.getPath(), fpe.parse(inv.getExpression()), set);
+      } else {
+        fpe.check(null, "Resource", ed.getPath(), fpe.parse(inv.getExpression()), set);
+      }
+      for (ElementDefinition edt : set) {
+        if (!edt.getPath().equals(ed.getPath()) && map.containsKey(edt.getPath())) {
+          IdType cnd = null;
+          for (IdType t : map.get(edt.getPath()).getCondition()) {
+            if (t.getValue().equals(inv.getKey())) {
+              cnd = t;
+            }
+          }
+          if (cnd == null) {
+            System.out.println("The invariant "+sd.getType()+"#"+inv.getKey()+" touches "+edt.getPath()+" but isn't listed as a condition");
+            result = false;
+          } else {
+            cnd.setUserData("validated", true);
+          }
+        }
+      }
+    } catch (Exception e) {
+      System.out.println ("Invariant error processing "+sd.getType()+"#"+inv.getKey()+": "+e.getMessage());
+      if (!isKnownBadInvariant(inv.getKey(), e.getMessage())) {
+        result = false;
+      }
+    }
+    return result;
+  }
+
+  private boolean isKnownBadInvariant(String key, String message) {
+    return message.equals(page.getDefinitions().getBadInvariants().get(key));
+  }
+
+  private boolean isKnownBadInvariant(String key) {
+    return page.getDefinitions().getBadInvariants().containsKey(key);
   }
 
   private String getGitBuildId() {
@@ -1041,7 +1331,7 @@ public class Publisher implements URIResolver, SectionNumberer {
         r.setConformancePack(makeConformancePack(r));
         r.setProfile(new ProfileGenerator(page.getDefinitions(), page.getWorkerContext(), page, page.getGenDate(), page.getVersion(), dataElements, fpUsages, page.getFolders().rootDir, page.getUml(), page.getRc()).generate(r.getConformancePack(), r, "core", false));
         page.getProfiles().see(r.getProfile(), page.packageInfo());
-        ResourceTableGenerator rtg = new ResourceTableGenerator(page.getFolders().dstDir, page, null, true, page.getVersion());
+        ResourceTableGenerator rtg = new ResourceTableGenerator(page.getFolders().dstDir, page, null, true, page.getVersion(), "");
         r.getProfile().getText().setDiv(new XhtmlNode(NodeType.Element, "div"));
         r.getProfile().getText().getDiv().getChildNodes().add(rtg.generate(r, "", false));
     }
@@ -1051,7 +1341,7 @@ public class Publisher implements URIResolver, SectionNumberer {
       r.setConformancePack(makeConformancePack(r));
       r.setProfile(new ProfileGenerator(page.getDefinitions(), page.getWorkerContext(), page, page.getGenDate(), page.getVersion(), dataElements, fpUsages, page.getFolders().rootDir, page.getUml(), page.getRc()).generate(r.getConformancePack(), r, "core", false));
       page.getProfiles().see(r.getProfile(), page.packageInfo());
-      ResourceTableGenerator rtg = new ResourceTableGenerator(page.getFolders().dstDir, page, null, true, page.getVersion());
+      ResourceTableGenerator rtg = new ResourceTableGenerator(page.getFolders().dstDir, page, null, true, page.getVersion(), "");
       r.getProfile().getText().setDiv(new XhtmlNode(NodeType.Element, "div"));
       r.getProfile().getText().getDiv().getChildNodes().add(rtg.generate(r, "", false));
     }
@@ -1059,7 +1349,7 @@ public class Publisher implements URIResolver, SectionNumberer {
     for (ResourceDefn r : page.getDefinitions().getResourceTemplates().values()) {
       r.setConformancePack(makeConformancePack(r));
       r.setProfile(new ProfileGenerator(page.getDefinitions(), page.getWorkerContext(), page, page.getGenDate(), page.getVersion(), dataElements, fpUsages, page.getFolders().rootDir, page.getUml(), page.getRc()).generate(r.getConformancePack(), r, "core", true));
-      ResourceTableGenerator rtg = new ResourceTableGenerator(page.getFolders().dstDir, page, null, true, page.getVersion());
+      ResourceTableGenerator rtg = new ResourceTableGenerator(page.getFolders().dstDir, page, null, true, page.getVersion(), "");
       r.getProfile().getText().setDiv(new XhtmlNode(NodeType.Element, "div"));
       r.getProfile().getText().getDiv().getChildNodes().add(rtg.generate(r, "", true));
       page.getProfiles().see(r.getProfile(), page.packageInfo());
@@ -1218,7 +1508,7 @@ public class Publisher implements URIResolver, SectionNumberer {
       profile = new ProfileGenerator(page.getDefinitions(), page.getWorkerContext(), page, page.getGenDate(), page.getVersion(), dataElements, fpUsages, page.getFolders().rootDir, page.getUml(), page.getRc()).generate(t);
       page.getProfiles().see(profile, page.packageInfo());
       t.setProfile(profile);
-      DataTypeTableGenerator dtg = new DataTypeTableGenerator(page.getFolders().dstDir, page, t.getName(), true, page.getVersion());
+      DataTypeTableGenerator dtg = new DataTypeTableGenerator(page.getFolders().dstDir, page, t.getName(), true, page.getVersion(), "");
       t.getProfile().getText().setDiv(new XhtmlNode(NodeType.Element, "div"));
       t.getProfile().getText().getDiv().getChildNodes().add(dtg.generate(t, null, false));
     } catch (Exception e) {
@@ -1437,7 +1727,7 @@ public class Publisher implements URIResolver, SectionNumberer {
   private void populateFHIRTypesCodeSystem() {
     CodeSystem cs = page.getWorkerContext().fetchCodeSystem("http://hl7.org/fhir/fhir-types");
     List<StructureDefinition> types = new ContextUtilities(page.getWorkerContext()).allStructures();
-    addTypes(cs, page.getWorkerContext().fetchTypeDefinition("Base"), cs.getConcept(), types);
+    addTypes(cs, page.getWorkerContext().fetchTypeDefinition("Base"), cs.getConcept(), types, new HashSet<>());
     CodeSystemUtilities.sortAllCodes(cs);
     
     // we're also going to fill out the value sets
@@ -1502,7 +1792,11 @@ public class Publisher implements URIResolver, SectionNumberer {
     }    
   }
 
-  private void addTypes(CodeSystem cs, StructureDefinition sd, List<ConceptDefinitionComponent> list, List<StructureDefinition> types) {
+  private void addTypes(CodeSystem cs, StructureDefinition sd, List<ConceptDefinitionComponent> list, List<StructureDefinition> types, Set<String> added) {
+    if (added.contains(sd.getType())) {
+      return;
+    }
+    added.add(sd.getType());
     ConceptDefinitionComponent cd = new ConceptDefinitionComponent();
     cd.setCode(sd.getType());
     cd.setDisplay(sd.getType());
@@ -1519,7 +1813,7 @@ public class Publisher implements URIResolver, SectionNumberer {
     list.add(cd);
     for (StructureDefinition t : types) {
       if (t.hasBaseDefinition() && t.getBaseDefinition().equals(sd.getUrl()) && (t.getDerivation() == TypeDerivationRule.SPECIALIZATION || Utilities.existsInList(t.getName(), "SimpleQuantity", "MoneyQuantity"))) {
-        addTypes(cs, t, cd.getConcept(), types);
+        addTypes(cs, t, cd.getConcept(), types, added);
       }
     }
     
@@ -2495,6 +2789,11 @@ public class Publisher implements URIResolver, SectionNumberer {
   private void produceSpecification() throws Exception {
     populateFHIRTypesCodeSystem();
 
+    cu = new ContextUtilities(page.getWorkerContext());
+
+    testInvariants();
+    testSearchParameters();
+    
     processCDA();
     page.log("Generate RDF", LogMessageType.Process);
     processRDF();
@@ -2589,7 +2888,7 @@ public class Publisher implements URIResolver, SectionNumberer {
   private void loadR4Definitions() throws FileNotFoundException, FHIRException, IOException {
     loadR4DefinitionBundle(page.getDiffEngine().getOriginal().getTypes(), Utilities.path(page.getFolders().rootDir, "tools", "history", "release4", "profiles-types.xml"));
     loadR4DefinitionBundle(page.getDiffEngine().getOriginal().getResources(), Utilities.path(page.getFolders().rootDir, "tools", "history", "release4", "profiles-resources.xml"));
-    loadR4DefinitionBundle(page.getDiffEngine().getOriginal().getExtensions(), Utilities.path(page.getFolders().rootDir, "tools", "history", "release4", "extension-definitions.xml"));
+//    loadR4DefinitionBundle(page.getDiffEngine().getOriginal().getExtensions(), Utilities.path(page.getFolders().rootDir, "tools", "history", "release4", "extension-definitions.xml"));
     loadR4DefinitionBundle(page.getDiffEngine().getOriginal().getProfiles(), Utilities.path(page.getFolders().rootDir, "tools", "history", "release4", "profiles-others.xml"));
     loadValueSetBundle(page.getDiffEngine().getOriginal().getExpansions(), Utilities.path(page.getFolders().rootDir, "tools", "history", "release4", "expansions.xml"));
     loadValueSetBundle(page.getDiffEngine().getOriginal().getValuesets(), Utilities.path(page.getFolders().rootDir, "tools", "history", "release4", "valuesets.xml"));
@@ -2715,15 +3014,15 @@ public class Publisher implements URIResolver, SectionNumberer {
       }
     }
     
-    for (StructureDefinition ed : page.getWorkerContext().getExtensionDefinitions()) {
-      String filename = "extension-"+(ed.getUrl().startsWith("http://fhir-registry.smarthealthit.org/StructureDefinition/") ? ed.getUrl().substring(59).toLowerCase() : ed.getUrl().substring(40).toLowerCase());
-      ed.setUserData("filename", filename);
-      ImplementationGuideDefn ig = page.getDefinitions().getIgs().get(ed.getUserString(ToolResourceUtilities.NAME_RES_IG));
-      if (ig == null) {
-        ig = page.getDefinitions().getIgs().get("core");
-      }
-      ed.setUserData("path", (ig.isCore() ? "" : ig.getCode()+File.separator) + filename+".html");
-    }
+//    for (StructureDefinition ed : page.getWorkerContext().getExtensionDefinitions()) {
+//      String filename = "extension-"+(ed.getUrl().startsWith("http://fhir-registry.smarthealthit.org/StructureDefinition/") ? ed.getUrl().substring(59).toLowerCase() : ed.getUrl().substring(40).toLowerCase());
+//      ed.setUserData("filename", filename);
+//      ImplementationGuideDefn ig = page.getDefinitions().getIgs().get(ed.getUserString(ToolResourceUtilities.NAME_RES_IG));
+//      if (ig == null) {
+//        ig = page.getDefinitions().getIgs().get("core");
+//      }
+//      ed.setUserData("path", (ig.isCore() ? "" : ig.getCode()+File.separator) + filename+".html");
+//    }
 
     page.updateDiffEngineDefinitions();
     
@@ -2775,6 +3074,8 @@ public class Publisher implements URIResolver, SectionNumberer {
     
     Regenerator regen = new Regenerator(page.getFolders().srcDir, page.getDefinitions(), page.getWorkerContext());
     regen.generate();
+    
+
     
     Bundle searchParamsFeed = new Bundle();
     searchParamsFeed.setId("searchParams");
@@ -2846,6 +3147,7 @@ public class Publisher implements URIResolver, SectionNumberer {
         //}
       }
 
+      
       produceUml();
       page.getVsValidator().checkDuplicates(page.getValidationErrors());
 
@@ -2859,6 +3161,7 @@ public class Publisher implements URIResolver, SectionNumberer {
       }
 
       checkAllOk();
+
 
       page.log(" ...collections ", LogMessageType.Process);
 
@@ -2887,21 +3190,21 @@ public class Publisher implements URIResolver, SectionNumberer {
       page.getTypeBundle().getEntry().sort(new ProfileBundleSorter());
       serializeResource(page.getTypeBundle(), "profiles-types", false);
       
-      Bundle extensionsFeed = new Bundle();
-      extensionsFeed.setId("extensions");
-      extensionsFeed.setType(BundleType.COLLECTION);
-      extensionsFeed.setMeta(new Meta().setLastUpdated(page.getResourceBundle().getMeta().getLastUpdated()));
-      Set<String> urls = new HashSet<String>();
-      for (StructureDefinition ed : page.getWorkerContext().getExtensionDefinitions()) {
-        if (!urls.contains(ed.getUrl())) {
-          urls.add(ed.getUrl());
-          extensionsFeed.getEntry().add(new BundleEntryComponent().setResource(ed).setFullUrl("http://hl7.org/fhir/"+ed.fhirType()+"/"+ed.getId()));
-        }
-      }
-      checkBundleURLs(extensionsFeed);
-      checkStructureDefinitions(extensionsFeed);
-      serializeResource(extensionsFeed, "extension-definitions", false);
-      Utilities.copyFile(page.getFolders().dstDir + "extension-definitions.xml", page.getFolders().dstDir + "examples" + File.separator + "extension-definitions.xml");
+//      Bundle extensionsFeed = new Bundle();
+//      extensionsFeed.setId("extensions");
+//      extensionsFeed.setType(BundleType.COLLECTION);
+//      extensionsFeed.setMeta(new Meta().setLastUpdated(page.getResourceBundle().getMeta().getLastUpdated()));
+//      Set<String> urls = new HashSet<String>();
+//      for (StructureDefinition ed : page.getWorkerContext().getExtensionDefinitions()) {
+//        if (!urls.contains(ed.getUrl())) {
+//          urls.add(ed.getUrl());
+//          extensionsFeed.getEntry().add(new BundleEntryComponent().setResource(ed).setFullUrl("http://hl7.org/fhir/"+ed.fhirType()+"/"+ed.getId()));
+//        }
+//      }
+//      checkBundleURLs(extensionsFeed);
+//      checkStructureDefinitions(extensionsFeed);
+//      serializeResource(extensionsFeed, "extension-definitions", false);
+//      Utilities.copyFile(page.getFolders().dstDir + "extension-definitions.xml", page.getFolders().dstDir + "examples" + File.separator + "extension-definitions.xml");
 
       serializeResource(searchParamsFeed, "search-parameters", false);
       Utilities.copyFile(page.getFolders().dstDir + "search-parameters.xml", page.getFolders().dstDir + "examples" + File.separator + "search-parameters.xml");
@@ -3009,7 +3312,6 @@ public class Publisher implements URIResolver, SectionNumberer {
       zip.addFileName("profiles-types.xml", page.getFolders().dstDir + "profiles-types.xml", false);
       zip.addFileName("profiles-resources.xml", page.getFolders().dstDir + "profiles-resources.xml", false);
       zip.addFileName("profiles-others.xml", page.getFolders().dstDir + "profiles-others.xml", false);
-      zip.addFileName("extension-definitions.xml", page.getFolders().dstDir + "extension-definitions.xml", false);
       zip.addFileName("search-parameters.xml", page.getFolders().dstDir + "search-parameters.xml", false);
       zip.addFileName("valuesets.xml", page.getFolders().dstDir + "valuesets.xml", false);
       zip.addFileName("conceptmaps.xml", page.getFolders().dstDir + "conceptmaps.xml", false);
@@ -3022,7 +3324,7 @@ public class Publisher implements URIResolver, SectionNumberer {
       zip.addFileName("profiles-types.json", page.getFolders().dstDir + "profiles-types.json", false);
       zip.addFileName("profiles-resources.json", page.getFolders().dstDir + "profiles-resources.json", false);
       zip.addFileName("profiles-others.json", page.getFolders().dstDir + "profiles-others.json", false);
-      zip.addFileName("extension-definitions.json", page.getFolders().dstDir + "extension-definitions.json", false);
+//      zip.addFileName("extension-definitions.json", page.getFolders().dstDir + "extension-definitions.json", false);
       zip.addFileName("search-parameters.json", page.getFolders().dstDir + "search-parameters.json", false);
       zip.addFileName("valuesets.json", page.getFolders().dstDir + "valuesets.json", false);
       zip.addFileName("conceptmaps.json", page.getFolders().dstDir + "conceptmaps.json", false);
@@ -3042,7 +3344,7 @@ public class Publisher implements URIResolver, SectionNumberer {
       zip.addFileName("profiles-types.json", page.getFolders().dstDir + "profiles-types.json", false);
       zip.addFileName("profiles-resources.json", page.getFolders().dstDir + "profiles-resources.json", false);
       zip.addFileName("profiles-others.json", page.getFolders().dstDir + "profiles-others.json", false);
-      zip.addFileName("extension-definitions.json", page.getFolders().dstDir + "extension-definitions.json", false);
+//      zip.addFileName("extension-definitions.json", page.getFolders().dstDir + "extension-definitions.json", false);
       zip.addFileName("valuesets.json", page.getFolders().dstDir + "valuesets.json", false);
       zip.addFileName("conceptmaps.json", page.getFolders().dstDir + "conceptmaps.json", false);
       // native schema
@@ -3056,7 +3358,6 @@ public class Publisher implements URIResolver, SectionNumberer {
       dstu3.convert(page.getFolders().dstDir + "profiles-types.xml", page.getFolders().tmpDir + "profiles-types-r3.xml");
       dstu3.convert(page.getFolders().dstDir + "profiles-resources.xml", page.getFolders().tmpDir + "profiles-resources-r3.xml");
       dstu3.convert(page.getFolders().dstDir + "profiles-others.xml", page.getFolders().tmpDir + "profiles-others-r3.xml");
-      dstu3.convert(page.getFolders().dstDir + "extension-definitions.xml", page.getFolders().tmpDir + "extension-definitions-r3.xml");
       dstu3.convert(page.getFolders().dstDir + "search-parameters.xml", page.getFolders().tmpDir + "search-parameters-r3.xml");
       dstu3.convert(page.getFolders().dstDir + "valuesets.xml", page.getFolders().tmpDir + "valuesets-r3.xml");
       dstu3.convert(page.getFolders().dstDir + "conceptmaps.xml", page.getFolders().tmpDir + "conceptmaps-r3.xml");
@@ -3066,7 +3367,6 @@ public class Publisher implements URIResolver, SectionNumberer {
       zip.addFileName("profiles-types.xml", page.getFolders().tmpDir + "profiles-types-r3.xml", false);
       zip.addFileName("profiles-resources.xml", page.getFolders().tmpDir + "profiles-resources-r3.xml", false);
       zip.addFileName("profiles-others.xml", page.getFolders().tmpDir + "profiles-others-r3.xml", false);
-      zip.addFileName("extension-definitions.xml", page.getFolders().tmpDir + "extension-definitions-r3.xml", false);
       zip.addFileName("search-parameters.xml", page.getFolders().tmpDir + "search-parameters-r3.xml", false);
       zip.addFileName("valuesets.xml", page.getFolders().tmpDir + "valuesets-r3.xml", false);
       zip.addFileName("conceptmaps.xml", page.getFolders().tmpDir + "conceptmaps-r3.xml", false);
@@ -3077,7 +3377,6 @@ public class Publisher implements URIResolver, SectionNumberer {
       dstu3.convertJ(page.getFolders().dstDir + "profiles-types.xml", page.getFolders().tmpDir + "profiles-types-r3.json");
       dstu3.convertJ(page.getFolders().dstDir + "profiles-resources.xml", page.getFolders().tmpDir + "profiles-resources-r3.json");
       dstu3.convertJ(page.getFolders().dstDir + "profiles-others.xml", page.getFolders().tmpDir + "profiles-others-r3.json");
-      dstu3.convertJ(page.getFolders().dstDir + "extension-definitions.xml", page.getFolders().tmpDir + "extension-definitions-r3.json");
       dstu3.convertJ(page.getFolders().dstDir + "search-parameters.xml", page.getFolders().tmpDir + "search-parameters-r3.json");
       dstu3.convertJ(page.getFolders().dstDir + "valuesets.xml", page.getFolders().tmpDir + "valuesets-r3.json");
       dstu3.convertJ(page.getFolders().dstDir + "conceptmaps.xml", page.getFolders().tmpDir + "conceptmaps-r3.json");
@@ -3087,7 +3386,7 @@ public class Publisher implements URIResolver, SectionNumberer {
       zip.addFileName("profiles-types.json", page.getFolders().tmpDir + "profiles-types-r3.json", false);
       zip.addFileName("profiles-resources.json", page.getFolders().tmpDir + "profiles-resources-r3.json", false);
       zip.addFileName("profiles-others.json", page.getFolders().tmpDir + "profiles-others-r3.json", false);
-      zip.addFileName("extension-definitions.json", page.getFolders().tmpDir + "extension-definitions-r3.json", false);
+//      zip.addFileName("extension-definitions.json", page.getFolders().tmpDir + "extension-definitions-r3.json", false);
       zip.addFileName("search-parameters.json", page.getFolders().tmpDir + "search-parameters-r3.json", false);
       zip.addFileName("valuesets.json", page.getFolders().tmpDir + "valuesets-r3.json", false);
       zip.addFileName("conceptmaps.json", page.getFolders().tmpDir + "conceptmaps-r3.json", false);
@@ -3121,7 +3420,6 @@ public class Publisher implements URIResolver, SectionNumberer {
       zip.addFileName("profiles-types.xml", page.getFolders().dstDir + "profiles-types.xml", false);
       zip.addFileName("profiles-resources.xml", page.getFolders().dstDir + "profiles-resources.xml", false);
       zip.addFileName("profiles-others.xml", page.getFolders().dstDir + "profiles-others.xml", false);
-      zip.addFileName("extension-definitions.xml", page.getFolders().dstDir + "extension-definitions.xml", false);
       zip.addFileName("search-parameters.xml", page.getFolders().dstDir + "search-parameters.xml", false);
       zip.addFileName("valuesets.xml", page.getFolders().dstDir + "valuesets.xml", false);
       zip.addFileName("conceptmaps.xml", page.getFolders().dstDir + "conceptmaps.xml", false);
@@ -3197,6 +3495,25 @@ public class Publisher implements URIResolver, SectionNumberer {
       zip.close();
       npm.finish();
       
+      page.log(" ...search package", LogMessageType.Process);
+
+      ImplementationGuide spIg = new ImplementationGuide();
+      spIg.addFhirVersion(page.getVersion());
+      spIg.setPackageId(pidRoot()+".search");
+      spIg.setVersion(page.getVersion().toCode());
+      spIg.setLicense(ImplementationGuide.SPDXLicense.CC01_0);
+      spIg.setTitle("FHIR "+page.getVersion().getDisplay()+" package : ungrouped search parameters");
+      exIg.setDescription("FHIR "+page.getVersion().getDisplay()+" package : Search Parameters (break out combined parmaeters for server execution convenience)");
+      npm = new NPMPackageGenerator(Utilities.path(page.getFolders().dstDir, pidRoot()+".search.tgz"), "http://hl7.org/fhir", "http://hl7.org/fhir", PackageType.EXAMPLES, exIg, page.getGenDate().getTime(), true);
+      for (ResourceDefn r : page.getDefinitions().getBaseResources().values()) {
+        addToSearchPackage(r, npm);
+      }
+      for (ResourceDefn r : page.getDefinitions().getResources().values()) {
+        addToSearchPackage(r, npm);
+      }
+      npm.finish();
+
+      
       NDJsonWriter ndjson = new NDJsonWriter(page.getFolders().dstDir + "examples-ndjson.zip", page.getFolders().tmpDir);
       ndjson.addFilesFiltered(page.getFolders().dstDir, ".json", new String[] {".schema.json", ".canonical.json", ".diff.json", "expansions.json", "package.json"});
       ndjson.close();
@@ -3211,6 +3528,15 @@ public class Publisher implements URIResolver, SectionNumberer {
       checkAllOk();
     } else
       page.log("Partial Build - terminating now", LogMessageType.Error);
+  }
+
+
+  private void addToSearchPackage(ResourceDefn r, NPMPackageGenerator npm) throws IOException {
+    for (SearchParameterDefn spd : r.getSearchParams().values()) {
+      SearchParameter sp = spd.getResource().copy();
+      sp.setId(r.getName()+"-"+sp.getCode().replace("_", ""));
+      npm.addFile(Category.RESOURCE, sp.fhirType()+"-"+sp.getId()+".json", new JsonParser().composeBytes(sp));
+    }    
   }
 
   private String pidRoot() {
@@ -3569,16 +3895,24 @@ public class Publisher implements URIResolver, SectionNumberer {
         if (e.getResource() instanceof CanonicalResource) {
           CanonicalResource m = (CanonicalResource) e.getResource();
           String url = m.getUrl();
-          if (url != null && url.startsWith("http://hl7.org/fhir") && !SIDUtilities.isKnownSID(url)) {
+          if (url != null && url.startsWith("http://hl7.org/fhir") && !SIDUtilities.isKnownSID(url) && !isExtension(m)) {
             if (!page.getVersion().toCode().equals(m.getVersion())) 
-              page.getValidationErrors().add(new ValidationMessage(Source.Publisher, IssueType.INVALID, -1, -1, "Bundle "+bnd.getId(), "definitions in FHIR space should have the correct version (url = "+url+", version = "+m.getVersion()+")", IssueSeverity.ERROR));              
+              page.getValidationErrors().add(new ValidationMessage(Source.Publisher, IssueType.INVALID, -1, -1, "Bundle "+bnd.getId(), "definitions in FHIR space should have the correct version (url = "+url+", version = "+m.getVersion()+" not "+page.getVersion()+")", IssueSeverity.ERROR));              
           }
         }
       }
     }
   }
 
-  private void produceComparisons() throws Exception {
+  private boolean isExtension(CanonicalResource m) {
+    if (!m.fhirType().equals("StructureDefinition")) {
+      return false;
+    }
+    StructureDefinition sd = (StructureDefinition) m;
+    return "Extension".equals(sd.getType()) && sd.getDerivation() == TypeDerivationRule.CONSTRAINT;
+  }
+
+ private void produceComparisons() throws Exception {
 //    for (String n : page.getIni().getPropertyNames("comparisons")) {
 //      produceComparison(n);
 //    }
@@ -3802,6 +4136,11 @@ public class Publisher implements URIResolver, SectionNumberer {
     if (!ped.contains(ed)) {
       ped.add(ed);
       ImplementationGuideDefn ig = page.getDefinitions().getIgs().get(ed.getUserString(ToolResourceUtilities.NAME_RES_IG));
+      if (ig == null) {
+        return;
+      } else if (true) {
+        throw new Error("Whoops - there should be no extensions in core anymore");
+      }
       String prefix = ig.isCore() ? "" : ig.getCode()+File.separator;
       String filename = ed.getUserString("filename");
       String fName = prefix+filename;
@@ -4160,7 +4499,17 @@ public class Publisher implements URIResolver, SectionNumberer {
         if (f.isJson()) {
           org.hl7.fhir.r5.elementmodel.JsonParser p = new org.hl7.fhir.r5.elementmodel.JsonParser(page.getWorkerContext());
           p.setupValidation(ValidationPolicy.QUICK, null);
-          p.parse(base.getTextContent(), type);
+          String src = base.getTextContent();
+          if (src.trim().startsWith("\"")) {
+            src = "{"+src+"}";
+          }
+          
+          try {
+            p.parse(src, type);
+          } catch (Exception e) {
+            page.getValidationErrors().add(new ValidationMessage(Source.Publisher, IssueType.STRUCTURE, f.getPage(), "Fragment Error in page " + f.getPage() +(f.id != null ? "#"+f.id : "")
+                + ": " + e.getMessage()+" from "+src.replace("\r", " ").replace("\n", " "), IssueSeverity.ERROR));            
+          }
         } else {
           org.hl7.fhir.r5.elementmodel.XmlParser p = new org.hl7.fhir.r5.elementmodel.XmlParser(page.getWorkerContext());
           p.setupValidation(ValidationPolicy.QUICK, null);
@@ -4595,13 +4944,16 @@ public class Publisher implements URIResolver, SectionNumberer {
 
   private Set<String> examplesProcessed = new HashSet<String>();
 
-  private boolean validateBundles;
+  private ValidationMode validationMode = ValidationMode.NORMAL;
 
   private ExampleInspector ei;
 
   private ProfileValidator pv;
 
-  
+  private FHIRPathEngine fpe;
+
+  private ContextUtilities cu;
+
   private void processExample(Example e, ResourceDefn resn, StructureDefinition profile, Profile pack, ImplementationGuideDefn ig) throws Exception {
     if (e.getType() == ExampleType.Tool)
       return;
@@ -5102,8 +5454,9 @@ public class Publisher implements URIResolver, SectionNumberer {
     maybeFixResourceId(vs, filename);
     if (vs.getId() == null)
       throw new Exception("Resource has no id: "+vs.getName()+" ("+vs.getUrl()+")");
-    if (ResourceUtilities.getById(dest, ResourceType.ValueSet, vs.getId()) != null)
+    if (ResourceUtilities.getById(dest, ResourceType.ValueSet, vs.getId()) != null) {
       throw new Exception("Attempt to add duplicate value set " + vs.getId()+" ("+vs.getName()+")");
+    }
     if (!vs.hasText() || !vs.getText().hasDiv()) {
       RendererFactory.factory(vs, page.getRc().copy()).render(vs);
     }
@@ -5854,8 +6207,11 @@ public class Publisher implements URIResolver, SectionNumberer {
 
   private void insertSectionNumbersInNode(XhtmlNode node, SectionTracker st, String link, int level, BooleanHolder registered, XhtmlNode parent, StandardsStatus sstatus) throws Exception {
     // while we're looking, mark external references explicitly
+    String href = node.getAttribute("href");
     if (node.getNodeType() == NodeType.Element && node.getName().equals("a") &&
-        node.getAttribute("href") != null && node.getAttribute("no-external") == null && node.getAttribute("xlink:type") == null && (node.getAttribute("href").startsWith("http:") || node.getAttribute("href").startsWith("https:"))) {
+        href != null && node.getAttribute("no-external") == null && node.getAttribute("xlink:type") == null &&
+        (href.startsWith("http:") || href.startsWith("https:")) &&
+        !node.getAttribute("href").startsWith(page.getExtensionsLocation())) {
       node.addText(" ");
       XhtmlNode img = node.addTag("img");
       String s = "external.png";
@@ -5977,24 +6333,48 @@ public class Publisher implements URIResolver, SectionNumberer {
   }
 
   private void validationProcess() throws Exception {
-
-    if (!isPostPR) {
+    
+    if (!isPostPR && validationMode != ValidationMode.NONE) {
       page.log("Validating Examples", LogMessageType.Process);
+      Map<String, ValidationInformation> filesToValidate = new HashMap<>();      
+      Set<String> txList = new HashSet<String>();
       ei.prepare2();
-      
+
       for (String rname : page.getDefinitions().sortedResourceNames()) {
         ResourceDefn r = page.getDefinitions().getResources().get(rname);
         if (wantBuild(rname)) {
+          if (validateId == null && buildFlags.get("all") && validationMode == ValidationMode.EXTENDED) {
+            filesToValidate.put(rname.toLowerCase()+".profile", new ValidationInformation("StructureDefinition"));
+            for (ElementDefinition ed : r.getProfile().getSnapshot().getElement()) {
+              if (ed.hasBinding() && ed.getBinding().hasValueSet()) {
+                if (!txList.contains(ed.getBinding().getValueSet())) {
+                  txList.add(ed.getBinding().getValueSet());
+                  ValueSet vs = page.getWorkerContext().fetchResource(ValueSet.class, ed.getBinding().getValueSet());
+                  if (vs != null && !vs.hasUserData("external.url")) {
+                    filesToValidate.put("valueset-"+vs.getId(), new ValidationInformation("ValueSet"));
+                    if (vs.hasCompose()) {
+                      for (ConceptSetComponent inc : vs.getCompose().getInclude()) {
+                        if (inc.hasSystem() && !txList.contains(inc.getSystem())) {
+                          txList.add(inc.getSystem());
+                          CodeSystem cs = page.getWorkerContext().fetchCodeSystem(inc.getSystem());
+                          if (cs != null && !cs.hasUserData("external.url")) {
+                            filesToValidate.put("codesystem-"+cs.getId(), new ValidationInformation("ValueSet"));                        
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
           for (Example e : r.getExamples()) {
             String n = e.getTitle();
             ImplementationGuideDefn ig = e.getIg() == null ? null : page.getDefinitions().getIgs().get(e.getIg());
             if (ig != null)
               n = ig.getCode()+File.separator+n;
             if (validateId == null || validateId.equals(n)) {
-              ei.validate(n, rname);
-              for (ValidationMessage vm : ei.getErrors()) {
-                e.getErrors().add(vm);
-              }
+              filesToValidate.put(n, new ValidationInformation("ValueSet", e));                        
             }
           }
 
@@ -6003,8 +6383,9 @@ public class Publisher implements URIResolver, SectionNumberer {
               ImplementationGuideDefn ig = en.getIg() == null ? null : page.getDefinitions().getIgs().get(en.getIg());
               String prefix = (ig == null || ig.isCore()) ? "" : ig.getCode()+File.separator;
               String n = prefix+Utilities.changeFileExt(en.getTitle(), "");
-              if (validateId == null || validateId.equals(n))
-                ei.validate(n, rname, e.getProfiles().get(0).getResource());
+              if (validateId == null || validateId.equals(n)) {
+                filesToValidate.put(n, new ValidationInformation(rname, en, e.getProfiles().get(0).getResource()));
+              }
             }
           }
         }
@@ -6015,29 +6396,52 @@ public class Publisher implements URIResolver, SectionNumberer {
         for (Example ex : ig.getExamples()) {
           String n = ex.getTitle();
           ei.validate(prefix+n, ex.getResourceName());
+          filesToValidate.put(prefix+n, new ValidationInformation(ex.getResourceName()));
         }
         for (Profile pck : ig.getProfiles()) {
           for (Example en : pck.getExamples()) {
-            ei.validate(prefix+Utilities.changeFileExt(en.getTitle(), ""), en.getResourceName(), pck.getProfiles().get(0).getResource());
+            filesToValidate.put(prefix+Utilities.changeFileExt(en.getTitle(), ""), new ValidationInformation(en.getResourceName(), en, pck.getProfiles().get(0).getResource()));
           }
         }
       }
-      if (buildFlags.get("all") && validateBundles) {
-        if (validateId == null || validateId.equals("valuesets"))
-          ei.validate("valuesets", "Bundle");
-        if (validateId == null || validateId.equals("conceptmaps"))
-          ei.validate("conceptmaps", "Bundle");
-        if (validateId == null || validateId.equals("profiles-types"))
-          ei.validate("profiles-types", "Bundle");
-        if (validateId == null || validateId.equals("profiles-resources"))
-          ei.validate("profiles-resources", "Bundle");
-        if (validateId == null || validateId.equals("profiles-others"))
-          ei.validate("profiles-others", "Bundle");
-        if (validateId == null || validateId.equals("search-parameters"))
-          ei.validate("search-parameters", "Bundle");
-        if (validateId == null || validateId.equals("extension-definitions"))
-          ei.validate("extension-definitions", "Bundle");
+      
+      if (validateId == null && buildFlags.get("all") && validationMode == ValidationMode.EXTENDED) {
+        for (File f : new File(page.getFolders().dstDir).listFiles()) {
+          if (f.getName().startsWith("codesystem-") && f.getName().endsWith(".json") && !f.getName().endsWith(".canonical.json") && !f.getName().endsWith("-questionnaire.json")) {
+            filesToValidate.put(Utilities.changeFileExt(f.getName(), ""), new ValidationInformation("CodeSystem"));            
+          }
+          if (f.getName().startsWith("valueset-") && f.getName().endsWith(".json") && !f.getName().endsWith(".canonical.json") && !f.getName().endsWith("-questionnaire.json")) {
+            filesToValidate.put(Utilities.changeFileExt(f.getName(), ""), new ValidationInformation("ValueSet"));            
+          }
+          if (f.getName().startsWith("conceptmap-") && f.getName().endsWith(".json") && !f.getName().endsWith(".canonical.json") && !f.getName().endsWith("-questionnaire.json")) {
+            filesToValidate.put(Utilities.changeFileExt(f.getName(), ""), new ValidationInformation("ConceptMap"));            
+          }          
+          if (f.getName().endsWith(".profile.json")) {
+            filesToValidate.put(Utilities.changeFileExt(f.getName(), ""), new ValidationInformation("StructureDefinition"));            
+          }          
+        }
+        filesToValidate.put("search-parameters", new ValidationInformation("Bundle"));            
       }
+
+      page.log("Validating "+filesToValidate.size()+" files", LogMessageType.Process);
+      
+      for (String n : Utilities.sorted(filesToValidate.keySet())) {
+        ValidationInformation vi = filesToValidate.get(n);
+        if (vi.getExample() == null) {
+        ei.validate(n, vi.getResourceName());
+        } else if (vi.getProfile() == null) {
+          ei.validate(n, vi.getResourceName());
+          for (ValidationMessage vm : ei.getErrors()) {
+            vi.getExample().getErrors().add(vm);
+          }
+        } else {
+          ei.validate(n, vi.getResourceName(), vi.getProfile());
+          for (ValidationMessage vm : ei.getErrors()) {
+            vi.getExample().getErrors().add(vm);
+          }
+        }
+      }
+            
       ei.summarise();
 
       if (buildFlags.get("all") && isGenerate)
@@ -6278,7 +6682,9 @@ public class Publisher implements URIResolver, SectionNumberer {
     for (String s : page.getDefinitions().getExtraValuesets().keySet()) {
       if (!s.startsWith("http:")) {
         ValueSet vs = page.getDefinitions().getExtraValuesets().get(s);
-        generateValueSetPart2(vs);
+        if (!page.getDefinitions().getBoundValueSets().containsKey(vs.getUrl())) {
+          generateValueSetPart2(vs);
+        }
       }
     }
   }
@@ -6559,7 +6965,7 @@ private String csCounter() {
             ",\n validateId='" + validateId + '\'' +
             ",\n ped=" + ped +
             ",\n examplesProcessed=" + examplesProcessed +
-            ",\n validateBundles=" + validateBundles +
+            ",\n validationMode=" + validationMode +
             '}';
   }
 }

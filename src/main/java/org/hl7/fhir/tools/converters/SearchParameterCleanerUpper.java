@@ -21,6 +21,7 @@ import org.hl7.fhir.r5.model.ElementDefinition.TypeRefComponent;
 import org.hl7.fhir.r5.model.Enumerations.SearchParamType;
 import org.hl7.fhir.r5.model.Resource;
 import org.hl7.fhir.r5.model.SearchParameter;
+import org.hl7.fhir.r5.model.SearchParameter.SearchProcessingModeType;
 import org.hl7.fhir.r5.model.StructureDefinition;
 import org.hl7.fhir.r5.utils.ToolingExtensions;
 import org.hl7.fhir.tools.converters.SearchParameterCleanerUpper.ResourceInfo;
@@ -122,6 +123,7 @@ public class SearchParameterCleanerUpper {
                 b.append(sp.getExpression()+".as("+t+")");
               }
               sp.setExpression(b.toString());
+              sp.setProcessingMode(SearchProcessingModeType.NORMAL);
               c++;
             }
           } else {

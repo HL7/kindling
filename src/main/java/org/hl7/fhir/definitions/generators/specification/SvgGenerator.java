@@ -292,7 +292,7 @@ public class SvgGenerator extends BaseGenerator {
           ElementDefn fake = new ElementDefn();
           fake.setName("xhtml");
           fakes.put("xhtml", fake);
-          DefinedCode cd = new DefinedCode("xhtml", "XHTML for resource narrative", null);
+          DefinedCode cd = new DefinedCode("xhtml", "XHTML for resource narrative", null, null);
           p = determineMetrics(fake, item, cn, false, cd);        
         } else if (definitions.getConstraints().containsKey(cn)) {
           ProfiledType cd = definitions.getConstraints().get(cn);
@@ -762,7 +762,7 @@ public class SvgGenerator extends BaseGenerator {
             }
           }
         } else if ("xhtml".equals(cn)) {
-          DefinedCode cd = new DefinedCode("xhtml", "XHTML for resource narrative", null);
+          DefinedCode cd = new DefinedCode("xhtml", "XHTML for resource narrative", null, null);
           ElementDefn fake = fakes.get(cn);
           ClassItem parent = classes.get(definitions.getElementDefn(VersionUtilities.isR4BVer(version.toCode()) ? "Element" :"DataType"));
           if (parent == null) {
@@ -776,7 +776,7 @@ public class SvgGenerator extends BaseGenerator {
           ClassItem parent = classes.get(definitions.getElementDefn(cd.getBaseType()));
           links.add(new Link(parent, drawClass(xml, fake, false, null, true, null, null, StandardsStatus.NORMATIVE), LinkType.CONSTRAINT, null, null, PointKind.unknown, null, null));        
         } else if (definitions.getPrimitives().containsKey(cn)) {
-          DefinedCode cd = new DefinedCode("xhtml", "XHTML for resource narrative", null);
+          DefinedCode cd = new DefinedCode("xhtml", "XHTML for resource narrative", null, null);
           ElementDefn fake = fakes.get(cn);
           //links.add(new Link(item, 
           drawClass(xml, fake, false, null, true, null, cd, StandardsStatus.NORMATIVE);//, LinkType.SPECIALIZATION, null, null, PointKind.unknown, null, null));        
