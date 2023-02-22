@@ -87,8 +87,14 @@ public class FhirTurtleGenerator {
                 genPrimitiveType(definitions.getPrimitives().get(pn));
         }
 
-        for (String infn : sorted(definitions.getInfrastructure().keySet()))
+        for (String infn : sorted(definitions.getInfrastructure().keySet())) {
+            TypeDefn defn = definitions.getInfrastructure().get(infn);
+            if (defn.enablesModifierExtensions()) {
+                defn._disableModifierExtensions(); // modify this original to disable modifier extensions in the original class
+                genBaseModifierExtensionCode(infn, defn.getProfile().getBaseDefinitionElement().getValue()); //generate onto for new superclass of modified extensions
+            }
             genElementDefn(definitions.getInfrastructure().get(infn));
+        }
 
         for (String n : sorted(definitions.getTypes().keySet()))
             genElementDefn(definitions.getTypes().get(n));
@@ -97,9 +103,14 @@ public class FhirTurtleGenerator {
             genProfiledType(definitions.getConstraints().get(n));
         }
 
-        for (String n : sorted(definitions.getBaseResources().keySet()))
-            genResourceDefn(definitions.getBaseResources().get(n));
-
+        for (String n : sorted(definitions.getBaseResources().keySet())) {
+            ResourceDefn defn = definitions.getBaseResources().get(n);
+            if(defn.getRoot().enablesModifierExtensions()) {
+                defn.getRoot()._disableModifierExtensions(); // modify this original to disable modifier extensions in the original class
+                genBaseModifierExtensionCode(n, defn.getProfile().getBaseDefinitionElement().getValue());
+            }
+            genResourceDefn(defn);
+        }
         for (String n : sorted(definitions.getResources().keySet()))
             genResourceDefn(definitions.getResources().get(n));
 
@@ -288,12 +299,16 @@ public class FhirTurtleGenerator {
     private void genResourceDefn(ResourceDefn rd) throws Exception {
         String resourceName = rd.getName();
         ElementDefn resourceType = rd.getRoot();
+        Resource resource = resourceType.getTypes().isEmpty() ? OWL2.Thing : RDFNamespace.FHIR.resourceRef(resourceType.typeCode());
         FHIRResource rdRes =
-                fact.fhir_class(resourceName, resourceType.getTypes().isEmpty()? OWL2.Thing : RDFNamespace.FHIR.resourceRef(resourceType.typeCode()))
+                fact.fhir_class(resourceName, resource)
                         .addDefinition(rd.getDefinition());
         processTypes(resourceName, rdRes, resourceType, resourceName, true);
         if(!Utilities.noString(resourceType.getW5()))
             rdRes.addObjectProperty(RDFS.subClassOf, RDFNamespace.W5.resourceRef(resourceType.getW5()));
+        if(definitions.getResources().containsKey(resourceName)  && classHasModifierExtensions.contains(resource.getLocalName())) { //Bundle, Binary, Parameters, DomainResource should not get modifier extensions here since they are under fhir:Resource instead of fhir:DomainResource
+            genModifierExtensions(resourceName, rdRes, resource.getLocalName());
+        }
     }
 
     /**
