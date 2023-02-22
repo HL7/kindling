@@ -1094,6 +1094,18 @@ public class ElementDefn {
 				e.getName().matches("modifierExtension") && e.hasModifier());
 	}
 
+	/**
+	 * Custom fix to change Definition to disable modifier extensions from appearing.
+	 * Probably should not be used for anything else...
+	 */
+	public void _disableModifierExtensions() {
+		for(ElementDefn e: this.elements) {
+			if(e.getName().matches("modifierExtension") && e.hasModifier()) {
+				e.setMaxCardinality(0);
+				e.setMinCardinality(0);
+			}
+		}
+	}
 
 	@Override
   public String toString() {
