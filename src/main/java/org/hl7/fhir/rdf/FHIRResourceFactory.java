@@ -199,7 +199,7 @@ public class FHIRResourceFactory {
      * @param onProperty
      * @return
      */
-    public FHIRResource create_empty_owl_restriction(Resource onProperty) {  //TODO:add fix - changed name for clarity since I dont believe it is meant to be overloaded
+    public FHIRResource create_empty_owl_restriction(Resource onProperty) {  //changed name for clarity to avoid confusion
         return fhir_bnode()
                 .addType(OWL2.Restriction)
                 .addObjectProperty(OWL2.onProperty, onProperty);
@@ -225,7 +225,7 @@ public class FHIRResourceFactory {
             if (min > 0)
                 list.add(create_empty_owl_restriction(onProperty).addDataProperty(OWL2.minCardinality, Integer.toString(min), XSDDatatype.XSDinteger).resource);
             if (max < Integer.MAX_VALUE)
-                list.add(create_empty_owl_restriction(onProperty).addDataProperty(OWL2.maxCardinality, Integer.toString(max), XSDDatatype.XSDinteger).resource);  //TODO:add fix to normal String instead of Binary as a String (9 was previously  owl:maxCardinality  1001 ;) also changed to maxQualifiedCardinality
+                list.add(create_empty_owl_restriction(onProperty).addDataProperty(OWL2.maxCardinality, Integer.toString(max), XSDDatatype.XSDinteger).resource);
         }
         return list;
     }

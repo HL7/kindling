@@ -103,7 +103,6 @@ public class FHIRResource {
 
     public List<FHIRResource> restriction(List<Resource> restrictions) {
         return restrictions.stream().map(restriction -> addObjectProperty(RDFS.subClassOf, restriction)).collect(Collectors.toList());
-//        return addObjectProperty(RDFS.subClassOf, restriction);
     }
 
 }
