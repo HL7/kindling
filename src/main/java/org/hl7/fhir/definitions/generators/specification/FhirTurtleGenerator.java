@@ -59,7 +59,7 @@ public class FhirTurtleGenerator {
                 .addTitle("Terminal data value")
                 .resource;
         this.v = fact.fhir_resource("v", OWL2.DatatypeProperty, "fhir:v")
-                .addTitle("Terminal data value for primitive fhir datatypes that can be represented as a RDF literal")
+                .addTitle("Terminal data value for primitive FHIR datatypes that can be represented as a RDF literal")
                 .resource;
     }
 
@@ -335,7 +335,7 @@ public class FhirTurtleGenerator {
     /**
      * Generates corresponding ontology for Modifier Extensions of fhir:OriginalProperty as fhir:_OriginalProperty
      */
-    private void genPropertyModifierExtensions(String baseName, FHIRResource baseFR, String qualifiedPredicateName) throws Exception {
+    private void genPropertyModifierExtensions(String baseName, FHIRResource baseFR, String label) throws Exception {
         if(baseName.matches("modifierExtension")) return; //skip the special case of fhir:modifierExtension
 
         // could change to instantiate only once
@@ -343,7 +343,7 @@ public class FhirTurtleGenerator {
         Property extProp = ResourceFactory.createProperty(hasExt.resource.toString());  
 
         FHIRResource modRes = fact.fhir_objectProperty("_" + baseName);
-        modRes.addDataProperty(RDFS.comment, "(Modified) " + qualifiedPredicateName);
+        modRes.addDataProperty(RDFS.comment, "(Modified) " + label);
         baseFR.addObjectProperty(extProp, modRes);
     }
 
