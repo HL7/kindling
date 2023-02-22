@@ -275,6 +275,9 @@ public class FhirTurtleGenerator {
                         .addTitle(td.getShortDefn())
                         .addDefinition(td.getDefinition());
         processTypes(typeName, typeRes, td, typeName, false);
+        if(classHasModifierExtensions.contains(parentName)) {
+            genModifierExtensions(typeName, typeRes, parentName);
+        }
     }
 
     /**
