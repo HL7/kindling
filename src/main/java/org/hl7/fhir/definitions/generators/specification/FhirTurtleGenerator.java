@@ -55,7 +55,7 @@ public class FhirTurtleGenerator {
         this.issues = issues;
         this.host = host;
         this.fact = new FHIRResourceFactory();
-        this.value = fact.fhir_resource("value", OWL2.DatatypeProperty, "fhir:value")
+        this.value = fact.fhir_resource("value", OWL2.ObjectProperty, "fhir:value")
                 .addTitle("Terminal data value")
                 .resource;
         this.v = fact.fhir_resource("v", OWL2.DatatypeProperty, "fhir:v")
