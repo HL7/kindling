@@ -250,7 +250,7 @@ public class FhirTurtleGenerator {
                 dspRes.restriction(fact.fhir_restriction(v,
                         fact.fhir_datatype_restriction(dspTypeRes == XSD.xstring ? XSD.normalizedString : dspTypeRes, facets)));
             } else
-                dspRes.restriction(fact.fhir_restriction(value, dspTypeRes));
+                dspRes.restriction(fact.fhir_restriction(v, dspTypeRes));
         }
     }
 
