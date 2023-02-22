@@ -309,7 +309,9 @@ public class FhirTurtleGenerator {
         processTypes(resourceName, rdRes, resourceType, resourceName, true);
         if(!Utilities.noString(resourceType.getW5()))
             rdRes.addObjectProperty(RDFS.subClassOf, RDFNamespace.W5.resourceRef(resourceType.getW5()));
-        if(definitions.getResources().containsKey(resourceName)  && classHasModifierExtensions.contains(resource.getLocalName())) { //Bundle, Binary, Parameters, DomainResource should not get modifier extensions here since they are under fhir:Resource instead of fhir:DomainResource
+        if(definitions.getResources().containsKey(resourceName)  && classHasModifierExtensions.contains(resource.getLocalName())) { 
+            //Bundle, Binary, Parameters, DomainResource should be excluded from this clause and not get modifier extensions here 
+            // since they are under fhir:Resource instead of fhir:DomainResource
             genModifierExtensions(resourceName, rdRes, resource.getLocalName());
         }
     }
@@ -333,15 +335,15 @@ public class FhirTurtleGenerator {
     /**
      * Generates corresponding ontology for Modifier Extensions of fhir:OriginalProperty as fhir:_OriginalProperty
      */
-    private void genPropertyModifierExtensions(String baseName, FHIRResource baseFR, String label) throws Exception {
+    private void genPropertyModifierExtensions(String baseName, FHIRResource baseFR, String qualifiedPredicateName) throws Exception {
         if(baseName.matches("modifierExtension")) return; //skip the special case of fhir:modifierExtension
 
         // could change to instantiate only once
         FHIRResource hasExt = fact.fhir_resource("modifierExtensionProperty", OWL2.AnnotationProperty,"modifierExtensionProperty").addDataProperty(RDFS.comment, "has modifier extension property");
-        Property extProp = ResourceFactory.createProperty(hasExt.resource.toString());  // maybe make this a singleton instead
+        Property extProp = ResourceFactory.createProperty(hasExt.resource.toString());  
 
         FHIRResource modRes = fact.fhir_objectProperty("_" + baseName);
-        modRes.addDataProperty(RDFS.comment, "(Modified) " + label);
+        modRes.addDataProperty(RDFS.comment, "(Modified) " + qualifiedPredicateName);
         baseFR.addObjectProperty(extProp, modRes);
     }
 
