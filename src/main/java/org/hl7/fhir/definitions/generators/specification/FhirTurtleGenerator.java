@@ -315,7 +315,7 @@ public class FhirTurtleGenerator {
                         FHIRResource qualifiedPredicate = fact.fhir_objectProperty(qualifiedPredicateName, predicateResource.resource)
                                 .domain(baseResource)
                                 .range(targetRes);
-                        typeOpts.add(
+                        typeOpts.addAll(
                                 fact.fhir_cardinality_restriction(qualifiedPredicate.resource,
                                                                   targetRes,
                                                                   ed.getMinCardinality(),
