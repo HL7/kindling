@@ -329,6 +329,7 @@ public class FhirTurtleGenerator {
             baseFR.addObjectProperty(modifierExtensionClassProperty, modRes);
 
     }
+
     /**
      * Generates corresponding ontology for Modifier Extensions of fhir:OriginalProperty as fhir:_OriginalProperty
      */
@@ -344,13 +345,6 @@ public class FhirTurtleGenerator {
         baseFR.addObjectProperty(extProp, modRes);
     }
 
-
-    public String shortenName(String qualifiedName) {
-        if(qualifiedName.contains(".")) {
-            return qualifiedName.substring(qualifiedName.lastIndexOf(".") + 1);
-        }
-        return qualifiedName;
-    }
 
     /**
      * Iterate over the Element Definitions in baseResource generating restrictions and properties
@@ -486,5 +480,13 @@ public class FhirTurtleGenerator {
         return definitions.hasPrimitiveType(name)
                 || (name.endsWith("Type")
                 && definitions.getPrimitives().containsKey(name.substring(0, name.length()-4)));
+    }
+
+    // used for shortening property names
+    private static String shortenName(String qualifiedName) {
+        if(qualifiedName.contains(".")) {
+            return qualifiedName.substring(qualifiedName.lastIndexOf(".") + 1);
+        }
+        return qualifiedName;
     }
 }
