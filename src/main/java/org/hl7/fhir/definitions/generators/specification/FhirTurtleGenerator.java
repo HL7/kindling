@@ -1,16 +1,10 @@
 package org.hl7.fhir.definitions.generators.specification;
 
 import java.io.OutputStream;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
-import org.apache.jena.rdf.model.Model;
-import org.apache.jena.rdf.model.ModelFactory;
-import org.apache.jena.rdf.model.Resource;
-import org.apache.jena.rdf.model.ResourceFactory;
+import org.apache.jena.datatypes.xsd.XSDDatatype;
+import org.apache.jena.rdf.model.*;
 import org.apache.jena.vocabulary.OWL2;
 import org.apache.jena.vocabulary.RDFS;
 import org.apache.jena.vocabulary.XSD;
@@ -47,6 +41,7 @@ public class FhirTurtleGenerator {
     private Resource value;
     private Resource v;
     private String host;
+    private List<String> classHasModifierExtensions = new ArrayList<>();
 
     // OWL doesn't recognize xsd:gYear, xsd:gYearMonth or xsd:date.  If true, map all three to xsd:datetime
     private boolean owlTarget = true;
@@ -173,6 +168,36 @@ public class FhirTurtleGenerator {
             .restriction(fact.fhir_cardinality_restriction(v, fact.fhir_datatype(XSD.xstring).resource, 1, 1));
     }
 
+    /**
+     * Generates Modifier Extension Code for superclass
+     * At current time these superclasses are: DomainResource, BackboneElement, BackboneType
+     */
+    private void genBaseModifierExtensionCode(String className, String parentUrl) throws Exception {
+            classHasModifierExtensions.add(className);  // keep track of which classes enable Modifier extensions
+
+            FHIRResource originalResource = fact.fhir_class(className);
+
+            FHIRResource modResource = fact.fhir_class("_"+className);
+
+            if(parentUrl != null) {
+                String parentName = parentUrl.substring(parentUrl.lastIndexOf("/")+1);
+                Resource parentRes = RDFNamespace.FHIR.resourceRef(parentName);
+                modResource.addObjectProperty(RDFS.subClassOf, parentRes);
+            }
+
+            FHIRResource cardRestriction = fact.fhir_bnode().addType(OWL2.Restriction).addDataProperty(OWL2.minCardinality, "1", XSDDatatype.XSDinteger)
+                    .addObjectProperty(OWL2.onProperty, fact.fhir_class("modifierExtension"));
+            modResource.restriction(cardRestriction.resource);
+            FHIRResource extRestriction = fact.fhir_bnode().addType(OWL2.Restriction)
+                    .addObjectProperty(OWL2.onProperty, fact.fhir_class("modifierExtension"))
+                    .addObjectProperty(OWL2.allValuesFrom, fact.fhir_class("Extension"));
+            modResource.restriction(extRestriction.resource);
+
+            FHIRResource floatingBNode = fact.fhir_bnode().addType(OWL2.AllDisjointClasses);
+            List<Resource> disjointedList = new ArrayList<>(Arrays.asList(originalResource.resource, modResource.resource));
+            floatingBNode.addObjectProperty(OWL2.members, fact.fhir_list(disjointedList));
+    }
+
   /* ==============================================
      Generators for various FHIR types
    * ============================================== */
@@ -270,6 +295,37 @@ public class FhirTurtleGenerator {
         if(!Utilities.noString(resourceType.getW5()))
             rdRes.addObjectProperty(RDFS.subClassOf, RDFNamespace.W5.resourceRef(resourceType.getW5()));
     }
+
+    /**
+     * Generates corresponding ontology for Modifier Extensions of fhir:OriginalClass as fhir:_OriginalClass
+     */
+    private void genModifierExtensions(String baseName, FHIRResource baseFR, String parentName) throws Exception {
+
+            // could change to instantiate only once
+            FHIRResource modifierExtensionClass = fact.fhir_resource("modifierExtensionClass", OWL2.AnnotationProperty, "modifierExtensionClass").addDataProperty(RDFS.comment, "has modifier extension class");
+            Property modifierExtensionClassProperty = ResourceFactory.createProperty(modifierExtensionClass.resource.toString());
+
+            FHIRResource modRes = fact.fhir_class("_" + baseName)
+                    .addObjectProperty(RDFS.subClassOf, RDFNamespace.FHIR.resourceRef("_" + parentName));
+            modRes.addDataProperty(RDFS.comment, "(Modified) " + baseName);
+            baseFR.addObjectProperty(modifierExtensionClassProperty, modRes);
+
+    }
+    /**
+     * Generates corresponding ontology for Modifier Extensions of fhir:OriginalProperty as fhir:_OriginalProperty
+     */
+    private void genPropertyModifierExtensions(String baseName, FHIRResource baseFR, String label) throws Exception {
+        if(baseName.matches("modifierExtension")) return; //skip the special case of fhir:modifierExtension
+
+        // could change to instantiate only once
+        FHIRResource hasExt = fact.fhir_resource("modifierExtensionProperty", OWL2.AnnotationProperty,"modifierExtensionProperty").addDataProperty(RDFS.comment, "has modifier extension property");
+        Property extProp = ResourceFactory.createProperty(hasExt.resource.toString());  // maybe make this a singleton instead
+
+        FHIRResource modRes = fact.fhir_objectProperty("_" + baseName);
+        modRes.addDataProperty(RDFS.comment, "(Modified) " + label);
+        baseFR.addObjectProperty(extProp, modRes);
+    }
+
 
     /**
      * Iterate over the Element Definitions in baseResource generating restrictions and properties

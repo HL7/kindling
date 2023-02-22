@@ -255,6 +255,17 @@ public class FHIRResourceFactory {
     }
 
     /**
+     * Returns a reference to an RDF List based on a supplied list of members
+     * @param members members to add to list
+     * @return Resource of List
+     */
+    public Resource fhir_list(List<Resource> members) {
+        return new FHIRResource(model, members).resource;
+    }
+
+
+
+    /**
      * Return a simple datatype restriction
      *
      * @param dataType data type to be restricted
