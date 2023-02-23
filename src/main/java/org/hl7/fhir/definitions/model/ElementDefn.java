@@ -1091,7 +1091,7 @@ public class ElementDefn {
 	 */
 	public boolean enablesModifierExtensions() {
 		return this.getElements().stream().anyMatch(e ->
-				e.getName().matches("modifierExtension") && e.hasModifier());
+				e.getName().equals("modifierExtension") && e.hasModifier());
 	}
 
 	@Override

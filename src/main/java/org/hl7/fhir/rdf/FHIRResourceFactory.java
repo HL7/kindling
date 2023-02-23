@@ -135,6 +135,8 @@ public class FHIRResourceFactory {
      * @return
      */
     public FHIRResource fhir_objectProperty(String name, Resource superProperty) {
+        if(superProperty.getLocalName().equals(name))
+            return fhir_objectProperty(name); // do not add something as a subProperty of itself
         return fhir_objectProperty(name).addObjectProperty(RDFS.subPropertyOf, superProperty);
     }
 
@@ -212,23 +214,39 @@ public class FHIRResourceFactory {
      * @param from       only/some target
      * @param min        min cardinality
      * @param max        max cardinality
-     * @return restriction resource
+     * @return restriction list of resources
      */
     public List<Resource> fhir_cardinality_restriction(Resource onProperty, Resource from, int min, int max) {
-        ArrayList<Resource> list = new ArrayList<>();
+        ArrayList<Resource> restrictions = new ArrayList<>();
 
-        list.add(create_empty_owl_restriction(onProperty)
+        restrictions.add(create_empty_owl_restriction(onProperty)
                 .addObjectProperty(min > 0 ? OWL2.someValuesFrom : OWL2.allValuesFrom, from).resource);
         if (min == max)
-            list.add(create_empty_owl_restriction(onProperty).addDataProperty(OWL2.cardinality, Integer.toString(min), XSDDatatype.XSDinteger).resource);
+            restrictions.add(create_empty_owl_restriction(onProperty).addDataProperty(OWL2.cardinality, Integer.toString(min), XSDDatatype.XSDinteger).resource);
         else {
             if (min > 0)
-                list.add(create_empty_owl_restriction(onProperty).addDataProperty(OWL2.minCardinality, Integer.toString(min), XSDDatatype.XSDinteger).resource);
+                restrictions.add(create_empty_owl_restriction(onProperty).addDataProperty(OWL2.minCardinality, Integer.toString(min), XSDDatatype.XSDinteger).resource);
             if (max < Integer.MAX_VALUE)
-                list.add(create_empty_owl_restriction(onProperty).addDataProperty(OWL2.maxCardinality, Integer.toString(max), XSDDatatype.XSDinteger).resource);
+                restrictions.add(create_empty_owl_restriction(onProperty).addDataProperty(OWL2.maxCardinality, Integer.toString(max), XSDDatatype.XSDinteger).resource);  //TODO:add fix to normal String instead of Binary as a String (9 was previously  owl:maxCardinality  1001 ;) also changed to maxQualifiedCardinality
         }
-        return list;
+        return restrictions;
     }
+
+    /**
+     * Create a new OWL restriction with the appropriate cardinality.  Creates a union of the various types from "from"
+     *
+     * @param onProperty property to apply the restriction to
+     * @param from       multiple targets
+     * @param min        min cardinality
+     * @param max        max cardinality
+     * @return restriction list of resources
+     */
+    public List<Resource> fhir_cardinality_restriction(Resource onProperty, List<Resource> from, int min, int max) {
+        Resource targetFrom = fhir_bnode().addObjectProperty(OWL2.unionOf, new FHIRResource(model, from))
+                .addObjectProperty(RDF.type, RDFS.Datatype).resource;
+        return fhir_cardinality_restriction(onProperty, targetFrom, min, max);
+    }
+
 
     /**
      * Return a generic restriction

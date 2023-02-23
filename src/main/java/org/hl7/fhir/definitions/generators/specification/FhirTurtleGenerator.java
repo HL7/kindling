@@ -175,7 +175,7 @@ public class FhirTurtleGenerator {
         // XHTML is an XML Literal -- but it isn't recognized by OWL so we use string
         FHIRResource NarrativeDiv = fact.fhir_dataProperty("Narrative.div");
         fact.fhir_class("xhtml", "Primitive")
-            .restriction(fact.fhir_cardinality_restriction(v, fact.fhir_datatype(XSD.xstring).resource, 1, 1));
+            .restriction(fact.fhir_cardinality_restriction(v, XSD.xstring, 1, 1));
     }
 
     /**
@@ -222,9 +222,12 @@ public class FhirTurtleGenerator {
         String ptName = pt.getCode();
         FHIRResource ptRes = fact.fhir_class(ptName, "Primitive")
                 .addDefinition(pt.getDefinition());
-        Resource rdfType = RDFTypeMap.xsd_type_for(ptName, owlTarget);
-        if (rdfType != null)
-            ptRes.restriction(fact.fhir_cardinality_restriction(v, fact.fhir_datatype(rdfType).resource, 1, 1));
+        Resource simpleRdfType = RDFTypeMap.xsd_type_for(ptName, owlTarget);
+            if(RDFTypeMap.unionTypesMap.containsKey(ptName)) {  // complex types like dateTime that are a union of types
+                ptRes.restriction(fact.fhir_cardinality_restriction(v, RDFTypeMap.unionTypesMap.get(ptName), 1, 1));
+            } else if (simpleRdfType != null) {
+                ptRes.restriction(fact.fhir_cardinality_restriction(v, simpleRdfType, 1, 1));
+            }
     }
 
 
@@ -335,7 +338,7 @@ public class FhirTurtleGenerator {
      * Generates corresponding ontology for Modifier Extensions of fhir:OriginalProperty as fhir:_OriginalProperty
      */
     private void genPropertyModifierExtensions(String baseName, FHIRResource baseFR, String label) throws Exception {
-        if(baseName.matches("modifierExtension")) return; //skip the special case of fhir:modifierExtension
+        if(baseName.equals("modifierExtension")) return; //skip the special case of fhir:modifierExtension
 
         // could change to instantiate only once
         FHIRResource hasExt = fact.fhir_resource("modifierExtensionProperty", OWL2.AnnotationProperty,"modifierExtensionProperty").addDataProperty(RDFS.comment, "has modifier extension property");
@@ -434,7 +437,7 @@ public class FhirTurtleGenerator {
                 predicateResource.addTitle(predicateName + ": " + ed.getShortDefn())
                         .addDefinition(predicateName + ": " + ed.getDefinition());
 
-                if(ed.getName().matches("modifierExtension") && ed.hasModifier()) {
+                if(ed.getName().equals("modifierExtension") && ed.hasModifier()) {
                     // special case for modifierExtensions on original Resources having a cardinality of zero
                     baseResource.restriction(fact.fhir_cardinality_restriction(predicateResource.resource, baseDef.resource, 0, 0));
                 } else {
