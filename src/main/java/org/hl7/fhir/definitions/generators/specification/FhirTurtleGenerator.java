@@ -90,8 +90,8 @@ public class FhirTurtleGenerator {
         for (String infn : sorted(definitions.getInfrastructure().keySet())) {
             TypeDefn defn = definitions.getInfrastructure().get(infn);
             if (defn.enablesModifierExtensions()) {
-                defn._disableModifierExtensions(); // modify this original to disable modifier extensions in the original class
-                genBaseModifierExtensionCode(infn, defn.getProfile().getBaseDefinitionElement().getValue()); //generate onto for new superclass of modified extensions
+                //if original defn is a superclass that enables modifierExtensions, then generate fhir:_"defn"
+                genBaseModifierExtensionCode(infn, defn.getProfile().getBaseDefinitionElement().getValue());
             }
             genElementDefn(definitions.getInfrastructure().get(infn));
         }
@@ -106,7 +106,6 @@ public class FhirTurtleGenerator {
         for (String n : sorted(definitions.getBaseResources().keySet())) {
             ResourceDefn defn = definitions.getBaseResources().get(n);
             if(defn.getRoot().enablesModifierExtensions()) {
-                defn.getRoot()._disableModifierExtensions(); // modify this original to disable modifier extensions in the original class
                 genBaseModifierExtensionCode(n, defn.getProfile().getBaseDefinitionElement().getValue());
             }
             genResourceDefn(defn);
@@ -397,26 +396,26 @@ public class FhirTurtleGenerator {
                 }
             } else {  // does not end with [x]
                 FHIRResource baseDef;
-                if(ed.getTypes().isEmpty()) {  //subnodes
+                if (ed.getTypes().isEmpty()) {  //subnodes
                     predicateResource = fact.fhir_objectProperty(shortenedPropertyName);
                     genPropertyModifierExtensions(shortenedPropertyName, predicateResource, predicateName);
                     String targetClassName = mapComponentName(baseResourceName, ed.getDeclaredTypeName());
                     String shortedClassName = shortenName(targetClassName);
-                    baseDef = fact.fhir_class(shortedClassName, innerIsBackbone? "BackboneElement": "Element")
+                    baseDef = fact.fhir_class(shortedClassName, innerIsBackbone ? "BackboneElement" : "Element")
                             .addDefinition(targetClassName + ": " + ed.getDefinition());
                     processTypes(targetClassName, baseDef, ed, predicateName, innerIsBackbone);
                 } else {
                     TypeRef targetType = ed.getTypes().get(0);
                     String targetName = targetType.getName();
-                    if(targetName.startsWith("@")) {        // Link to earlier definition
+                    if (targetName.startsWith("@")) {        // Link to earlier definition
                         ElementDefn targetRef = getElementForPath(targetName.substring(1));
                         String targetRefName = targetRef.getName();
                         String targetClassName = baseResourceName +
                                 Character.toUpperCase(targetRefName.charAt(0)) + targetRefName.substring(1);
-                        baseDef = fact.fhir_class(targetClassName, innerIsBackbone? "BackboneElement": "Element")
+                        baseDef = fact.fhir_class(targetClassName, innerIsBackbone ? "BackboneElement" : "Element")
                                 .addDefinition(ed.getDefinition())
                                 .addTitle(ed.getShortDefn());
-                        if(!processing.contains(targetRefName)) {
+                        if (!processing.contains(targetRefName)) {
                             processing.add(targetRefName);
                             processTypes(targetClassName, baseDef, targetRef, predicateName, innerIsBackbone);
                             processing.remove(targetRefName);
@@ -432,10 +431,16 @@ public class FhirTurtleGenerator {
                         predicateResource = fact.fhir_objectProperty(shortenedPropertyName);
                     genPropertyModifierExtensions(shortenedPropertyName, predicateResource, predicateName);
                 }
-                predicateResource.addTitle(predicateName+ ": " + ed.getShortDefn())
-                        .addDefinition(predicateName+ ": " + ed.getDefinition());
-                baseResource.restriction(
-                        fact.fhir_cardinality_restriction(predicateResource.resource, baseDef.resource, ed.getMinCardinality(), ed.getMaxCardinality()));
+                predicateResource.addTitle(predicateName + ": " + ed.getShortDefn())
+                        .addDefinition(predicateName + ": " + ed.getDefinition());
+
+                if(ed.getName().matches("modifierExtension") && ed.hasModifier()) {
+                    // special case for modifierExtensions on original Resources having a cardinality of zero
+                    baseResource.restriction(fact.fhir_cardinality_restriction(predicateResource.resource, baseDef.resource, 0, 0));
+                } else {
+                    baseResource.restriction(
+                            fact.fhir_cardinality_restriction(predicateResource.resource, baseDef.resource, ed.getMinCardinality(), ed.getMaxCardinality()));
+                }
                 if(!Utilities.noString(ed.getW5()))
                     predicateResource.addObjectProperty(RDFS.subPropertyOf, RDFNamespace.W5.resourceRef(ed.getW5()));
             }
