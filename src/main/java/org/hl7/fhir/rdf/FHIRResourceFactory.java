@@ -218,14 +218,13 @@ public class FHIRResourceFactory {
      */
     public List<Resource> fhir_cardinality_restriction(Resource onProperty, Resource from, int min, int max) {
         ArrayList<Resource> restrictions = new ArrayList<>();
-
-        restrictions.add(create_empty_owl_restriction(onProperty)
-                .addObjectProperty(min > 0 ? OWL2.someValuesFrom : OWL2.allValuesFrom, from).resource);
+        restrictions.add(create_empty_owl_restriction(onProperty).addObjectProperty(OWL2.allValuesFrom, from).resource);
         if (min == max)
             restrictions.add(create_empty_owl_restriction(onProperty).addDataProperty(OWL2.cardinality, Integer.toString(min), XSDDatatype.XSDinteger).resource);
         else {
             if (min > 0)
                 restrictions.add(create_empty_owl_restriction(onProperty).addDataProperty(OWL2.minCardinality, Integer.toString(min), XSDDatatype.XSDinteger).resource);
+                //restrictions.add(create_empty_owl_restriction(onProperty).addObjectProperty(OWL2.someValuesFrom, from).resource);  // use minCardinality instead
             if (max < Integer.MAX_VALUE)
                 restrictions.add(create_empty_owl_restriction(onProperty).addDataProperty(OWL2.maxCardinality, Integer.toString(max), XSDDatatype.XSDinteger).resource);  //TODO:add fix to normal String instead of Binary as a String (9 was previously  owl:maxCardinality  1001 ;) also changed to maxQualifiedCardinality
         }
