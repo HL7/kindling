@@ -301,9 +301,14 @@ public class MappingsGenerator {
 
 
   private void listKnownMappings(ElementDefn e, List<String> maps) {
-		for (String s : e.getMappings().keySet())
-			if (!maps.contains(s) && definitions.getMapTypes().get(s).isPublish())
+		for (String s : e.getMappings().keySet()) {
+		  if (!definitions.getMapTypes().containsKey(s)) {
+		    System.out.println("map not found: "+s);
+		  }
+			if (!maps.contains(s) && definitions.getMapTypes().get(s).isPublish()) {
 				maps.add(s);
+			}
+		}
 		for (ElementDefn c : e.getElements())
 			listKnownMappings(c,  maps);		
 	}

@@ -31,6 +31,7 @@ import org.hl7.fhir.definitions.model.W5Entry;
 import org.hl7.fhir.exceptions.FHIRException;
 import org.hl7.fhir.r5.context.CanonicalResourceManager;
 import org.hl7.fhir.r5.context.IWorkerContext;
+import org.hl7.fhir.r5.model.CanonicalType;
 import org.hl7.fhir.r5.model.CodeSystem;
 import org.hl7.fhir.r5.model.CodeSystem.ConceptDefinitionComponent;
 import org.hl7.fhir.r5.model.Enumerations.BindingStrength;
@@ -190,8 +191,8 @@ public class ResourceValidator extends BaseValidator {
     //        hint(errors, ValidationMessage.NO_RULE_DATE, IssueType.REQUIRED, rd.getName(), !Utilities.noString(s), "RIM Mapping is required");
 
     for (Operation op : rd.getOperations()) {
-      warning(errors, ValidationMessage.NO_RULE_DATE, IssueType.BUSINESSRULE, rd.getName() + ".$" + op.getName(), hasOpExample(op.getExamples(), false), "Operation must have an example request");
-      warning(errors, ValidationMessage.NO_RULE_DATE, IssueType.BUSINESSRULE, rd.getName() + ".$" + op.getName(), hasOpExample(op.getExamples(), true), "Operation must have an example response");
+      warning(errors, ValidationMessage.NO_RULE_DATE, IssueType.BUSINESSRULE, rd.getName() + ".$" + op.getName(), hasOpExample(op.getAllExamples1(), false), "Operation must have an example request");
+      warning(errors, ValidationMessage.NO_RULE_DATE, IssueType.BUSINESSRULE, rd.getName() + ".$" + op.getName(), hasOpExample(op.getAllExamples1(), true), "Operation must have an example response");
     }
     List<String> vsWarns = new ArrayList<String>();
     int vsWarnings = checkElement(errors, rd.getName(), rd.getRoot(), rd, null, s == null || !s.equalsIgnoreCase("n/a"), false, hasSummary(rd.getRoot()), vsWarns, true, rd.getStatus(), invIds);
@@ -1260,12 +1261,17 @@ public class ResourceValidator extends BaseValidator {
       return true;
 
     for (ConceptSetComponent inc : vs.getCompose().getInclude()) {
-      if (inc.hasValueSet())
-        throw new Error("not handled yet");
-      if (inc.getSystem().startsWith("http://terminology.hl7.org/CodeSystem/v2-") || inc.getSystem().startsWith("http://terminology.hl7.org/CodeSystem/v3-"))
-        return false;
-      if (!Utilities.existsInList(inc.getSystem(), "urn:iso:std:iso:4217", "urn:ietf:bcp:13", "http://unitsofmeasure.org") && !inc.getSystem().startsWith("http://hl7.org/fhir/"))
-        return false;
+      if (inc.hasValueSet()) {
+        for (CanonicalType s : inc.getValueSet()) {
+          ValueSet ivs = context.fetchResource(ValueSet.class, s.primitiveValue());
+          noExternals(ivs);
+        }
+      } else {
+        if (inc.getSystem().startsWith("http://terminology.hl7.org/CodeSystem/v2-") || inc.getSystem().startsWith("http://terminology.hl7.org/CodeSystem/v3-"))
+          return false;
+        if (!Utilities.existsInList(inc.getSystem(), "urn:iso:std:iso:4217", "urn:ietf:bcp:13", "http://unitsofmeasure.org") && !inc.getSystem().startsWith("http://hl7.org/fhir/"))
+          return false;
+      }
     }
     return true;
   }
@@ -1364,6 +1370,9 @@ public class ResourceValidator extends BaseValidator {
               ElementDefn ed;
               try {
                 ed = definitions.getElementByPath(p.split("\\."), "matching compartment", true);
+                if (ed == null && Utilities.endsWithInList(p, ".reference", ".concept")) {
+                  ed = definitions.getElementByPath((p.substring(0, p.lastIndexOf("."))).split("\\."), "matching compartment", true);
+                }
               } catch (Exception e) {
                 rule(errors, ValidationMessage.NO_RULE_DATE, IssueType.STRUCTURE, "compartment." + cmp.getName() + "." + rd.getName() + "." + s, ok, "Illegal path " + p);
                 ed = null;

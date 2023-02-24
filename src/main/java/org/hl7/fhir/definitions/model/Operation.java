@@ -41,12 +41,13 @@ public class Operation {
   private String footer2;
   private Boolean idempotent;
   private StandardsStatus standardsStatus; // defaults to container value
-  private List<OperationExample> examples = new ArrayList<Operation.OperationExample>();
+  private List<OperationExample> requestExamples = new ArrayList<Operation.OperationExample>();
+  private List<OperationExample> responseExamples = new ArrayList<Operation.OperationExample>();
   private List<OperationExample> examples2 = new ArrayList<Operation.OperationExample>();
   private OperationDefinition resource;
   private String fmm;
 
-  public Operation(String name, boolean system, boolean type, boolean instance, String kind, String title, String doco, String footer, List<OperationExample> examples, boolean idempotent) {
+  public Operation(String name, boolean system, boolean type, boolean instance, String kind, String title, String doco, String footer, List<OperationExample> requestExamples, List<OperationExample> responseExamples, boolean idempotent) {
     this.name = name;
     this.title = title;
     this.system = system;
@@ -56,7 +57,8 @@ public class Operation {
     this.doco = doco;
     this.footer = footer;
     this.idempotent = idempotent;
-    this.examples.addAll(examples);
+    this.requestExamples.addAll(requestExamples);
+    this.responseExamples.addAll(responseExamples);
   }
 
   public String getName() {
@@ -136,8 +138,12 @@ public class Operation {
     this.footer2 = footer;
   }
   
-  public List<OperationExample> getExamples() {
-    return examples;
+  public List<OperationExample> getRequestExamples() {
+    return requestExamples;
+  }
+  
+  public List<OperationExample> getResponseExamples() {
+    return responseExamples;
   }
 
   
@@ -193,5 +199,16 @@ public class Operation {
 
   public void setNormativeVersion(String normativeVersion) {
     this.normativeVersion = normativeVersion;
+  }
+
+  public boolean hasExamples() {
+    return (requestExamples.size() + responseExamples.size()) > 0;
+  }
+
+  public List<OperationExample> getAllExamples1() {
+    List<OperationExample> list = new ArrayList<>();
+    list.addAll(requestExamples);
+    list.addAll(responseExamples);
+    return list;
   }
 }

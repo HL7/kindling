@@ -183,6 +183,7 @@ import org.hl7.fhir.r5.model.ContactPoint.ContactPointSystem;
 import org.hl7.fhir.r5.model.DomainResource;
 import org.hl7.fhir.r5.model.ElementDefinition;
 import org.hl7.fhir.r5.model.ElementDefinition.ElementDefinitionBindingComponent;
+import org.hl7.fhir.r5.model.ElementDefinition.ElementDefinitionConstraintComponent;
 import org.hl7.fhir.r5.model.ElementDefinition.TypeRefComponent;
 import org.hl7.fhir.r5.model.Enumerations.BindingStrength;
 import org.hl7.fhir.r5.model.Enumerations.CapabilityStatementKind;
@@ -192,6 +193,7 @@ import org.hl7.fhir.r5.model.Enumerations.FHIRVersion;
 import org.hl7.fhir.r5.model.Enumerations.PublicationStatus;
 import org.hl7.fhir.r5.model.Enumerations.SearchParamType;
 import org.hl7.fhir.r5.model.Factory;
+import org.hl7.fhir.r5.model.IdType;
 import org.hl7.fhir.r5.model.ImplementationGuide;
 import org.hl7.fhir.r5.model.ImplementationGuide.ImplementationGuideDefinitionPageComponent;
 import org.hl7.fhir.r5.model.Library;
@@ -211,6 +213,7 @@ import org.hl7.fhir.r5.model.StringType;
 import org.hl7.fhir.r5.model.StructureDefinition;
 import org.hl7.fhir.r5.model.StructureDefinition.StructureDefinitionKind;
 import org.hl7.fhir.r5.model.StructureDefinition.TypeDerivationRule;
+import org.hl7.fhir.r5.model.TypeDetails;
 import org.hl7.fhir.r5.model.UriType;
 import org.hl7.fhir.r5.model.ValueSet;
 import org.hl7.fhir.r5.model.ValueSet.ConceptSetComponent;
@@ -917,9 +920,240 @@ public class Publisher implements URIResolver, SectionNumberer {
     ei = new ExampleInspector(page.getWorkerContext(), page, page.getFolders().dstDir, Utilities.path(page.getFolders().rootDir, "tools", "schematron"), page.getValidationErrors(), page.getDefinitions(), page.getVersion());
     ei.prepare();
 
-    for (String rname : page.getDefinitions().sortedResourceNames()) {
-      ei.testInvariants(page.getFolders().srcDir, page.getDefinitions().getResourceByName(rname));
+  }
+
+  private void testSearchParameters() {
+    boolean ok = true;
+    for (ResourceDefn rd : page.getDefinitions().getBaseResources().values()) {
+      ok = testSearchParameters(rd) && ok;
     }
+    
+    for (ResourceDefn rd : page.getDefinitions().getResources().values()) {
+      ok = testSearchParameters(rd) && ok;
+    }    
+
+    if (!ok) {
+      throw new Error("Some invariants failed testing");
+    }
+  }
+
+  private boolean testSearchParameters(ResourceDefn rd) {
+    if (fpe == null) {
+      fpe = new FHIRPathEngine(page.getWorkerContext());
+    }
+    boolean ok = true;
+    for (SearchParameterDefn spd : rd.getSearchParams().values()) {
+      ok = testSearchParameter(spd.getResource(), rd.getProfile()) && ok;
+    }
+    return ok;
+  }
+
+  private boolean testSearchParameter(SearchParameter sp, StructureDefinition rd) {
+    boolean result = true;
+    if (sp.hasExpression()) {
+      try {
+        Set<ElementDefinition> set = new HashSet<>();
+        String exp = sp.getExpression().replace("{{name}}", rd.getType()); // for templates  
+        TypeDetails td = null;
+        if (sp.getBase().size() > 1) {
+          td = fpe.check(null, rd.getType(), page.getWorkerContext().getResourceNames(), fpe.parse(exp), set);
+        } else {
+          td = fpe.check(null, rd.getType(), rd.getType(), fpe.parse(exp), set);
+        }
+        if (!Utilities.existsInList(sp.getCode(), "_id", "_in") && sp.getType() != SearchParamType.COMPOSITE) {
+          String types = page.getDefinitions().getAllowedSearchTypes().get(sp.getType().toCode());
+          boolean ok = false;
+          for (String t : types.split("\\,")) {
+            if (td.hasType(t)) {
+              ok = true;
+              break;
+            }
+          }
+          if (!ok) {
+            System.out.println("The search parameter "+rd.getType()+":"+sp.getCode()+" has an invalid expression: the type "+td.toString()+" is not valid for the search parameter type "+sp.getType().toCode());
+            result = false;
+          }
+          if (sp.getType() == SearchParamType.REFERENCE) {
+            sp.getTarget().clear();
+            if (td.getTargets() == null) {
+              System.out.println("The search parameter "+rd.getType()+":"+sp.getCode()+" has a problem: the search parameter type "+sp.getType().toCode()+" but no targets were identified from the expression outcome of "+td.toString());
+              if (td.hasType("Reference")) {
+                td.addTarget("Resource");                  
+              } else if (td.hasType("canonical")) {
+                td.addTarget("CanonicalResource");   
+              } else if (td.hasType("Composition")) {
+                td.addTarget("Composition");
+              } else if (td.hasType("MessageHeader")) {
+                td.addTarget("MessageHeader");
+              } else {
+                throw new Error("What?");
+              }
+            }
+            for (String t : td.getTargets()) {
+              String tn = tail(t);
+              if (tn.equals("Resource")) {
+                for (String s : cu.getConcreteResources()) {
+                  if (!sp.hasTarget(s)) {
+                    sp.addTarget(s);
+                  }
+                }
+              } else if (tn.equals("CanonicalResource")) {
+                for (String s : cu.getCanonicalResourceNames()) {
+                  if (!sp.hasTarget(s)) {
+                    sp.addTarget(s);
+                  }
+                }
+              } else if (!sp.hasTarget(tn)) { 
+                sp.addTarget(tn);
+              }
+            }
+          }
+        }
+        StandardsStatus ssCeiling = determineStandardsStatus(rd, set);
+        StandardsStatus ssStated = sp.getStandardsStatus();
+        if (ssStated == null) {
+          ssStated = ssCeiling;
+          sp.setStandardsStatus(ssStated); 
+        }
+        if (ssCeiling.isLowerThan(ssStated)) {
+          if (sp.getBase().size() > 1) {
+            StandardsStatus high = null;
+            for (CodeType b : sp.getBase()) {
+              if (b.primitiveValue().equals(rd.getType())) {
+                b.setStandardsStatus(ssCeiling);
+              }
+              StandardsStatus ss = b.getStandardsStatus();
+              if (ss == null) {
+                ss = ssStated;
+              }
+              if (high == null) {
+                high = ss;
+              } else if (high.isLowerThan(ss)) {
+                high = ss;
+              }
+            }
+            if (high != ssStated) {
+              sp.setStandardsStatus(high);
+            }
+          } else { 
+            sp.setStandardsStatus(ssCeiling);
+          }          
+        }        
+      } catch (Exception e) {
+        System.out.println("The search parameter "+rd.getType()+":"+sp.getCode()+" has an invalid expression: " +e.getMessage());
+        result = false;
+        e.printStackTrace();
+      }
+    }
+    return result;
+  }
+
+  private StandardsStatus determineStandardsStatus(StructureDefinition rd, Set<ElementDefinition> set) {
+    StandardsStatus result = rd.getStandardsStatus();
+    for (ElementDefinition ed : set) {
+      StandardsStatus status = ed.getStandardsStatus();
+      if (status != null && status.isLowerThan(result)) {
+        result = status;
+      }
+    }
+    return result;
+  }
+
+  private void testInvariants() throws FHIRException, IOException {
+    page.log("... check invariants", LogMessageType.Process);
+    // first part: compile the invariants to check them 
+    // second part: run the invariants
+    boolean ok = true;
+    if (fpe == null) {
+      fpe = new FHIRPathEngine(page.getWorkerContext());
+    }
+    Set<String> set = new HashSet<>();
+    for (StructureDefinition sd : page.getWorkerContext().fetchResourcesByType(StructureDefinition.class)) {
+      if (sd.getDerivation() == TypeDerivationRule.SPECIALIZATION && !set.contains(sd.getUrl())) {
+        set.add(sd.getUrl());
+        if (!checkInvariants(fpe, sd)) {
+          ok = false;
+        }
+      }
+    }
+    
+    for (String rname : page.getDefinitions().sortedResourceNames()) {
+      if (!ei.testInvariants(page.getFolders().srcDir, page.getDefinitions().getResourceByName(rname))) {
+        ok = false;
+      }
+    }
+    if (!ok) {
+      throw new Error("Some invariants failed testing");
+    }
+  }
+  
+  private boolean checkInvariants(FHIRPathEngine fpe, StructureDefinition sd) {
+    boolean result = true;
+    Map<String, ElementDefinition> map = new HashMap<>();
+    for (ElementDefinition ed : sd.getDifferential().getElement()) {
+      map.put(ed.getPath(), ed);
+    }
+    for (ElementDefinition ed : sd.getDifferential().getElement()) {
+      for (ElementDefinitionConstraintComponent inv : ed.getConstraint()) {
+        if (inv.hasExpression()) {
+          if (!checkInvariant(fpe, sd, map, ed, inv)) {
+            result = false;
+          }
+        }
+      }
+    }
+    for (ElementDefinition ed : sd.getDifferential().getElement()) {
+      for (IdType t : ed.getCondition()) {
+        if (!t.hasUserData("validated") && !isKnownBadInvariant(t.primitiveValue())) {
+          System.out.println("The element "+ed.getPath()+" claims that the invariant "+t.primitiveValue()+" affects it, but it isn't touched by that invariant");
+          result = false;
+        }        
+      }
+    }
+    return result;
+  }
+
+  private boolean checkInvariant(FHIRPathEngine fpe, StructureDefinition sd, 
+      Map<String, ElementDefinition> map, ElementDefinition ed, ElementDefinitionConstraintComponent inv) {
+    boolean result = true;
+    try {
+      Set<ElementDefinition> set = new HashSet<>();
+      if (sd.getKind() == StructureDefinitionKind.RESOURCE) {
+        fpe.check(null, sd.getType(), ed.getPath(), fpe.parse(inv.getExpression()), set);
+      } else {
+        fpe.check(null, "Resource", ed.getPath(), fpe.parse(inv.getExpression()), set);
+      }
+      for (ElementDefinition edt : set) {
+        if (!edt.getPath().equals(ed.getPath()) && map.containsKey(edt.getPath())) {
+          IdType cnd = null;
+          for (IdType t : map.get(edt.getPath()).getCondition()) {
+            if (t.getValue().equals(inv.getKey())) {
+              cnd = t;
+            }
+          }
+          if (cnd == null) {
+            System.out.println("The invariant "+sd.getType()+"#"+inv.getKey()+" touches "+edt.getPath()+" but isn't listed as a condition");
+            result = false;
+          } else {
+            cnd.setUserData("validated", true);
+          }
+        }
+      }
+    } catch (Exception e) {
+      System.out.println ("Invariant error processing "+sd.getType()+"#"+inv.getKey()+": "+e.getMessage());
+      if (!isKnownBadInvariant(inv.getKey(), e.getMessage())) {
+        result = false;
+      }
+    }
+    return result;
+  }
+
+  private boolean isKnownBadInvariant(String key, String message) {
+    return message.equals(page.getDefinitions().getBadInvariants().get(key));
+  }
+
+  private boolean isKnownBadInvariant(String key) {
+    return page.getDefinitions().getBadInvariants().containsKey(key);
   }
 
   private String getGitBuildId() {
@@ -1097,7 +1331,7 @@ public class Publisher implements URIResolver, SectionNumberer {
         r.setConformancePack(makeConformancePack(r));
         r.setProfile(new ProfileGenerator(page.getDefinitions(), page.getWorkerContext(), page, page.getGenDate(), page.getVersion(), dataElements, fpUsages, page.getFolders().rootDir, page.getUml(), page.getRc()).generate(r.getConformancePack(), r, "core", false));
         page.getProfiles().see(r.getProfile(), page.packageInfo());
-        ResourceTableGenerator rtg = new ResourceTableGenerator(page.getFolders().dstDir, page, null, true, page.getVersion());
+        ResourceTableGenerator rtg = new ResourceTableGenerator(page.getFolders().dstDir, page, null, true, page.getVersion(), "");
         r.getProfile().getText().setDiv(new XhtmlNode(NodeType.Element, "div"));
         r.getProfile().getText().getDiv().getChildNodes().add(rtg.generate(r, "", false));
     }
@@ -1107,7 +1341,7 @@ public class Publisher implements URIResolver, SectionNumberer {
       r.setConformancePack(makeConformancePack(r));
       r.setProfile(new ProfileGenerator(page.getDefinitions(), page.getWorkerContext(), page, page.getGenDate(), page.getVersion(), dataElements, fpUsages, page.getFolders().rootDir, page.getUml(), page.getRc()).generate(r.getConformancePack(), r, "core", false));
       page.getProfiles().see(r.getProfile(), page.packageInfo());
-      ResourceTableGenerator rtg = new ResourceTableGenerator(page.getFolders().dstDir, page, null, true, page.getVersion());
+      ResourceTableGenerator rtg = new ResourceTableGenerator(page.getFolders().dstDir, page, null, true, page.getVersion(), "");
       r.getProfile().getText().setDiv(new XhtmlNode(NodeType.Element, "div"));
       r.getProfile().getText().getDiv().getChildNodes().add(rtg.generate(r, "", false));
     }
@@ -1115,7 +1349,7 @@ public class Publisher implements URIResolver, SectionNumberer {
     for (ResourceDefn r : page.getDefinitions().getResourceTemplates().values()) {
       r.setConformancePack(makeConformancePack(r));
       r.setProfile(new ProfileGenerator(page.getDefinitions(), page.getWorkerContext(), page, page.getGenDate(), page.getVersion(), dataElements, fpUsages, page.getFolders().rootDir, page.getUml(), page.getRc()).generate(r.getConformancePack(), r, "core", true));
-      ResourceTableGenerator rtg = new ResourceTableGenerator(page.getFolders().dstDir, page, null, true, page.getVersion());
+      ResourceTableGenerator rtg = new ResourceTableGenerator(page.getFolders().dstDir, page, null, true, page.getVersion(), "");
       r.getProfile().getText().setDiv(new XhtmlNode(NodeType.Element, "div"));
       r.getProfile().getText().getDiv().getChildNodes().add(rtg.generate(r, "", true));
       page.getProfiles().see(r.getProfile(), page.packageInfo());
@@ -1274,7 +1508,7 @@ public class Publisher implements URIResolver, SectionNumberer {
       profile = new ProfileGenerator(page.getDefinitions(), page.getWorkerContext(), page, page.getGenDate(), page.getVersion(), dataElements, fpUsages, page.getFolders().rootDir, page.getUml(), page.getRc()).generate(t);
       page.getProfiles().see(profile, page.packageInfo());
       t.setProfile(profile);
-      DataTypeTableGenerator dtg = new DataTypeTableGenerator(page.getFolders().dstDir, page, t.getName(), true, page.getVersion());
+      DataTypeTableGenerator dtg = new DataTypeTableGenerator(page.getFolders().dstDir, page, t.getName(), true, page.getVersion(), "");
       t.getProfile().getText().setDiv(new XhtmlNode(NodeType.Element, "div"));
       t.getProfile().getText().getDiv().getChildNodes().add(dtg.generate(t, null, false));
     } catch (Exception e) {
@@ -2555,6 +2789,11 @@ public class Publisher implements URIResolver, SectionNumberer {
   private void produceSpecification() throws Exception {
     populateFHIRTypesCodeSystem();
 
+    cu = new ContextUtilities(page.getWorkerContext());
+
+    testInvariants();
+    testSearchParameters();
+    
     processCDA();
     page.log("Generate RDF", LogMessageType.Process);
     processRDF();
@@ -2836,6 +3075,8 @@ public class Publisher implements URIResolver, SectionNumberer {
     Regenerator regen = new Regenerator(page.getFolders().srcDir, page.getDefinitions(), page.getWorkerContext());
     regen.generate();
     
+
+    
     Bundle searchParamsFeed = new Bundle();
     searchParamsFeed.setId("searchParams");
     searchParamsFeed.setType(BundleType.COLLECTION);
@@ -2906,6 +3147,7 @@ public class Publisher implements URIResolver, SectionNumberer {
         //}
       }
 
+      
       produceUml();
       page.getVsValidator().checkDuplicates(page.getValidationErrors());
 
@@ -2919,6 +3161,7 @@ public class Publisher implements URIResolver, SectionNumberer {
       }
 
       checkAllOk();
+
 
       page.log(" ...collections ", LogMessageType.Process);
 
@@ -3252,6 +3495,25 @@ public class Publisher implements URIResolver, SectionNumberer {
       zip.close();
       npm.finish();
       
+      page.log(" ...search package", LogMessageType.Process);
+
+      ImplementationGuide spIg = new ImplementationGuide();
+      spIg.addFhirVersion(page.getVersion());
+      spIg.setPackageId(pidRoot()+".search");
+      spIg.setVersion(page.getVersion().toCode());
+      spIg.setLicense(ImplementationGuide.SPDXLicense.CC01_0);
+      spIg.setTitle("FHIR "+page.getVersion().getDisplay()+" package : ungrouped search parameters");
+      exIg.setDescription("FHIR "+page.getVersion().getDisplay()+" package : Search Parameters (break out combined parmaeters for server execution convenience)");
+      npm = new NPMPackageGenerator(Utilities.path(page.getFolders().dstDir, pidRoot()+".search.tgz"), "http://hl7.org/fhir", "http://hl7.org/fhir", PackageType.EXAMPLES, exIg, page.getGenDate().getTime(), true);
+      for (ResourceDefn r : page.getDefinitions().getBaseResources().values()) {
+        addToSearchPackage(r, npm);
+      }
+      for (ResourceDefn r : page.getDefinitions().getResources().values()) {
+        addToSearchPackage(r, npm);
+      }
+      npm.finish();
+
+      
       NDJsonWriter ndjson = new NDJsonWriter(page.getFolders().dstDir + "examples-ndjson.zip", page.getFolders().tmpDir);
       ndjson.addFilesFiltered(page.getFolders().dstDir, ".json", new String[] {".schema.json", ".canonical.json", ".diff.json", "expansions.json", "package.json"});
       ndjson.close();
@@ -3266,6 +3528,15 @@ public class Publisher implements URIResolver, SectionNumberer {
       checkAllOk();
     } else
       page.log("Partial Build - terminating now", LogMessageType.Error);
+  }
+
+
+  private void addToSearchPackage(ResourceDefn r, NPMPackageGenerator npm) throws IOException {
+    for (SearchParameterDefn spd : r.getSearchParams().values()) {
+      SearchParameter sp = spd.getResource().copy();
+      sp.setId(r.getName()+"-"+sp.getCode().replace("_", ""));
+      npm.addFile(Category.RESOURCE, sp.fhirType()+"-"+sp.getId()+".json", new JsonParser().composeBytes(sp));
+    }    
   }
 
   private String pidRoot() {
@@ -4678,6 +4949,10 @@ public class Publisher implements URIResolver, SectionNumberer {
   private ExampleInspector ei;
 
   private ProfileValidator pv;
+
+  private FHIRPathEngine fpe;
+
+  private ContextUtilities cu;
 
   private void processExample(Example e, ResourceDefn resn, StructureDefinition profile, Profile pack, ImplementationGuideDefn ig) throws Exception {
     if (e.getType() == ExampleType.Tool)

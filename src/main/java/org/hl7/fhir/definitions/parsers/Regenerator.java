@@ -440,7 +440,7 @@ public class Regenerator {
       opd.addExtension(BuildExtensions.EXT_FOOTER2, new MarkdownType(op.getFooter2()));
     }
     
-    for (OperationExample opex : op.getExamples()) {
+    for (OperationExample opex : op.getAllExamples1()) {
       Extension ex = new Extension(BuildExtensions.EXT_OP_EXAMPLE);
       if (!Utilities.noString(opex.getContent())) {
         ex.addExtension(BuildExtensions.EXT_OP_EXAMPLE_CONTENT, new StringType(opex.getContent()));

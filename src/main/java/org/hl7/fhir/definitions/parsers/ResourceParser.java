@@ -300,17 +300,19 @@ public class ResourceParser {
 
   private Operation convertOperation(OperationDefinition src) throws FileNotFoundException, FHIRException, IOException, Exception {
 
-    List<OperationExample> examples = new ArrayList<>();
+    List<OperationExample> reqExamples = new ArrayList<>();
+    List<OperationExample> respExamples = new ArrayList<>();
     List<OperationExample> examples2 = new ArrayList<>();
     for (Extension ex : src.getExtensionsByUrl(BuildExtensions.EXT_OP_EXAMPLE)) {
+      boolean isResp = "true".equals(ex.getExtensionString(BuildExtensions.EXT_OP_EXAMPLE_RESPONSE));
       if ("2".equals(ex.getExtensionString(BuildExtensions.EXT_OP_EXAMPLE_LIST))) {
-        processExample(examples2, ex.getExtensionString(BuildExtensions.EXT_OP_EXAMPLE_CONTENT), "true".equals(ex.getExtensionString(BuildExtensions.EXT_OP_EXAMPLE_RESPONSE)));
+        processExample(examples2, ex.getExtensionString(BuildExtensions.EXT_OP_EXAMPLE_CONTENT), isResp);
       } else {
-        processExample(examples, ex.getExtensionString(BuildExtensions.EXT_OP_EXAMPLE_CONTENT), "true".equals(ex.getExtensionString(BuildExtensions.EXT_OP_EXAMPLE_RESPONSE)));
+        processExample(isResp ? respExamples : reqExamples, ex.getExtensionString(BuildExtensions.EXT_OP_EXAMPLE_CONTENT), isResp);
       }
     }
     Operation op = new Operation(src.getCode(), src.getSystem(), src.getType(), src.getInstance(), src.getKind().toCode(), src.getTitle(), src.getDescription(), 
-        BuildExtensions.readStringExtension(src, BuildExtensions.EXT_FOOTER), examples, !src.getAffectsState());
+        BuildExtensions.readStringExtension(src, BuildExtensions.EXT_FOOTER), reqExamples, respExamples, !src.getAffectsState());
     op.getExamples2().addAll(examples2);
     op.setResource(src);
     op.setStandardsStatus(StandardsStatus.fromCode(BuildExtensions.readStringExtension(src, BuildExtensions.EXT_STANDARDS_STATUS)));
@@ -323,7 +325,7 @@ public class ResourceParser {
   }
 
   private void processExample(List<OperationExample> examples, String file, boolean response) throws FileNotFoundException, IOException, Exception {
-    for (String s : TextFile.fileToString(Utilities.path(folder, file)).split("\r\n--------------------------------------\r\n"))
+    for (String s : TextFile.fileToString(Utilities.path(folder, file)).split("\r?\n--------------------------------------\r?\n"))
       examples.add(convertToExample(s, response));
   }
 
@@ -431,6 +433,7 @@ public class ResourceParser {
     r.getSearchParams().put(sp.getCode(), sp);
     sp.setExpression(src.getExpression());
     sp.setResource(src);
+    sp.setBase(r.getName());
     String s = BuildExtensions.readStringExtension(src, BuildExtensions.EXT_PATH);
     if (!Utilities.noString(s)) {
       for (String p : s.split("\\,")) {
@@ -510,6 +513,33 @@ public class ResourceParser {
 
 
   private TypeDefn parseTypeDefinition(ProfileUtilities pu, ElementDefinition focus, StructureDefinition sd) throws IOException {
+    for (ElementDefinition edt : sd.getDifferential().getElement()) {
+      for (ElementDefinitionConstraintComponent cst : edt.getConstraint()) {
+        Invariant inv = new Invariant();
+        inv.setContext(focus.getPath());
+        inv.setEnglish(cst.getHuman());
+        if (cst.hasExtension(BuildExtensions.EXT_OCL)) {
+          inv.setOcl(cst.getExtensionString(BuildExtensions.EXT_OCL));        
+        }
+        inv.setId(cst.getKey());
+        if (cst.hasExtension(BuildExtensions.EXT_FIXED_NAME)) {
+          inv.setFixedName(cst.getExtensionString(BuildExtensions.EXT_FIXED_NAME));        
+        }
+        inv.setSeverity(cst.getSeverity().toCode());
+        if (cst.hasExtension(BuildExtensions.EXT_BEST_PRACTICE)) {
+          inv.setSeverity("best-practice");
+        }
+        if (cst.hasExtension(BuildExtensions.EXT_TURTLE)) {
+          inv.setTurtle(cst.getExtensionString(BuildExtensions.EXT_TURTLE));        
+        }
+        inv.setRequirements(cst.getRequirements());
+        inv.setExpression(cst.getExpression());
+        if (cst.hasExtension(BuildExtensions.EXT_BEST_PRACTICE_EXPLANATION)) {
+          inv.setExplanation(cst.getExtensionString(BuildExtensions.EXT_BEST_PRACTICE_EXPLANATION));        
+        }
+        invariants.put(inv.getId(), inv);
+      }
+    }
     TypeDefn ed = new TypeDefn(null);
     parseED(pu, ed, focus, sd, "");
     return ed;
@@ -584,30 +614,8 @@ public class ResourceParser {
     }
 
     for (ElementDefinitionConstraintComponent cst : focus.getConstraint()) {
-      Invariant inv = new Invariant();
-      inv.setContext(focus.getPath());
-      inv.setEnglish(cst.getHuman());
-      if (cst.hasExtension(BuildExtensions.EXT_OCL)) {
-        inv.setOcl(cst.getExtensionString(BuildExtensions.EXT_OCL));        
-      }
-      inv.setId(cst.getKey());
-      if (cst.hasExtension(BuildExtensions.EXT_FIXED_NAME)) {
-        inv.setFixedName(cst.getExtensionString(BuildExtensions.EXT_FIXED_NAME));        
-      }
-      inv.setSeverity(cst.getSeverity().toCode());
-      if (cst.hasExtension(BuildExtensions.EXT_BEST_PRACTICE)) {
-        inv.setSeverity("best-practice");
-      }
-      if (cst.hasExtension(BuildExtensions.EXT_TURTLE)) {
-        inv.setTurtle(cst.getExtensionString(BuildExtensions.EXT_TURTLE));        
-      }
-      inv.setRequirements(cst.getRequirements());
-      inv.setExpression(cst.getExpression());
-      if (cst.hasExtension(BuildExtensions.EXT_BEST_PRACTICE_EXPLANATION)) {
-        inv.setExplanation(cst.getExtensionString(BuildExtensions.EXT_BEST_PRACTICE_EXPLANATION));        
-      }
+      Invariant inv = invariants.get(cst.getKey());
       ed.getInvariants().put(inv.getId(), inv);
-      invariants.put(inv.getId(), inv);
     }
 
     for (IdType cnd : focus.getCondition()) {

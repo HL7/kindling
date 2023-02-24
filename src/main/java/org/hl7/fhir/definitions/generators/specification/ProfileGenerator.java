@@ -1441,6 +1441,14 @@ public class ProfileGenerator {
         if (spd.getProcessingMode() != null && sp.getProcessingMode() != spd.getProcessingMode()) 
           throw new FHIRException("Usage mismatch on common parameter: expected "+sp.getProcessingMode().toCode()+" but found "+spd.getProcessingMode().toCode());
 //      }
+      SearchParameter spx = sp.copy();
+      spx.getBase().clear();
+      spx.addBase(p.getType());
+      spx.setExpression(spd.getExpression());
+      spx.setDescription("["+rn+"]("+rn.toLowerCase()+".html): " + spd.getDescription()+"\r\n");
+      spx.setUserData("common-id", spd.getCommonId());
+      spd.setResource(spx);
+
       StandardsStatus sst = ToolingExtensions.getStandardsStatus(sp);
       if (sst == null || (spd.getStandardsStatus() == null && spd.getStandardsStatus().isLowerThan(sst))) {
         for (CodeType ct : sp.getBase()) {

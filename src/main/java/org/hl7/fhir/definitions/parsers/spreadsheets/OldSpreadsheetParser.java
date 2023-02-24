@@ -553,7 +553,8 @@ public class OldSpreadsheetParser {
         String use = sheet.getColumn(row, "Use");
         String doco = sheet.getColumn(row, "Documentation");
         String type = sheet.getColumn(row, "Type");
-        List<OperationExample> examples = loadOperationExamples(sheet.getColumn(row, "Example.Request"), sheet.getColumn(row, "Example.Response"));
+        List<OperationExample> reqExamples = loadOperationExamples(sheet.getColumn(row, "Example.Request"), null);
+        List<OperationExample> respExamples = loadOperationExamples(null, sheet.getColumn(row, "Example.Response"));
         List<OperationExample> examples2 = loadOperationExamples(sheet.getColumn(row, "Example2.Request"), sheet.getColumn(row, "Example2.Response"));
 
 				if (name != null && !name.equals("") && !name.startsWith("!")) {
@@ -580,7 +581,7 @@ public class OldSpreadsheetParser {
 	              throw new Exception("unknown operation use code "+c+" at "+getLocation(row));
 	          }
 	          Operation op = new Operation(name, system, istype, instance, sheet.getColumn(row, "Type"), sheet.getColumn(row, "Title"), doco, 
-	              sheet.getColumn(row, "Footer"), examples, parseBoolean(sheet.getColumn(row, "Idempotent"), row,  false));
+	              sheet.getColumn(row, "Footer"), reqExamples, respExamples, parseBoolean(sheet.getColumn(row, "Idempotent"), row,  false));
             op.setStandardsStatus(StandardsStatus.fromCode(sheet.getColumn(row, "Standards-Status")));
             op.setNormativeVersion(sheet.getColumn(row, "Normative-Version"));
             op.setFooter2(sheet.getColumn(row, "Footer2"));

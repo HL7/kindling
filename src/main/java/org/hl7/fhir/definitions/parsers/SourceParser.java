@@ -358,7 +358,18 @@ public class SourceParser {
         }
       }        
     }
-    closeTemplates();    
+    closeTemplates();
+    
+    for (String s : ini.getProperties("allowed-bad-invariants").keySet()) {
+      definitions.getBadInvariants().put(s, ini.getStringProperty("allowed-bad-invariants", s));
+    }
+    for (String s : ini.getProperties("allowed-search-types").keySet()) {
+      definitions.getAllowedSearchTypes().put(s, ini.getStringProperty("allowed-search-types", s));
+    }
+    
+    if (definitions.getResourceByName("ConceptMap").getRoot().getElementByName(definitions, "mapAttribute", false, false) != null) {
+      FormatUtilities.WORKING_CM_PROP_NAME = FormatUtilities.MAP_ATTRIBUTE_NAME;
+    }
   }
 
   private String getFmmForType(String n, String def) {
@@ -1170,7 +1181,7 @@ public class SourceParser {
     try {
       profile = new ProfileGenerator(definitions, context, page, genDate, version, null, fpUsages, page.getFolders().rootDir, page.getUml(), page.getRc()).generate(t);
       t.setProfile(profile);
-      DataTypeTableGenerator dtg = new DataTypeTableGenerator(dstDir, page, t.getName(), true, version);
+      DataTypeTableGenerator dtg = new DataTypeTableGenerator(dstDir, page, t.getName(), true, version, "");
       t.getProfile().getText().setDiv(new XhtmlNode(NodeType.Element, "div"));
       t.getProfile().getText().getDiv().getChildNodes().add(dtg.generate(t, null, false));
       context.cacheResource(t.getProfile());
