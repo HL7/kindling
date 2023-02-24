@@ -366,6 +366,10 @@ public class SourceParser {
     for (String s : ini.getProperties("allowed-search-types").keySet()) {
       definitions.getAllowedSearchTypes().put(s, ini.getStringProperty("allowed-search-types", s));
     }
+    
+    if (definitions.getResourceByName("ConceptMap").getRoot().getElementByName(definitions, "mapAttribute", false, false) != null) {
+      FormatUtilities.WORKING_CM_PROP_NAME = FormatUtilities.MAP_ATTRIBUTE_NAME;
+    }
   }
 
   private String getFmmForType(String n, String def) {
