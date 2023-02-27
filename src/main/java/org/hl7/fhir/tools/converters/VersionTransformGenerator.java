@@ -128,9 +128,9 @@ public class VersionTransformGenerator {
     b.append("/// title = 'FML Conversion for "+sd.getType()+": "+sourceV+" to "+targetV+"'\r\n");
     b.append("\r\n");
     b.append("uses \"http://hl7.org/fhir/"+srcVP+"StructureDefinition/"+sd.getType()+"\" alias "+sd.getType()+""+sourceV+" as source\r\n");
-    b.append("uses \"http://hl7.org/fhir/"+tgtVP+"StructureDefinition/"+sd.getType()+"\" alias Account"+targetV+" as target\r\n");
+    b.append("uses \"http://hl7.org/fhir/"+tgtVP+"StructureDefinition/"+sd.getType()+"\" alias "+sd.getType()+""+targetV+" as target\r\n");
     b.append("\r\n");
-    b.append("imports \"http://hl7.org/fhir/StructureMap/*"+suffix+"\r\n");
+    b.append("imports \"http://hl7.org/fhir/StructureMap/*"+suffix+"\"\r\n");
     b.append("\r\n");
     List<StringBuilder> list = new ArrayList<>();
     generateGroup(list, sd, sd.getSnapshot().getElementFirstRep(), sd.getType(), sd.getType()+""+sourceV, sd.getType()+""+targetV);
@@ -143,7 +143,7 @@ public class VersionTransformGenerator {
   private void generateGroup(List<StringBuilder> list, StructureDefinition sd, ElementDefinition ed, String name, String st, String tt) {
     StringBuilder b = new StringBuilder();
     list.add(b);
-    if (sd != null) {
+    if (st != null) {
       b.append("group "+name+"(source src : "+st+", target tgt : "+tt+") extends "+tail(sd.getBaseDefinition())+" <<type+>> {\r\n");
     } else {
       b.append("group "+name+"(source src, target tgt) extends "+ed.typeSummary()+" {\r\n");
