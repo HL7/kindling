@@ -56,8 +56,12 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.StringJoiner;
 import java.util.UUID;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
+import javax.xml.XMLConstants;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.transform.OutputKeys;
@@ -68,6 +72,10 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.TransformerFactoryConfigurationError;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
+import javax.xml.transform.stream.StreamSource;
+import javax.xml.validation.Schema;
+import javax.xml.validation.SchemaFactory;
+import javax.xml.validation.Validator;
 
 import org.apache.commons.lang3.NotImplementedException;
 import org.fhir.ucum.UcumException;
@@ -171,8 +179,7 @@ import org.hl7.fhir.r5.model.ElementDefinition.ElementDefinitionSlicingComponent
 import org.hl7.fhir.r5.model.ElementDefinition.ElementDefinitionSlicingDiscriminatorComponent;
 import org.hl7.fhir.r5.model.ElementDefinition.SlicingRules;
 import org.hl7.fhir.r5.model.ElementDefinition.TypeRefComponent;
-import org.hl7.fhir.r5.model.Enumeration;
-import org.hl7.fhir.r5.model.Enumerations.AllResourceTypes;
+import org.hl7.fhir.r5.model.Enumerations;
 import org.hl7.fhir.r5.model.Enumerations.ConceptMapRelationship;
 import org.hl7.fhir.r5.model.Enumerations.FHIRVersion;
 import org.hl7.fhir.r5.model.Enumerations.SearchParamType;
@@ -262,12 +269,18 @@ import org.hl7.fhir.utilities.xhtml.XhtmlNode;
 import org.hl7.fhir.utilities.xhtml.XhtmlParser;
 import org.hl7.fhir.utilities.xml.XMLUtil;
 import org.hl7.fhir.utilities.xml.XhtmlGenerator;
-import org.w3c.dom.Document;
+import org.w3c.dom.*;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
+import org.w3c.dom.bootstrap.DOMImplementationRegistry;
+import org.w3c.dom.ls.DOMImplementationLS;
+import org.w3c.dom.ls.LSInput;
+import org.w3c.dom.ls.LSParser;
+import org.w3c.dom.ls.LSSerializer;
+import org.xml.sax.SAXException;
 
 
 public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferenceResolver, ILoggingService, TypeLinkProvider, ITypeParser, IMarkdownProcessor  {
@@ -414,6 +427,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     }
   }
 
+  private final String MAPPING_EXCEPTIONS_SCHEMA = "tools/schema/mappingExceptions.xsd";
   private final List<String> suppressedMessages = new ArrayList<String>();
   private Definitions definitions;
   private FolderManager folders;
@@ -430,6 +444,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
   private CanonicalResourceManager<ConceptMap> conceptMaps = new CanonicalResourceManager<ConceptMap>(false);
   private CanonicalResourceManager<StructureDefinition> profiles = new CanonicalResourceManager<StructureDefinition>(false);
   private CanonicalResourceManager<ImplementationGuide> guides = new CanonicalResourceManager<ImplementationGuide>(false);
+  private Map<String, ResourceDefn> logicalModels = new HashMap<String, ResourceDefn>();
   private Map<String, Resource> igResources = new HashMap<String, Resource>();
   private Map<String, String> svgs = new HashMap<String, String>();
   private Translations translations = new Translations();
@@ -463,6 +478,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
   private String webLocation;
   private String searchLocation;
   private String extensionsLocation;
+  private Validator mappingExceptionsValidator;
   
   private String getComputerName()
   {
@@ -486,6 +502,13 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
   public PageProcessor(String tsServer) throws URISyntaxException, UcumException {
     super();
     this.tsServer = tsServer;
+    try {
+      SchemaFactory schemaFactory = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
+      Schema exceptionsSchema = schemaFactory.newSchema(new File(MAPPING_EXCEPTIONS_SCHEMA));
+      mappingExceptionsValidator = exceptionsSchema.newValidator();
+    } catch (SAXException e) {
+      System.out.println("Error loading schema " + MAPPING_EXCEPTIONS_SCHEMA);
+    }
   }
 
   public final static String WEB_LOCATION = "http://hl7.org/fhir/{version}/";
@@ -515,6 +538,8 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
           "This is your Local Build of FHIR. <br/>See the <a href=\"http://hl7.org/fhir/directory.html\">Directory of published versions for published versions</a>"+
           "</p>\r\n";
   
+  private static final String REASON_UNKNOWN = "Unknown";
+  private static final String UNNOWN_DESCRIPTION =  "no reason provided";
   public static final String CODE_LIMIT_EXPANSION = "1000";
   public static final String TOO_MANY_CODES_TEXT_NOT_EMPTY = "This value set has >1000 codes in it. In order to keep the publication size manageable, only a selection (1000 codes) of the whole set of codes is shown";
   public static final String TOO_MANY_CODES_TEXT_EMPTY = "This value set cannot be expanded because of the way it is defined - it has an infinite number of members";
@@ -3538,7 +3563,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     ByteArrayOutputStream b = new ByteArrayOutputStream();
     xhtml.generate(xdoc, b, name, description, level, adorn, n+".xml.html");
     String html = ("<%setlevel "+Integer.toString(level)+"%>"+TextFile.fileToString(folders.srcDir + "template-example-xml.html")).replace("<%example%>", b.toString());
-    html = processPageIncludes(n+".xml.html", html, pageType, null, n+".xml.html", null, null, crumbTitle,  (adorn && hasNarrative(xdoc)) ? new Boolean(true) : null, ig, rd, wg, exTitle);
+    html = processPageIncludes(n+".xml.html", html, pageType, null, n+".xml.html", null, null, crumbTitle,  (adorn && hasNarrative(xdoc)) ? Boolean.TRUE : null, ig, rd, wg, exTitle);
     TextFile.stringToFile(html, dst);
     htmlchecker.registerExternal(dst);
   }
@@ -6640,7 +6665,11 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     return b.toString();
   }
 
-  private String genLogicalMappings(ResourceDefn logical, String genlevel) throws FHIRException {
+  private String genLogicalMappings(ResourceDefn logical, String genlevel) throws Exception {
+    final DOMImplementationRegistry registry = DOMImplementationRegistry.newInstance();
+    final DOMImplementationLS impl = (DOMImplementationLS) registry.getDOMImplementation("LS");
+    final LSParser xmlReader = impl.createLSParser(DOMImplementationLS.MODE_SYNCHRONOUS, null);
+    boolean light = logical.getName().contains("fivews"); // Do lightweight checking
     String url = logical.getMappingUrl();
     StringBuilder b = new StringBuilder();
     b.append("<table class=\"lmap\">");
@@ -6667,12 +6696,93 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
       }
       if (code != null) {
         if (hasLogicalMapping(sd, logical, code)) {
-          b.append(" <tr>\r\n");
+          b.append(" <tr>\r\n");          DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+          DocumentBuilder builder = factory.newDocumentBuilder();
+          Document exceptionsDoc = builder.newDocument();
+          Document newExceptionsDoc = builder.newDocument();
+          org.w3c.dom.Element rootException = newExceptionsDoc.createElement("mappingExceptions");
+          newExceptionsDoc.appendChild(rootException);
+          Attr attr = newExceptionsDoc.createAttributeNS("http://www.w3.org/2001/XMLSchema-instance", "xsi:noNamespaceSchemaLocation");
+          attr.setValue("../../tools/schema/mappingExceptions.xsd");
+          rootException.setAttributeNodeNS(attr);
+          rootException.setAttribute("resource", sd.getName());
+          rootException.setAttribute("pattern", logical.getRoot().getName());
+          rootException.appendChild(newExceptionsDoc.createComment("For information on the contents of this file and how to properly update it, see https://confluence.hl7.org/display/FHIR/Mapping+to+Patterns."));
+          String exceptionsPath = Utilities.path(folders.srcDir, sd.getName(), sd.getName().toLowerCase(Locale.ROOT) + "-" + logical.getRoot().getName().toLowerCase(Locale.ROOT) + "-mapping-exceptions.xml");
+          CSFile exceptionsFile = new CSFile(exceptionsPath);
+          if (exceptionsFile.exists()) {
+            try {
+              try {
+                mappingExceptionsValidator.validate(new StreamSource(exceptionsFile));
+              } catch (SAXException e) {
+                System.out.println(exceptionsFile + " is NOT valid against schema " + MAPPING_EXCEPTIONS_SCHEMA);
+                System.out.println("Reason: " + e.getLocalizedMessage());
+              }
+              LSInput domInput = impl.createLSInput();
+              domInput.setByteStream(new CSFileInputStream(exceptionsFile));
+              exceptionsDoc = xmlReader.parse(domInput);
+            } catch (Exception e) {
+              throw e;
+            }
+          }
+
+          Map<String, org.w3c.dom.Element> divergents = new HashMap<String, org.w3c.dom.Element>();
+          Map<String, org.w3c.dom.Element> unmapped = new HashMap<String, org.w3c.dom.Element>();
+          Map<String, org.w3c.dom.Element> doubleMaps = new HashMap<String, org.w3c.dom.Element>();
+          if (exceptionsDoc.hasChildNodes()) {
+            NodeList divergentElements = exceptionsDoc.getDocumentElement().getElementsByTagName("divergentElement");
+            for (int i = 0; i < divergentElements.getLength(); i++) {
+              org.w3c.dom.Element divergent = (org.w3c.dom.Element) divergentElements.item(i);
+              divergents.put(divergent.getAttribute("resourcePath"), divergent);
+            }
+
+            NodeList unmappedElements = exceptionsDoc.getDocumentElement().getElementsByTagName("unmappedElement");
+            for (int i = 0; i < unmappedElements.getLength(); i++) {
+              org.w3c.dom.Element missing = (org.w3c.dom.Element) unmappedElements.item(i);
+              unmapped.put(missing.getAttribute("patternPath"), missing);
+            }
+
+            NodeList doubleMappedElements = exceptionsDoc.getDocumentElement().getElementsByTagName("doubleMappedElement");
+            for (int i = 0; i < doubleMappedElements.getLength(); i++) {
+              org.w3c.dom.Element doubleMap = (org.w3c.dom.Element) doubleMappedElements.item(i);
+              doubleMaps.put(doubleMap.getAttribute("patternPath"), doubleMap);
+            }
+          }
+
+          Map<String,Boolean> unmappedLogicalElements = new HashMap<String,Boolean>();
+          addLogicalElements(unmappedLogicalElements, logical);
+
           b.append("  <td><a href=\""+rd.getName().toLowerCase()+".html\">"+rd.getName()+"</a></td>\r\n");
+          LogicalModelSupportInformation info = null;
+          boolean unknownMappings = false;
           for (ElementDefn e : elements) {
-            populateLogicalMappingColumn(b, logical.getRoot().getName(), rd.getName().toLowerCase()+"-definitions.html#", e, sd, rd.getName(), code, url, null, null, null);
+            info = populateLogicalMappingColumn(b, logical.getRoot().getName(), rd.getName().toLowerCase()+"-definitions.html#", e, light, sd, rd.getName(), code, url, null, null, null, rootException, newExceptionsDoc, divergents, doubleMaps, unmappedLogicalElements, exceptionsFile);
+            if (info.hasUnknown())
+              unknownMappings = true;
           }
           b.append(" </tr>\r\n");
+
+          if (unknownMappings) {
+            // If need be, we can comment this out for the short term.
+            getValidationErrors().add(
+                    new ValidationMessage(Source.Publisher, IssueType.INFORMATIONAL, -1, -1, sd.getName(), "Resource contains differences from the "+logical.getName()+" pattern that have an 'Unknown' reason in the "+exceptionsFile+" file.", IssueSeverity.INFORMATION));
+          }
+
+          for (String logicalPath : unmappedLogicalElements.keySet()) {
+            if (!unmappedLogicalElements.get(logicalPath).booleanValue())
+              addMappingIssue(logicalPath, unmapped, "unmappedElement", rootException, newExceptionsDoc);
+          }
+
+          if (!exceptionsFile.exists())
+            exceptionsFile.createNewFile();
+
+          java.io.Writer writer = new java.io.FileWriter(exceptionsFile);
+          final LSSerializer xmlWriter = impl.createLSSerializer();
+          xmlWriter.getDomConfig().setParameter("format-pretty-print", true);
+          xmlWriter.getDomConfig().setParameter("xml-declaration", false);
+          String xml = xmlWriter.writeToString(newExceptionsDoc);
+          writer.write(xml);
+          writer.close();
         }
       }
     }
@@ -6680,7 +6790,36 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     return b.toString();
   }
 
-  private String genLogicalAnalysis(ResourceDefn logical, String genlevel) throws FHIRException, IOException {
+  private void addLogicalElements(Map<String,Boolean> unmappedLogicalElements, ResourceDefn logical) {
+    String parentName = logical.getRoot().getTypes().get(0).getName();
+    if (!parentName.equals("Logical")) {
+      ResourceDefn parent = logicalModels.get(parentName);
+      addLogicalElements(unmappedLogicalElements, parent);
+    }
+    if (logical.getRoot().getName().contains("."))
+      unmappedLogicalElements.put(logical.getRoot().getName(),Boolean.FALSE);
+    for (ElementDefn e: logical.getRoot().getElements()) {
+      addLogicalElement(e, unmappedLogicalElements);
+    }
+  }
+
+  private void addLogicalElement(ElementDefn e, Map<String,Boolean> unmappedLogicalElements) {
+    String p = e.getPath();
+    if (p.endsWith("[x]"))
+      p = p.substring(0, p.length()-3);
+    unmappedLogicalElements.put(p, Boolean.FALSE);
+    if (e.hasNestedElements()) {
+      for (ElementDefn child : e.getElements()) {
+        addLogicalElement(child, unmappedLogicalElements);
+      }
+    }
+  }
+
+  private String genLogicalAnalysis(ResourceDefn logical, String genlevel) throws Exception {
+    final DOMImplementationRegistry registry = DOMImplementationRegistry.newInstance();
+    final DOMImplementationLS impl = (DOMImplementationLS) registry.getDOMImplementation("LS");
+    final LSParser xmlReader = impl.createLSParser(DOMImplementationLS.MODE_SYNCHRONOUS, null);
+    boolean light = logical.getName().contains("fivews"); // Do lightweight checking
     IniFile ini = new IniFile(Utilities.path(getFolders().srcDir, logical.getName(), logical.getName()+"-tasks.ini"));
     String url = logical.getMappingUrl();
     Map<ElementDefn, StringBuilder> bm = new HashMap<>();
@@ -6702,10 +6841,35 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
       }
       if (code != null) {
         if (hasLogicalMapping(sd, logical, code)) {
+          DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+          DocumentBuilder builder = factory.newDocumentBuilder();
+          Document exceptionsDoc = builder.newDocument();
+          Document newExceptionsDoc = builder.newDocument();
+          org.w3c.dom.Element rootException = newExceptionsDoc.createElement("mappingExceptions");
+          newExceptionsDoc.appendChild(rootException);
+          rootException.setAttribute("resource", sd.getName());
+          rootException.setAttribute("pattern", logical.getRoot().getName());
+          String exceptionsPath = Utilities.path(folders.srcDir, sd.getName(), sd.getName().toLowerCase(Locale.ROOT) + "-" + logical.getRoot().getName().toLowerCase(Locale.ROOT) + "-exceptions.xml");
+          CSFile exceptionsFile = new CSFile(exceptionsPath);
+          if (exceptionsFile.exists()) {
+            try {
+              LSInput domInput = impl.createLSInput();
+              domInput.setByteStream(new CSFileInputStream(exceptionsFile));
+              exceptionsDoc = xmlReader.parse(domInput);
+            } catch (Exception e) {
+              throw e;
+            }
+          }
+/*          Map<String, org.w3c.dom.Element> divergents = new HashMap<String, org.w3c.dom.Element>();
+          NodeList divergentElements = exceptionsDoc.getElementsByTagName("divergentElement");
+          for (int i = 0; i < divergentElements.getLength(); i++) {
+            org.w3c.dom.Element divergent = (org.w3c.dom.Element)divergentElements.item(i);
+            divergents.put(divergent.getAttribute("resource"), divergent);
+          }*/
           any = true;
           for (ElementDefn e : elements) {
             StringBuilder b2 = bm.get(e);
-            populateLogicalMappingColumn(null, logical.getRoot().getName(), rd.getName().toLowerCase()+"-definitions.html#", e, sd, rd.getName(), code, url, b2, ini, e.getPath());
+            populateLogicalMappingColumn(null, logical.getRoot().getName(), rd.getName().toLowerCase()+"-definitions.html#", e, light, sd, rd.getName(), code, url, b2, ini, e.getPath(), rootException, newExceptionsDoc, new HashMap<String, org.w3c.dom.Element>(), new HashMap<String, org.w3c.dom.Element>(), new HashMap<String, Boolean>(), exceptionsFile);
           }
         }
       }
@@ -6745,9 +6909,45 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     int elementcount;
     CommaSeparatedStringBuilder elementlist = new CommaSeparatedStringBuilder();
     Set<String> extensions = new HashSet<>();
-    boolean nameChanged;
-    TypeMappingStatus typeMismatch = TypeMappingStatus.OK;
-    boolean cardinalityProblem;
+    String nameReason = null;
+    String extraTypesReason = null;
+    String missingTypesReason = null;
+    String lowerCardReason = null;
+    String upperCardReason = null;
+    String shortReason = null;
+    String definitionReason = null;
+    String requirementsReason = null;
+    String commentReason = null;
+    String modifierReason = null;
+    String summaryReason = null;
+    String bindingReason = null;
+
+    boolean nameChanged() {
+      return nameReason!=null;
+    }
+    TypeMappingStatus typeMismatch() {
+      if (extraTypesReason==null && missingTypesReason==null)
+        return TypeMappingStatus.OK;
+      else
+        return TypeMappingStatus.ERROR;
+    }
+    boolean hasUnknown() {
+      return (nameReason!=null && nameReason.equals(REASON_UNKNOWN))
+              || (extraTypesReason!=null && extraTypesReason.equals(REASON_UNKNOWN))
+              || (missingTypesReason!=null && missingTypesReason.equals(REASON_UNKNOWN))
+              || (lowerCardReason!=null && lowerCardReason.equals(REASON_UNKNOWN))
+              || (upperCardReason!=null && upperCardReason.equals(REASON_UNKNOWN))
+              || (shortReason!=null && shortReason.equals(REASON_UNKNOWN))
+              || (definitionReason!=null && definitionReason.equals(REASON_UNKNOWN))
+              || (requirementsReason!=null && requirementsReason.equals(REASON_UNKNOWN))
+              || (commentReason!=null && commentReason.equals(REASON_UNKNOWN))
+              || (modifierReason!=null && modifierReason.equals(REASON_UNKNOWN))
+              || (summaryReason!=null && summaryReason.equals(REASON_UNKNOWN))
+              || (bindingReason!=null && bindingReason.equals(REASON_UNKNOWN));
+    }
+    boolean cardinalityProblem() {
+      return lowerCardReason!=null || upperCardReason!=null;
+    };
     List<String> notes = new ArrayList<String>();
   }
   private final static String LOGICAL_MAPPING_MISMATCH_COLOR = "#ffebe6";
@@ -6756,27 +6956,62 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
   private final static String LOGICAL_MAPPING_MAPPED_COLOR = "#ffffff";
   private final static String LOGICAL_MAPPING_NOTMAPPED_COLOR = "#f2f2f2";
   
-  private void populateLogicalMappingColumn(StringBuilder b, String n, String page, ElementDefn e, StructureDefinition sd, String rn, String code, String url, StringBuilder b2, IniFile ini, String iniPath) throws FHIRException {
+  private LogicalModelSupportInformation populateLogicalMappingColumn(StringBuilder b, String n, String page, ElementDefn e, boolean light, StructureDefinition sd, String rn, String code, String url, StringBuilder b2, IniFile ini, String iniPath,
+                                            org.w3c.dom.Element rootException, org.w3c.dom.Document newExceptionsDoc, Map<String,org.w3c.dom.Element> divergents, Map<String,org.w3c.dom.Element> doubleMaps, Map<String,Boolean> unmapped,
+                                            File exceptionsFile) throws Exception {
     LogicalModelSupportInformation info = new LogicalModelSupportInformation();
 
+    List<String> otherPatterns = new ArrayList<String>();
+    for (ElementDefinitionMappingComponent m : sd.getSnapshot().getElement().get(0).getMapping()) {
+      if (m.getIdentity().equals(code)) {
+        otherPatterns = candidateMaps(m.getMap());
+      }
+    }
+
+
+    boolean elementMatch = false;
     for (ElementDefinition ed : sd.getSnapshot().getElement()) { 
       for (ElementDefinitionMappingComponent m : ed.getMapping()) {
         if (m.getIdentity().equals(code)) {
           String s = m.getMap();
-          for (String p : s.split("\\,")) {
-            String f = p.contains("{") ? p.substring(0, p.indexOf("{")).trim() : p;
+          for (String p : s.split(",\\s*")) {
+            String f = p.contains("{") ? p.substring(0, p.indexOf("{")).trim() : p.trim();
+            if (f.endsWith("[x]"))
+              f = f.substring(0, f.length()-3);
+            if (f.isEmpty())
+              continue;
+            if (!unmapped.isEmpty() && !unmapped.containsKey(f) && (!code.equals("w5") || ed.getPath().contains("."))) {
+              // w5 mappings are weird at the root, as the mapping listed is for elements that don't exist in the pattern, so we don't report on those.
+              boolean inOtherPattern = false;
+              for (String other : otherPatterns) {
+                if (f.startsWith(other))
+                  inOtherPattern = true;
+              }
+              if (!inOtherPattern)
+              getValidationErrors().add(
+                        new ValidationMessage(Source.Publisher, IssueType.NOTFOUND, -1, -1, ed.getPath(), code + " pattern mapping to path that doesn't exist in pattern - "+f, IssueSeverity.WARNING));
+            }
             String cm = p.contains("{") ? p.substring(p.indexOf("{")) : null;
             if (cm != null) {
               cm = cm.trim();
             }
-            if (f.equals(e.getPath())) {
-              checkMapping(info, e, ed, b2 == null, cm);
+            if (f.equals(e.getPath()) || (f + "[x]").equals(e.getPath())) {
+              org.w3c.dom.Element divergent = divergents.get(ed.getPath());
+              org.w3c.dom.Element newDivergent = newExceptionsDoc.createElement("divergentElement");
+              newDivergent.setAttribute("patternPath", e.getPath());
+              newDivergent.setAttribute("resourcePath", ed.getPath());
+              String name = sd.hasTitle() ? sd.getTitle() : String.join(" ", Utilities.splitByCamelCase(sd.getName()));
+              checkMapping(info, light, e, ed, b2 == null, cm, divergent, newDivergent, newExceptionsDoc, sd.getName());
+              if (newDivergent.hasChildNodes())
+                rootException.appendChild(newDivergent);
+              elementMatch = true;
            }
           }
         }
       }
     }
     
+    boolean extensionMatch = false;
     for (StructureDefinition ext : workerContext.getExtensionDefinitions()) {
       boolean ok = false;
       for (StructureDefinitionContextComponent ec : ext.getContext()) {
@@ -6790,12 +7025,19 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
             for (String p : map.split("\\,")) {
               String f = p.contains("{") ? p.substring(0, p.indexOf("{")) : p;
               if (f.equals(e.getPath())) {
-                checkExtMapping(info, e, ext);
+                org.w3c.dom.Element divergent = divergents.get(e.getPath());
+                org.w3c.dom.Element newDivergent = newExceptionsDoc.createElement("divergentElement");
+                checkExtMapping(info, light, e, ext, divergent, newDivergent, newExceptionsDoc, sd.getName());
+                extensionMatch = true;
+              }
               }
             }
           }
         }
       }
+
+    if (elementMatch && extensionMatch) {
+      addMappingIssue(e.getPath(), doubleMaps, "doubleMappedElement", rootException, newExceptionsDoc);
     }
 
     // color: 
@@ -6804,9 +7046,9 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     //   one coor when color extension  
     //   blank for no mapping
     String color;
-    if (info.typeMismatch == TypeMappingStatus.ERROR || info.cardinalityProblem) 
+    if (info.typeMismatch() == TypeMappingStatus.ERROR || info.cardinalityProblem())
       color = LOGICAL_MAPPING_MISMATCH_COLOR;
-    else if (info.nameChanged || info.typeMismatch == TypeMappingStatus.NEEDS_MAPPING) 
+    else if (info.nameChanged() || info.typeMismatch() == TypeMappingStatus.NEEDS_MAPPING)
       color = LOGICAL_MAPPING_NAMECHANGE_COLOR;
     else if (info.extensions.size()> 0) 
       color = LOGICAL_MAPPING_EXTENSION_COLOR;
@@ -6822,7 +7064,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
           ns.append("&#10;");
         ns.append(s);
       }
-      b.append("  <td style=\"background-color: "+color+"\" title=\""+ns.toString()+"\">");
+      b.append("  <td style=\"background-color: "+color+"\" title=\""+Utilities.escapeXml(ns.toString())+"\">");
       if (info.elementcount > 0 || info.extensions.size() > 0) {
         b.append(info.elementcount);
         if (info.extensions.size() > 0) {
@@ -6833,11 +7075,11 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
       b.append(" ");
       if (info.extensions.size() > 0)
         b.append("E");
-      if (info.nameChanged)
+      if (info.nameChanged())
         b.append("N");
-      if (info.typeMismatch == TypeMappingStatus.ERROR)
+      if (info.typeMismatch() == TypeMappingStatus.ERROR)
         b.append("T");
-      if (info.cardinalityProblem)
+      if (info.cardinalityProblem())
         b.append("C");
       b.append("</td>\r\n");
     }
@@ -6854,19 +7096,19 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
       if (info.extensions.size() > 0)
         b2.append(" (as an extension)");
       b2.append("</td><td>");
-      if (info.nameChanged || info.typeMismatch != TypeMappingStatus.OK || info.cardinalityProblem) {
+      if (info.nameChanged() || info.typeMismatch() != TypeMappingStatus.OK || info.cardinalityProblem()) {
         boolean first = true;
-        if (info.nameChanged) {
+        if (info.nameChanged()) {
           b2.append("Names are different. " );
           first = false;
         }
-        if (info.typeMismatch != TypeMappingStatus.OK) {
+        if (info.typeMismatch() != TypeMappingStatus.OK) {
           if (!first)
             b2.append("<br/>");
           b2.append("Type Mismatch. ");
           first = false;
         }
-        if (info.cardinalityProblem) {
+        if (info.cardinalityProblem()) {
           if (!first)
             b2.append("<br/>");
           b2.append("Cardinality Problem. ");
@@ -6891,6 +7133,18 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
       
       b2.append("</td></tr>\r\n");
     }
+
+    if (elementMatch || extensionMatch) {
+      String mappedName = e.getPath();
+      if (mappedName.endsWith("[x]"))
+        mappedName = mappedName.substring(0, mappedName.length() - 3);
+      if (unmapped.containsKey(mappedName) && !unmapped.get(mappedName).booleanValue()) {
+        unmapped.remove(mappedName);
+        unmapped.put(mappedName, Boolean.TRUE);
+      }
+    }
+
+    return info;
   }
 
   private String getWorkflowMapping(StructureDefinition ext, String url) {
@@ -6909,32 +7163,171 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     return null;
   }
 
-  private void checkMapping(LogicalModelSupportInformation info, ElementDefn logical, ElementDefinition resource, boolean inline, String cm) throws FHIRException {
+  private void checkMapping(LogicalModelSupportInformation info, boolean light, ElementDefn logical, ElementDefinition resource, boolean inline, String cm, org.w3c.dom.Element exception, org.w3c.dom.Element newException, org.w3c.dom.Document doc, String resourceName) throws FHIRException {
     info.elementcount++;
     info.elementlist.append(resource.getPath());
-    String s;
+    StringJoiner sj = new StringJoiner("\n  ");
     if (inline)
-      s = resource.getPath()+" : "+resource.typeSummary()+" ["+resource.getMin()+".."+resource.getMax()+"]";
+      sj.add(resource.getPath()+" : "+resource.typeSummary()+" ["+resource.getMin()+".."+resource.getMax()+"]");
     else 
-      s = "<li>"+resource.getPath()+" : "+resource.typeSummary()+" ["+resource.getMin()+".."+resource.getMax()+"]</li>";
+      sj.add("<li>"+resource.getPath()+" : "+resource.typeSummary()+" ["+resource.getMin()+".."+resource.getMax()+"]</li>");
     if (!logical.getName().equals(edPathTail(resource.getPath()))) {
-      info.nameChanged = true;
+      info.nameReason = REASON_UNKNOWN;
     }
-    String cardinalityError = checkCardinality(logical, resource);
-    if (!Utilities.noString(cardinalityError)) {
-      info.cardinalityProblem = true;
-      s = s + " " +cardinalityError;
+    checkCardinality(logical, light, resource, info, exception, newException, doc, sj);
+    if (!light)
+      checkType(logical, light, resource, cm, info, exception, newException, doc, sj);
+    checkFlags(logical, light, resource, info, exception, newException, doc, sj);
+    if (!light) {
+      checkBinding(logical, resource, info, exception, newException, doc, sj);
+      info.shortReason = checkText(logical.getShortDefn(), resource.getShort(), "shortUnmatched", exception, newException, doc, "short", sj, logical.getName(), resourceName);
+      info.definitionReason = checkText(logical.getDefinition(), resource.getDefinition(), "definitionUnmatched", exception, newException, doc, "definition", sj, logical.getName(), resourceName);
+      info.commentReason = checkText(logical.getComments(), resource.getComment(), "commentsUnmatched", exception, newException, doc, "comments", sj, logical.getName(), resourceName);
+      info.requirementsReason = checkText(logical.getRequirements(), resource.getRequirements(), "requirementsUnmatched", exception, newException, doc, "requirements", sj, logical.getName(), resourceName);
     }
-    String typeError = checkType(logical, resource, cm);
-    if (!Utilities.noString(typeError)) {
+
+    String s = sj.toString();
+    if (!info.notes.contains(s)) {
+      info.notes.add(s);
+    }
+/* Grahame - not sure what this was doing
+
       if (cm != null && cm.startsWith("{map:"))
         info.typeMismatch = TypeMappingStatus.NEEDS_MAPPING;
       else
-        info.typeMismatch = TypeMappingStatus.OK;
-      s = s + " " +typeError;
+        info.typeMismatch = TypeMappingStatus.OK;*/
     }
-    if (!info.notes.contains(s)) {
-      info.notes.add(s);
+
+  private String checkText(String logicalText, String resourceText, String issueName, org.w3c.dom.Element exception, org.w3c.dom.Element newException, org.w3c.dom.Document doc, String name, StringJoiner sj, String elementName, String resourceName) {
+    String adjustLogical = replaceTitle(trimBracketedText(logicalText), resourceName).trim();
+    resourceText = resourceText==null ? "" : resourceText;
+    if (adjustLogical==null || adjustLogical.isEmpty() || adjustLogical.equals("."))
+      return "";
+    else if (resourceText != null && resourceText.contains(adjustLogical))
+      return "";
+    return checkElements(exception, newException, false, doc, issueName, adjustLogical, resourceText, elementName + " does not contain the recommended logical text for " + name, sj);
+  }
+
+  private String trimBracketedText(String text) {
+    if (text==null)
+      return "";
+    if (!text.contains("[") || !text.substring(text.indexOf("[")+1).contains("]"))
+      return text;
+    int startPos = text.indexOf("[");
+    int endPos = text.indexOf("]", startPos+1);
+    if (text.length() > endPos && text.substring(endPos+1,endPos+2).equals("("))
+      return text.substring(0,endPos+1) + trimBracketedText(text.substring(endPos+1));
+    String s = "";
+    if (startPos!=0)
+      s = text.substring(0, startPos-1);
+    if (endPos < text.length())
+      s += text.substring(endPos+1);
+    return trimBracketedText(s);
+  }
+
+  private String replaceTitle(String text, String title) {
+    if (text==null)
+      return null;
+    if (title==null)
+      return text;
+    Pattern p = Pattern.compile("[A-Z][a-z]+");
+    Matcher m = p.matcher(title);
+    List<String> parts = new ArrayList<String>();
+    while (m.find()) {
+      parts.add(m.group().toLowerCase());
+    }
+    String fixedTitle = String.join(" ", parts);
+
+    return text.replaceAll("\\{\\{title\\}\\}", fixedTitle);
+  }
+
+  private String checkElements(org.w3c.dom.Element exception, org.w3c.dom.Element newException, boolean asAttribute, org.w3c.dom.Document doc, String path, String patternValue, String resourceValue, String message, StringJoiner sj) {
+    if (patternValue!=null && resourceValue!=null && patternValue.equals(resourceValue))
+      return null;
+
+    String reason = REASON_UNKNOWN;
+    String elementName = path.replace("[", "_").replace("]","");
+    org.w3c.dom.Element nameException = doc.createElement(elementName);
+    boolean managed = false;
+    if (exception != null && exception.getElementsByTagName(elementName).getLength() != 0) {
+      org.w3c.dom.Element oldNameException = (org.w3c.dom.Element) exception.getElementsByTagName(elementName).item(0);
+      String oldPattern = getException(oldNameException, "pattern", asAttribute);
+      String oldResource = getException(oldNameException, "resource", asAttribute);
+      if (oldNameException.getAttribute("reason").equals(REASON_UNKNOWN)) {
+        // Just copy across any comments reflecting old values and reasons
+        for (int i = 0; i < oldNameException.getChildNodes().getLength(); i++) {
+          Node n = oldNameException.getChildNodes().item(i);
+          if (n.getNodeType()== Node.COMMENT_NODE)
+            nameException.appendChild(doc.createComment(((Comment)n).getNodeValue()));
+        }
+      } else if (((patternValue == null && oldPattern.isEmpty()) || patternValue.equals(oldPattern))
+              && ((resourceValue == null && oldResource.isEmpty()) || resourceValue.equals(oldResource))) {
+        // We've got a reason *and* the pattern and resource values match what's in the current patterns and resources
+        reason = oldNameException.getAttribute("reason");
+        managed = true;
+      } else {
+        // Things have changed, so the reason may no longer be valid and needs to be checked.
+        // Keep old content as a comment, but revert reason to 'Unknown'
+        if ((patternValue == null != (oldPattern==null || oldPattern.isEmpty())) || !patternValue.equals(oldPattern))
+          nameException.appendChild(doc.createComment("Old pattern: " + oldPattern));
+        if ((resourceValue == null != (oldResource==null || oldResource.isEmpty())) || (resourceValue!=null && oldResource!=null && !resourceValue.equals(oldResource)))
+          nameException.appendChild(doc.createComment("Old resource: " + oldResource));
+        nameException.appendChild(doc.createComment("Old reason: " + oldNameException.getAttribute("reason")));
+      }
+    }
+    if (patternValue!=null)
+      setException(nameException, "pattern", doc, asAttribute, patternValue);
+    if (resourceValue!=null)
+      setException(nameException, "resource", doc, asAttribute, resourceValue);
+    nameException.setAttribute("reason", reason);
+    newException.appendChild(nameException);
+    String s = message + " (";
+    if (patternValue != null) {
+      s += "Pattern: " + patternValue;
+      if (resourceValue != null)
+        s += "; ";
+    }
+    if (resourceValue != null)
+      s += "; Resource: " + resourceValue;
+    s += ")";
+    if (reason.equals(REASON_UNKNOWN))
+      s += " - " + UNNOWN_DESCRIPTION;
+    else if (!reason.isEmpty())
+      s += " - " + reason;
+    sj.add(s);
+    return reason;
+  }
+
+  void addMappingIssue(String logicalPath, Map<String, org.w3c.dom.Element> elements, String elementName, org.w3c.dom.Element rootException, org.w3c.dom.Document doc) {
+    org.w3c.dom.Element exception = doc.createElement(elementName);
+    rootException.appendChild(exception);
+    exception.setAttribute("patternPath", logicalPath);
+    String reason = REASON_UNKNOWN;
+    if (elements.containsKey(logicalPath)) {
+      org.w3c.dom.Element oldException = elements.get(logicalPath);
+      if (oldException.getAttribute("reason") != null)
+        reason = oldException.getAttribute("reason");
+    }
+    exception.setAttribute("reason", reason);
+  }
+
+  private String getException(org.w3c.dom.Element exception, String name, boolean asAttribute) {
+    if (asAttribute)
+      return exception.getAttribute("_" + name);
+    String adjustedName = (name.equals("pattern") ? "_" : "") + name;
+    if (exception.getElementsByTagName(adjustedName).getLength()!=0) {
+      return ((org.w3c.dom.Element)exception.getElementsByTagName(adjustedName).item(0)).getAttribute("value");
+    }
+    return null;
+  }
+
+  private void setException(org.w3c.dom.Element exception, String name, org.w3c.dom.Document doc, boolean asAttribute, String value) {
+    if (asAttribute) {
+      exception.setAttribute("_" + name, value);
+    } else {
+      org.w3c.dom.Element e = doc.createElement((name.equals("pattern") ? "_" : "") +name);
+      exception.appendChild(e);
+      e.setAttribute("value", value);
     }
   }
 
@@ -6942,7 +7335,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     return path.substring(path.lastIndexOf(".")+1);
   }
 
-  private void checkExtMapping(LogicalModelSupportInformation info, ElementDefn logical, StructureDefinition extension) throws FHIRException {
+  private void checkExtMapping(LogicalModelSupportInformation info, boolean light, ElementDefn logical, StructureDefinition extension, org.w3c.dom.Element exception, org.w3c.dom.Element newException,  org.w3c.dom.Document doc, String extName) throws FHIRException {
     info.extensions.add(tail(extension.getUrl()));
     ElementDefinition e = extension.getSnapshot().getElementFirstRep();
     ElementDefinition v = null;
@@ -6950,33 +7343,109 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
       if ("Extension.value[x]".equals(ed.getBase().getPath()))
         v = ed;
     }
-    String s = "Extension "+tail(extension.getUrl())+" : "+v.typeSummary()+" ["+e.getMin()+".."+e.getMax()+"]";
-    String cardinalityError = checkCardinality(logical, e);
-    if (!Utilities.noString(cardinalityError)) {
-      info.cardinalityProblem = true;
-      s = s + " " +cardinalityError;
+    StringJoiner sj = new StringJoiner("\n  ");
+    sj.add("Extension "+tail(extension.getUrl())+" : "+v.typeSummary()+" ["+e.getMin()+".."+e.getMax()+"]");
+    checkCardinality(logical, light, e, info, exception, newException, doc, sj);
+
+    checkType(logical, light, v, null, info, exception, newException, doc, sj);
+    checkFlags(logical, light, e, info, exception, newException, doc, sj);
+    if (!light) {
+      checkBinding(logical, e, info, exception, newException, doc, sj);
+      checkText(logical.getShortDefn(), e.getShort(), "shortUnmatched", exception, newException, doc, "short", sj, logical.getName(), extName);
+      checkText(logical.getDefinition(), e.getDefinition(), "definitionUnmatched", exception, newException, doc, "definition", sj, logical.getName(), extName);
+      checkText(logical.getComments(), e.getComment(), "commentsUnmatched", exception, newException, doc, "comments", sj, logical.getName(), extName);
+      checkText(logical.getRequirements(), e.getRequirements(), "requirementsUnmatched", exception, newException, doc, "requirements", sj, logical.getName(), extName);
     }
-    String typeError = checkType(logical, v, null);
-    if (!Utilities.noString(typeError)) {
-      info.typeMismatch = TypeMappingStatus.ERROR;
-      s = s + " " +typeError;
-    }
+
+    String s = sj.toString();
     if (!info.notes.contains(s)) {
       info.notes.add(s);
     }
   }
 
-
-
-  private String checkType(ElementDefn logical, ElementDefinition resource, String cm) throws FHIRException {
+  private void checkType(ElementDefn logical, boolean light, ElementDefinition resource, String cm, LogicalModelSupportInformation info, org.w3c.dom.Element exception, org.w3c.dom.Element newException,  org.w3c.dom.Document doc, StringJoiner sj) throws FHIRException {
     String s = "";
+    Map<String,TypeRefComponent> rTypes = new HashMap<String, TypeRefComponent>();  // List of resourceTypes that are 'extra'
+    List<TypeRef> lTypes = new ArrayList<TypeRef>();               // List of logical types that are 'extra'
     for (TypeRefComponent rt : resource.getType()) {
+      rTypes.put(rt.getCode(), rt.copy());
+    }
+    for (TypeRef origlt : logical.getTypes()) {
+      TypeRef lt = new TypeRef();
+      lt.setName(origlt.getName());
+      lt.getParams().addAll(origlt.getParams());
+      if (rTypes.containsKey(lt.getName())) {
+        if (lt.getName().equals("canonical") || lt.getName().equals("Reference")) {
+          TypeRefComponent rType = rTypes.get(lt.getName());
+          Map<String, CanonicalType> rProfiles = new HashMap<String, CanonicalType>();
+          List<CanonicalType> rRemoveProfiles = new ArrayList<CanonicalType>();
+          List<String> lProfiles = new ArrayList<String>();
+          if (!rType.hasTargetProfile())
+            rType.getTargetProfile().add(new CanonicalType("http://hl7.org/fhir/StructureDefinition/Resource"));
+          for (CanonicalType rp : rType.getTargetProfile()) {
+            String profileName = rp.asStringValue().startsWith("http://hl7.org/fhir/StructureDefinition/") ? rp.asStringValue().substring(40) : rp.asStringValue();
+            rProfiles.put(profileName, rp);
+          }
+          if (!lt.hasParams())
+            lt.getParams().add("Resource");
+          for (String lp : lt.getParams()) {
+            if (rProfiles.containsKey(lp)) {
+              rRemoveProfiles.add(rProfiles.get(lp));
+              rProfiles.remove(lp);
+              lProfiles.add(lp);
+            }
+          }
+          for (String lp : lProfiles) {
+            lt.getParams().remove(lp);
+          }
+          for (CanonicalType rp : rRemoveProfiles) {
+            rType.getTargetProfile().remove(rp);
+          }
+          if (!rType.hasTargetProfile())
+            rTypes.remove(lt.getName());
+          if (lt.hasParams())
+            lTypes.add(lt);
+        } else {
+          rTypes.remove(lt.getName());
+        }
+      } else {
+        lTypes.add(lt);
+      }
+/*      lTypes.add()
       if (!checkType(logical, rt, cm, resource)) {
         String m = "The type '"+rt.getWorkingCode()+"' is not legal according to the pattern ("+resource.typeSummary()+" vs "+logical.typeCode()+") ";
         s = Utilities.noString(s) ? m : s + ", "+m;
-      }
+      }*/
     }
-    return s;
+    StringJoiner unmappedLogicalType = new StringJoiner(", ");
+    StringJoiner unmappedResourceType = new StringJoiner(", ");
+    for (TypeRefComponent rt : rTypes.values()) {
+      String dtName = rt.getName();
+      if (rt.hasTargetProfile()) {
+        StringJoiner profiles = new StringJoiner(",");
+        for (CanonicalType ct : rt.getTargetProfile()) {
+          if (ct.asStringValue().startsWith("http://hl7.org/fhir/StructureDefinition/"))
+            profiles.add(ct.asStringValue().substring(40));
+          else
+            profiles.add(ct.asStringValue());
+        }
+        dtName += "(" + profiles.toString() + ")";
+      }
+      unmappedResourceType.add(dtName);
+    }
+    for (TypeRef lt : lTypes) {
+      String dtName = lt.getName();
+      if (lt.hasParams()) {
+        dtName += "(" + String.join(",", lt.getParams()) + ")";
+      }
+      unmappedLogicalType.add(dtName);
+    }
+    if (unmappedLogicalType.length()!=0) {
+      info.missingTypesReason = checkElements(exception, newException, true, doc, "missingTypes", unmappedLogicalType.toString(), null, "Resource does not support types that are part of the pattern", sj);
+    }
+    if (unmappedResourceType.length()!=0) {
+      info.extraTypesReason = checkElements(exception, newException, true, doc, "extraTypes", null, unmappedResourceType.toString(), "Resource supports types that are not part of the pattern", sj);
+    }
   }
 
   private boolean checkType(ElementDefn logical, TypeRefComponent rt, String cm, ElementDefinition resource) throws FHIRException {
@@ -7041,26 +7510,89 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     return map;
   }
   
-  private String checkCardinality(ElementDefn logical, ElementDefinition resource) {
-    String s = "";
-    if (resource.getMin() < logical.getMinCardinality())
-      s = "Minimum Cardinality Violation (pattern = 1, resource = 0)";
-    if (!resource.getMax().equals("1") && logical.getMaxCardinality() == 1)
-      s = Utilities.noString(s) ? "Maximum Cardinality Violation (pattern = 1, resource = *)" : s + ", Maximum Cardinality Violation (pattern = 1, resource = *)";
-    return s;
+  private void checkCardinality(ElementDefn logical, boolean light, ElementDefinition resource, LogicalModelSupportInformation info, org.w3c.dom.Element exception, org.w3c.dom.Element newException,  org.w3c.dom.Document doc, StringJoiner sj) {
+    if (!light || !(logical.getMinCardinality()==0 && resource.getMin()==1))
+      info.lowerCardReason = checkElements(exception, newException, true, doc, "lowerCardinality", logical.getMinCardinality().toString(), Integer.toString(resource.getMin()), "Minimum Cardinality differs", sj);
+    if (!light || !(logical.getMaxCardinality()!=1 && resource.getMax().equals("1")))
+      info.upperCardReason = checkElements(exception, newException, true, doc, "upperCardinality", logical.getMaxCardinality()==1 ? "1" : "*", resource.getMax(), "Maximum Cardinality differs", sj);
+  }
+
+  private void checkFlags(ElementDefn logical, boolean light, ElementDefinition resource, LogicalModelSupportInformation info, org.w3c.dom.Element exception, org.w3c.dom.Element newException,  org.w3c.dom.Document doc, StringJoiner sj) {
+    info.modifierReason = checkElements(exception, newException, true, doc, "modifier", Boolean.toString(logical.isModifier()), Boolean.toString(resource.getIsModifier()), "IsModifier differs", sj);
+    if (!light)
+      info.summaryReason = checkElements(exception, newException, true, doc, "summary", Boolean.toString(logical.isSummary()), Boolean.toString(resource.getIsSummary()), "IsSummary differs", sj);
+  }
+
+  private void checkBinding(ElementDefn logical, ElementDefinition resource, LogicalModelSupportInformation info, org.w3c.dom.Element exception, org.w3c.dom.Element newException,  org.w3c.dom.Document doc, StringJoiner sj) {
+    if (logical.hasBinding() || resource.hasBinding())
+      if (!logical.hasBinding() || !resource.hasBinding()) {
+        info.bindingReason = checkElements(exception, newException, true, doc, "bindingExistence", Boolean.toString(logical.hasBinding()), Boolean.toString(resource.hasBinding()), "Only one element has bindings", sj);
+      } else if (logical.getBinding().getStrength() != resource.getBinding().getStrength()) {
+        if ((logical.getBinding().getStrength()== Enumerations.BindingStrength.PREFERRED || logical.getBinding().getStrength()==Enumerations.BindingStrength.EXAMPLE)
+                && (resource.getBinding().getStrength()==Enumerations.BindingStrength.PREFERRED || resource.getBinding().getStrength()==Enumerations.BindingStrength.EXAMPLE)) {
+          // Do nothing - we don't care if there are different strangths for 'week' bindings
+        } else {
+          info.bindingReason = checkElements(exception, newException, true, doc, "bindingStrength", logical.getBinding().getStrength().toCode(), resource.getBinding().getStrength().toCode(), "Binding strengths differ", sj);
+        }
+      } else if (logical.getBinding().getStrength()==Enumerations.BindingStrength.REQUIRED || logical.getBinding().getStrength()==Enumerations.BindingStrength.EXTENSIBLE) {
+        ValueSet logicalVs = logical.getBinding().getValueSet();
+        ValueSet resourceVs = vsForBinding(resource.getBinding().getValueSet());
+        if (logicalVs!=null && resourceVs !=null && logicalVs.getUrl().equals(resourceVs.getUrl())) {
+          List<String> logicalSystems = new ArrayList<String>();
+          List<String> resourceSystems = new ArrayList<String>();
+          for (ConceptSetComponent c : logicalVs.getCompose().getInclude()) {
+            if (!logicalSystems.contains(c.getSystem()))
+              logicalSystems.add(c.getSystem());
+          }
+          for (ConceptSetComponent c : resourceVs.getCompose().getInclude()) {
+            if (!resourceSystems.contains(c.getSystem()))
+              resourceSystems.add(c.getSystem());
+          }
+          info.bindingReason = checkElements(exception, newException, true, doc, "bindingSystems", String.join(", ", logicalSystems), String.join(", ", resourceSystems), "Bound code systems differ", sj);
+        }
+      }
   }
 
   private boolean hasLogicalMapping(StructureDefinition sd, ResourceDefn logical, String code) {
     for (ElementDefinition ed : sd.getSnapshot().getElement()) { 
       for (ElementDefinitionMappingComponent m : ed.getMapping()) {
         if (m.getIdentity().equals(code)) {
-          String s = m.getMap();
-          if (s.equals(logical.getRoot().getName()) || s.startsWith(logical.getRoot().getName()+"."))
+          for (String aMap : candidateMaps(m.getMap())) {
+            if (aMap.equals(logical.getRoot().getName()) || aMap.startsWith(logical.getRoot().getName()+".")) {
+              if (ed.getPath().contains(".") && !code.equals("w5")) {
+                getValidationErrors().add(
+                        new ValidationMessage(Source.Publisher, IssueType.INFORMATIONAL, -1, -1, ed.getPath(), "Mapping to " + code + " pattern found, when no mapping for that pattern defined on the resource base element", IssueSeverity.WARNING));
+
+              }
             return true;
         }
       }
     }
+      }
+    }
     return false;
+  }
+
+  private List<String> candidateMaps(String mapString) {
+    List<String> fullMaps = new ArrayList<String>();
+    for (String aMap : mapString.split(",\\s*")) {
+      String f = aMap.contains("{") ? aMap.substring(0, aMap.indexOf("{")).trim() : aMap.trim();
+      if (f.endsWith("[x]"))
+        f = f.substring(0, f.length()-3);
+      if (f.isEmpty())
+        continue;
+
+      fullMaps.add(aMap);
+      if (!aMap.contains(".")) {
+        do {
+          ResourceDefn lm = logicalModels.get(aMap);
+          aMap = lm.getRoot().getTypes().get(0).getName();
+          if (!aMap.equals("Logical"))
+            fullMaps.add(aMap);
+        } while (!aMap.equals("Logical"));
+      }
+    }
+    return fullMaps;
   }
 
   private void addLogicalElementColumn(StringBuilder b, boolean root, ElementDefn e) {
@@ -10025,6 +10557,10 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     return profiles;
   }
 
+  public Map<String, ResourceDefn> getLogicalModels() {
+    return logicalModels;
+  }
+
   @Override
   public boolean isDatatype(String type) {
     return definitions.hasPrimitiveType(type) || (definitions.hasElementDefn(type) && !definitions.hasResource(type));
@@ -10213,6 +10749,29 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     }
     return br;
   }
+
+  public ValueSet vsForBinding(String ref) {
+    ValueSet vs = null;
+    if (ref==null)
+      return null;
+    if (ref.contains("|"))
+      ref = ref.substring(0 , ref.indexOf("|"));
+    if (ref.startsWith("http://terminology.hl7.org/ValueSet/v3-") || ref.startsWith("http://terminology.hl7.org/ValueSet/v2-") ) {
+      vs = workerContext.fetchResource(ValueSet.class, ref);
+    } else if (definitions.getValuesets().has(ref)) {
+      vs = definitions.getValuesets().get(ref);
+    } else if (ref.startsWith("ValueSet/")) {
+      vs = definitions.getValuesets().get(ref.substring(8));
+    } else if (ref.startsWith("http://hl7.org/fhir/ValueSet/")) {
+      vs = definitions.getValuesets().get(ref);
+      if (vs == null)
+        vs = definitions.getExtraValuesets().get(ref);
+      if (vs == null)
+        vs = definitions.getBoundValueSets().get(ref);
+    }
+    return vs;
+  }
+
 
   @Override
   public String getLinkForProfile(StructureDefinition profile, String url) {

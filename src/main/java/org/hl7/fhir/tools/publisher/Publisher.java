@@ -512,18 +512,18 @@ public class Publisher implements URIResolver, SectionNumberer {
 
     Publisher pub = new Publisher();
     pub.page = new PageProcessor(KindlingConstants.DEF_TS_SERVER);
-    pub.isGenerate = !(args.length > 1 && hasParam(args, "-nogen"));
+    pub.isGenerate = !(args.length >= 1 && hasParam(args, "-nogen"));
     pub.doValidate = true;   
-    pub.noArchive = (args.length > 1 && hasParam(args, "-noarchive"));
-    pub.web = (args.length > 1 && hasParam(args, "-web"));
+    pub.noArchive = (args.length >= 1 && hasParam(args, "-noarchive"));
+    pub.web = (args.length >= 1 && hasParam(args, "-web"));
     pub.page.setForPublication(pub.web);
     pub.diffProgram = getNamedParam(args, "-diff");
-    pub.noSound =  (args.length > 1 && hasParam(args, "-nosound"));
-    pub.noPartialBuild = (args.length > 1 && hasParam(args, "-nopartial"));
+    pub.noSound =  (args.length >= 1 && hasParam(args, "-nosound"));
+    pub.noPartialBuild = (args.length >= 1 && hasParam(args, "-nopartial"));
     if (hasParam(args, "-validation-mode")) {
       pub.validationMode = ValidationMode.fromCode(getNamedParam(args, "-validation-mode"));
     }
-    pub.isPostPR = (args.length > 1 && hasParam(args, "-post-pr"));
+    pub.isPostPR = (args.length >= 1 && hasParam(args, "-post-pr"));
     if (hasParam(args, "-resource"))
       pub.singleResource = getNamedParam(args, "-resource");
     if (hasParam(args, "-page"))
@@ -1388,6 +1388,7 @@ public class Publisher implements URIResolver, SectionNumberer {
         page.log(" ...process logical model " + lm.getId(), LogMessageType.Process);
         if (lm.getDefinition() == null)
           lm.setDefinition(new ProfileGenerator(page.getDefinitions(), page.getWorkerContext(), page, page.getGenDate(), page.getVersion(), dataElements, fpUsages, page.getFolders().rootDir, page.getUml(), page.getRc()).generateLogicalModel(ig, lm.getResource()));
+        page.getLogicalModels().put(lm.getResource().getRoot().getName(), lm.getResource());
       }
     }
 
