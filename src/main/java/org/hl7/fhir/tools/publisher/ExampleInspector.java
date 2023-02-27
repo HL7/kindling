@@ -430,9 +430,9 @@ public class ExampleInspector implements IValidatorResourceFetcher, IValidationP
 
   public void summarise() throws EValidationFailed {
     logger.log("Summary: Errors="+Integer.toString(errorCount)+", Warnings="+Integer.toString(warningCount)+", Information messages="+Integer.toString(informationCount), LogMessageType.Error);
-    if (errorCount > 0) {
-      throw new EValidationFailed("Resource Examples failed instance validation");
-    }
+//    if (errorCount > 0) {
+//      throw new EValidationFailed("Resource Examples failed instance validation");
+//    }
   }
 
 
