@@ -473,10 +473,12 @@ public class ExampleInspector implements IValidatorResourceFetcher, IValidationP
     if (r != null) {
       for (SearchParameterDefn sp : r.getSearchParams().values()) {
         if (!Utilities.noString(sp.getExpression())) {
-          if (sp.getExpressionNode() == null)
+          if (sp.getExpressionNode() == null) {
             sp.setExpressionNode(fpe.parse(sp.getExpression()));
-          if (fpe.evaluate(e, sp.getExpressionNode()).size() > 0)
+          }
+          if (fpe.evaluate(e, sp.getExpressionNode()).size() > 0) {
             sp.setWorks(true);
+          }
         }
       }
     }
