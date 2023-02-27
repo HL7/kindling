@@ -692,11 +692,13 @@ public class ResourceValidator extends BaseValidator {
     warning(errors, ValidationMessage.NO_RULE_DATE, IssueType.BUSINESSRULE, path, Utilities.noString(e.getTodo()), "Element has a todo associated with it (" + e.getTodo() + ")");
 
     if (!Utilities.noString(e.getW5())) {
-      if (path.contains("."))
-        rule(errors, ValidationMessage.NO_RULE_DATE, IssueType.INVALID, path, definitions.getW5s().containsKey(e.getW5()), "The w5 value '" + e.getW5() + "' is illegal");
-      else {
-        String[] vs = e.getW5().split("\\.");
-        rule(errors, ValidationMessage.NO_RULE_DATE, IssueType.INVALID, path, vs.length == 2 && definitions.getW5s().containsKey(vs[0]) && definitions.getW5s().get(vs[0]).getSubClasses().contains(vs[1]), "The w5 value '" + e.getW5() + "' is illegal");
+      for (String w5 : e.getW5().split(",\\s*")) {
+        if (path.contains("."))
+          rule(errors, ValidationMessage.NO_RULE_DATE, IssueType.INVALID, path, definitions.getW5s().containsKey(w5), "The w5 value '" + w5 + "' is illegal");
+        else {
+          String[] vs = w5.split("\\.");
+          rule(errors, ValidationMessage.NO_RULE_DATE, IssueType.INVALID, path, vs.length == 2 && definitions.getW5s().containsKey(vs[0]) && definitions.getW5s().get(vs[0]).getSubClasses().contains(vs[1]), "The w5 value '" + w5 + "' is illegal");
+        }
       }
     }
     if (e.getName().equals("subject"))

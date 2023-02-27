@@ -966,13 +966,19 @@ public class ResourceParser {
     return null; /// try again later
   }
 
-  private String reverseW5(String map) {
-    for (W5Entry w5 : definitions.getW5list()) {
-      if (w5.getFiveWs().equals(map)) {
-        return w5.getCode();
+  private String reverseW5(String mapList) {
+    List<String> maps = new ArrayList<String>();
+    for (String map: mapList.split(",\\s*")) {
+      String mapCode = null;
+      for (W5Entry w5 : definitions.getW5list()) {
+        if (w5.getFiveWs().equals(map)) {
+          mapCode = w5.getCode();
+          break;
+        }
       }
+      maps.add(mapCode==null ? map : mapCode);
     }
-    return map;
+    return String.join(",", maps);
   }
 
   private String getMappingUri(StructureDefinition sd, String identity) {
