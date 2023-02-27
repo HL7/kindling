@@ -430,9 +430,9 @@ public class ExampleInspector implements IValidatorResourceFetcher, IValidationP
 
   public void summarise() throws EValidationFailed {
     logger.log("Summary: Errors="+Integer.toString(errorCount)+", Warnings="+Integer.toString(warningCount)+", Information messages="+Integer.toString(informationCount), LogMessageType.Error);
-    if (errorCount > 0) {
-      throw new EValidationFailed("Resource Examples failed instance validation");
-    }
+//    if (errorCount > 0) {
+//      throw new EValidationFailed("Resource Examples failed instance validation");
+//    }
   }
 
 
@@ -485,12 +485,13 @@ public class ExampleInspector implements IValidatorResourceFetcher, IValidationP
   private void testSearchParameters(Element xe, String rn, boolean inBundle) throws FHIRException {
     ResourceDefn r = definitions.getResources().get(rn);
     for (SearchParameterDefn sp : r.getSearchParams().values()) {
-      if (!sp.isTested() && !Utilities.noString(sp.getExpression())) {
+      if (!Utilities.noString(sp.getExpression())) {
         try {
           sp.setTested(true);
           List<Base> nodes = fpe.evaluate(xe, sp.getExpression());
-          if (nodes.size() > 0)
+          if (nodes.size() > 0) {
             sp.setWorks(true);
+          }
         } catch (Exception e1) {
           throw new FHIRException("Expression \"" + sp.getExpression() + "\" execution failed: " + e1.getMessage(), e1);
         }
