@@ -73,9 +73,6 @@ import javax.xml.transform.TransformerFactoryConfigurationError;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import javax.xml.transform.stream.StreamSource;
-import javax.xml.validation.Schema;
-import javax.xml.validation.SchemaFactory;
-import javax.xml.validation.Validator;
 
 import org.apache.commons.lang3.NotImplementedException;
 import org.fhir.ucum.UcumException;
@@ -427,7 +424,6 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     }
   }
 
-  private final String MAPPING_EXCEPTIONS_SCHEMA = "tools/schema/mappingExceptions.xsd";
   private final List<String> suppressedMessages = new ArrayList<String>();
   private Definitions definitions;
   private FolderManager folders;
@@ -478,8 +474,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
   private String webLocation;
   private String searchLocation;
   private String extensionsLocation;
-  private Validator mappingExceptionsValidator;
-  
+
   private String getComputerName()
   {
       Map<String, String> env = System.getenv();
@@ -502,13 +497,6 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
   public PageProcessor(String tsServer) throws URISyntaxException, UcumException {
     super();
     this.tsServer = tsServer;
-    try {
-      SchemaFactory schemaFactory = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
-      Schema exceptionsSchema = schemaFactory.newSchema(new File(MAPPING_EXCEPTIONS_SCHEMA));
-      mappingExceptionsValidator = exceptionsSchema.newValidator();
-    } catch (SAXException e) {
-      System.out.println("Error loading schema " + MAPPING_EXCEPTIONS_SCHEMA);
-    }
   }
 
   public final static String WEB_LOCATION = "http://hl7.org/fhir/{version}/";
@@ -6712,12 +6700,6 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
           CSFile exceptionsFile = new CSFile(exceptionsPath);
           if (exceptionsFile.exists()) {
             try {
-              try {
-                mappingExceptionsValidator.validate(new StreamSource(exceptionsFile));
-              } catch (SAXException e) {
-                System.out.println(exceptionsFile + " is NOT valid against schema " + MAPPING_EXCEPTIONS_SCHEMA);
-                System.out.println("Reason: " + e.getLocalizedMessage());
-              }
               LSInput domInput = impl.createLSInput();
               domInput.setByteStream(new CSFileInputStream(exceptionsFile));
               exceptionsDoc = xmlReader.parse(domInput);

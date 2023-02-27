@@ -62,6 +62,10 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.zip.ZipEntry;
+import javax.xml.XMLConstants;
+import javax.xml.validation.Schema;
+import javax.xml.validation.SchemaFactory;
+import javax.xml.validation.Validator;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -76,6 +80,7 @@ import javax.xml.transform.stream.StreamSource;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.tools.ant.DirectoryScanner;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.lib.Ref;
@@ -285,6 +290,7 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.xml.sax.InputSource;
+import org.xml.sax.SAXException;
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserFactory;
 
@@ -347,7 +353,8 @@ public class Publisher implements URIResolver, SectionNumberer {
   }
 
   public static final boolean WANT_REQUIRE_OIDS = false;
-  
+  public static final String MAPPING_EXCEPTIONS_SCHEMA = "tools/schema/mappingExceptions.xsd";
+
   public class DocumentHolder {
     public XhtmlDocument doc;
   }
@@ -506,6 +513,7 @@ public class Publisher implements URIResolver, SectionNumberer {
   private boolean isPostPR;
   private String validateId;
   private IniFile apiKeyFile;
+  private Validator mappingExceptionsValidator;
 
   public static void main(String[] args) throws Exception {
     org.hl7.fhir.utilities.FileFormat.checkCharsetAndWarnIfNotUTF8(System.out);
@@ -561,6 +569,16 @@ public class Publisher implements URIResolver, SectionNumberer {
       pub.apiKeyFile = new IniFile(new File(getNamedParam(args, "-api-key-file")).getAbsolutePath());
     }
     pub.execute(dir, args);
+  }
+
+  private Publisher () {
+    try {
+      SchemaFactory schemaFactory = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
+      Schema exceptionsSchema = schemaFactory.newSchema(new File(MAPPING_EXCEPTIONS_SCHEMA));
+      mappingExceptionsValidator = exceptionsSchema.newValidator();
+    } catch (SAXException e) {
+      System.out.println("Error loading schema " + MAPPING_EXCEPTIONS_SCHEMA);
+    }
   }
 
   private static boolean hasParam(String[] args, String param) {
@@ -2402,6 +2420,8 @@ public class Publisher implements URIResolver, SectionNumberer {
       page.setRegistry(prsr.getRegistry());
       page.getDiffEngine().loadFromIni(prsr.getIni());
 
+
+
       for (String s : page.getIni().getPropertyNames("special-pages"))
         page.getDefinitions().getStructuralPages().add(s);
 
@@ -2412,6 +2432,19 @@ public class Publisher implements URIResolver, SectionNumberer {
       checkFile("required", page.getFolders().templateDir, "template-book.html", errors, "all");
       checkFile("required", page.getFolders().srcDir, "mappingSpaces.xml", errors, "all");
       // Utilities.checkFolder(page.getFolders().dstDir, errors);
+
+      DirectoryScanner scanner = new DirectoryScanner();
+      scanner.setIncludes(new String[]{"**/*-mapping-exceptions.xml"});
+      scanner.setBasedir(page.getFolders().srcDir);
+      scanner.setCaseSensitive(false);
+      scanner.scan();
+      for (String exceptionsFile: scanner.getIncludedFiles()) {
+        try {
+          mappingExceptionsValidator.validate(new StreamSource(page.getFolders().srcDir + exceptionsFile));
+        } catch (SAXException e) {
+          errors.add(exceptionsFile + " is NOT valid against schema " + MAPPING_EXCEPTIONS_SCHEMA + ".  Reason: " + e.getLocalizedMessage());
+        }
+      }
 
       if (page.getIni().getPropertyNames("support") != null)
         for (String n : page.getIni().getPropertyNames("support"))
