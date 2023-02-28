@@ -367,7 +367,7 @@ public class SourceParser {
       definitions.getAllowedSearchTypes().put(s, ini.getStringProperty("allowed-search-types", s));
     }
     
-    if (definitions.getResourceByName("ConceptMap").getRoot().getElementByName(definitions, "mapAttribute", false, false) != null) {
+    if (definitions.getResourceByName("ConceptMap").getRoot().getElementByName(definitions, "additionalAttribute", false, false) != null) {
       FormatUtilities.WORKING_CM_PROP_NAME = FormatUtilities.MAP_ATTRIBUTE_NAME;
     }
   }
@@ -1343,9 +1343,6 @@ public class SourceParser {
       }
       new SpreadSheetCreator(context, srcDir, t).generateSpreadsheet();
       ResourceDefn rootNew = new ResourceParser(srcDir, definitions, context, wg, registry, version.toCode(), page.getConceptMaps()).parse(n, t);
-      if (f.exists()) { 
-        parseSvgFile(f, rootNew.getLayout(), f.getName());
-      }
       if (!isTemplate) {
         definitions.getKnownResources().put(rootNew.getName(), new DefinedCode(rootNew.getName(), rootNew.getRoot().getDefinition(), n, null));
         context.getResourceNames().add(rootNew.getName());
@@ -1381,6 +1378,25 @@ public class SourceParser {
   private void parseSvgFile(File f, Map<String, PointSpec> layout, String name) throws FileNotFoundException, FHIRException {
     Document svg = parseXml(new FileInputStream(f), name);
     readElement(svg.getDocumentElement(), null, layout);
+    fixLayout(layout);
+  }
+
+  private void fixLayout(Map<String, PointSpec> layout) {
+    double minx = Integer.MAX_VALUE;
+    double miny = Integer.MAX_VALUE;
+    for (PointSpec ps : layout.values()) {
+      if (ps.getX() < minx) {
+        minx = ps.getX();
+      }
+      if (ps.getY() < miny) {
+        miny = ps.getY();
+      }
+    }
+    for (String n : layout.keySet()) {
+      PointSpec ps = layout.get(n);
+      PointSpec nps = new PointSpec(ps.getX() - minx, ps.getY() - miny);
+      layout.put(n, nps);
+    }
   }
 
   private void readElement(Element e, Element p, Map<String, PointSpec> layout) {
