@@ -1084,7 +1084,17 @@ public class ElementDefn {
       return rd.getNormativeVersion();
   }
 
-  @Override
+	/**
+	 * Method determines if a superclass enables the usage of modifierExtensions for its children
+	 * Currently these are for BackboneElement, BackboneType, and DomainResource
+	 * @return true if enables modifierExtensions
+	 */
+	public boolean enablesModifierExtensions() {
+		return this.getElements().stream().anyMatch(e ->
+				e.getName().equals("modifierExtension") && e.hasModifier());
+	}
+
+	@Override
   public String toString() {
     return path == null ? name : path;
   }

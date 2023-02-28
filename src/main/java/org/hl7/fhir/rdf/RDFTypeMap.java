@@ -1,6 +1,8 @@
 package org.hl7.fhir.rdf;
 
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.apache.jena.rdf.model.Resource;
@@ -13,6 +15,7 @@ public class RDFTypeMap {
      */
     static public final Map<String, Resource> ptMap = new HashMap<String, Resource>();
     static public final Map<Resource, Resource> owlTypeMap = new HashMap<Resource, Resource>();
+    static public final Map<String, List<Resource>> unionTypesMap = new HashMap<>();
 
     static {
         ptMap.put("base64Binary", XSD.base64Binary);
@@ -41,12 +44,18 @@ public class RDFTypeMap {
         ptMap.put("token", RDFNamespace.FHIR.resourceRef("token"));
         ptMap.put("nonNegativeInteger", XSD.nonNegativeInteger);
         ptMap.put("positiveInteger", XSD.positiveInteger);
+        ptMap.put("integer64", XSD.xlong);
 
         owlTypeMap.put(XSD.gYear, XSD.dateTime);
         owlTypeMap.put(XSD.gYearMonth, XSD.dateTime);
         owlTypeMap.put(XSD.date, XSD.dateTime);
         owlTypeMap.put(XSD.time, XSD.xstring);
         owlTypeMap.put(RDFNamespace.FHIR.resourceRef("xhtml"), XSD.xstring);
+
+        // Special datatypes that are a union of multiple types.
+        unionTypesMap.put("date", Arrays.asList(XSD.date, XSD.gYear, XSD.gYearMonth));
+        unionTypesMap.put("dateTime", Arrays.asList(XSD.dateTime, XSD.date , XSD.gYear, XSD.gYearMonth));
+        unionTypesMap.put("decimal", Arrays.asList(XSD.decimal, XSD.xdouble));
     }
 
     public static Resource xsd_type_for(String type, boolean owl_types_required) {
