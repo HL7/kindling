@@ -367,7 +367,7 @@ public class SourceParser {
       definitions.getAllowedSearchTypes().put(s, ini.getStringProperty("allowed-search-types", s));
     }
     
-    if (definitions.getResourceByName("ConceptMap").getRoot().getElementByName(definitions, "mapAttribute", false, false) != null) {
+    if (definitions.getResourceByName("ConceptMap").getRoot().getElementByName(definitions, "additionalAttribute", false, false) != null) {
       FormatUtilities.WORKING_CM_PROP_NAME = FormatUtilities.MAP_ATTRIBUTE_NAME;
     }
   }
