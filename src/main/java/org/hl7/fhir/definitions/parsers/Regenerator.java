@@ -38,6 +38,7 @@ import org.hl7.fhir.r5.model.ElementDefinition.ElementDefinitionConstraintCompon
 import org.hl7.fhir.r5.model.Enumerations.ListMode;
 import org.hl7.fhir.r5.model.Enumerations.PublicationStatus;
 import org.hl7.fhir.r5.model.Enumerations.SearchParamType;
+import org.hl7.fhir.r5.model.Enumerations.VersionIndependentResourceTypesAll;
 import org.hl7.fhir.r5.model.Extension;
 import org.hl7.fhir.r5.model.ImplementationGuide;
 import org.hl7.fhir.r5.model.ImplementationGuide.ImplementationGuideDefinitionResourceComponent;
@@ -506,7 +507,7 @@ public class Regenerator {
       sp.setExpression(spd.getExpression());
       if (spd.hasManualTypes()) {
         for (String t : sorted(spd.getManualTypes())) {
-          sp.addTarget(t);
+          sp.addTarget(VersionIndependentResourceTypesAll.fromCode(t));
         }
       }
       if (spd.getStandardsStatus() != null) {

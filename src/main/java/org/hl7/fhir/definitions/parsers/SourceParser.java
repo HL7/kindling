@@ -102,8 +102,8 @@ import org.hl7.fhir.r5.model.CodeSystem;
 import org.hl7.fhir.r5.model.CodeType;
 import org.hl7.fhir.r5.model.Composition;
 import org.hl7.fhir.r5.model.Enumeration;
-import org.hl7.fhir.r5.model.Enumerations.AllResourceTypes;
 import org.hl7.fhir.r5.model.Enumerations.FHIRVersion;
+import org.hl7.fhir.r5.model.Enumerations.VersionIndependentResourceTypesAll;
 import org.hl7.fhir.r5.model.Resource;
 import org.hl7.fhir.r5.model.SearchParameter;
 import org.hl7.fhir.r5.model.StructureDefinition;
@@ -367,9 +367,6 @@ public class SourceParser {
       definitions.getAllowedSearchTypes().put(s, ini.getStringProperty("allowed-search-types", s));
     }
     
-    if (definitions.getResourceByName("ConceptMap").getRoot().getElementByName(definitions, "additionalAttribute", false, false) != null) {
-      FormatUtilities.WORKING_CM_PROP_NAME = FormatUtilities.MAP_ATTRIBUTE_NAME;
-    }
   }
 
   private String getFmmForType(String n, String def) {
@@ -501,7 +498,7 @@ public class SourceParser {
       CommonSearchParameter csp = new CommonSearchParameter();
       csp.setId(sp.getId());
       csp.setCode(sp.getCode());
-      for (CodeType ct : sp.getBase()) {
+      for (Enumeration<VersionIndependentResourceTypesAll> ct : sp.getBase()) {
         csp.getResources().add(ct.asStringValue());
         definitions.getCommonSearchParameters().put(ct.asStringValue()+"::"+sp.getCode(), csp);
       }

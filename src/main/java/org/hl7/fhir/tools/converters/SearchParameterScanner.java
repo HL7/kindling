@@ -9,6 +9,8 @@ import org.hl7.fhir.r5.formats.XmlParser;
 import org.hl7.fhir.r5.model.Bundle;
 import org.hl7.fhir.r5.model.Bundle.BundleEntryComponent;
 import org.hl7.fhir.r5.model.CodeType;
+import org.hl7.fhir.r5.model.Enumeration;
+import org.hl7.fhir.r5.model.Enumerations.VersionIndependentResourceTypesAll;
 import org.hl7.fhir.r5.model.Resource;
 import org.hl7.fhir.r5.model.SearchParameter;
 import org.hl7.fhir.utilities.CommaSeparatedStringBuilder;
@@ -72,14 +74,14 @@ public class SearchParameterScanner {
       SearchParameter sp = (SearchParameter) res;
       boolean in = false;
       CommaSeparatedStringBuilder b = new CommaSeparatedStringBuilder();
-      for (CodeType base : sp.getBase()) {
+      for (Enumeration<VersionIndependentResourceTypesAll> base : sp.getBase()) {
         b.append(base.toString());
         if (Utilities.existsInList(base.asStringValue(), resources)) {
           in = true;
         }
       }
       CommaSeparatedStringBuilder b2 = new CommaSeparatedStringBuilder();
-      for (CodeType base : sp.getTarget()) {
+      for (Enumeration<VersionIndependentResourceTypesAll> base : sp.getTarget()) {
         b2.append(base.toString());
         if (Utilities.existsInList(base.asStringValue(), resources)) {
           in = true;

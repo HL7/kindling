@@ -36,6 +36,7 @@ import org.hl7.fhir.r5.model.Enumerations.FHIRTypes;
 import org.hl7.fhir.r5.model.Enumerations.OperationParameterUse;
 import org.hl7.fhir.r5.model.Enumerations.PublicationStatus;
 import org.hl7.fhir.r5.model.Enumerations.SearchParamType;
+import org.hl7.fhir.r5.model.Enumerations.VersionIndependentResourceTypesAll;
 import org.hl7.fhir.r5.model.Extension;
 import org.hl7.fhir.r5.model.ImplementationGuide;
 import org.hl7.fhir.r5.model.IntegerType;
@@ -534,7 +535,7 @@ public class SpreadSheetReloader extends SpreadSheetBase {
     sp.setDescription(getValue(row, cols, CN_DESCRIPTION));
     sp.getTarget().clear();
     for (String s : splitValue(row, cols, CN_TARGET_TYPES, "\\|")) {
-      sp.getTarget().add(new CodeType(s));
+      sp.addTarget(VersionIndependentResourceTypesAll.fromCode(s));
     }
     readExt(sp, row, cols, CN_PATH, BuildExtensions.EXT_PATH, ExtensionType.String);
     readExt(sp, row, cols, CN_COMMITTEE_NOTES, BuildExtensions.EXT_COMMITTEE_NOTES, ExtensionType.String);

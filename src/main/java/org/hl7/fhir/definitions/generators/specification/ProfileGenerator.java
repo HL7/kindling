@@ -103,13 +103,15 @@ import org.hl7.fhir.r5.model.ElementDefinition.SlicingRules;
 import org.hl7.fhir.r5.model.ElementDefinition.TypeRefComponent;
 import org.hl7.fhir.r5.model.Enumeration;
 import org.hl7.fhir.r5.model.Enumerations;
-import org.hl7.fhir.r5.model.Enumerations.AllResourceTypes;
-import org.hl7.fhir.r5.model.Enumerations.AllResourceTypesEnumFactory;
 import org.hl7.fhir.r5.model.Enumerations.BindingStrength;
 import org.hl7.fhir.r5.model.Enumerations.FHIRVersion;
 import org.hl7.fhir.r5.model.Enumerations.OperationParameterUse;
 import org.hl7.fhir.r5.model.Enumerations.PublicationStatus;
+import org.hl7.fhir.r5.model.Enumerations.SearchComparator;
+import org.hl7.fhir.r5.model.Enumerations.SearchModifierCode;
 import org.hl7.fhir.r5.model.Enumerations.SearchParamType;
+import org.hl7.fhir.r5.model.Enumerations.VersionIndependentResourceTypesAll;
+import org.hl7.fhir.r5.model.Enumerations.VersionIndependentResourceTypesAllEnumFactory;
 import org.hl7.fhir.r5.model.Extension;
 import org.hl7.fhir.r5.model.Factory;
 import org.hl7.fhir.r5.model.InstantType;
@@ -126,7 +128,6 @@ import org.hl7.fhir.r5.model.OperationDefinition.OperationKind;
 import org.hl7.fhir.r5.model.OperationDefinition.OperationParameterScope;
 import org.hl7.fhir.r5.model.PositiveIntType;
 import org.hl7.fhir.r5.model.SearchParameter;
-import org.hl7.fhir.r5.model.SearchParameter.SearchComparator;
 import org.hl7.fhir.r5.model.StringType;
 import org.hl7.fhir.r5.model.StructureDefinition;
 import org.hl7.fhir.r5.model.StructureDefinition.StructureDefinitionDifferentialComponent;
@@ -1393,8 +1394,8 @@ public class ProfileGenerator {
         throw new Exception("unknown resource type "+p.getType());
       sp.setType(getSearchParamType(spd.getType()));
       if (sp.getType() == SearchParamType.REFERENCE && spd.isHierarchy()) {
-        sp.addModifier(SearchParameter.SearchModifierCode.BELOW);
-        sp.addModifier(SearchParameter.SearchModifierCode.ABOVE);
+        sp.addModifier(Enumerations.SearchModifierCode.BELOW);
+        sp.addModifier(Enumerations.SearchModifierCode.ABOVE);
       }
       if (shared) {
         sp.setDescription("Multiple Resources: \r\n\r\n* ["+rn+"]("+rn.toLowerCase()+".html): " + spd.getDescription()+"\r\n");
@@ -1421,7 +1422,7 @@ public class ProfileGenerator {
         }
         sp.setMultipleOr(false);
       } 
-      sp.addBase(p.getType());
+      sp.addBase(VersionIndependentResourceTypesAll.fromCode(p.getType()));
     } else {
       if (sp.getType() != getSearchParamType(spd.getType()))
         throw new FHIRException("Type mismatch on common parameter: expected "+sp.getType().toCode()+" but found "+getSearchParamType(spd.getType()).toCode());
@@ -1443,7 +1444,7 @@ public class ProfileGenerator {
 //      }
       SearchParameter spx = sp.copy();
       spx.getBase().clear();
-      spx.addBase(p.getType());
+      spx.addBase(VersionIndependentResourceTypesAll.fromCode(p.getType()));
       spx.setExpression(spd.getExpression());
       spx.setDescription("["+rn+"]("+rn.toLowerCase()+".html): " + spd.getDescription()+"\r\n");
       spx.setUserData("common-id", spd.getCommonId());
@@ -1451,7 +1452,7 @@ public class ProfileGenerator {
 
       StandardsStatus sst = ToolingExtensions.getStandardsStatus(sp);
       if (sst == null || (spd.getStandardsStatus() == null && spd.getStandardsStatus().isLowerThan(sst))) {
-        for (CodeType ct : sp.getBase()) {
+        for (Enumeration<VersionIndependentResourceTypesAll> ct : sp.getBase()) {
           if (!ToolingExtensions.hasExtension(ct, ToolingExtensions.EXT_STANDARDS_STATUS)) {
             ToolingExtensions.setStandardsStatus(ct, sst, null);
           }
@@ -1461,7 +1462,7 @@ public class ProfileGenerator {
       sst = ToolingExtensions.getStandardsStatus(sp);
       
       boolean found = false;
-      for (CodeType ct : sp.getBase())
+      for (Enumeration<VersionIndependentResourceTypesAll> ct : sp.getBase())
         found = found || p.getType().equals(ct.asStringValue());
 
       if (!found) {
@@ -1469,7 +1470,7 @@ public class ProfileGenerator {
         if (sst != spd.getStandardsStatus()) {          
           ToolingExtensions.setStandardsStatus(ct, spd.getStandardsStatus(), null);
         }
-        sp.getBase().add(ct);
+        sp.getBase().add(new VersionIndependentResourceTypesAllEnumFactory().fromType(ct));
       }
     }
     spd.setUrl(sp.getUrl());
@@ -1477,18 +1478,18 @@ public class ProfileGenerator {
       if("Any".equals(target) == true) {   	  
         for(String resourceName : definitions.sortedResourceNames()) {
           boolean found = false;
-          for (CodeType st : sp.getTarget())
+          for (Enumeration<VersionIndependentResourceTypesAll> st : sp.getTarget())
             found = found || st.asStringValue().equals(resourceName);
           if (!found)
-            sp.addTarget(resourceName);
+            sp.addTarget(VersionIndependentResourceTypesAll.fromCode(resourceName));
         }
       }
       else {
         boolean found = false;
-        for (CodeType st : sp.getTarget())
+        for (Enumeration<VersionIndependentResourceTypesAll> st : sp.getTarget())
           found = found || st.asStringValue().equals(target);
         if (!found)
-          sp.addTarget(target);
+          sp.addTarget(VersionIndependentResourceTypesAll.fromCode(target));
       }
     }
     context.cacheResource(sp);
@@ -1522,32 +1523,32 @@ public class ProfileGenerator {
 
 
   private void addModifiers(SearchParameter sp) {
-    sp.addModifier(org.hl7.fhir.r5.model.SearchParameter.SearchModifierCode.MISSING); // on everything
+    sp.addModifier(SearchModifierCode.MISSING); // on everything
     switch (sp.getType()) {
     case STRING: 
-      sp.addModifier(org.hl7.fhir.r5.model.SearchParameter.SearchModifierCode.EXACT);
-      sp.addModifier(org.hl7.fhir.r5.model.SearchParameter.SearchModifierCode.CONTAINS);
+      sp.addModifier(SearchModifierCode.EXACT);
+      sp.addModifier(SearchModifierCode.CONTAINS);
       return;
     case TOKEN: 
-      sp.addModifier(org.hl7.fhir.r5.model.SearchParameter.SearchModifierCode.TEXT);
-      sp.addModifier(org.hl7.fhir.r5.model.SearchParameter.SearchModifierCode.NOT);
-      sp.addModifier(org.hl7.fhir.r5.model.SearchParameter.SearchModifierCode.IN);
-      sp.addModifier(org.hl7.fhir.r5.model.SearchParameter.SearchModifierCode.NOTIN);
-      sp.addModifier(org.hl7.fhir.r5.model.SearchParameter.SearchModifierCode.BELOW);
-      sp.addModifier(org.hl7.fhir.r5.model.SearchParameter.SearchModifierCode.ABOVE);
-      sp.addModifier(org.hl7.fhir.r5.model.SearchParameter.SearchModifierCode.OFTYPE);
+      sp.addModifier(SearchModifierCode.TEXT);
+      sp.addModifier(SearchModifierCode.NOT);
+      sp.addModifier(SearchModifierCode.IN);
+      sp.addModifier(SearchModifierCode.NOTIN);
+      sp.addModifier(SearchModifierCode.BELOW);
+      sp.addModifier(SearchModifierCode.ABOVE);
+      sp.addModifier(SearchModifierCode.OFTYPE);
       return;
     case REFERENCE: 
-      sp.addModifier(org.hl7.fhir.r5.model.SearchParameter.SearchModifierCode.TYPE);
-      sp.addModifier(org.hl7.fhir.r5.model.SearchParameter.SearchModifierCode.IDENTIFIER);
+      sp.addModifier(SearchModifierCode.TYPE);
+      sp.addModifier(SearchModifierCode.IDENTIFIER);
       if (isCircularReference(sp)) {
-        sp.addModifier(org.hl7.fhir.r5.model.SearchParameter.SearchModifierCode.BELOW);
-        sp.addModifier(org.hl7.fhir.r5.model.SearchParameter.SearchModifierCode.ABOVE);
+        sp.addModifier(SearchModifierCode.BELOW);
+        sp.addModifier(SearchModifierCode.ABOVE);
       }
       return;
     case URI: 
-      sp.addModifier(org.hl7.fhir.r5.model.SearchParameter.SearchModifierCode.BELOW);
-      sp.addModifier(org.hl7.fhir.r5.model.SearchParameter.SearchModifierCode.ABOVE);
+      sp.addModifier(SearchModifierCode.BELOW);
+      sp.addModifier(SearchModifierCode.ABOVE);
       return;
      // no modifiers for these
     case NUMBER: 
@@ -2536,7 +2537,7 @@ public class ProfileGenerator {
     opd.setCode(op.getName());
     opd.setComment(preProcessMarkdown(op.getFooter(), "Operation Comments"));
     opd.setSystem(op.isSystem());
-    opd.addResource(resourceName);
+    opd.addResource(VersionIndependentResourceTypesAll.fromCode(resourceName));
     opd.setType(op.isType()); 
     opd.setInstance(op.isInstance());
     opd.setUserData("path", resourceName.toLowerCase()+"-operation-"+op.getName().toLowerCase()+".html");

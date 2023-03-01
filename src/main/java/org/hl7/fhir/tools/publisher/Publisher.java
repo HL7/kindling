@@ -185,6 +185,7 @@ import org.hl7.fhir.r5.model.ElementDefinition;
 import org.hl7.fhir.r5.model.ElementDefinition.ElementDefinitionBindingComponent;
 import org.hl7.fhir.r5.model.ElementDefinition.ElementDefinitionConstraintComponent;
 import org.hl7.fhir.r5.model.ElementDefinition.TypeRefComponent;
+import org.hl7.fhir.r5.model.Enumeration;
 import org.hl7.fhir.r5.model.Enumerations.BindingStrength;
 import org.hl7.fhir.r5.model.Enumerations.CapabilityStatementKind;
 import org.hl7.fhir.r5.model.Enumerations.CompartmentType;
@@ -192,6 +193,7 @@ import org.hl7.fhir.r5.model.Enumerations.ConceptMapRelationship;
 import org.hl7.fhir.r5.model.Enumerations.FHIRVersion;
 import org.hl7.fhir.r5.model.Enumerations.PublicationStatus;
 import org.hl7.fhir.r5.model.Enumerations.SearchParamType;
+import org.hl7.fhir.r5.model.Enumerations.VersionIndependentResourceTypesAll;
 import org.hl7.fhir.r5.model.Factory;
 import org.hl7.fhir.r5.model.IdType;
 import org.hl7.fhir.r5.model.ImplementationGuide;
@@ -993,18 +995,18 @@ public class Publisher implements URIResolver, SectionNumberer {
               String tn = tail(t);
               if (tn.equals("Resource")) {
                 for (String s : cu.getConcreteResources()) {
-                  if (!sp.hasTarget(s)) {
-                    sp.addTarget(s);
+                  if (!sp.hasTarget(VersionIndependentResourceTypesAll.fromCode(s))) {
+                    sp.addTarget(VersionIndependentResourceTypesAll.fromCode(s));
                   }
                 }
               } else if (tn.equals("CanonicalResource")) {
                 for (String s : cu.getCanonicalResourceNames()) {
-                  if (!sp.hasTarget(s)) {
-                    sp.addTarget(s);
+                  if (!sp.hasTarget(VersionIndependentResourceTypesAll.fromCode(s))) {
+                    sp.addTarget(VersionIndependentResourceTypesAll.fromCode(s));
                   }
                 }
-              } else if (!sp.hasTarget(tn)) { 
-                sp.addTarget(tn);
+              } else if (!sp.hasTarget(VersionIndependentResourceTypesAll.fromCode(tn))) { 
+                sp.addTarget(VersionIndependentResourceTypesAll.fromCode(tn));
               }
             }
           }
@@ -1018,8 +1020,8 @@ public class Publisher implements URIResolver, SectionNumberer {
         if (ssCeiling.isLowerThan(ssStated)) {
           if (sp.getBase().size() > 1) {
             StandardsStatus high = null;
-            for (CodeType b : sp.getBase()) {
-              if (b.primitiveValue().equals(rd.getType())) {
+            for (Enumeration<VersionIndependentResourceTypesAll> b : sp.getBase()) {
+              if (b.getCode().equals(rd.getType())) {
                 b.setStandardsStatus(ssCeiling);
               }
               StandardsStatus ss = b.getStandardsStatus();
