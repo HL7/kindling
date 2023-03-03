@@ -101,12 +101,12 @@ import org.hl7.fhir.r5.model.DataType;
 import org.hl7.fhir.r5.model.DateTimeType;
 import org.hl7.fhir.r5.model.DateType;
 import org.hl7.fhir.r5.model.DecimalType;
-import org.hl7.fhir.r5.model.Enumerations.AllResourceTypes;
 import org.hl7.fhir.r5.model.Enumerations.BindingStrength;
 import org.hl7.fhir.r5.model.Enumerations.FHIRVersion;
 import org.hl7.fhir.r5.model.Enumerations.PublicationStatus;
 import org.hl7.fhir.r5.model.Enumerations.QuantityComparator;
 import org.hl7.fhir.r5.model.Enumerations.SearchParamType;
+import org.hl7.fhir.r5.model.Enumerations.VersionIndependentResourceTypesAll;
 import org.hl7.fhir.r5.model.Extension;
 import org.hl7.fhir.r5.model.Factory;
 import org.hl7.fhir.r5.model.IdType;
@@ -841,7 +841,7 @@ public class OldSpreadsheetParser {
           path = path.substring(0, path.indexOf('.'));
           if (!pkp.isResource(path))
             throw new Exception("Ilegal Search Parameter path "+sheet.getColumn(row, "Path"));
-          sp.addBase(path);
+          sp.addBase(VersionIndependentResourceTypesAll.fromCode(path));
           sp.setId(pack.getId()+"-"+path+"-"+sp.getName());
           if (definitions != null) { // igtodo (and below)
             root2 = definitions.getResourceByName(path);
@@ -850,7 +850,7 @@ public class OldSpreadsheetParser {
             if (!pkp.isResource(root2.getName()))
               throw new Exception("Ilegal Search Parameter path "+sheet.getColumn(row, "Path"));
             sp.getBase().clear();
-            sp.addBase(root2.getName());
+            sp.addBase(VersionIndependentResourceTypesAll.fromCode(root2.getName()));
             sp.setId(pack.getId()+"-"+(root2 == null ? "all" : root2.getName())+"-"+sp.getName());
           }
         }

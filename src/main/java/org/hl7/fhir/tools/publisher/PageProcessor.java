@@ -180,6 +180,7 @@ import org.hl7.fhir.r5.model.Enumerations;
 import org.hl7.fhir.r5.model.Enumerations.ConceptMapRelationship;
 import org.hl7.fhir.r5.model.Enumerations.FHIRVersion;
 import org.hl7.fhir.r5.model.Enumerations.SearchParamType;
+import org.hl7.fhir.r5.model.Enumerations.VersionIndependentResourceTypesAll;
 import org.hl7.fhir.r5.model.ExpressionNode.CollectionStatus;
 import org.hl7.fhir.r5.model.Extension;
 import org.hl7.fhir.r5.model.Identifier;
@@ -1278,7 +1279,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
         src = s1 + (((SearchParameter) resource).hasExpression() ? ((SearchParameter) resource).getExpression() : "") + s3;
       else if (com[0].equals("search-param-targets") && resource instanceof SearchParameter) {
         CommaSeparatedStringBuilder b = new CommaSeparatedStringBuilder();
-        for (CodeType t : ((SearchParameter) resource).getTarget())
+        for (Enumeration<VersionIndependentResourceTypesAll> t : ((SearchParameter) resource).getTarget())
           b.append(t.asStringValue());
         src = s1 + b.toString() + s3;
       }
@@ -10996,16 +10997,16 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     return s.toString();
   }
 
-  private String asText(List<CodeType> list) {
+  private String asText(List<Enumeration<VersionIndependentResourceTypesAll>> list) {
     StringBuilder b = new StringBuilder();
     boolean first = true;
-    for (CodeType rn : list) {
+    for (Enumeration<VersionIndependentResourceTypesAll> rn : list) {
       if (first) {
         first = false;
         b.append("<br/>(");
       } else
         b.append(", ");
-      final String value = rn.getValue();
+      final String value = rn.getCode();
       if ("Any".equals(value))
         b.append("Any");
        else
@@ -11698,7 +11699,7 @@ private int countContains(List<ValueSetExpansionContainsComponent> list) {
   private void genSearchParams(StringBuilder b, List<SearchParameter> splist, String base) throws Exception {
     List<SearchParameter> list = new ArrayList<SearchParameter>();
     for (SearchParameter sp : splist) {
-      for (CodeType ct : sp.getBase())
+      for (Enumeration<VersionIndependentResourceTypesAll> ct : sp.getBase())
         if (ct.asStringValue().equals(base)) {
           boolean found = false;
           for (SearchParameter spt : list)
@@ -11777,7 +11778,7 @@ private int countContains(List<ValueSetExpansionContainsComponent> list) {
   private void addSearchParams(Map<String, SearchParameter> spmap, Profile conformancePack, String rn) {
     for (SearchParameter sp : conformancePack.getSearchParameters()) {
       boolean ok = false;
-      for (CodeType c : sp.getBase()) {
+      for (Enumeration<VersionIndependentResourceTypesAll> c : sp.getBase()) {
         ok = ok || rn.equals(c.getValueAsString());
       }
       if (ok) {
@@ -12334,5 +12335,5 @@ private int countContains(List<ValueSetExpansionContainsComponent> list) {
     } catch (Exception e) {
       throw new FHIRException(e);
     }
-  }  
+  }
 }

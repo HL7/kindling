@@ -61,6 +61,7 @@ import org.hl7.fhir.r5.model.Enumeration;
 import org.hl7.fhir.r5.model.Enumerations.FHIRVersion;
 import org.hl7.fhir.r5.model.Enumerations.PublicationStatus;
 import org.hl7.fhir.r5.model.Enumerations.SearchParamType;
+import org.hl7.fhir.r5.model.Enumerations.VersionIndependentResourceTypesAll;
 import org.hl7.fhir.r5.model.Extension;
 import org.hl7.fhir.r5.model.IdType;
 import org.hl7.fhir.r5.model.ImplementationGuide;
@@ -447,7 +448,7 @@ public class ResourceParser {
     for (SearchParameterComponentComponent comp : src.getComponent()) {
       sp.getComposites().add(new CompositeDefinition(comp.getDefinition(), comp.getExpression()));
     }
-    for (CodeType target : src.getTarget()) {
+    for (Enumeration<VersionIndependentResourceTypesAll> target : src.getTarget()) {
       sp.getManualTargets().add(target.asStringValue());
     }
   }

@@ -1,16 +1,10 @@
 package org.hl7.fhir.definitions.generators.specification;
 
 import java.io.OutputStream;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
-import org.apache.jena.rdf.model.Model;
-import org.apache.jena.rdf.model.ModelFactory;
-import org.apache.jena.rdf.model.Resource;
-import org.apache.jena.rdf.model.ResourceFactory;
+import org.apache.jena.datatypes.xsd.XSDDatatype;
+import org.apache.jena.rdf.model.*;
 import org.apache.jena.vocabulary.OWL2;
 import org.apache.jena.vocabulary.RDFS;
 import org.apache.jena.vocabulary.XSD;
@@ -45,7 +39,9 @@ public class FhirTurtleGenerator {
     private List<ValidationMessage> issues;
     private FHIRResourceFactory fact;
     private Resource value;
+    private Resource v;
     private String host;
+    private List<String> classHasModifierExtensions = new ArrayList<>();
 
     // OWL doesn't recognize xsd:gYear, xsd:gYearMonth or xsd:date.  If true, map all three to xsd:datetime
     private boolean owlTarget = true;
@@ -59,8 +55,11 @@ public class FhirTurtleGenerator {
         this.issues = issues;
         this.host = host;
         this.fact = new FHIRResourceFactory();
-        this.value = fact.fhir_resource("value", OWL2.DatatypeProperty, "fhir:value")
+        this.value = fact.fhir_resource("value", OWL2.ObjectProperty, "fhir:value")
                 .addTitle("Terminal data value")
+                .resource;
+        this.v = fact.fhir_resource("v", OWL2.DatatypeProperty, "fhir:v")
+                .addTitle("Terminal data value for primitive FHIR datatypes that can be represented as a RDF literal")
                 .resource;
     }
 
@@ -88,8 +87,14 @@ public class FhirTurtleGenerator {
                 genPrimitiveType(definitions.getPrimitives().get(pn));
         }
 
-        for (String infn : sorted(definitions.getInfrastructure().keySet()))
+        for (String infn : sorted(definitions.getInfrastructure().keySet())) {
+            TypeDefn defn = definitions.getInfrastructure().get(infn);
+            if (defn.enablesModifierExtensions()) {
+                //if original defn is a superclass that enables modifierExtensions, then generate fhir:_"defn"
+                genBaseModifierExtensionCode(infn, defn.getProfile().getBaseDefinitionElement().getValue());
+            }
             genElementDefn(definitions.getInfrastructure().get(infn));
+        }
 
         for (String n : sorted(definitions.getTypes().keySet()))
             genElementDefn(definitions.getTypes().get(n));
@@ -98,9 +103,13 @@ public class FhirTurtleGenerator {
             genProfiledType(definitions.getConstraints().get(n));
         }
 
-        for (String n : sorted(definitions.getBaseResources().keySet()))
-            genResourceDefn(definitions.getBaseResources().get(n));
-
+        for (String n : sorted(definitions.getBaseResources().keySet())) {
+            ResourceDefn defn = definitions.getBaseResources().get(n);
+            if(defn.getRoot().enablesModifierExtensions()) {
+                genBaseModifierExtensionCode(n, defn.getProfile().getBaseDefinitionElement().getValue());
+            }
+            genResourceDefn(defn);
+        }
         for (String n : sorted(definitions.getResources().keySet()))
             genResourceDefn(definitions.getResources().get(n));
 
@@ -140,7 +149,7 @@ public class FhirTurtleGenerator {
         fact.fhir_class("Primitive")
                 .addTitle("Types with only a value")
                 .addDefinition("Types with only a value and no additional elements as children")
-                .restriction(fact.fhir_restriction(value, RDFS.Literal));
+                .restriction(fact.fhir_restriction(v, RDFS.Literal));
 
         // A resource can have an optional nodeRole
         FHIRResource treeRoot = fact.fhir_class("treeRoot")
@@ -153,11 +162,11 @@ public class FhirTurtleGenerator {
 
 
         // Any element can have an index to assign order in a list
-        FHIRResource index = fact.fhir_dataProperty("index")
-                .addTitle("Ordering value for list")
-                .domain(Element)
-                .range(XSD.nonNegativeInteger);
-        Element.restriction(fact.fhir_cardinality_restriction(index.resource, XSD.nonNegativeInteger, 0, 1));
+//        FHIRResource index = fact.fhir_dataProperty("index")
+//                .addTitle("Ordering value for list")
+//                .domain(Element)
+//                .range(XSD.nonNegativeInteger);
+//        Element.restriction(fact.fhir_cardinality_restriction(index.resource, XSD.nonNegativeInteger, 0, 1));
 
         // References have an optional link
         FHIRResource link = fact.fhir_objectProperty("link").addTitle("URI of a reference");
@@ -166,7 +175,37 @@ public class FhirTurtleGenerator {
         // XHTML is an XML Literal -- but it isn't recognized by OWL so we use string
         FHIRResource NarrativeDiv = fact.fhir_dataProperty("Narrative.div");
         fact.fhir_class("xhtml", "Primitive")
-            .restriction(fact.fhir_cardinality_restriction(value, fact.fhir_datatype(XSD.xstring).resource, 1, 1));
+            .restriction(fact.fhir_cardinality_restriction(v, XSD.xstring, 1, 1));
+    }
+
+    /**
+     * Generates Modifier Extension Code for superclass
+     * At current time these superclasses are: DomainResource, BackboneElement, BackboneType
+     */
+    private void genBaseModifierExtensionCode(String className, String parentUrl) throws Exception {
+            classHasModifierExtensions.add(className);  // keep track of which classes enable Modifier extensions
+
+            FHIRResource originalResource = fact.fhir_class(className);
+
+            FHIRResource modResource = fact.fhir_class("_"+className);
+
+            if(parentUrl != null) {
+                String parentName = parentUrl.substring(parentUrl.lastIndexOf("/")+1);
+                Resource parentRes = RDFNamespace.FHIR.resourceRef(parentName);
+                modResource.addObjectProperty(RDFS.subClassOf, parentRes);
+            }
+
+            FHIRResource cardRestriction = fact.fhir_bnode().addType(OWL2.Restriction).addDataProperty(OWL2.minCardinality, "1", XSDDatatype.XSDinteger)
+                    .addObjectProperty(OWL2.onProperty, fact.fhir_class("modifierExtension"));
+            modResource.restriction(cardRestriction.resource);
+            FHIRResource extRestriction = fact.fhir_bnode().addType(OWL2.Restriction)
+                    .addObjectProperty(OWL2.onProperty, fact.fhir_class("modifierExtension"))
+                    .addObjectProperty(OWL2.allValuesFrom, fact.fhir_class("Extension"));
+            modResource.restriction(extRestriction.resource);
+
+            FHIRResource floatingBNode = fact.fhir_bnode().addType(OWL2.AllDisjointClasses);
+            List<Resource> disjointedList = new ArrayList<>(Arrays.asList(originalResource.resource, modResource.resource));
+            floatingBNode.addObjectProperty(OWL2.members, fact.fhir_list(disjointedList));
     }
 
   /* ==============================================
@@ -183,9 +222,12 @@ public class FhirTurtleGenerator {
         String ptName = pt.getCode();
         FHIRResource ptRes = fact.fhir_class(ptName, "Primitive")
                 .addDefinition(pt.getDefinition());
-        Resource rdfType = RDFTypeMap.xsd_type_for(ptName, owlTarget);
-        if (rdfType != null)
-            ptRes.restriction(fact.fhir_cardinality_restriction(value, fact.fhir_datatype(rdfType).resource, 1, 1));
+        Resource simpleRdfType = RDFTypeMap.xsd_type_for(ptName, owlTarget);
+            if(RDFTypeMap.unionTypesMap.containsKey(ptName)) {  // complex types like dateTime that are a union of types
+                ptRes.restriction(fact.fhir_cardinality_restriction(v, RDFTypeMap.unionTypesMap.get(ptName), 1, 1));
+            } else if (simpleRdfType != null) {
+                ptRes.restriction(fact.fhir_cardinality_restriction(v, simpleRdfType, 1, 1));
+            }
     }
 
 
@@ -207,10 +249,10 @@ public class FhirTurtleGenerator {
             if (dspType.endsWith("+")) {
                 List<Resource> facets = new ArrayList<Resource>(1);
                 facets.add(fact.fhir_pattern(dsp.getRegex()));
-                dspRes.restriction(fact.fhir_restriction(value,
+                dspRes.restriction(fact.fhir_restriction(v,
                         fact.fhir_datatype_restriction(dspTypeRes == XSD.xstring ? XSD.normalizedString : dspTypeRes, facets)));
             } else
-                dspRes.restriction(fact.fhir_restriction(value, dspTypeRes));
+                dspRes.restriction(fact.fhir_restriction(v, dspTypeRes));
         }
     }
 
@@ -235,6 +277,9 @@ public class FhirTurtleGenerator {
                         .addTitle(td.getShortDefn())
                         .addDefinition(td.getDefinition());
         processTypes(typeName, typeRes, td, typeName, false);
+        if(classHasModifierExtensions.contains(parentName)) {
+            genModifierExtensions(typeName, typeRes, parentName);
+        }
     }
 
     /**
@@ -259,13 +304,51 @@ public class FhirTurtleGenerator {
     private void genResourceDefn(ResourceDefn rd) throws Exception {
         String resourceName = rd.getName();
         ElementDefn resourceType = rd.getRoot();
+        Resource resource = resourceType.getTypes().isEmpty() ? OWL2.Thing : RDFNamespace.FHIR.resourceRef(resourceType.typeCode());
         FHIRResource rdRes =
-                fact.fhir_class(resourceName, resourceType.getTypes().isEmpty()? OWL2.Thing : RDFNamespace.FHIR.resourceRef(resourceType.typeCode()))
+                fact.fhir_class(resourceName, resource)
                         .addDefinition(rd.getDefinition());
         processTypes(resourceName, rdRes, resourceType, resourceName, true);
         if(!Utilities.noString(resourceType.getW5()))
             rdRes.addObjectProperty(RDFS.subClassOf, RDFNamespace.W5.resourceRef(resourceType.getW5()));
+        if(definitions.getResources().containsKey(resourceName)  && classHasModifierExtensions.contains(resource.getLocalName())) { 
+            //Bundle, Binary, Parameters, DomainResource should be excluded from this clause and not get modifier extensions here 
+            // since they are under fhir:Resource instead of fhir:DomainResource
+            genModifierExtensions(resourceName, rdRes, resource.getLocalName());
+        }
     }
+
+    /**
+     * Generates corresponding ontology for Modifier Extensions of fhir:OriginalClass as fhir:_OriginalClass
+     */
+    private void genModifierExtensions(String baseName, FHIRResource baseFR, String parentName) throws Exception {
+
+            // could change to instantiate only once
+            FHIRResource modifierExtensionClass = fact.fhir_resource("modifierExtensionClass", OWL2.AnnotationProperty, "modifierExtensionClass").addDataProperty(RDFS.comment, "has modifier extension class");
+            Property modifierExtensionClassProperty = ResourceFactory.createProperty(modifierExtensionClass.resource.toString());
+
+            FHIRResource modRes = fact.fhir_class("_" + baseName)
+                    .addObjectProperty(RDFS.subClassOf, RDFNamespace.FHIR.resourceRef("_" + parentName));
+            modRes.addDataProperty(RDFS.comment, "(Modified) " + baseName);
+            baseFR.addObjectProperty(modifierExtensionClassProperty, modRes);
+
+    }
+
+    /**
+     * Generates corresponding ontology for Modifier Extensions of fhir:OriginalProperty as fhir:_OriginalProperty
+     */
+    private void genPropertyModifierExtensions(String baseName, FHIRResource baseFR, String label) throws Exception {
+        if(baseName.equals("modifierExtension")) return; //skip the special case of fhir:modifierExtension
+
+        // could change to instantiate only once
+        FHIRResource hasExt = fact.fhir_resource("modifierExtensionProperty", OWL2.AnnotationProperty,"modifierExtensionProperty").addDataProperty(RDFS.comment, "has modifier extension property");
+        Property extProp = ResourceFactory.createProperty(hasExt.resource.toString());  
+
+        FHIRResource modRes = fact.fhir_objectProperty("_" + baseName);
+        modRes.addDataProperty(RDFS.comment, "(Modified) " + label);
+        baseFR.addObjectProperty(extProp, modRes);
+    }
+
 
     /**
      * Iterate over the Element Definitions in baseResource generating restrictions and properties
@@ -276,15 +359,18 @@ public class FhirTurtleGenerator {
      * @param innerIsBackbone True if we're processing a backbone element
      */
     HashSet<String> processing = new HashSet<String>();
-    private void processTypes(String baseResourceName, FHIRResource baseResource, ElementDefn td, String predicateBase, boolean innerIsBackbone) throws Exception {
+    private void processTypes(String baseResourceName, FHIRResource baseResource, ElementDefn td, String predicateBase, boolean innerIsBackbone)
+            throws Exception {
 
         for (ElementDefn ed : td.getElements()) {
             String predicateName = predicateBase + "." + (ed.getName().endsWith("[x]")?
-                            ed.getName().substring(0, ed.getName().length() - 3) : ed.getName());
+                    ed.getName().substring(0, ed.getName().length() - 3) : ed.getName());
+            String shortenedPropertyName = shortenName(predicateName);
             FHIRResource predicateResource;
 
             if (ed.getName().endsWith("[x]")) {
-                predicateResource = fact.fhir_objectProperty(predicateName);
+                predicateResource = fact.fhir_objectProperty(shortenedPropertyName);
+                genPropertyModifierExtensions(shortenedPropertyName, predicateResource, predicateName);
 
                 // Choice entry
                 if (ed.typeCode().equals("*")) {
@@ -296,69 +382,68 @@ public class FhirTurtleGenerator {
                                     targetResource,
                                     ed.getMinCardinality(),
                                     ed.getMaxCardinality()));
-                    predicateResource.domain(baseResource);
-                    predicateResource.range(targetResource);
                 } else {
                     // Create a restriction on the union of possible types
                     List<Resource> typeOpts = new ArrayList<Resource>();
                     for (TypeRef tr : ed.getTypes()) {
-                        // TODO: Figure out how to get the type reference code
-                        String trName = tr.getName();
-                        if(trName.equals("SimpleQuantity"))
-                            trName = "Quantity";
-                        String qualifiedPredicateName = predicateName + Utilities.capitalize(trName);
                         Resource targetRes = fact.fhir_class(tr.getName()).resource;
-                        FHIRResource qualifiedPredicate = fact.fhir_objectProperty(qualifiedPredicateName, predicateResource.resource)
-                                .domain(baseResource)
-                                .range(targetRes);
-                        typeOpts.add(
-                                fact.fhir_cardinality_restriction(qualifiedPredicate.resource,
-                                                                  targetRes,
-                                                                  ed.getMinCardinality(),
-                                                                  ed.getMaxCardinality()));
+//                        FHIRResource shortPredicate = fact.fhir_objectProperty(shortenedPropertyName, predicateResource.resource, predicateName);
+                        FHIRResource shortPredicate = fact.fhir_objectProperty(shortenedPropertyName, predicateResource.resource).addDataProperty(RDFS.comment, predicateName);
+                        typeOpts.addAll(
+                                fact.fhir_cardinality_restriction(shortPredicate.resource,
+                                        targetRes,
+                                        ed.getMinCardinality(),
+                                        ed.getMaxCardinality()));
                     }
                     baseResource.restriction(fact.fhir_union(typeOpts));
                 }
-            } else {
+            } else {  // does not end with [x]
                 FHIRResource baseDef;
-                if(ed.getTypes().isEmpty()) {
-                    predicateResource = fact.fhir_objectProperty(predicateName);
+                if (ed.getTypes().isEmpty()) {  //subnodes
+                    predicateResource = fact.fhir_objectProperty(shortenedPropertyName);
+                    genPropertyModifierExtensions(shortenedPropertyName, predicateResource, predicateName);
                     String targetClassName = mapComponentName(baseResourceName, ed.getDeclaredTypeName());
-                    baseDef = fact.fhir_class(targetClassName, innerIsBackbone? "BackboneElement": "Element")
-                            .addDefinition(ed.getDefinition());
+                    String shortedClassName = shortenName(targetClassName);
+                    baseDef = fact.fhir_class(shortedClassName, innerIsBackbone ? "BackboneElement" : "Element")
+                            .addDefinition(targetClassName + ": " + ed.getDefinition());
                     processTypes(targetClassName, baseDef, ed, predicateName, innerIsBackbone);
                 } else {
                     TypeRef targetType = ed.getTypes().get(0);
                     String targetName = targetType.getName();
-                    if(targetName.startsWith("@")) {        // Link to earlier definition
+                    if (targetName.startsWith("@")) {        // Link to earlier definition
                         ElementDefn targetRef = getElementForPath(targetName.substring(1));
                         String targetRefName = targetRef.getName();
                         String targetClassName = baseResourceName +
                                 Character.toUpperCase(targetRefName.charAt(0)) + targetRefName.substring(1);
-                        baseDef = fact.fhir_class(targetClassName, innerIsBackbone? "BackboneElement": "Element")
+                        baseDef = fact.fhir_class(targetClassName, innerIsBackbone ? "BackboneElement" : "Element")
                                 .addDefinition(ed.getDefinition())
                                 .addTitle(ed.getShortDefn());
-                        if(!processing.contains(targetRefName)) {
+                        if (!processing.contains(targetRefName)) {
                             processing.add(targetRefName);
                             processTypes(targetClassName, baseDef, targetRef, predicateName, innerIsBackbone);
                             processing.remove(targetRefName);
                         }
-                    } else {
+                    } else { // doesn't start with "@"
                         // A placeholder entry.  The rest of the information will be supplied elsewhere
                         baseDef = fact.fhir_class(targetName);
                     }
                     // XHTML the exception, in that the html doesn't derive from Primitive
                     if (targetName.equals("xhtml"))
-                        predicateResource = fact.fhir_dataProperty(predicateName);
+                        predicateResource = fact.fhir_dataProperty(shortenedPropertyName);
                     else
-                        predicateResource = fact.fhir_objectProperty(predicateName);
+                        predicateResource = fact.fhir_objectProperty(shortenedPropertyName);
+                    genPropertyModifierExtensions(shortenedPropertyName, predicateResource, predicateName);
                 }
-                predicateResource.addTitle(ed.getShortDefn())
-                        .addDefinition(ed.getDefinition())
-                        .domain(baseResource);
-                baseResource.restriction(
-                        fact.fhir_cardinality_restriction(predicateResource.resource, baseDef.resource, ed.getMinCardinality(), ed.getMaxCardinality()));
-                predicateResource.range(baseDef.resource);
+                predicateResource.addTitle(predicateName + ": " + ed.getShortDefn())
+                        .addDefinition(predicateName + ": " + ed.getDefinition());
+
+                if(ed.getName().equals("modifierExtension") && ed.hasModifier()) {
+                    // special case for modifierExtensions on original Resources having a cardinality of zero
+                    baseResource.restriction(fact.fhir_cardinality_restriction(predicateResource.resource, baseDef.resource, 0, 0));
+                } else {
+                    baseResource.restriction(
+                            fact.fhir_cardinality_restriction(predicateResource.resource, baseDef.resource, ed.getMinCardinality(), ed.getMaxCardinality()));
+                }
                 if(!Utilities.noString(ed.getW5()))
                     predicateResource.addObjectProperty(RDFS.subPropertyOf, RDFNamespace.W5.resourceRef(ed.getW5()));
             }
@@ -405,5 +490,13 @@ public class FhirTurtleGenerator {
         return definitions.hasPrimitiveType(name)
                 || (name.endsWith("Type")
                 && definitions.getPrimitives().containsKey(name.substring(0, name.length()-4)));
+    }
+
+    // used for shortening property names
+    private static String shortenName(String qualifiedName) {
+        if(qualifiedName.contains(".")) {
+            return qualifiedName.substring(qualifiedName.lastIndexOf(".") + 1);
+        }
+        return qualifiedName;
     }
 }

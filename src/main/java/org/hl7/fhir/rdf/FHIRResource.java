@@ -1,6 +1,7 @@
 package org.hl7.fhir.rdf;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.apache.jena.datatypes.xsd.XSDDatatype;
 import org.apache.jena.rdf.model.Model;
@@ -98,6 +99,10 @@ public class FHIRResource {
 
     public FHIRResource restriction(Resource restriction) {
         return addObjectProperty(RDFS.subClassOf, restriction);
+    }
+
+    public List<FHIRResource> restriction(List<Resource> restrictions) {
+        return restrictions.stream().map(restriction -> addObjectProperty(RDFS.subClassOf, restriction)).collect(Collectors.toList());
     }
 
 }

@@ -473,10 +473,12 @@ public class ExampleInspector implements IValidatorResourceFetcher, IValidationP
     if (r != null) {
       for (SearchParameterDefn sp : r.getSearchParams().values()) {
         if (!Utilities.noString(sp.getExpression())) {
-          if (sp.getExpressionNode() == null)
+          if (sp.getExpressionNode() == null) {
             sp.setExpressionNode(fpe.parse(sp.getExpression()));
-          if (fpe.evaluate(e, sp.getExpressionNode()).size() > 0)
+          }
+          if (fpe.evaluate(e, sp.getExpressionNode()).size() > 0) {
             sp.setWorks(true);
+          }
         }
       }
     }
@@ -485,12 +487,13 @@ public class ExampleInspector implements IValidatorResourceFetcher, IValidationP
   private void testSearchParameters(Element xe, String rn, boolean inBundle) throws FHIRException {
     ResourceDefn r = definitions.getResources().get(rn);
     for (SearchParameterDefn sp : r.getSearchParams().values()) {
-      if (!sp.isTested() && !Utilities.noString(sp.getExpression())) {
+      if (!Utilities.noString(sp.getExpression())) {
         try {
           sp.setTested(true);
           List<Base> nodes = fpe.evaluate(xe, sp.getExpression());
-          if (nodes.size() > 0)
+          if (nodes.size() > 0) {
             sp.setWorks(true);
+          }
         } catch (Exception e1) {
           throw new FHIRException("Expression \"" + sp.getExpression() + "\" execution failed: " + e1.getMessage(), e1);
         }
@@ -691,24 +694,32 @@ public class ExampleInspector implements IValidatorResourceFetcher, IValidationP
     boolean result = true;
     File testsDir = new File(Utilities.path(srcDir, rd.getName().toLowerCase(), "invariant-tests"));
     if (testsDir.exists()) {
-      for (File f : testsDir.listFiles()) {
-        if (f.getName().endsWith(".json")) {
-          result = testInvariant(rd, f) && result;
-        }
+      result = testInvariants(rd, result, testsDir);
+    }
+    return result;
+  }
+
+  private boolean testInvariants(ResourceDefn rd, boolean result, File testsDir) throws FileNotFoundException {
+    for (File f : testsDir.listFiles()) {
+      if (f.getName().endsWith(".json")) {
+        result = testInvariant(rd, f, FhirFormat.JSON) && result;
+      }
+      if (f.getName().endsWith(".xml")) {
+        result = testInvariant(rd, f, FhirFormat.XML) && result;
       }
     }
     return result;
   }
 
 
-  private boolean testInvariant(ResourceDefn rd, File f) throws FHIRException, FileNotFoundException {
+  private boolean testInvariant(ResourceDefn rd, File f, FhirFormat fmt) throws FHIRException, FileNotFoundException {
     String inv = f.getName();
     inv = inv.substring(0, inv.indexOf("."));
     Invariant con = rd.findInvariant(inv);
 
     if (con != null) {
       List<ValidationMessage> errs = new ArrayList<>();
-      validator.validate(null, errs, new FileInputStream(f), FhirFormat.JSON);
+      validator.validate(null, errs, new FileInputStream(f), fmt);
 
       boolean fail = false;
       for (ValidationMessage vm : errs) {

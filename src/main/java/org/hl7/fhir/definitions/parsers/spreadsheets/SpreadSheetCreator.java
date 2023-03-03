@@ -30,6 +30,8 @@ import org.hl7.fhir.r5.model.ElementDefinition.ElementDefinitionBindingComponent
 import org.hl7.fhir.r5.model.ElementDefinition.ElementDefinitionConstraintComponent;
 import org.hl7.fhir.r5.model.ElementDefinition.ElementDefinitionExampleComponent;
 import org.hl7.fhir.r5.model.ElementDefinition.TypeRefComponent;
+import org.hl7.fhir.r5.model.Enumeration;
+import org.hl7.fhir.r5.model.Enumerations.VersionIndependentResourceTypesAll;
 import org.hl7.fhir.r5.model.Extension;
 import org.hl7.fhir.r5.model.IdType;
 import org.hl7.fhir.r5.model.ImplementationGuide;
@@ -732,8 +734,8 @@ public class SpreadSheetCreator extends SpreadSheetBase {
 
   private String target(SearchParameter sp) {
     List<String> tl = new ArrayList<>();
-    for (CodeType c : sp.getTarget()) {
-      tl.add(c.primitiveValue());
+    for (Enumeration<VersionIndependentResourceTypesAll> c : sp.getTarget()) {
+      tl.add(c.getCode());
     }
     return String.join("|", tl);
   }
