@@ -262,7 +262,7 @@ public class XSDBaseGenerator  extends XSDRootGenerator {
     for (DefinedCode cd : definitions.getPrimitives().values()) {
       if (cd instanceof PrimitiveType) {
         PrimitiveType pt = (PrimitiveType) cd;
-        // two very special cases due to schema weirdness
+        // four very special cases due to schema weirdness
         if (cd.getCode().equals("date")) {
           write("  <xs:simpleType name=\"date-primitive\">\r\n");
           write("    <xs:restriction>\r\n");
@@ -287,6 +287,12 @@ public class XSDBaseGenerator  extends XSDRootGenerator {
           write("      <xs:pattern value=\"([01][0-9]|2[0-3]):[0-5][0-9]:([0-5][0-9]|60)(\\.[0-9]+)?\"/>\r\n");
           write("    </xs:restriction>\r\n");
           write("  </xs:simpleType>\r\n");          
+        } else if (cd.getCode().equals("base64Binary")) {
+          write("  <xs:simpleType name=\"base64Binary-primitive\">\r\n");
+          write("    <xs:restriction base=\"xs:base64Binary\">\r\n");
+          write("      <xs:pattern value=\"([A-Za-z0-9+/]{4})*([A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?\"/>\r\n");
+          write("    </xs:restriction>\r\n");
+          write("  </xs:simpleType>\r\n");
         } else {
           write("  <xs:simpleType name=\"" + pt.getCode() + "-primitive\">\r\n");
           if (pt.getSchemaType().contains(",")) {
