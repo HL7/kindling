@@ -6689,7 +6689,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
           rootException.setAttribute("resource", sd.getName());
           rootException.setAttribute("pattern", logical.getRoot().getName());
           rootException.appendChild(newExceptionsDoc.createComment("For information on the contents of this file and how to properly update it, see https://confluence.hl7.org/display/FHIR/Mapping+to+Patterns."));
-          String exceptionsPath = Utilities.path(folders.srcDir, sd.getName(), sd.getName().toLowerCase(Locale.ROOT) + "-" + logical.getRoot().getName().toLowerCase(Locale.ROOT) + "-mapping-exceptions.xml");
+          String exceptionsPath = Utilities.path(folders.srcDir, sd.getName().toLowerCase(), sd.getName().toLowerCase(Locale.ROOT) + "-" + logical.getRoot().getName().toLowerCase(Locale.ROOT) + "-mapping-exceptions.xml");
           CSFile exceptionsFile = new CSFile(exceptionsPath);
           if (exceptionsFile.exists()) {
             try {
