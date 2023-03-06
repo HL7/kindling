@@ -78,4 +78,5 @@ This project is maintained by [Grahame Grieve][Link-grahameGithub], [David Otase
 
 ## Extensions
 
-The FHIR IG 'fhir-extensions' is tightly integrated into this build.
+The FHIR IG 'fhir-extensions' is tightly integrated into the core spec that this project builds.
+
