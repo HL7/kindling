@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+
 import org.hl7.fhir.exceptions.FHIRException;
 import org.hl7.fhir.r5.context.ContextUtilities;
 import org.hl7.fhir.r5.context.IWorkerContext;
@@ -20,9 +21,12 @@ import org.hl7.fhir.r5.formats.IParser.OutputStyle;
 import org.hl7.fhir.r5.formats.JsonParser;
 import org.hl7.fhir.r5.formats.XmlParser;
 import org.hl7.fhir.r5.model.CanonicalResource;
+import org.hl7.fhir.r5.model.CodeSystem;
+import org.hl7.fhir.r5.model.CodeSystem.ConceptDefinitionComponent;
 import org.hl7.fhir.r5.model.ElementDefinition;
 import org.hl7.fhir.r5.model.ElementDefinition.ElementDefinitionConstraintComponent;
 import org.hl7.fhir.r5.model.ElementDefinition.TypeRefComponent;
+import org.hl7.fhir.r5.model.Enumerations.BindingStrength;
 import org.hl7.fhir.r5.model.EvidenceReport;
 import org.hl7.fhir.r5.model.Extension;
 import org.hl7.fhir.r5.model.IdType;
@@ -30,7 +34,10 @@ import org.hl7.fhir.r5.model.Resource;
 import org.hl7.fhir.r5.model.StructureDefinition;
 import org.hl7.fhir.r5.model.StructureDefinition.StructureDefinitionKind;
 import org.hl7.fhir.r5.model.StructureDefinition.TypeDerivationRule;
+import org.hl7.fhir.r5.model.ValueSet;
+import org.hl7.fhir.r5.model.ValueSet.ConceptSetComponent;
 import org.hl7.fhir.r5.utils.FHIRPathEngine;
+import org.hl7.fhir.r5.utils.ToolingExtensions;
 import org.hl7.fhir.utilities.TextFile;
 import org.hl7.fhir.utilities.Utilities;
 import org.hl7.fhir.utilities.npm.FilesystemPackageCacheManager;
@@ -127,20 +134,24 @@ public class VersionTransformGenerator {
     b.append("/// name = '"+sd.getType()+""+suffix+"'\r\n");
     b.append("/// title = 'FML Conversion for "+sd.getType()+": "+sourceV+" to "+targetV+"'\r\n");
     b.append("\r\n");
+    List<StringBuilder> list = new ArrayList<>();
+    Map<String, StringBuilder> conceptMaps = new HashMap<>(); 
+    generateGroup(list, conceptMaps, sd, sd.getSnapshot().getElementFirstRep(), sd.getType(), sd.getType()+""+sourceV, sd.getType()+""+targetV, srcVP, tgtVP);
+    for (String cmName : Utilities.sorted(conceptMaps.keySet())) {
+      b.append(conceptMaps.get(cmName).toString());
+    }
     b.append("uses \"http://hl7.org/fhir/"+srcVP+"StructureDefinition/"+sd.getType()+"\" alias "+sd.getType()+""+sourceV+" as source\r\n");
     b.append("uses \"http://hl7.org/fhir/"+tgtVP+"StructureDefinition/"+sd.getType()+"\" alias "+sd.getType()+""+targetV+" as target\r\n");
     b.append("\r\n");
     b.append("imports \"http://hl7.org/fhir/StructureMap/*"+suffix+"\"\r\n");
     b.append("\r\n");
-    List<StringBuilder> list = new ArrayList<>();
-    generateGroup(list, sd, sd.getSnapshot().getElementFirstRep(), sd.getType(), sd.getType()+""+sourceV, sd.getType()+""+targetV);
     for (StringBuilder gb : list) {
       b.append(gb.toString());
     }
     TextFile.stringToFile(b.toString(), path);
   }
 
-  private void generateGroup(List<StringBuilder> list, StructureDefinition sd, ElementDefinition ed, String name, String st, String tt) {
+  private void generateGroup(List<StringBuilder> list, Map<String, StringBuilder> conceptMaps, StructureDefinition sd, ElementDefinition ed, String name, String st, String tt, String sv, String tv) {
     StringBuilder b = new StringBuilder();
     list.add(b);
     if (st != null) {
@@ -155,17 +166,53 @@ public class VersionTransformGenerator {
           if (Utilities.existsInList(td.getWorkingCode(), "Element", "BackboneElement")) {
             String gn = name+Utilities.capitalize(ted.getName());
             b.append("  src."+ted.getNameBase()+" as s -> tgt."+ted.getNameBase()+" as t then "+gn+"(s,t);\r\n");
-            generateGroup(list, sd, ted, gn, null, null);
-          } else if (ted.getType().size() == 1) {
-            b.append("  src."+ted.getNameBase()+" -> tgt."+ted.getNameBase()+";\r\n");
-          } else {
+            generateGroup(list, conceptMaps, sd, ted, gn, null, null, sv, tv);
+          } else if (ted.getType().size() > 1) {
             b.append("  src."+ted.getNameBase()+" : "+td.getWorkingCode()+" -> tgt."+ted.getNameBase()+";\r\n");
+          } else {
+            if (ted.getBinding().getStrength() == BindingStrength.REQUIRED) {            
+              ValueSet vs = context.fetchResource(ValueSet.class, ted.getBinding().getValueSet());
+              CodeSystem cs = vs == null ? null : getCodeSystemForValueSet(vs);
+              if (vs != null && cs != null) {
+                String cmName = ted.getBinding().hasExtension(ToolingExtensions.EXT_BINDING_NAME) ? ted.getBinding().getExtensionString(ToolingExtensions.EXT_BINDING_NAME) : vs.getId();
+                genConceptMap(conceptMaps, cmName, vs, cs, sv, tv);
+                b.append("  src."+ted.getNameBase()+" as v -> tgt."+ted.getNameBase()+" = translate(v, '#"+cmName+"', 'code');\r\n");
+                break;
+              }
+            }
+            b.append("  src."+ted.getNameBase()+" -> tgt."+ted.getNameBase()+";\r\n");
           }
         }
       }
     }
     b.append("}\r\n");
     b.append("\r\n");
+  }
+
+  private CodeSystem getCodeSystemForValueSet(ValueSet vs) {
+    if (vs.getCompose().getExclude().isEmpty() && vs.getCompose().getInclude().size() == 1) {
+      ConceptSetComponent inc = vs.getCompose().getIncludeFirstRep();
+      if (inc.getConcept().isEmpty() && inc.getFilter().isEmpty() && inc.getSystem().startsWith("http://hl7.org/fhir/")) {
+        return context.fetchResource(CodeSystem.class, inc.getSystem());
+      }
+    }
+    return null;
+  }
+
+  private void genConceptMap(Map<String, StringBuilder> conceptMaps, String cmName, ValueSet vs, CodeSystem cs, String sv, String tv) {
+    if (!conceptMaps.containsKey(cmName)) {
+      StringBuilder b = new StringBuilder();
+      conceptMaps.put(cmName, b);
+
+      b.append("conceptmap \""+cmName+"\" {\r\n");
+      b.append("  prefix s = \""+cs.getUrl().replace("http://hl7.org/fhir/", "http://hl7.org/fhir/"+sv)+"\"\r\n");
+      b.append("  prefix t = \""+cs.getUrl().replace("http://hl7.org/fhir/", "http://hl7.org/fhir/"+tv)+"\"\r\n\r\n");
+
+      for (ConceptDefinitionComponent cd : cs.getConcept()) {
+        b.append("  s:\""+cd.getCode()+"\" - t:\""+cd.getCode()+"\"\r\n");
+      }
+      b.append("}\r\n\r\n");
+    }
   }
 
   private String tail(String url) {

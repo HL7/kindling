@@ -821,7 +821,7 @@ public class ResourceParser {
       if (!id.equals(cs.getId())) {
         throw new FHIRException("Error loading "+csfn+": id mismatch. Expected "+id+" but found "+cs.getId());        
       }
-      boolean save = CodeSystemUtilities.makeCSShareable(cs);
+      boolean save = CodeSystemUtilities.checkMakeShareable(cs);
       if (!cs.hasUrl()) {
         cs.setUrl("http://hl7.org/fhir/"+cs.getId());
         save = true;
@@ -895,6 +895,7 @@ public class ResourceParser {
         cm.setUserData("filename", cmid);
         cm.setUserData("path", cmid+".html");
         cm.setUserData("generate", "true");
+        ConceptMapUtilities.makeShareable(cm);
         if (!ConceptMapUtilities.hasOID(cm)) {
           String oid = registry.getOID(cm.getUrl());
           if (oid != null) {
