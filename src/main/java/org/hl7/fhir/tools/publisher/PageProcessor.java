@@ -461,10 +461,10 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
   private ValueSetValidator vsValidator;
   boolean forPublication;
   private String resourceCategory;
-  private SpecDifferenceEvaluator diffEngine = new SpecDifferenceEvaluator();
+  private SpecDifferenceEvaluator diffEngine;
   private Bundle typeBundle;
   private Bundle resourceBundle;
-  private JsonObject r3r4Outcomes;
+  private JsonObject r4r5Outcomes;
   private Map<String, Map<String, PageInfo>> normativePackages = new HashMap<String, Map<String, PageInfo>>();
   private List<String> normativePages = new ArrayList<String>();
   private MarkDownProcessor processor = new MarkDownProcessor(Dialect.COMMON_MARK);
@@ -2191,13 +2191,13 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
        return "No R4/R5 map exists for "+name;
     }
     String n = name.toLowerCase();
-    String status = r3r4StatusForResource(name);
-    String fwds = TextFile.fileToString(Utilities.path(folders.rootDir, "implementations", "r3maps", "R3toR4",  r3nameForResource(name)+".map"));
-    String bcks = TextFile.fileToString(Utilities.path(folders.rootDir, "implementations", "r3maps", "R4toR3", name+".map"));
+    String status = r4r5StatusForResource(name);
+    String fwds = TextFile.fileToString(Utilities.path(folders.rootDir, "implementations", "r4maps", "R4toR5",  r4nameForResource(name)+".map"));
+    String bcks = TextFile.fileToString(Utilities.path(folders.rootDir, "implementations", "r4maps", "R5toR4", name+".map"));
     String fwdsStatus =  "";
     String bcksStatus =  "";
     try {
-      new StructureMapUtilities(workerContext).parse(fwds, r3nameForResource(name)+".map");
+      new StructureMapUtilities(workerContext).parse(fwds, r4nameForResource(name)+".map");
     } catch (FHIRException e) {
       fwdsStatus = "<p style=\"background-color: #ffb3b3; border:1px solid maroon; padding: 5px;\">This script does not compile: "+e.getMessage()+"</p>\r\n";
     }
@@ -2229,21 +2229,13 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     bcksStatus+"\r\n";
   }
 
-  public String r3nameForResource(String name) {
-    if ("BodyStructure".equals(name)) {
-      return "BodySite";
+  public String r4nameForResource(String name) {
+    
+    if ("DeviceUseStatement".equals(name)) {
+      return "DeviceUsage";
     }
-    if ("CoverageEligibilityRequest".equals(name)) {
-      return "EligibilityRequest";
-    }
-    if ("CoverageEligibilityResponse".equals(name)) {
-      return "EligibilityResponse";
-    }
-    if ("CoverageEligibilityResponse".equals(name)) {
-      return "EligibilityResponse";
-    }
-    if ("MolecularSequence".equals(name)) {
-      return "Sequence";
+    if ("RequestGroup".equals(name)) {
+      return "RequestOrchestration";
     }
     return name;
   }
@@ -2284,8 +2276,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     }
 
     for (ValueSet vs : getValueSets().getList()) {
-      if (!diffEngine.getRevision().getValuesets().containsKey(vs.getUrl()))
-        diffEngine.getRevision().getValuesets().put(vs.getUrl(), vs);
+      diffEngine.getRevision().getValuesets().add(vs);
       if (vs.getUserData(ToolResourceUtilities.NAME_VS_USE_MARKER) != null) {
         ValueSet evs = null;
         if (vs.hasUserData("expansion"))
@@ -2297,8 +2288,8 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
             vs.setUserData("expansion", evs);
           }
         }
-        if (evs != null && !diffEngine.getRevision().getExpansions().containsKey(evs.getUrl())) {
-          diffEngine.getRevision().getExpansions().put(evs.getUrl(), evs);
+        if (evs != null) {
+          diffEngine.getRevision().getExpansions().add(evs);
         }
       }
     }
@@ -7631,9 +7622,9 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
 
   private String getR3r4transformNote(String name) throws IOException {
     StringBuilder b = new StringBuilder();
-    if (new File(Utilities.path(folders.rootDir, "implementations", "r3maps", "R3toR4", name+".map")).exists()) {
-      String st = r3r4StatusForResource(name);
-      return "<p>See <a href=\""+name.toLowerCase()+"-version-maps.html\">R3 &lt;--&gt; R4 Conversion Maps</a> (status = "+st+")</p>\r\n";
+    if (new File(Utilities.path(folders.rootDir, "implementations", "r4maps", "R4toR5", name+".map")).exists()) {
+      String st = r4r5StatusForResource(name);
+      return "<p>See <a href=\""+name.toLowerCase()+"-version-maps.html\">R4 &lt;--&gt; R5 Conversion Maps</a> (status = "+st+")</p>\r\n";
     } else
     return "";
   }
@@ -10390,7 +10381,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
   public void setFolders(FolderManager folders) throws Exception {
     this.folders = folders;
     htmlchecker = new HTMLLinkChecker(this, validationErrors, webLocation);
-    r3r4Outcomes = (JsonObject) new com.google.gson.JsonParser().parse(TextFile.fileToString(Utilities.path(folders.rootDir, "implementations", "r3maps", "outcomes.json")));
+    r4r5Outcomes = (JsonObject) new com.google.gson.JsonParser().parse(TextFile.fileToString(Utilities.path(folders.rootDir, "implementations", "r4maps", "outcomes.json")));
     for (File f : new File(Utilities.path(folders.rootDir, "tools", "macros")).listFiles()) {
       if (f.getAbsolutePath().endsWith(".html")) {
         macros.put(Utilities.fileTitle(f.getName()), TextFile.fileToString(f));
@@ -11489,7 +11480,7 @@ private int countContains(List<ValueSetExpansionContainsComponent> list) {
     diffEngine = null;
     typeBundle = null;
     resourceBundle = null;
-    r3r4Outcomes = null;
+    r4r5Outcomes = null;
     normativePackages = null;
     processor = null;
 
@@ -11816,7 +11807,7 @@ private int countContains(List<ValueSetExpansionContainsComponent> list) {
 
   public SpecDifferenceEvaluator getDiffEngine() {
     if (diffEngine == null)
-      return null;
+      diffEngine = new SpecDifferenceEvaluator(workerContext);
     return diffEngine; 
   }
 
@@ -11862,8 +11853,8 @@ private int countContains(List<ValueSetExpansionContainsComponent> list) {
     int testCount;
     int executeFailCount;
     int roundTripFailCount;
-    int r4ValidationFailCount;
-    int r4ValidationErrors;
+    int r5ValidationFailCount;
+    int r5ValidationErrors;
     public boolean isMapped() {
       return mapped;
     }
@@ -11879,26 +11870,26 @@ private int countContains(List<ValueSetExpansionContainsComponent> list) {
     public int getExecuteFailCount() {
       return executeFailCount;
     }
-    public void setExecuteFailCount(int executeFailCount) {
-      this.executeFailCount = executeFailCount;
+    public void setExecuteFailCount(int value) {
+      this.executeFailCount = value;
     }
     public int getRoundTripFailCount() {
       return roundTripFailCount;
     }
-    public void setRoundTripFailCount(int roundTripFailCount) {
-      this.roundTripFailCount = roundTripFailCount;
+    public void setRoundTripFailCount(int value) {
+      this.roundTripFailCount = value;
     }
-    public int getR4ValidationFailCount() {
-      return r4ValidationFailCount;
+    public int getR5ValidationFailCount() {
+      return r5ValidationFailCount;
     }
-    public void setR4ValidationFailCount(int r3ValidationFailCount) {
-      this.r4ValidationFailCount = r3ValidationFailCount;
+    public void setR5ValidationFailCount(int value) {
+      this.r5ValidationFailCount = value;
     }
-    public int getR4ValidationErrors() {
-      return r4ValidationErrors;
+    public int getR5ValidationErrors() {
+      return r5ValidationErrors;
     }
-    public void setR4ValidationErrors(int r3ValidationErrors) {
-      this.r4ValidationErrors = r3ValidationErrors;
+    public void setR5ValidationErrors(int value) {
+      this.r5ValidationErrors = value;
     }
     public int executePct() {
       return (executeCount() * 100) / testCount;
@@ -11910,7 +11901,7 @@ private int countContains(List<ValueSetExpansionContainsComponent> list) {
       return executeCount() == 0 ? 0 : ((executeCount() - roundTripFailCount) * 100) / executeCount();
     }
     public int r4ValidPct() {
-      return executeCount() == 0 ? 0 : ((executeCount() - r4ValidationFailCount) * 100) / executeCount();
+      return executeCount() == 0 ? 0 : ((executeCount() - r5ValidationFailCount) * 100) / executeCount();
     }
 
   }
@@ -11925,14 +11916,14 @@ private int countContains(List<ValueSetExpansionContainsComponent> list) {
         b.append("<td style=\"background-color: "+mapsBckColor(rs.executePct(), "#ffaaaa", "#ffffff")+"\">"+Integer.toString(rs.executePct())+"</td>");
         b.append("<td style=\"background-color: "+mapsBckColor(rs.roundTripPct(), "#ffcccc", "#ffffff")+"\">"+Integer.toString(rs.roundTripPct())+"</td>");
         b.append("<td style=\"background-color: "+mapsBckColor(rs.r4ValidPct(), "#ffcccc", "#ffffff")+"\">"+Integer.toString(rs.r4ValidPct())+"</td>");
-        if (rs.getR4ValidationErrors() > 0)
-          b.append("<td>"+Integer.toString(rs.getR4ValidationErrors())+"</td>");
+        if (rs.getR5ValidationErrors() > 0)
+          b.append("<td>"+Integer.toString(rs.getR5ValidationErrors())+"</td>");
         else
           b.append("<td></td>");
 
       } else {
         b.append("<tr><td>"+n+"</td>");
-        b.append("<td colspan=\"54\" style=\"background-color: #efefef\">No r3:r4 maps available</td>");
+        b.append("<td colspan=\"54\" style=\"background-color: #efefef\">No r4:r5 maps available</td>");
       }
       b.append("</tr>");
     }
@@ -11941,8 +11932,8 @@ private int countContains(List<ValueSetExpansionContainsComponent> list) {
 
   private ResourceSummary getResourceSummary(String n) throws IOException {
     ResourceSummary rs = new ResourceSummary();
-    JsonObject r = r3r4Outcomes.getAsJsonObject(n);
-    if (r != null && (new File(Utilities.path(folders.rootDir, "implementations", "r3maps", "R4toR3", n+".map")).exists())) {
+    JsonObject r = r4r5Outcomes.getAsJsonObject(n);
+    if (r != null && (new File(Utilities.path(folders.rootDir, "implementations", "r4maps", "R5toR4", n+".map")).exists())) {
       rs.setMapped(true);
       for (Entry<String, JsonElement> e : r.entrySet()) {
         JsonObject el = (JsonObject) e.getValue();
@@ -11950,12 +11941,12 @@ private int countContains(List<ValueSetExpansionContainsComponent> list) {
         JsonPrimitive p = el.getAsJsonPrimitive("execution");
         if (p!= null && !p.isBoolean())
           rs.executeFailCount++;
-        if (el.has("r4.errors")) {
-          rs.r4ValidationFailCount++;
-          if (el.getAsJsonArray("r3.errors") != null)
-            rs.r4ValidationErrors = rs.r4ValidationErrors+el.getAsJsonArray("r3.errors").size();
+        if (el.has("r5.errors")) {
+          rs.r5ValidationFailCount++;
+          if (el.getAsJsonArray("r4.errors") != null)
+            rs.r5ValidationErrors = rs.r5ValidationErrors+el.getAsJsonArray("r4.errors").size();
           else
-            rs.r4ValidationErrors = rs.r4ValidationErrors;
+            rs.r5ValidationErrors = rs.r5ValidationErrors;
         }
         if (el.has("round-trip"))
           rs.roundTripFailCount++;
@@ -11969,7 +11960,7 @@ private int countContains(List<ValueSetExpansionContainsComponent> list) {
     return pct == 100 ? goodColor : badColor;
   }
 
-  public String r3r4StatusForResource(String name) throws IOException {
+  public String r4r5StatusForResource(String name) throws IOException {
     ResourceSummary rs = getResourceSummary(name);
     if (!rs.isMapped())
       return "Not Mapped";
@@ -11986,10 +11977,10 @@ private int countContains(List<ValueSetExpansionContainsComponent> list) {
         b.append(" All tests pass round-trip testing ");
       else
         b.append(" <span style=\"background-color: #ccffcc\">"+Integer.toString(rs.getRoundTripFailCount())+" fail round-trip testing</span>");
-      if (rs.getR4ValidationFailCount() == 0)
-        b.append(" and all r3 resources are valid.");
+      if (rs.getR5ValidationFailCount() == 0)
+        b.append(" and all r4 resources are valid.");
       else
-        b.append(" and <span style=\"background-color: #E0B0FF\">"+Integer.toString(rs.getR4ValidationFailCount())+" r3 resources are invalid ("+Integer.toString(rs.getR4ValidationErrors())+" errors).</span>");
+        b.append(" and <span style=\"background-color: #E0B0FF\">"+Integer.toString(rs.getR5ValidationFailCount())+" r4 resources are invalid ("+Integer.toString(rs.getR5ValidationErrors())+" errors).</span>");
     }
     return b.toString();
 
@@ -12004,9 +11995,9 @@ private int countContains(List<ValueSetExpansionContainsComponent> list) {
     return null;
   }
 
-  public String getR3R4ValidationErrors(String name) {
+  public String getR4R5ValidationErrors(String name) {
     StringBuilder b = new StringBuilder();
-    JsonObject r = r3r4Outcomes.getAsJsonObject(name);
+    JsonObject r = r4r5Outcomes.getAsJsonObject(name);
     if (r != null) {
       boolean first = true;
       for (Entry<String, JsonElement> e : r.entrySet()) {
@@ -12020,7 +12011,7 @@ private int countContains(List<ValueSetExpansionContainsComponent> list) {
           b.append("  <td>");
           b.append(e.getKey());
           b.append("</td>\r\n");
-          JsonArray arr = el.getAsJsonArray("r3.errors");
+          JsonArray arr = el.getAsJsonArray("r4.errors");
           b.append("  <td>");
           b.append("   <ul>");
           for (JsonElement n : arr) {

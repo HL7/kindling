@@ -87,6 +87,7 @@ import org.eclipse.jgit.lib.Ref;
 import org.eclipse.jgit.transport.RemoteConfig;
 import org.eclipse.jgit.transport.URIish;
 import org.hl7.fhir.convertors.factory.VersionConvertorFactory_40_50;
+import org.hl7.fhir.convertors.factory.VersionConvertorFactory_43_50;
 import org.hl7.fhir.definitions.Config;
 import org.hl7.fhir.definitions.generators.specification.DataTypeTableGenerator;
 import org.hl7.fhir.definitions.generators.specification.DictHTMLGenerator;
@@ -573,16 +574,6 @@ public class Publisher implements URIResolver, SectionNumberer {
     pub.execute(dir, args);
   }
 
-  private Publisher () {
-    try {
-      SchemaFactory schemaFactory = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
-      Schema exceptionsSchema = schemaFactory.newSchema(new File(MAPPING_EXCEPTIONS_SCHEMA));
-      mappingExceptionsValidator = exceptionsSchema.newValidator();
-    } catch (SAXException e) {
-      System.out.println("Error loading schema " + MAPPING_EXCEPTIONS_SCHEMA);
-    }
-  }
-
   private static boolean hasParam(String[] args, String param) {
     for (String a : args)
       if (a.equals(param))
@@ -713,9 +704,9 @@ public class Publisher implements URIResolver, SectionNumberer {
       tester.initialTests();
       page.setFolders(new FolderManager(folder, outputdir));
       checkGit(folder);
+      loadMappingExceptionsSchema(folder);
       if (!initialize(folder))
         throw new Exception("Unable to publish as preconditions aren't met");
-
 
       cache = new IniFile(page.getFolders().rootDir + "temp" + File.separator + "build.cache");
       loadSuppressedMessages(page.getFolders().rootDir);
@@ -889,6 +880,16 @@ public class Publisher implements URIResolver, SectionNumberer {
       e.printStackTrace();
       TextFile.stringToFile(StringUtils.defaultString(e.getMessage()), Utilities.path(outputdir, "simple-error.txt"));
       System.exit(1);
+    }
+  }
+
+  private void loadMappingExceptionsSchema(String folder) throws IOException {
+    try {
+      SchemaFactory schemaFactory = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
+      Schema exceptionsSchema = schemaFactory.newSchema(new File(Utilities.path(folder, MAPPING_EXCEPTIONS_SCHEMA)));
+      mappingExceptionsValidator = exceptionsSchema.newValidator();
+    } catch (SAXException e) {
+      System.out.println("Error loading schema " + MAPPING_EXCEPTIONS_SCHEMA+": "+e.getMessage());
     }
   }
 
@@ -1081,6 +1082,7 @@ public class Publisher implements URIResolver, SectionNumberer {
 
   private void testInvariants() throws FHIRException, IOException {
     page.log("... check invariants", LogMessageType.Process);
+    
     // first part: compile the invariants to check them 
     // second part: run the invariants
     boolean ok = true;
@@ -1097,11 +1099,13 @@ public class Publisher implements URIResolver, SectionNumberer {
       }
     }
     
+    ZipGenerator zip = new ZipGenerator(Utilities.path(page.getFolders().dstDir, "invariant-tests.zip"));
     for (String rname : page.getDefinitions().sortedResourceNames()) {
-      if (!ei.testInvariants(page.getFolders().srcDir, page.getDefinitions().getResourceByName(rname))) {
+      if (!ei.testInvariants(page.getFolders().srcDir, page.getDefinitions().getResourceByName(rname), zip)) {
         ok = false;
       }
     }
+    zip.close();
     if (!ok) {
       throw new Error("Some invariants failed testing");
     }
@@ -2898,6 +2902,8 @@ public class Publisher implements URIResolver, SectionNumberer {
 
     page.log("Load R4 Definitions", LogMessageType.Process);
     loadR4Definitions();
+    page.log("Load R4B Definitions", LogMessageType.Process);
+    loadR4BDefinitions();
     page.log("Produce Content", LogMessageType.Process);
     produceSpec();
 
@@ -2918,12 +2924,12 @@ public class Publisher implements URIResolver, SectionNumberer {
 
 
   private void loadR4Definitions() throws FileNotFoundException, FHIRException, IOException {
-    loadR4DefinitionBundle(page.getDiffEngine().getOriginal().getTypes(), Utilities.path(page.getFolders().rootDir, "tools", "history", "release4", "profiles-types.xml"));
-    loadR4DefinitionBundle(page.getDiffEngine().getOriginal().getResources(), Utilities.path(page.getFolders().rootDir, "tools", "history", "release4", "profiles-resources.xml"));
+    loadR4DefinitionBundle(page.getDiffEngine().getOriginalR4().getTypes(), Utilities.path(page.getFolders().rootDir, "tools", "history", "release4", "profiles-types.xml"));
+    loadR4DefinitionBundle(page.getDiffEngine().getOriginalR4().getResources(), Utilities.path(page.getFolders().rootDir, "tools", "history", "release4", "profiles-resources.xml"));
 //    loadR4DefinitionBundle(page.getDiffEngine().getOriginal().getExtensions(), Utilities.path(page.getFolders().rootDir, "tools", "history", "release4", "extension-definitions.xml"));
-    loadR4DefinitionBundle(page.getDiffEngine().getOriginal().getProfiles(), Utilities.path(page.getFolders().rootDir, "tools", "history", "release4", "profiles-others.xml"));
-    loadValueSetBundle(page.getDiffEngine().getOriginal().getExpansions(), Utilities.path(page.getFolders().rootDir, "tools", "history", "release4", "expansions.xml"));
-    loadValueSetBundle(page.getDiffEngine().getOriginal().getValuesets(), Utilities.path(page.getFolders().rootDir, "tools", "history", "release4", "valuesets.xml"));
+    loadR4DefinitionBundle(page.getDiffEngine().getOriginalR4().getProfiles(), Utilities.path(page.getFolders().rootDir, "tools", "history", "release4", "profiles-others.xml"));
+    loadValueSetBundle(page.getDiffEngine().getOriginalR4().getExpansions(), Utilities.path(page.getFolders().rootDir, "tools", "history", "release4", "expansions.xml"));
+    loadValueSetBundle(page.getDiffEngine().getOriginalR4().getValuesets(), Utilities.path(page.getFolders().rootDir, "tools", "history", "release4", "valuesets.xml"));
   }
 
   private void loadR4DefinitionBundle(Map<String, StructureDefinition> map, String fn) throws FHIRException, FileNotFoundException, IOException {
@@ -2936,13 +2942,43 @@ public class Publisher implements URIResolver, SectionNumberer {
     }
   }
   
-  private static void loadValueSetBundle(Map<String, ValueSet> map, String fn) throws FHIRException, FileNotFoundException, IOException {
+  private static void loadValueSetBundle(List<ValueSet> map, String fn) throws FHIRException, FileNotFoundException, IOException {
     org.hl7.fhir.r4.model.Bundle bundle = (org.hl7.fhir.r4.model.Bundle) new org.hl7.fhir.r4.formats.XmlParser().parse(new FileInputStream(fn));
     for (org.hl7.fhir.r4.model.Bundle.BundleEntryComponent be : bundle.getEntry()) {
       if (be.getResource() instanceof org.hl7.fhir.r4.model.ValueSet) {
-        org.hl7.fhir.r4.model.ValueSet sd = (org.hl7.fhir.r4.model.ValueSet) be.getResource();
-        sd.setUserData("old", "r4");
-        map.put(sd.getName(), (ValueSet) VersionConvertorFactory_40_50.convertResource(sd));
+        org.hl7.fhir.r4.model.ValueSet vs = (org.hl7.fhir.r4.model.ValueSet) be.getResource();
+        vs.setUserData("old", "r4");
+        map.add((ValueSet) VersionConvertorFactory_40_50.convertResource(vs));
+      }
+    }    
+  }
+
+  private void loadR4BDefinitions() throws FileNotFoundException, FHIRException, IOException {
+    loadR4BDefinitionBundle(page.getDiffEngine().getOriginalR4B().getTypes(), Utilities.path(page.getFolders().rootDir, "tools", "history", "release4b", "profiles-types.xml"));
+    loadR4BDefinitionBundle(page.getDiffEngine().getOriginalR4B().getResources(), Utilities.path(page.getFolders().rootDir, "tools", "history", "release4b", "profiles-resources.xml"));
+//    loadR4DefinitionBundle(page.getDiffEngine().getOriginal().getExtensions(), Utilities.path(page.getFolders().rootDir, "tools", "history", "release4", "extension-definitions.xml"));
+    loadR4BDefinitionBundle(page.getDiffEngine().getOriginalR4B().getProfiles(), Utilities.path(page.getFolders().rootDir, "tools", "history", "release4b", "profiles-others.xml"));
+    loadValueSetBundleB(page.getDiffEngine().getOriginalR4B().getExpansions(), Utilities.path(page.getFolders().rootDir, "tools", "history", "release4b", "expansions.xml"));
+    loadValueSetBundleB(page.getDiffEngine().getOriginalR4B().getValuesets(), Utilities.path(page.getFolders().rootDir, "tools", "history", "release4b", "valuesets.xml"));
+  }
+
+  private void loadR4BDefinitionBundle(Map<String, StructureDefinition> map, String fn) throws FHIRException, FileNotFoundException, IOException {
+    org.hl7.fhir.r4b.model.Bundle bundle = (org.hl7.fhir.r4b.model.Bundle) new org.hl7.fhir.r4b.formats.XmlParser().parse(new FileInputStream(fn));
+    for (org.hl7.fhir.r4b.model.Bundle.BundleEntryComponent be : bundle.getEntry()) {
+      if (be.getResource() instanceof org.hl7.fhir.r4b.model.StructureDefinition) {
+        org.hl7.fhir.r4b.model.StructureDefinition sd = (org.hl7.fhir.r4b.model.StructureDefinition) be.getResource();
+        map.put(sd.getName(), (StructureDefinition) VersionConvertorFactory_43_50.convertResource(sd));
+      }
+    }
+  }
+  
+  private static void loadValueSetBundleB(List<ValueSet> map, String fn) throws FHIRException, FileNotFoundException, IOException {
+    org.hl7.fhir.r4b.model.Bundle bundle = (org.hl7.fhir.r4b.model.Bundle) new org.hl7.fhir.r4b.formats.XmlParser().parse(new FileInputStream(fn));
+    for (org.hl7.fhir.r4b.model.Bundle.BundleEntryComponent be : bundle.getEntry()) {
+      if (be.getResource() instanceof org.hl7.fhir.r4b.model.ValueSet) {
+        org.hl7.fhir.r4b.model.ValueSet vs = (org.hl7.fhir.r4b.model.ValueSet) be.getResource();
+        vs.setUserData("old", "r4");
+        map.add((ValueSet) VersionConvertorFactory_43_50.convertResource(vs));
       }
     }    
   }
@@ -3198,20 +3234,36 @@ public class Publisher implements URIResolver, SectionNumberer {
       page.log(" ...collections ", LogMessageType.Process);
 
       com.google.gson.JsonObject diff = new com.google.gson.JsonObject();
-      page.getDiffEngine().getDiffAsJson(diff);
+      page.getDiffEngine().getDiffAsJson(diff, true);
       Gson gson = new GsonBuilder().setPrettyPrinting().create();
       Gson gsonp = new GsonBuilder().create();
       String json = gson.toJson(diff);
-      TextFile.stringToFile(json, Utilities.path(page.getFolders().dstDir, "fhir.diff.json"));
+      TextFile.stringToFile(json, Utilities.path(page.getFolders().dstDir, "fhir.r4.diff.json"));
+
+      diff = new com.google.gson.JsonObject();
+      page.getDiffEngine().getDiffAsJson(diff, false);
+      gson = new GsonBuilder().setPrettyPrinting().create();
+      gsonp = new GsonBuilder().create();
+      json = gson.toJson(diff);
+      TextFile.stringToFile(json, Utilities.path(page.getFolders().dstDir, "fhir.r4b.diff.json"));
 
       DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
       DocumentBuilder builder = dbf.newDocumentBuilder();
       Document doc = builder.newDocument();
       Element element = doc.createElement("difference");
       doc.appendChild(element);
-      page.getDiffEngine().getDiffAsXml(doc, element);
-      prettyPrint(doc, Utilities.path(page.getFolders().dstDir, "fhir.diff.xml"));
+      page.getDiffEngine().getDiffAsXml(doc, element, true);
+      prettyPrint(doc, Utilities.path(page.getFolders().dstDir, "fhir.r4.diff.xml"));
+
+      dbf = DocumentBuilderFactory.newInstance();
+      builder = dbf.newDocumentBuilder();
+      doc = builder.newDocument();
+      element = doc.createElement("difference");
+      doc.appendChild(element);
+      page.getDiffEngine().getDiffAsXml(doc, element, false);
+      prettyPrint(doc, Utilities.path(page.getFolders().dstDir, "fhir.r4b.diff.xml"));
       
+
       checkBundleURLs(page.getResourceBundle());
       checkStructureDefinitions(page.getResourceBundle());
       page.getResourceBundle().getEntry().sort(new ProfileBundleSorter());
@@ -3427,11 +3479,19 @@ public class Publisher implements URIResolver, SectionNumberer {
       System.gc();
 
       page.log("....r4 in r5 format", LogMessageType.Process);
-      zip = new ZipGenerator(page.getFolders().dstDir + "definitions-r2asr3.xml.zip");
-      page.getDiffEngine().saveR4AsR5(zip, FhirFormat.XML);
+      zip = new ZipGenerator(page.getFolders().dstDir + "definitions-r4asr5.xml.zip");
+      page.getDiffEngine().saveR4AsR5(zip, FhirFormat.XML, true);
       zip.close();
-      zip = new ZipGenerator(page.getFolders().dstDir + "definitions-r2asr3.json.zip");
-      page.getDiffEngine().saveR4AsR5(zip, FhirFormat.JSON);
+      zip = new ZipGenerator(page.getFolders().dstDir + "definitions-r4asr5.json.zip");
+      page.getDiffEngine().saveR4AsR5(zip, FhirFormat.JSON, true);
+      zip.close();
+            
+      page.log("....r4b in r5 format", LogMessageType.Process);
+      zip = new ZipGenerator(page.getFolders().dstDir + "definitions-r4basr5.xml.zip");
+      page.getDiffEngine().saveR4AsR5(zip, FhirFormat.XML, false);
+      zip.close();
+      zip = new ZipGenerator(page.getFolders().dstDir + "definitions-r4basr5.json.zip");
+      page.getDiffEngine().saveR4AsR5(zip, FhirFormat.JSON, false);
       zip.close();
             
       zip = new ZipGenerator(page.getFolders().dstDir + "all-valuesets.zip");
@@ -3638,16 +3698,16 @@ public class Publisher implements URIResolver, SectionNumberer {
         return;
     String n = name.toLowerCase();
     Map<String, String> values = new HashMap<String, String>();
-    values.put("conv-status", page.r3r4StatusForResource(name));
-    String fwds = TextFile.fileToString(Utilities.path(page.getFolders().rootDir, "implementations", "r3maps", "R3toR4", page.r3nameForResource(name)+".map"));
-    String bcks = TextFile.fileToString(Utilities.path(page.getFolders().rootDir, "implementations", "r3maps", "R4toR3", name+".map"));
+    values.put("conv-status", page.r4r5StatusForResource(name));
+    String fwds = TextFile.fileToString(Utilities.path(page.getFolders().rootDir, "implementations", "r4maps", "R4toR5", page.r4nameForResource(name)+".map"));
+    String bcks = TextFile.fileToString(Utilities.path(page.getFolders().rootDir, "implementations", "r4maps", "R5toR4", name+".map"));
     values.put("fwds", Utilities.escapeXml(fwds));
     values.put("bcks", Utilities.escapeXml(bcks));
     values.put("fwds-status", "");
     values.put("bcks-status", "");
-    values.put("r3errs", Utilities.escapeXml(page.getR3R4ValidationErrors(name)));
+    values.put("r4errs", page.getR4R5ValidationErrors(name));
     try {
-      new StructureMapUtilities(page.getWorkerContext()).parse(fwds, page.r3nameForResource(name)+".map");
+      new StructureMapUtilities(page.getWorkerContext()).parse(fwds, page.r4nameForResource(name)+".map");
     } catch (FHIRException e) {
       values.put("fwds-status", "<p style=\"background-color: #ffb3b3; border:1px solid maroon; padding: 5px;\">This script does not compile: "+e.getMessage()+"</p>\r\n");
     }
@@ -4778,18 +4838,31 @@ public class Publisher implements URIResolver, SectionNumberer {
     // resource
     StructureDefinition p = generateProfile(resource, n, xml, json, ttl, !logicalOnly);
     com.google.gson.JsonObject diff = new com.google.gson.JsonObject();
-    page.getDiffEngine().getDiffAsJson(diff, p);
+    page.getDiffEngine().getDiffAsJson(diff, p, true);
     Gson gson = new GsonBuilder().setPrettyPrinting().create();
     json = gson.toJson(diff);
-    TextFile.stringToFile(json, Utilities.path(page.getFolders().dstDir, resource.getName().toLowerCase()+".diff.json"));
+    TextFile.stringToFile(json, Utilities.path(page.getFolders().dstDir, resource.getName().toLowerCase()+".r4.diff.json"));
+    diff = new com.google.gson.JsonObject();
+    page.getDiffEngine().getDiffAsJson(diff, p, false);
+    gson = new GsonBuilder().setPrettyPrinting().create();
+    json = gson.toJson(diff);
+    TextFile.stringToFile(json, Utilities.path(page.getFolders().dstDir, resource.getName().toLowerCase()+".r4b.diff.json"));
 
     DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
     DocumentBuilder builder = dbf.newDocumentBuilder();
     Document doc = builder.newDocument();
     Element element = doc.createElement("difference");
     doc.appendChild(element);
-    page.getDiffEngine().getDiffAsXml(doc, element, p);
-    prettyPrint(doc, Utilities.path(page.getFolders().dstDir, resource.getName().toLowerCase()+".diff.xml"));
+    page.getDiffEngine().getDiffAsXml(doc, element, p, true);
+    prettyPrint(doc, Utilities.path(page.getFolders().dstDir, resource.getName().toLowerCase()+".r4.diff.xml"));
+
+    dbf = DocumentBuilderFactory.newInstance();
+    builder = dbf.newDocumentBuilder();
+    doc = builder.newDocument();
+    element = doc.createElement("difference");
+    doc.appendChild(element);
+    page.getDiffEngine().getDiffAsXml(doc, element, p, false);
+    prettyPrint(doc, Utilities.path(page.getFolders().dstDir, resource.getName().toLowerCase()+".r4b.diff.xml"));
 }
 
   public void prettyPrint(Document xml, String filename) throws Exception {
@@ -5027,9 +5100,17 @@ public class Publisher implements URIResolver, SectionNumberer {
       if (rt.equals("ValueSet") || rt.equals("CodeSystem") || rt.equals("ConceptMap") || rt.equals("CapabilityStatement") || rt.equals("Library")) {
         // for these, we use the reference implementation directly
         CanonicalResource res = (CanonicalResource) loadExample(file);
-        if (res.getUrl() != null && res.getUrl().startsWith("http://hl7.org/fhir"))
-          res.setVersion(page.getVersion().toCode());
         boolean wantSave = false;
+        if (res.getUrl() != null && (res.getUrl().startsWith("http://hl7.org/fhir") || res.getUrl().startsWith("http://cds-hooks.hl7.org"))) {
+          if (!page.getVersion().toCode().equals(res.getVersion())) {
+            res.setVersion(page.getVersion().toCode());
+            wantSave = true;
+          }
+          if (!res.hasExperimental()) {
+            res.setExperimental(true);
+            wantSave = true;
+          }
+        }
         if (res instanceof CapabilityStatement) {
           ((CapabilityStatement) res).setFhirVersion(page.getVersion());
           if (res.hasText() && res.getText().hasDiv())
@@ -5037,7 +5118,6 @@ public class Publisher implements URIResolver, SectionNumberer {
         }
         if (!res.hasText() || !res.getText().hasDiv()) {
           RendererFactory.factory(res, lrc).render(res);
-          wantSave = true;
         }
         if (wantSave) {
           if (VersionUtilities.isR4BVer(page.getVersion().toCode())) {
