@@ -67,6 +67,7 @@ import org.hl7.fhir.utilities.SimpleHTTPClient;
 import org.hl7.fhir.utilities.SimpleHTTPClient.HTTPResult;
 import org.hl7.fhir.utilities.TextFile;
 import org.hl7.fhir.utilities.Utilities;
+import org.hl7.fhir.utilities.ZipGenerator;
 import org.hl7.fhir.utilities.validation.ValidationMessage;
 import org.hl7.fhir.utilities.validation.ValidationMessage.IssueSeverity;
 import org.hl7.fhir.utilities.validation.ValidationMessage.IssueType;
@@ -690,17 +691,18 @@ public class ExampleInspector implements IValidatorResourceFetcher, IValidationP
   }
 
 
-  public boolean testInvariants(String srcDir, ResourceDefn rd) throws IOException {
+  public boolean testInvariants(String srcDir, ResourceDefn rd, ZipGenerator zip) throws IOException {
     boolean result = true;
     File testsDir = new File(Utilities.path(srcDir, rd.getName().toLowerCase(), "invariant-tests"));
     if (testsDir.exists()) {
-      result = testInvariants(rd, result, testsDir);
+      result = testInvariants(rd, result, testsDir, zip);
     }
     return result;
   }
 
-  private boolean testInvariants(ResourceDefn rd, boolean result, File testsDir) throws FileNotFoundException {
+  private boolean testInvariants(ResourceDefn rd, boolean result, File testsDir, ZipGenerator zip) throws IOException {
     for (File f : testsDir.listFiles()) {
+      zip.addFileName(Utilities.path(rd.getName(), f.getName()), f.getAbsolutePath(), false);
       if (f.getName().endsWith(".json")) {
         result = testInvariant(rd, f, FhirFormat.JSON) && result;
       }
