@@ -91,19 +91,19 @@ public class VersionTransformGenerator {
   }
 
   private void generate(File dir, StructureDefinition sd) throws IOException {
-    generate(Utilities.path(dir.getAbsolutePath(), "r5-2-r4", sd.getType()+".fml"), sd, "5to4", "R5", "R4", "", "4.0/");
-    generate(Utilities.path(dir.getAbsolutePath(), "r5-2-r4b", sd.getType()+".fml"), sd, "5to4B", "R5", "R4B", "", "4.3/");
+    generate(Utilities.path(dir.getAbsolutePath(), "r5-2-r4", sd.getType()+"5to4.fml"), sd, "5to4", "R5", "R4", "", "4.0/");
+    generate(Utilities.path(dir.getAbsolutePath(), "r5-2-r4b", sd.getType()+"5to4B.fml"), sd, "5to4B", "R5", "R4B", "", "4.3/");
 
-    generate(Utilities.path(dir.getAbsolutePath(), "r4-2-r5", sd.getType()+".fml"), sd, "4to5", "R4", "R5", "4.0/", "");
-    generate(Utilities.path(dir.getAbsolutePath(), "r4b-2-r5", sd.getType()+".fml"), sd, "4Bto5", "R4B", "R5", "4.3/", "");
+    generate(Utilities.path(dir.getAbsolutePath(), "r4-2-r5", sd.getType()+"4to5.fml"), sd, "4to5", "R4", "R5", "4.0/", "");
+    generate(Utilities.path(dir.getAbsolutePath(), "r4b-2-r5", sd.getType()+"4Bto5.fml"), sd, "4Bto5", "R4B", "R5", "4.3/", "");
 }
 
   private void generatePrimitives(File dir, List<String> primitives) throws IOException {
-    generatePrimitives(Utilities.path(dir.getAbsolutePath(), "r5-2-r4", "primitives.fml"), primitives, "5to4", "R5", "R4", "", "4.0/");
-    generatePrimitives(Utilities.path(dir.getAbsolutePath(), "r5-2-r4b", "primitives.fml"), primitives, "5to4B", "R5", "R4B", "", "4.3/");
+    generatePrimitives(Utilities.path(dir.getAbsolutePath(), "r5-2-r4", "primitives5to4.fml"), primitives, "5to4", "R5", "R4", "", "4.0/");
+    generatePrimitives(Utilities.path(dir.getAbsolutePath(), "r5-2-r4b", "primitives5to4B.fml"), primitives, "5to4B", "R5", "R4B", "", "4.3/");
 
-    generatePrimitives(Utilities.path(dir.getAbsolutePath(), "r4-2-r5", "primitives.fml"), primitives, "4to5", "R4", "R5", "4.0/", "");
-    generatePrimitives(Utilities.path(dir.getAbsolutePath(), "r4b-2-r5", "primitives.fml"), primitives, "4Bto5", "R4B", "R5", "4.3/", "");
+    generatePrimitives(Utilities.path(dir.getAbsolutePath(), "r4-2-r5", "primitives4to5.fml"), primitives, "4to5", "R4", "R5", "4.0/", "");
+    generatePrimitives(Utilities.path(dir.getAbsolutePath(), "r4b-2-r5", "primitives4Bto5.fml"), primitives, "4Bto5", "R4B", "R5", "4.3/", "");
 }
 
   private void generatePrimitives(String path, List<String> primitives, String suffix, String sourceV, String targetV, String srcVP, String tgtVP) throws IOException {
@@ -117,12 +117,12 @@ public class VersionTransformGenerator {
       b.append("uses \"http://hl7.org/fhir/"+tgtVP+"StructureDefinition/"+n+"\" alias "+n+targetV+" as target\r\n");      
     }
     b.append("\r\n");
-    b.append("imports \"http://hl7.org/fhir/StructureMap/Element4to3\"\r\n");
+    b.append("imports \"http://hl7.org/fhir/StructureMap/Element"+suffix+"\"\r\n");
     b.append("\r\n");
 
     for (String n : primitives) {
       b.append("group "+n+"(source src : "+n+""+sourceV+", target tgt : "+n+""+targetV+") extends Element <<type+>> {\r\n");
-      b.append("  src.value as v -> tgt.value = v \""+n+"-value\";\r\n");
+      b.append("  src.value as v -> tgt.value = v \""+n+"Value\";\r\n");
       b.append("}\r\n");
     }
     TextFile.stringToFile(b.toString(), path);
