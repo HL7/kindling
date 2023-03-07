@@ -6389,7 +6389,7 @@ public class Publisher implements URIResolver, SectionNumberer {
     while (i >= 0) {
       XhtmlNode f = parent.getChildNodes().get(i);
       if (f.getNodeType() == NodeType.Text) {
-        if (!Utilities.isWhitespace(f.getContent()))
+        if (!StringUtils.isWhitespace(f.getContent()))
           break;
       } else if (f.getNodeType() == NodeType.Element) {
         if (f.getName().equals("a") && f.hasAttribute("name")) {
