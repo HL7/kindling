@@ -2511,7 +2511,7 @@ public class Publisher implements URIResolver, SectionNumberer {
         }
       }
     }
-//          
+//          E
     page.setPatternFinder(val.getPatternFinder());
     val.report();
     val.summariseSearchTypes(page.getSearchTypeUsage());
@@ -5097,7 +5097,7 @@ public class Publisher implements URIResolver, SectionNumberer {
       if (!page.getDefinitions().getBaseResources().containsKey(rt) && !id.equals(e.getId()))
         throw new Error("Resource in "+prefix +n + ".xml needs an id of value=\""+e.getId()+"\"");
       page.getDefinitions().addNs("http://hl7.org/fhir/"+rt+"/"+id, "Example", prefix +n + ".html");
-      if (rt.equals("ValueSet") || rt.equals("CodeSystem") || rt.equals("ConceptMap") || rt.equals("CapabilityStatement") || rt.equals("Library")) {
+      if (rt.equals("ValueSet") || rt.equals("CodeSystem") || rt.equals("ConceptMap") || rt.equals("CapabilityStatement") || rt.equals("Library") || rt.equals("StructureMap")) {
         // for these, we use the reference implementation directly
         CanonicalResource res = (CanonicalResource) loadExample(file);
         e.setResource(res);

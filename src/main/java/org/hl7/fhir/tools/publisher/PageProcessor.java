@@ -905,10 +905,10 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
       } else if (com[0].equals("profile-diff")) {
         ConstraintStructure p = definitions.findProfile(com[1]);
         src = s1 + generateProfileStructureTable(p, true, com[1]+".html", com[1], genlevel(level)) + s3;
-      } else if (com[0].equals("example")) {
-        String[] parts = com[1].split("\\/");
-        Example e = findExample(parts[0], parts[1]);
-        src = s1+genExample(e, com.length > 2 ? Integer.parseInt(com[2]) : 0, genlevel(level))+s3;
+//      } else if (com[0].equals("example")) {
+//        String[] parts = com[1].split("\\/");
+//        Example e = findExample(parts[0], parts[1]);
+//        src = s1+genExample(e, com.length > 2 ? Integer.parseInt(com[2]) : 0, genlevel(level))+s3;
       } else if (com[0].equals("r4r5transform")) {
         src = s1+dtR4R5Transform(com[1])+s3;
       } else if (com[0].equals("fmm-style")) {
@@ -2329,20 +2329,23 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     return null;
   }
 
-  private String genExample(Example example, int headerLevelContext, String genlevel) throws IOException, EOperationOutcome, FHIRException {
-    if (example.getResource() == null) {
-      String xml = XMLUtil.elementToString(example.getXml().getDocumentElement());
-      example.setResource(new XmlParser().parse(xml));
-    }
-    if (!(example.getResource() instanceof DomainResource))
-      return "";
-    DomainResource dr = (DomainResource) example.getResource();
-    if (!dr.hasText() || !dr.getText().hasDiv()) {
-      RenderingContext lrc = rc.copy().setHeaderLevelContext(headerLevelContext);
-      RendererFactory.factory(dr, lrc).render(dr);
-    }
-    return new XhtmlComposer(XhtmlComposer.HTML).compose(dr.getText().getDiv());
-  }
+//  private String genExample(Example example, int headerLevelContext, String genlevel) throws IOException, EOperationOutcome, FHIRException {
+//    if (example.getResource() == null) {
+//      String xml = XMLUtil.elementToString(example.getXml().getDocumentElement());
+//      example.setResource(new XmlParser().parse(xml));
+//    }
+//    if (!(example.getResource() instanceof DomainResource))
+//      return "";
+//    if (example.getResource().fhirType().equals("StructureMap")) {
+//      System.out.println("!!");
+//    }
+//    DomainResource dr = (DomainResource) example.getResource();
+//    if (!dr.hasText() || !dr.getText().hasDiv()) {
+//      RenderingContext lrc = rc.copy().setHeaderLevelContext(headerLevelContext);
+//      RendererFactory.factory(dr, lrc).render(dr);
+//    }
+//    return new XhtmlComposer(XhtmlComposer.HTML).compose(dr.getText().getDiv());
+//  }
 
   private String genMappingsTable() throws IOException {
     StringBuilder b = new  StringBuilder();
@@ -5671,10 +5674,10 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
       } else if (com[0].equals("profile-diff")) {
         ConstraintStructure p = definitions.findProfile(com[1]);
         src = s1 + generateProfileStructureTable(p, true, com[1]+".html", com[1], genlevel(level)) + s3;
-      } else if (com[0].equals("example")) {
-        String[] parts = com[1].split("\\/");
-        Example e = findExample(parts[0], parts[1]);
-        src = s1+genExample(e, com.length > 2 ? Integer.parseInt(com[2]) : 0, genlevel(level))+s3;
+//      } else if (com[0].equals("example")) {
+//        String[] parts = com[1].split("\\/");
+//        Example e = findExample(parts[0], parts[1]);
+//        src = s1+genExample(e, com.length > 2 ? Integer.parseInt(com[2]) : 0, genlevel(level))+s3;
       } else if (com[0].equals("extension-diff")) {
         StructureDefinition ed = workerContext.fetchResource(StructureDefinition.class, com[1]);
         src = s1+generateExtensionTable(ed, "extension-"+com[1], "false", genlevel(level))+s3;
