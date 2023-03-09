@@ -40,6 +40,7 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 
 import org.hl7.fhir.r5.elementmodel.Element;
+import org.hl7.fhir.r5.model.Resource;
 import org.hl7.fhir.tools.publisher.PageProcessor;
 import org.hl7.fhir.utilities.CSFile;
 import org.hl7.fhir.utilities.CSFileInputStream;
@@ -68,6 +69,7 @@ public class Example {
   private String exampleFor;
   private Element element;
   private List<ValidationMessage> errors = new ArrayList<>();
+  private Resource resource;
 
 
   public enum ExampleType {
@@ -284,6 +286,16 @@ public class Example {
       }
     }
     return null;
+  }
+
+
+  public Resource getResource() {
+    return resource;
+  }
+
+
+  public void setResource(Resource resource) {
+    this.resource = resource;
   }
 
 
