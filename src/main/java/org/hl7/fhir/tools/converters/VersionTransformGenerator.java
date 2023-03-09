@@ -208,10 +208,15 @@ public class VersionTransformGenerator {
       b.append("  prefix s = \""+cs.getUrl().replace("http://hl7.org/fhir/", "http://hl7.org/fhir/"+sv)+"\"\r\n");
       b.append("  prefix t = \""+cs.getUrl().replace("http://hl7.org/fhir/", "http://hl7.org/fhir/"+tv)+"\"\r\n\r\n");
 
-      for (ConceptDefinitionComponent cd : cs.getConcept()) {
-        b.append("  s:\""+cd.getCode()+"\" - t:\""+cd.getCode()+"\"\r\n");
-      }
+      genConcepts(cs.getConcept(), b);
       b.append("}\r\n\r\n");
+    }
+  }
+
+  private void genConcepts(List<ConceptDefinitionComponent> list, StringBuilder b) {
+    for (ConceptDefinitionComponent cd : list) {
+      b.append("  s:\""+cd.getCode()+"\" - t:\""+cd.getCode()+"\"\r\n");
+      genConcepts(cd.getConcept(), b);
     }
   }
 
