@@ -5206,7 +5206,7 @@ public class Publisher implements URIResolver, SectionNumberer {
         String xml = XMLUtil.elementToString(e.getXml().getDocumentElement());
         e.setResource(new XmlParser().parse(xml));
       }
-    } catch (Exception ex) {
+    } catch (Throwable ex) {
       StringWriter errors = new StringWriter();
       System.out.println("Error generating narrative for example "+e.getName()+": "+ex.getMessage());
       ex.printStackTrace();
