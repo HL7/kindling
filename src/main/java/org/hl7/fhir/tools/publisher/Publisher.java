@@ -5100,6 +5100,7 @@ public class Publisher implements URIResolver, SectionNumberer {
       if (rt.equals("ValueSet") || rt.equals("CodeSystem") || rt.equals("ConceptMap") || rt.equals("CapabilityStatement") || rt.equals("Library")) {
         // for these, we use the reference implementation directly
         CanonicalResource res = (CanonicalResource) loadExample(file);
+        e.setResource(res);
         boolean wantSave = false;
         if (res.getUrl() != null && (res.getUrl().startsWith("http://hl7.org/fhir") || res.getUrl().startsWith("http://cds-hooks.hl7.org"))) {
           if (!page.getVersion().toCode().equals(res.getVersion())) {
@@ -5200,6 +5201,10 @@ public class Publisher implements URIResolver, SectionNumberer {
             }
           }
         }
+      }
+      if (e.getResource() == null && e.getElement() == null) {
+        String xml = XMLUtil.elementToString(e.getXml().getDocumentElement());
+        e.setResource(new XmlParser().parse(xml));
       }
     } catch (Exception ex) {
       StringWriter errors = new StringWriter();
@@ -6574,7 +6579,7 @@ public class Publisher implements URIResolver, SectionNumberer {
       for (SearchParameterDefn sp : r.getSearchParams().values()) {
         if (!sp.isWorks() && !sp.getCode().equals("_id") && !Utilities.noString(sp.getExpression())) {
           page.getValidationErrors().add(new ValidationMessage(Source.Publisher, IssueType.INFORMATIONAL, -1, -1, rn + "." + sp.getCode(), 
-              "Search Parameter '" + rn + "." + sp.getCode() + "' had no found values in any example. Consider reviewing the expression (" + sp.getExpression() + ")", IssueSeverity.WARNING));
+              "Search Parameter '" + rn + "." + sp.getCode() + "' had no found values in any example. Consider reviewing the expression (" + sp.getExpression() + ")", IssueSeverity.INFORMATION));
         }
       }
     }
