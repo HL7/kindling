@@ -2330,11 +2330,13 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
   }
 
   private String genExample(Example example, int headerLevelContext, String genlevel) throws IOException, EOperationOutcome, FHIRException {
-    String xml = XMLUtil.elementToString(example.getXml().getDocumentElement());
-    Resource res = new XmlParser().parse(xml);
-    if (!(res instanceof DomainResource))
+    if (example.getResource() == null) {
+      String xml = XMLUtil.elementToString(example.getXml().getDocumentElement());
+      example.setResource(new XmlParser().parse(xml));
+    }
+    if (!(example.getResource() instanceof DomainResource))
       return "";
-    DomainResource dr = (DomainResource) res;
+    DomainResource dr = (DomainResource) example.getResource();
     if (!dr.hasText() || !dr.getText().hasDiv()) {
       RenderingContext lrc = rc.copy().setHeaderLevelContext(headerLevelContext);
       RendererFactory.factory(dr, lrc).render(dr);
