@@ -295,7 +295,11 @@ public class ResourceParser {
       String id = le.getItem().getReference().substring(le.getItem().getReference().indexOf("/")+1);
       OperationDefinition opd = (OperationDefinition) parseXml("operationdefinition-"+id+".xml");
       opd.setVersion(version);
-      r.getOperations().add(convertOperation(opd));
+      Operation op = convertOperation(opd);
+      r.getOperations().add(op);
+      if (r.getName().equals("Resource")) {
+        definitions.genOpList().add(op);    
+      }
     }
   }
 

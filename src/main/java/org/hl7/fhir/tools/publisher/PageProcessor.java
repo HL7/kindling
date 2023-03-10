@@ -4692,7 +4692,6 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
       n = n.substring(0, n.indexOf('-'));
 
     ResourceDefn res = definitions.getResourceByName(title);
-    boolean hasOps = !res.getOperations().isEmpty();
     boolean isAbstract = res.isAbstract();
     b.append("<ul class=\"nav nav-tabs\">");
 
@@ -4706,8 +4705,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     b.append(makeHeaderTab("Extensions", extensionsLocation+"extensions-"+ title+".html", "extensions".equals(mode)));
 //    if (!isAbstract)
 //      b.append(makeHeaderTab("HTML Form", n+"-questionnaire.html", "questionnaire".equals(mode)));
-    if (hasOps)
-      b.append(makeHeaderTab("Operations", n+"-operations.html", "operations".equals(mode)));
+    b.append(makeHeaderTab("Operations", n+"-operations.html", "operations".equals(mode)));
     if (new File(Utilities.path(folders.rootDir, "implementations", "r3maps", "R4toR3", title+".map")).exists())
       b.append(makeHeaderTab("R4 Conversions", n+"-version-maps.html", "conversion".equals(mode)));
     b.append(makeHeaderTab("Search Params", n+"-search.html", "search".equals(mode)));
@@ -7696,9 +7694,27 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
 
   private String genOperationsSummary(List<Operation> oplist, ResourceDefn resource) throws Exception {
     StringBuilder b = new StringBuilder();
+    if (oplist.size() == 0) {
+      b.append("<p>This resource has no operations associated with it, but there are operations that apply to all resource types:</p>\r\n");      
+    } else {
+      b.append("<p>This resource has "+oplist.size()+" operations associated with it:</p>\r\n<table class=\"list\">\r\n");
+      for (Operation op : oplist) {
+        b.append("<tr><td><a href=\""+resource.getName().toLowerCase()+"-operation-"+ op.getName()+".html\">$"+Utilities.escapeXml(op.getName())+"</a></td><td>"+Utilities.escapeXml(op.getTitle())+"</td>");
+        if (resource.getStatus() == StandardsStatus.NORMATIVE) {
+          if (op.getStandardsStatus() == null)
+            b.append("<td><a class=\""+resource.getStatus().toCode()+"-flag\" href=\"versions.html#std-process\">"+resource.getStatus().toDisplay()+"</a></td>");
+          else
+            b.append("<td><a class=\""+op.getStandardsStatus().toCode()+"-flag\" href=\"versions.html#std-process\">"+op.getStandardsStatus().toDisplay()+"</a></td>");
+        }
+        
+        b.append("</tr>\r\n");
+      }
+      b.append("</table>\r\n");
+      b.append("<p>In addition, there are operations that apply to all resource types:</p>\r\n\r\n");
+    }
     b.append("<table class=\"list\">\r\n");
-    for (Operation op : oplist) {
-      b.append("<tr><td><a href=\""+resource.getName().toLowerCase()+"-operation-"+ op.getName()+".html\">$"+Utilities.escapeXml(op.getName())+"</a></td><td>"+Utilities.escapeXml(op.getTitle())+"</td>");
+    for (Operation op : definitions.genOpList()) {
+      b.append("<tr><td><a href=\"resource-operation-"+ op.getName()+".html\">$"+Utilities.escapeXml(op.getName())+"</a></td><td>"+Utilities.escapeXml(op.getTitle())+"</td>");
       if (resource.getStatus() == StandardsStatus.NORMATIVE) {
         if (op.getStandardsStatus() == null)
           b.append("<td><a class=\""+resource.getStatus().toCode()+"-flag\" href=\"versions.html#std-process\">"+resource.getStatus().toDisplay()+"</a></td>");

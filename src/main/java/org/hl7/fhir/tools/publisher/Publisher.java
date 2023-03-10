@@ -4776,16 +4776,14 @@ public class Publisher implements URIResolver, SectionNumberer {
           insertSectionNumbers(page.processResourceIncludes(n, resource, xml, json, ttl, tx, dict, src, mappings, mappingsList, "res-Profiles", n + "-profiles.html", null, values, resource.getWg(), null), st, n + "-profiles.html", 0, null),
           page.getFolders().dstDir + n + "-profiles.html");
       page.getHTMLChecker().registerFile(n + "-profiles.html", "Profiles for " + resource.getName(), HTMLLinkChecker.XHTML_TYPE, true);
-      if (!resource.getOperations().isEmpty()) {
-        src = TextFile.fileToString(page.getFolders().templateDir + "template-operations.html");
-        TextFile.stringToFile(
-            insertSectionNumbers(page.processResourceIncludes(n, resource, xml, json, ttl, tx, dict, src, mappings, mappingsList, "res-Operations", n + "-operations.html", null, values, resource.getWg(), null), st, n + "-operations.html", 0, null), 
-            page.getFolders().dstDir + n + "-operations.html");
-        page.getHTMLChecker().registerFile(n + "-operations.html", "Operations for " + resource.getName(), HTMLLinkChecker.XHTML_TYPE, true);
+      src = TextFile.fileToString(page.getFolders().templateDir + "template-operations.html");
+      TextFile.stringToFile(
+          insertSectionNumbers(page.processResourceIncludes(n, resource, xml, json, ttl, tx, dict, src, mappings, mappingsList, "res-Operations", n + "-operations.html", null, values, resource.getWg(), null), st, n + "-operations.html", 0, null), 
+          page.getFolders().dstDir + n + "-operations.html");
+      page.getHTMLChecker().registerFile(n + "-operations.html", "Operations for " + resource.getName(), HTMLLinkChecker.XHTML_TYPE, true);
 
-        for (Operation t : resource.getOperations()) {
-          produceOperation(null, resource.getName().toLowerCase()+"-"+t.getName(), resource.getName()+"-"+t.getName(), resource, t, st);
-        }
+      for (Operation t : resource.getOperations()) {
+        produceOperation(null, resource.getName().toLowerCase()+"-"+t.getName(), resource.getName()+"-"+t.getName(), resource, t, st);
       }
       produceMap(resource.getName(), st, resource);
       for (Profile ap : resource.getConformancePackages())

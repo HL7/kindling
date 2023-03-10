@@ -405,6 +405,7 @@ public class Definitions {
   private boolean loaded;
   private int valueSetCount;
   private FHIRVersion version;
+  private List<Operation> genOpList = new ArrayList<>();
   
   public List<String> sortedResourceNames() {
     if (sortedNames == null) {
@@ -997,5 +998,9 @@ public class Definitions {
 
   public Map<String, String> getAllowedSearchTypes() {
     return allowedSearchTypes;
+  }
+
+  public List<Operation> genOpList() {
+    return genOpList;
   }
 }
