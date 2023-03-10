@@ -352,7 +352,7 @@ public class ResourceParser {
           indent = Integer.parseInt(filename.substring(0, filename.indexOf(" ")));
           filename = filename.substring(filename.indexOf(" ")).trim();
         }
-        String json = new JsonParser().setOutputStyle(OutputStyle.PRETTY).composeString(new XmlParser().parse(new FileInputStream(Utilities.path(folder, filename))));
+        String json = new JsonParser().setOutputStyle(OutputStyle.PRETTY).composeString(new XmlParser().parse(new FileInputStream(Utilities.uncheckedPath(folder, filename))));
         process(content, indent, json);
       } else if (l.startsWith("$include ")) {
         int indent = 0;
@@ -361,7 +361,7 @@ public class ResourceParser {
           indent = Integer.parseInt(filename.substring(0, filename.indexOf(" ")));
           filename = filename.substring(filename.indexOf(" ")).trim();
         }
-        process(content, indent, TextFile.fileToString(Utilities.path(folder, filename)));
+        process(content, indent, TextFile.fileToString(Utilities.uncheckedPath(folder, filename)));
       } else {
         content.append(Utilities.escapeXml(l));
         content.append("\r\n");
