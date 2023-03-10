@@ -253,8 +253,6 @@ import org.hl7.fhir.tools.converters.CDAGenerator;
 import org.hl7.fhir.tools.converters.DSTU3ValidationConvertor;
 import org.hl7.fhir.tools.converters.SpecNPMPackageGenerator;
 import org.hl7.fhir.tools.publisher.ExampleInspector.EValidationFailed;
-import org.hl7.fhir.tools.publisher.Publisher.ValidationInformation;
-import org.hl7.fhir.tools.publisher.Publisher.ValidationMode;
 import org.hl7.fhir.utilities.CSFile;
 import org.hl7.fhir.utilities.CSFileInputStream;
 import org.hl7.fhir.utilities.CloseProtectedZipInputStream;
@@ -696,7 +694,7 @@ public class Publisher implements URIResolver, SectionNumberer {
       page.log("Create output in "+outputdir, LogMessageType.Process);
     }
     if (apiKeyFile == null) {
-      apiKeyFile = new IniFile(Utilities.path(System.getProperty("user.home"), "fhir-build-keys.ini"));
+      apiKeyFile = new IniFile(Utilities.uncheckedPath(System.getProperty("user.home"), "fhir-build-keys.ini"));
     }
     page.log("API keys loaded from "+apiKeyFile.getFileName(), LogMessageType.Process);
 
@@ -878,7 +876,7 @@ public class Publisher implements URIResolver, SectionNumberer {
       page.log("FHIR build failure @ " + Config.DATE_FORMAT().format(Calendar.getInstance().getTime()), LogMessageType.Process);
       System.out.println("Error: " + e.getMessage());
       e.printStackTrace();
-      TextFile.stringToFile(StringUtils.defaultString(e.getMessage()), Utilities.path(outputdir, "simple-error.txt"));
+      TextFile.stringToFile(StringUtils.defaultString(e.getMessage()), Utilities.uncheckedPath(outputdir, "simple-error.txt"));
       System.exit(1);
     }
   }
@@ -886,7 +884,7 @@ public class Publisher implements URIResolver, SectionNumberer {
   private void loadMappingExceptionsSchema(String folder) throws IOException {
     try {
       SchemaFactory schemaFactory = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
-      Schema exceptionsSchema = schemaFactory.newSchema(new File(Utilities.path(folder, MAPPING_EXCEPTIONS_SCHEMA)));
+      Schema exceptionsSchema = schemaFactory.newSchema(new File(Utilities.uncheckedPath(folder, MAPPING_EXCEPTIONS_SCHEMA)));
       mappingExceptionsValidator = exceptionsSchema.newValidator();
     } catch (SAXException e) {
       System.out.println("Error loading schema " + MAPPING_EXCEPTIONS_SCHEMA+": "+e.getMessage());
@@ -1098,8 +1096,8 @@ public class Publisher implements URIResolver, SectionNumberer {
         }
       }
     }
-    
-    ZipGenerator zip = new ZipGenerator(Utilities.path(page.getFolders().dstDir, "invariant-tests.zip"));
+
+    ZipGenerator zip = new ZipGenerator(Utilities.uncheckedPath(page.getFolders().dstDir, "invariant-tests.zip"));
     for (String rname : page.getDefinitions().sortedResourceNames()) {
       if (!ei.testInvariants(page.getFolders().srcDir, page.getDefinitions().getResourceByName(rname), zip)) {
         ok = false;
@@ -1288,7 +1286,7 @@ public class Publisher implements URIResolver, SectionNumberer {
       if (c == '/')
         level = level +"../";
 
-    String fullFileName = Utilities.path(page.getFolders().dstDir, n.replace("/", File.separator));
+    String fullFileName = Utilities.uncheckedPath(page.getFolders().dstDir, n.replace("/", File.separator));
     Utilities.createDirectory(fullFileName);
     // simple html version
 //    String pagecnt = "<html>\r\n<head>\r\n<title>Redirect Page for "+Utilities.escapeXml(desc)+" </title>\r\n<meta http-equiv=\"REFRESH\" content=\"0;url="+
@@ -1297,8 +1295,8 @@ public class Publisher implements URIResolver, SectionNumberer {
     // asp redirection version
     String pagecnt = TextFile.fileToString(Utilities.path(page.getFolders().rootDir, "tools", "html", "redirect.asp"));
     pagecnt = pagecnt.replace("<%filename%>", Utilities.changeFileExt(pn, ""));
-    
-    String fn = Utilities.path(fullFileName, "index.asp");
+
+    String fn = Utilities.uncheckedPath(fullFileName, "index.asp");
     if (!(new File(fn).exists()))
       TextFile.stringToFile(pagecnt, fn);
 
@@ -1435,7 +1433,7 @@ public class Publisher implements URIResolver, SectionNumberer {
     for (FHIRPathUsage p : fpUsages) {
       checkExpression(b, fp, p);
     }
-    TextFile.stringToFile(b.toString(), Utilities.path(page.getFolders().dstDir, "fhirpaths.txt"));
+    TextFile.stringToFile(b.toString(), Utilities.uncheckedPath(page.getFolders().dstDir, "fhirpaths.txt"));
 
     checkAllOk();
   }
@@ -2042,37 +2040,37 @@ public class Publisher implements URIResolver, SectionNumberer {
     if (VersionUtilities.isR4BVer(page.getVersion().toCode())) {
       org.hl7.fhir.r4.model.Resource r2 = VersionConvertorFactory_40_50.convertResource(r);
       org.hl7.fhir.r4.formats.IParser xml = new org.hl7.fhir.r4.formats.XmlParser().setOutputStyle(org.hl7.fhir.r4.formats.IParser.OutputStyle.PRETTY);
-      xml.compose(new FileOutputStream(Utilities.path(page.getFolders().dstDir, baseFileName + ".xml")), r2);
+      xml.compose(new FileOutputStream(Utilities.uncheckedPath(page.getFolders().dstDir, baseFileName + ".xml")), r2);
       if (showCanonical) {
         xml.setOutputStyle(org.hl7.fhir.r4.formats.IParser.OutputStyle.CANONICAL);
-        xml.compose(new FileOutputStream(Utilities.path(page.getFolders().dstDir, baseFileName + ".canonical.xml")), r2);
+        xml.compose(new FileOutputStream(Utilities.uncheckedPath(page.getFolders().dstDir, baseFileName + ".canonical.xml")), r2);
       }
       org.hl7.fhir.r4.formats.IParser json = new org.hl7.fhir.r4.formats.JsonParser().setOutputStyle(org.hl7.fhir.r4.formats.IParser.OutputStyle.PRETTY);
-      json.compose(new FileOutputStream(Utilities.path(page.getFolders().dstDir, baseFileName + ".json")), r2);
+      json.compose(new FileOutputStream(Utilities.uncheckedPath(page.getFolders().dstDir, baseFileName + ".json")), r2);
       if (showCanonical) {
         json.setOutputStyle(org.hl7.fhir.r4.formats.IParser.OutputStyle.CANONICAL);
-        json.compose(new FileOutputStream(Utilities.path(page.getFolders().dstDir, baseFileName + ".canonical.json")), r2);
+        json.compose(new FileOutputStream(Utilities.uncheckedPath(page.getFolders().dstDir, baseFileName + ".canonical.json")), r2);
       }
       if (showTtl) { 
         org.hl7.fhir.r4.formats.IParser rdf = new org.hl7.fhir.r4.formats.RdfParser().setOutputStyle(org.hl7.fhir.r4.formats.IParser.OutputStyle.PRETTY);
-        rdf.compose(new FileOutputStream(Utilities.path(page.getFolders().dstDir, baseFileName + ".ttl")), r2);
+        rdf.compose(new FileOutputStream(Utilities.uncheckedPath(page.getFolders().dstDir, baseFileName + ".ttl")), r2);
       }
     } else {
       IParser xml = new XmlParser().setOutputStyle(OutputStyle.PRETTY);
-      xml.compose(new FileOutputStream(Utilities.path(page.getFolders().dstDir, baseFileName + ".xml")), r);
+      xml.compose(new FileOutputStream(Utilities.uncheckedPath(page.getFolders().dstDir, baseFileName + ".xml")), r);
       if (showCanonical) {
         xml.setOutputStyle(OutputStyle.CANONICAL);
-        xml.compose(new FileOutputStream(Utilities.path(page.getFolders().dstDir, baseFileName + ".canonical.xml")), r);
+        xml.compose(new FileOutputStream(Utilities.uncheckedPath(page.getFolders().dstDir, baseFileName + ".canonical.xml")), r);
       }
       IParser json = new JsonParser().setOutputStyle(OutputStyle.PRETTY);
-      json.compose(new FileOutputStream(Utilities.path(page.getFolders().dstDir, baseFileName + ".json")), r);
+      json.compose(new FileOutputStream(Utilities.uncheckedPath(page.getFolders().dstDir, baseFileName + ".json")), r);
       if (showCanonical) {
         json.setOutputStyle(OutputStyle.CANONICAL);
-        json.compose(new FileOutputStream(Utilities.path(page.getFolders().dstDir, baseFileName + ".canonical.json")), r);
+        json.compose(new FileOutputStream(Utilities.uncheckedPath(page.getFolders().dstDir, baseFileName + ".canonical.json")), r);
       }
       if (showTtl) {
         IParser rdf = new RdfParser().setOutputStyle(OutputStyle.PRETTY);
-        rdf.compose(new FileOutputStream(Utilities.path(page.getFolders().dstDir, baseFileName + ".ttl")), r);
+        rdf.compose(new FileOutputStream(Utilities.uncheckedPath(page.getFolders().dstDir, baseFileName + ".ttl")), r);
       }
     }
     if (description!=null) {
@@ -2854,13 +2852,13 @@ public class Publisher implements URIResolver, SectionNumberer {
     shgen.withComments = false;
     TextFile.stringToFile(shgen.generate(HTMLLinkPolicy.NONE, list), page.getFolders().dstDir+"fhir.shex", false);
 
-    new XVerPathsGenerator(page.getDefinitions(), Utilities.path(page.getFolders().dstDir, "xver-paths-"+Constants.VERSION_MM+".json"), Utilities.path(page.getFolders().rootDir, "tools", "history", "release4b", "xver-paths-4.3.json")).execute();
+    new XVerPathsGenerator(page.getDefinitions(), Utilities.uncheckedPath(page.getFolders().dstDir, "xver-paths-" + Constants.VERSION_MM + ".json"), Utilities.path(page.getFolders().rootDir, "tools", "history", "release4b", "xver-paths-4.3.json")).execute();
     GraphQLSchemaGenerator gql = new GraphQLSchemaGenerator(page.getWorkerContext(), page.getVersion().toCode());
-    gql.generateTypes(new FileOutputStream(Utilities.path(page.getFolders().dstDir, "types.graphql")));
+    gql.generateTypes(new FileOutputStream(Utilities.uncheckedPath(page.getFolders().dstDir, "types.graphql")));
     Set<String> names = new HashSet<String>();
     for (StructureDefinition sd : new ContextUtilities(page.getWorkerContext()).allStructures()) {
       if (sd.getKind() == StructureDefinitionKind.RESOURCE && sd.getAbstract() == false && sd.getDerivation() == TypeDerivationRule.SPECIALIZATION && !names.contains(sd.getUrl())) {
-        String filename = Utilities.path(page.getFolders().dstDir, sd.getName().toLowerCase() + ".graphql");
+        String filename = Utilities.uncheckedPath(page.getFolders().dstDir, sd.getName().toLowerCase() + ".graphql");
         names.add(sd.getUrl());
         List<SearchParameter> splist = new ArrayList<SearchParameter>();
         ResourceDefn rd = page.getDefinitions().getResourceByName(sd.getName());
@@ -2877,9 +2875,9 @@ public class Publisher implements URIResolver, SectionNumberer {
         gql.generateResource(new FileOutputStream(filename), sd, splist, ops);
       }
     }
-    
-    TextFile.stringToFile(page.genBackboneElementsJson(), Utilities.path(page.getFolders().dstDir, "backbone-elements.json"));
-    TextFile.stringToFile(page.genChoiceElementsJson(), Utilities.path(page.getFolders().dstDir, "choice-elements.json"));
+
+    TextFile.stringToFile(page.genBackboneElementsJson(), Utilities.uncheckedPath(page.getFolders().dstDir, "backbone-elements.json"));
+    TextFile.stringToFile(page.genChoiceElementsJson(), Utilities.uncheckedPath(page.getFolders().dstDir, "choice-elements.json"));
 
     page.log("Produce Schematrons", LogMessageType.Process);
     for (String rname : page.getDefinitions().sortedResourceNames()) {
@@ -2996,23 +2994,23 @@ public class Publisher implements URIResolver, SectionNumberer {
     FhirTurtleGenerator ttl = new FhirTurtleGenerator(tmp, page.getDefinitions(), page.getWorkerContext(), page.getValidationErrors(), page.getWebLocation());
     ttl.executeV3(page.getValueSets(), page.getCodeSystems());
     rim = rim + tmp.toString();
-    TextFile.stringToFile(rim, Utilities.path(page.getFolders().dstDir, "rim.ttl"));
-    ttl = new FhirTurtleGenerator(new FileOutputStream(Utilities.path(page.getFolders().dstDir, "fhir.ttl")), page.getDefinitions(), page.getWorkerContext(), page.getValidationErrors(), page.getWebLocation());
+    TextFile.stringToFile(rim, Utilities.uncheckedPath(page.getFolders().dstDir, "rim.ttl"));
+    ttl = new FhirTurtleGenerator(new FileOutputStream(Utilities.uncheckedPath(page.getFolders().dstDir, "fhir.ttl")), page.getDefinitions(), page.getWorkerContext(), page.getValidationErrors(), page.getWebLocation());
     ttl.executeMain();
-    W5TurtleGenerator w5 = new W5TurtleGenerator(new FileOutputStream(Utilities.path(page.getFolders().dstDir, "w5.ttl")), page.getDefinitions(), page.getWorkerContext(), page.getValidationErrors(), page.getWebLocation());
+    W5TurtleGenerator w5 = new W5TurtleGenerator(new FileOutputStream(Utilities.uncheckedPath(page.getFolders().dstDir, "w5.ttl")), page.getDefinitions(), page.getWorkerContext(), page.getValidationErrors(), page.getWebLocation());
     w5.executeMain();
     RDFValidator val = new RDFValidator();
-    val.validate(Utilities.path(page.getFolders().dstDir, "fhir.ttl"));
-    val.validate(Utilities.path(page.getFolders().dstDir, "rim.ttl"));
-    val.validate(Utilities.path(page.getFolders().dstDir, "w5.ttl"));
-    ZipGenerator zip = new ZipGenerator(Utilities.path(page.getFolders().dstDir, "fhir.rdf.ttl.zip"));
-    zip.addFileName("fhir.ttl", Utilities.path(page.getFolders().dstDir, "fhir.ttl"), false);
-    zip.addFileName("rim.ttl", Utilities.path(page.getFolders().dstDir, "rim.ttl"), false);
-    zip.addFileName("w5.ttl", Utilities.path(page.getFolders().dstDir, "w5.ttl"), false);
+    val.validate(Utilities.uncheckedPath(page.getFolders().dstDir, "fhir.ttl"));
+    val.validate(Utilities.uncheckedPath(page.getFolders().dstDir, "rim.ttl"));
+    val.validate(Utilities.uncheckedPath(page.getFolders().dstDir, "w5.ttl"));
+    ZipGenerator zip = new ZipGenerator(Utilities.uncheckedPath(page.getFolders().dstDir, "fhir.rdf.ttl.zip"));
+    zip.addFileName("fhir.ttl", Utilities.uncheckedPath(page.getFolders().dstDir, "fhir.ttl"), false);
+    zip.addFileName("rim.ttl", Utilities.uncheckedPath(page.getFolders().dstDir, "rim.ttl"), false);
+    zip.addFileName("w5.ttl", Utilities.uncheckedPath(page.getFolders().dstDir, "w5.ttl"), false);
     zip.close();
 
     // now that the RDF is generated, run any sparql rules that have been defined
-    Element test = loadDom(new FileInputStream(Utilities.path(page.getFolders().srcDir, "sparql-rules.xml")), false).getDocumentElement();
+    Element test = loadDom(new FileInputStream(Utilities.uncheckedPath(page.getFolders().srcDir, "sparql-rules.xml")), false).getDocumentElement();
     test = XMLUtil.getFirstChild(test);
     while (test != null) {
       if (test.getNodeName().equals("assertion")) {
@@ -3238,14 +3236,14 @@ public class Publisher implements URIResolver, SectionNumberer {
       Gson gson = new GsonBuilder().setPrettyPrinting().create();
       Gson gsonp = new GsonBuilder().create();
       String json = gson.toJson(diff);
-      TextFile.stringToFile(json, Utilities.path(page.getFolders().dstDir, "fhir.r4.diff.json"));
+      TextFile.stringToFile(json, Utilities.uncheckedPath(page.getFolders().dstDir, "fhir.r4.diff.json"));
 
       diff = new com.google.gson.JsonObject();
       page.getDiffEngine().getDiffAsJson(diff, false);
       gson = new GsonBuilder().setPrettyPrinting().create();
       gsonp = new GsonBuilder().create();
       json = gson.toJson(diff);
-      TextFile.stringToFile(json, Utilities.path(page.getFolders().dstDir, "fhir.r4b.diff.json"));
+      TextFile.stringToFile(json, Utilities.uncheckedPath(page.getFolders().dstDir, "fhir.r4b.diff.json"));
 
       DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
       DocumentBuilder builder = dbf.newDocumentBuilder();
@@ -3253,7 +3251,7 @@ public class Publisher implements URIResolver, SectionNumberer {
       Element element = doc.createElement("difference");
       doc.appendChild(element);
       page.getDiffEngine().getDiffAsXml(doc, element, true);
-      prettyPrint(doc, Utilities.path(page.getFolders().dstDir, "fhir.r4.diff.xml"));
+      prettyPrint(doc, Utilities.uncheckedPath(page.getFolders().dstDir, "fhir.r4.diff.xml"));
 
       dbf = DocumentBuilderFactory.newInstance();
       builder = dbf.newDocumentBuilder();
@@ -3261,7 +3259,7 @@ public class Publisher implements URIResolver, SectionNumberer {
       element = doc.createElement("difference");
       doc.appendChild(element);
       page.getDiffEngine().getDiffAsXml(doc, element, false);
-      prettyPrint(doc, Utilities.path(page.getFolders().dstDir, "fhir.r4b.diff.xml"));
+      prettyPrint(doc, Utilities.uncheckedPath(page.getFolders().dstDir, "fhir.r4b.diff.xml"));
       
 
       checkBundleURLs(page.getResourceBundle());
@@ -3337,7 +3335,7 @@ public class Publisher implements URIResolver, SectionNumberer {
       expIg.setLicense(ImplementationGuide.SPDXLicense.CC01_0);
       expIg.setTitle("FHIR "+page.getVersion().getDisplay()+" package : Expansions");
       expIg.setDescription("Expansions for the "+page.getVersion().getDisplay()+" version of the FHIR standard");
-      NPMPackageGenerator npm = new NPMPackageGenerator(Utilities.path(page.getFolders().dstDir, pidRoot()+".expansions.tgz"), "http://hl7.org/fhir", "http://hl7.org/fhir", PackageType.CORE, expIg, page.getGenDate().getTime(), true);
+      NPMPackageGenerator npm = new NPMPackageGenerator(Utilities.uncheckedPath(page.getFolders().dstDir, pidRoot() + ".expansions.tgz"), "http://hl7.org/fhir", "http://hl7.org/fhir", PackageType.CORE, expIg, page.getGenDate().getTime(), true);
       Bundle expansionFeed = new Bundle();
       Set<String> urlset = new HashSet<>();
       expansionFeed.setId("valueset-expansions");
@@ -3374,7 +3372,7 @@ public class Publisher implements URIResolver, SectionNumberer {
       npm.finish();
       if (!isCIBuild) {
         String id = pidRoot()+".expansions";
-        new FilesystemPackageCacheManager(true, ToolsVersion.TOOLS_VERSION).addPackageToCache(id, "current", new FileInputStream(Utilities.path(page.getFolders().dstDir, id+".tgz")), Utilities.path(page.getFolders().dstDir, id+".tgz"));
+        new FilesystemPackageCacheManager(true, ToolsVersion.TOOLS_VERSION).addPackageToCache(id, "current", new FileInputStream(Utilities.uncheckedPath(page.getFolders().dstDir, id + ".tgz")), Utilities.uncheckedPath(page.getFolders().dstDir, id + ".tgz"));
       }
       
       serializeResource(expansionFeed, "expansions", false);
@@ -3521,7 +3519,7 @@ public class Publisher implements URIResolver, SectionNumberer {
       zip.addFileName("redirect.asp.template", page.getFolders().srcDir + "redirect.asp", false);
       zip.addFileName("redirect.cgi.template", page.getFolders().srcDir + "redirect.cgi", false);
       zip.addFileName("redirect.php.template", page.getFolders().srcDir + "redirect.php", false);
-      zip.addFileName("ig-template.zip", Utilities.path(page.getFolders().tmpDir, "ig-template.zip"), false);
+      zip.addFileName("ig-template.zip", Utilities.uncheckedPath(page.getFolders().tmpDir, "ig-template.zip"), false);
       zip.addFiles(page.getFolders().dstDir, "", ".png", null);
       zip.addFiles(page.getFolders().dstDir, "", ".gif", null);
       zip.close();
@@ -3530,7 +3528,7 @@ public class Publisher implements URIResolver, SectionNumberer {
       SpecNPMPackageGenerator self = new SpecNPMPackageGenerator();
       self.generate(page.getFolders().dstDir, page.getWebLocation(), false, page.getGenDate().getTime(), pidRoot());
       if (!isCIBuild) {
-        new FilesystemPackageCacheManager(true, ToolsVersion.TOOLS_VERSION).addPackageToCache(pidRoot()+".core", "current", new FileInputStream(Utilities.path(page.getFolders().dstDir, pidRoot()+".core.tgz")), Utilities.path(page.getFolders().dstDir, pidRoot()+".core.tgz"));
+        new FilesystemPackageCacheManager(true, ToolsVersion.TOOLS_VERSION).addPackageToCache(pidRoot()+".core", "current", new FileInputStream(Utilities.uncheckedPath(page.getFolders().dstDir, pidRoot() + ".core.tgz")), Utilities.uncheckedPath(page.getFolders().dstDir, pidRoot() + ".core.tgz"));
       }
 
       page.log(" ...zips", LogMessageType.Process);
@@ -3546,7 +3544,7 @@ public class Publisher implements URIResolver, SectionNumberer {
       exIg.setLicense(ImplementationGuide.SPDXLicense.CC01_0);
       exIg.setTitle("FHIR "+page.getVersion().getDisplay()+" package : Examples");
       exIg.setDescription("Examples for the "+page.getVersion().getDisplay()+" version of the FHIR standard");
-      npm = new NPMPackageGenerator(Utilities.path(page.getFolders().dstDir, pidRoot()+".examples.tgz"), "http://hl7.org/fhir", "http://hl7.org/fhir", PackageType.EXAMPLES, exIg, page.getGenDate().getTime(), true);
+      npm = new NPMPackageGenerator(Utilities.uncheckedPath(page.getFolders().dstDir, pidRoot() + ".examples.tgz"), "http://hl7.org/fhir", "http://hl7.org/fhir", PackageType.EXAMPLES, exIg, page.getGenDate().getTime(), true);
 
       zip = new ZipGenerator(page.getFolders().dstDir + "examples-json.zip");
       File f = new CSFile(page.getFolders().dstDir);
@@ -3596,7 +3594,7 @@ public class Publisher implements URIResolver, SectionNumberer {
       spIg.setLicense(ImplementationGuide.SPDXLicense.CC01_0);
       spIg.setTitle("FHIR "+page.getVersion().getDisplay()+" package : ungrouped search parameters");
       exIg.setDescription("FHIR "+page.getVersion().getDisplay()+" package : Search Parameters (break out combined parmaeters for server execution convenience)");
-      npm = new NPMPackageGenerator(Utilities.path(page.getFolders().dstDir, pidRoot()+".search.tgz"), "http://hl7.org/fhir", "http://hl7.org/fhir", PackageType.EXAMPLES, exIg, page.getGenDate().getTime(), true);
+      npm = new NPMPackageGenerator(Utilities.uncheckedPath(page.getFolders().dstDir, pidRoot() + ".search.tgz"), "http://hl7.org/fhir", "http://hl7.org/fhir", PackageType.EXAMPLES, exIg, page.getGenDate().getTime(), true);
       for (ResourceDefn r : page.getDefinitions().getBaseResources().values()) {
         addToSearchPackage(r, npm);
       }
@@ -4364,7 +4362,7 @@ public class Publisher implements URIResolver, SectionNumberer {
     Utilities.copyDirectory(page.getFolders().rootDir + page.getIni().getStringProperty("html", "source"), page.getFolders().dstDir, page.getHTMLChecker());
     TextFile.stringToFile("\r\n[FHIR]\r\nFhirVersion=" + page.getVersion().toCode() + "\r\nversion=" + page.getVersion().toCode()
         + "\r\nbuildId=" + page.getBuildId() + "\r\ndate=" + new SimpleDateFormat("yyyyMMddHHmmss").format(page.getGenDate().getTime()),
-        Utilities.path(page.getFolders().dstDir, "version.info"), false);
+            Utilities.uncheckedPath(page.getFolders().dstDir, "version.info"), false);
 
     for (String n : page.getDefinitions().getDiagrams().keySet()) {
       page.log(" ...diagram " + n, LogMessageType.Process);
@@ -4386,7 +4384,7 @@ public class Publisher implements URIResolver, SectionNumberer {
         page.getHTMLChecker().registerFile(f.getName(), "Support File", HTMLLinkChecker.determineType(n), true);
       }
     } else {
-      Utilities.copyFile(new CSFile(Utilities.path(folder, n)), new CSFile(page.getFolders().dstDir + (n.contains("/") ? n.substring(n.lastIndexOf("/")+1): n)));
+      Utilities.copyFile(new CSFile(Utilities.uncheckedPath(folder, n)), new CSFile(page.getFolders().dstDir + (n.contains("/") ? n.substring(n.lastIndexOf("/")+1): n)));
       page.getHTMLChecker().registerFile(n, "Support File", HTMLLinkChecker.determineType(n), true);
     }
   }
@@ -4404,11 +4402,11 @@ public class Publisher implements URIResolver, SectionNumberer {
         }
       });
       for (File f : files) {
-        Utilities.copyFile(f, new CSFile(Utilities.path(page.getFolders().dstDir, prefix+f.getName())));
+        Utilities.copyFile(f, new CSFile(Utilities.uncheckedPath(page.getFolders().dstDir, prefix + f.getName())));
         page.getHTMLChecker().registerFile(prefix+f.getName(), "Support File", HTMLLinkChecker.determineType(f.getName()), true);
       }
     } else {
-      Utilities.copyFile(file, new CSFile(Utilities.path(page.getFolders().dstDir, prefix+file.getName())));
+      Utilities.copyFile(file, new CSFile(Utilities.uncheckedPath(page.getFolders().dstDir, prefix + file.getName())));
       page.getHTMLChecker().registerFile(prefix+file.getName(), "Support File", HTMLLinkChecker.determineType(file.getName()), true);
     }
   }
@@ -4650,7 +4648,7 @@ public class Publisher implements URIResolver, SectionNumberer {
     zip = new ZipGenerator(page.getFolders().dstDir + "fhir.schema.shex.zip");
     for (String fn : new File(page.getFolders().dstDir).list()) {
       if (fn.endsWith(".shex")) {
-        zip.addFileName(fn, Utilities.path(page.getFolders().dstDir, fn), false);   
+        zip.addFileName(fn, Utilities.uncheckedPath(page.getFolders().dstDir, fn), false);
       }
     }
     zip.close();
@@ -4832,7 +4830,7 @@ public class Publisher implements URIResolver, SectionNumberer {
 
     StructureDefinitionSpreadsheetGenerator sdr = new StructureDefinitionSpreadsheetGenerator(page.getWorkerContext(), false, false);
     sdr.renderStructureDefinition(resource.getProfile(), false);
-    sdr.finish(new FileOutputStream(Utilities.path(page.getFolders().dstDir, n + ".xlsx")));
+    sdr.finish(new FileOutputStream(Utilities.uncheckedPath(page.getFolders().dstDir, n + ".xlsx")));
 
     // because we'll pick up a little more information as we process the
     // resource
@@ -4841,12 +4839,12 @@ public class Publisher implements URIResolver, SectionNumberer {
     page.getDiffEngine().getDiffAsJson(diff, p, true);
     Gson gson = new GsonBuilder().setPrettyPrinting().create();
     json = gson.toJson(diff);
-    TextFile.stringToFile(json, Utilities.path(page.getFolders().dstDir, resource.getName().toLowerCase()+".r4.diff.json"));
+    TextFile.stringToFile(json, Utilities.uncheckedPath(page.getFolders().dstDir, resource.getName().toLowerCase() + ".r4.diff.json"));
     diff = new com.google.gson.JsonObject();
     page.getDiffEngine().getDiffAsJson(diff, p, false);
     gson = new GsonBuilder().setPrettyPrinting().create();
     json = gson.toJson(diff);
-    TextFile.stringToFile(json, Utilities.path(page.getFolders().dstDir, resource.getName().toLowerCase()+".r4b.diff.json"));
+    TextFile.stringToFile(json, Utilities.uncheckedPath(page.getFolders().dstDir, resource.getName().toLowerCase() + ".r4b.diff.json"));
 
     DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
     DocumentBuilder builder = dbf.newDocumentBuilder();
@@ -4854,7 +4852,7 @@ public class Publisher implements URIResolver, SectionNumberer {
     Element element = doc.createElement("difference");
     doc.appendChild(element);
     page.getDiffEngine().getDiffAsXml(doc, element, p, true);
-    prettyPrint(doc, Utilities.path(page.getFolders().dstDir, resource.getName().toLowerCase()+".r4.diff.xml"));
+    prettyPrint(doc, Utilities.uncheckedPath(page.getFolders().dstDir, resource.getName().toLowerCase() + ".r4.diff.xml"));
 
     dbf = DocumentBuilderFactory.newInstance();
     builder = dbf.newDocumentBuilder();
@@ -4862,7 +4860,7 @@ public class Publisher implements URIResolver, SectionNumberer {
     element = doc.createElement("difference");
     doc.appendChild(element);
     page.getDiffEngine().getDiffAsXml(doc, element, p, false);
-    prettyPrint(doc, Utilities.path(page.getFolders().dstDir, resource.getName().toLowerCase()+".r4b.diff.xml"));
+    prettyPrint(doc, Utilities.uncheckedPath(page.getFolders().dstDir, resource.getName().toLowerCase() + ".r4b.diff.xml"));
 }
 
   public void prettyPrint(Document xml, String filename) throws Exception {
@@ -5284,13 +5282,13 @@ public class Publisher implements URIResolver, SectionNumberer {
     // build json and ttl formats
     e.setResourceName(resn.getName());
     ParserBase xp = Manager.makeParser(page.getWorkerContext(), FhirFormat.XML);
-    org.hl7.fhir.r5.elementmodel.Element exe = xp.parseSingle(new FileInputStream(Utilities.path(page.getFolders().dstDir, prefix + n + ".xml")));
-    xp.compose(exe, new FileOutputStream(Utilities.path(page.getFolders().dstDir, prefix + n + ".canonical.xml")), OutputStyle.CANONICAL, null);
+    org.hl7.fhir.r5.elementmodel.Element exe = xp.parseSingle(new FileInputStream(Utilities.uncheckedPath(page.getFolders().dstDir, prefix + n + ".xml")));
+    xp.compose(exe, new FileOutputStream(Utilities.uncheckedPath(page.getFolders().dstDir, prefix + n + ".canonical.xml")), OutputStyle.CANONICAL, null);
     ParserBase jp = Manager.makeParser(page.getWorkerContext(), FhirFormat.JSON);
-    jp.compose(exe, new FileOutputStream(Utilities.path(page.getFolders().dstDir, prefix + n + ".json")), OutputStyle.PRETTY, null);
-    jp.compose(exe, new FileOutputStream(Utilities.path(page.getFolders().dstDir, prefix + n + ".canonical.json")), OutputStyle.CANONICAL, null);
+    jp.compose(exe, new FileOutputStream(Utilities.uncheckedPath(page.getFolders().dstDir, prefix + n + ".json")), OutputStyle.PRETTY, null);
+    jp.compose(exe, new FileOutputStream(Utilities.uncheckedPath(page.getFolders().dstDir, prefix + n + ".canonical.json")), OutputStyle.CANONICAL, null);
     ParserBase tp = Manager.makeParser(page.getWorkerContext(), FhirFormat.TURTLE);
-    tp.compose(exe, new FileOutputStream(Utilities.path(page.getFolders().dstDir, prefix + n + ".ttl")), OutputStyle.PRETTY, null);
+    tp.compose(exe, new FileOutputStream(Utilities.uncheckedPath(page.getFolders().dstDir, prefix + n + ".ttl")), OutputStyle.PRETTY, null);
     
     String json = TextFile.fileToString(page.getFolders().dstDir + prefix+n + ".json");
     //        String json2 = "<div class=\"example\">\r\n<p>" + Utilities.escapeXml(e.getDescription()) + "</p>\r\n<p><a href=\""+ n + ".json\">Raw JSON</a> (<a href=\""+n + ".canonical.json\">Canonical</a>)</p>\r\n<pre class=\"json\" style=\"white-space: pre; overflow: hidden\">\r\n" + Utilities.escapeXml(json)
@@ -5931,7 +5929,7 @@ public class Publisher implements URIResolver, SectionNumberer {
     String logicalName = Utilities.fileTitle(actualName);
     String src;
     if (IgParser.getKind(p) == GuidePageKind.TOC)
-      src = TextFile.fileToString(Utilities.path(page.getFolders().templateDir, "template-ig-toc.html"));
+      src = TextFile.fileToString(Utilities.uncheckedPath(page.getFolders().templateDir, "template-ig-toc.html"));
     else
       throw new Exception("Unsupported special page kind "+IgParser.getKind(p).toCode());
 
@@ -5943,9 +5941,9 @@ public class Publisher implements URIResolver, SectionNumberer {
 
     src = addSectionNumbers(file, logicalName, src, null, 1, null, ig);
 
-    TextFile.stringToFile(src, Utilities.path(page.getFolders().dstDir, file));
+    TextFile.stringToFile(src, Utilities.uncheckedPath(page.getFolders().dstDir, file));
 
-    src = TextFile.fileToString(Utilities.path(page.getFolders().dstDir, file)).replace("<body>", "<body style=\"margin: 10px\">");
+    src = TextFile.fileToString(Utilities.uncheckedPath(page.getFolders().dstDir, file)).replace("<body>", "<body style=\"margin: 10px\">");
     src = page.processPageIncludesForBook(file, src, "page", null, ig, null);
     cachePage(file, src, logicalName, true);
   }
@@ -6048,7 +6046,7 @@ public class Publisher implements URIResolver, SectionNumberer {
     page.getSectionTrackerCache().put(fn, st);
 
     if (lm.getDefinition() != null) {
-      String fName = Utilities.path(ig.getPrefix(), n);
+      String fName = Utilities.uncheckedPath(ig.getPrefix(), n);
       fixCanonicalResource(lm.getDefinition(), fName);
       serializeResource(lm.getDefinition(), fName, "Logical Model "+lm.getDefinition().getName(), "logical-model", lm.getDefinition().getName(), lm.getWg(), false, true);
     }
@@ -6215,7 +6213,7 @@ public class Publisher implements URIResolver, SectionNumberer {
 
 //    TextFile.stringToFile(src, Utilities.path(page.getFolders().dstDir, dstName));
     src = addSectionNumbers(Utilities.path("sid-"+ logicalName+ ".html"), "sid:terminologies-systems", src, "3." + Integer.toString(i), 0, null, null);
-    TextFile.stringToFile(src, Utilities.path(page.getFolders().dstDir, dstName));
+    TextFile.stringToFile(src, Utilities.uncheckedPath(page.getFolders().dstDir, dstName));
     page.getHTMLChecker().registerFile(Utilities.path("sid-"+ logicalName+ ".html"), logicalName, HTMLLinkChecker.XHTML_TYPE, true);
   }
 
