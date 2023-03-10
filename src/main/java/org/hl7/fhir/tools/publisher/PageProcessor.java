@@ -3848,11 +3848,11 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
       }
       if (uses) {
         if (vs.hasUserData("external.url"))
-          b.append(" <li>ValueSet: <a href=\"").append(vs.getUserString("external.url")).append("\">").append(vs.present()).append("</a> (").append(Utilities.escapeXml(vs.getDescription())).append(")</li>\r\n");
+          b.append(" <li>ValueSet: <a href=\"").append(vs.getUserString("external.url")).append("\">").append(vs.present()).append("</a> (").append(processMarkdown("description", vs.getDescriptionElement())).append(")</li>\r\n");
         else if (!vs.hasUserData("path"))
-          b.append(" <li>ValueSet: <a href=\"").append(prefix+"valueset-"+vs.getId()).append("\">").append(vs.present()).append("</a> (").append(Utilities.escapeXml(vs.getDescription())).append(")</li>\r\n");
+          b.append(" <li>ValueSet: <a href=\"").append(prefix+"valueset-"+vs.getId()).append("\">").append(vs.present()).append("</a> (").append(processMarkdown("description", vs.getDescriptionElement())).append(")</li>\r\n");
         else
-          b.append(" <li>ValueSet: <a href=\"").append(prefix+vs.getUserString("path")).append("\">").append(vs.present()).append("</a> (").append(Utilities.escapeXml(vs.getDescription())).append(")</li>\r\n");
+          b.append(" <li>ValueSet: <a href=\"").append(prefix+vs.getUserString("path")).append("\">").append(vs.present()).append("</a> (").append(processMarkdown("description", vs.getDescriptionElement())).append(")</li>\r\n");
       }
     }
     if (b.length() == 0)

@@ -136,18 +136,27 @@ public class XSDGenerator extends XSDRootGenerator {
 	  if (allenums.contains(en)) 
 	    return;
 	  allenums.add(en);
-	  write("  <xs:simpleType name=\""+en+"Enum\">\r\n");
-	  write("    <xs:restriction base=\"code-primitive\">\r\n");
-	  ValueSet vs = enums.get(en);
-	  vs.setUserData(ToolResourceUtilities.NAME_VS_USE_MARKER, true);
-	  ValueSet ex = workerContext.expandVS(vs, true, false).getValueset();
-	  for (ValueSetExpansionContainsComponent cc : ex.getExpansion().getContains()) {
-	    genIncludedCode(cc);
-	  }
+    ValueSet vs = enums.get(en);
+    ValueSet ex = workerContext.expandVS(vs, true, false).getValueset();
+    if (ex == null) {
+      write("  <xs:simpleType name=\""+en+"Enum\">\r\n");
+      write("    <xs:restriction base=\"xs:string\">\r\n");
+      write("      <xs:minLength value=\"1\"/>\r\n");
+      write("      <xs:pattern value=\"[\\s\\S]+\"/>\r\n");
+      write("    </xs:restriction>\r\n");
+      write("  </xs:simpleType>\r\n");
+      
+    } else {
+      write("  <xs:simpleType name=\""+en+"Enum\">\r\n");
+      write("    <xs:restriction base=\"code-primitive\">\r\n");
+      vs.setUserData(ToolResourceUtilities.NAME_VS_USE_MARKER, true);
+      for (ValueSetExpansionContainsComponent cc : ex.getExpansion().getContains()) {
+        genIncludedCode(cc);
+      }
 
-	  write("    </xs:restriction>\r\n");
-	  write("  </xs:simpleType>\r\n");
-
+      write("    </xs:restriction>\r\n");
+      write("  </xs:simpleType>\r\n");
+    }
 	  write("  <xs:complexType name=\""+en+"\">\r\n");
 	  write("    <xs:annotation>\r\n");
 	  write("      <xs:documentation xml:lang=\"en\">"+Utilities.escapeXml(enumDefs.get(en))+"</xs:documentation>\r\n");

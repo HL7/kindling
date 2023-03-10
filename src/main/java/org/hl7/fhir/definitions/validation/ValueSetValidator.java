@@ -174,7 +174,7 @@ public class ValueSetValidator extends BaseValidator {
     if (rule(errors, ValidationMessage.NO_RULE_DATE, IssueType.BUSINESSRULE, getWg(cs)+":CodeSystem["+cs.getId()+"].codeSystem", cs.hasUrl(), "A code system must have a url")) {
       if (!cs.getId().startsWith("v2-") && cs.hasConcept()) {
         ruleHtml(errors, ValidationMessage.NO_RULE_DATE, IssueType.BUSINESSRULE, getWg(cs)+":CodeSystem["+cs.getId()+"].codeSystem", (cs.hasCaseSensitiveElement() && cs.getCaseSensitive()) || 
-            Utilities.existsInList(cs.getUrl(), "http://terminology.hl7.org/CodeSystem/HCPCS", "http://terminology.hl7.org/CodeSystem/hl7TermMaintInfra", "http://terminology.hl7.org/CodeSystem/triggerEventID", "http://www.ada.org/snodent"), // this list is known exceptions already dealt with            
+            Utilities.existsInList(cs.getUrl(), "http://terminology.hl7.org/CodeSystem/HCPCS", "http://terminology.hl7.org/CodeSystem/hl7TermMaintInfra", "http://terminology.hl7.org/CodeSystem/triggerEventID", "http://www.ada.org/snodent", "http://hl7.org/fhir/color-names"), // this list is known exceptions already dealt with            
           "Value set "+nameForErrors+" ("+cs.getName()+"): All Code Systems that define codes must mark them as case sensitive ("+cs.getUrl()+")",
           "<a href=\""+cs.getUserString("path")+"\">Value set "+nameForErrors+" ("+cs.getName()+")</a>: All value sets that define codes must mark them as case sensitive");
       }
