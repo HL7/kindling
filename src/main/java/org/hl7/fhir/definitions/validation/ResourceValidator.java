@@ -665,6 +665,9 @@ public class ResourceValidator extends BaseValidator {
         e.setNormativeVersion(null);
       }
     }
+    if (e.getStandardsStatus() != null) {
+      status = e.getStandardsStatus();
+    }
     if (!hasSummary)
       e.setSummaryItem(true);
     else if (parentInSummary) {
@@ -790,10 +793,10 @@ public class ResourceValidator extends BaseValidator {
           else if (e.getBinding().getStrength() == BindingStrength.PREFERRED)
             ValueSetUtilities.markStatus(cd.getValueSet(), parent.getWg().getCode(), null, null, null, context, null);
           else
-            ValueSetUtilities.markStatus(cd.getValueSet(), parent.getWg().getCode(), parent.getStatus(), parent.getNormativePackage(), parent.getFmmLevel(), context, parent.getNormativeVersion());
+            ValueSetUtilities.markStatus(cd.getValueSet(), parent.getWg().getCode(), status, parent.getNormativePackage(), parent.getFmmLevel(), context, parent.getNormativeVersion());
           for (AdditionalBinding vsc : cd.getAdditionalBindings()) {
             if (vsc.getValueSet() != null) {
-              ValueSetUtilities.markStatus(vsc.getValueSet(), parent.getWg().getCode(), parent.getStatus(), parent.getNormativePackage(), parent.getFmmLevel(), context, parent.getNormativeVersion());
+              ValueSetUtilities.markStatus(vsc.getValueSet(), parent.getWg().getCode(), status, parent.getNormativePackage(), parent.getFmmLevel(), context, parent.getNormativeVersion());
             }
           }
           Integer w = (Integer) cd.getValueSet().getUserData("warnings");
