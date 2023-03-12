@@ -1768,7 +1768,7 @@ public class ProfileGenerator {
       ToolingExtensions.addStringExtension(ce, "http://hl7.org/fhir/StructureDefinition/structuredefinition-explicit-type-name", e.getStatedType());
     }
     if (e.isNoBindingAllowed()) {
-      ToolingExtensions.addBooleanExtension(ce, BuildExtensions.EXT_NO_BINDING, true);      
+      ToolingExtensions.addBooleanExtension(ce, ToolingExtensions.EXT_NO_BINDING, true);      
     }
 
     if (!root) {
