@@ -47,6 +47,7 @@ import java.io.UnsupportedEncodingException;
 import java.io.Writer;
 import java.net.URL;
 import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -97,6 +98,7 @@ import org.hl7.fhir.definitions.generators.specification.MappingsGenerator;
 import org.hl7.fhir.definitions.generators.specification.ProfileGenerator;
 import org.hl7.fhir.definitions.generators.specification.ResourceTableGenerator;
 import org.hl7.fhir.definitions.generators.specification.ReviewSpreadsheetGenerator;
+import org.hl7.fhir.definitions.generators.specification.SDUsageMapper;
 import org.hl7.fhir.definitions.generators.specification.SchematronGenerator;
 import org.hl7.fhir.definitions.generators.specification.SvgGenerator;
 import org.hl7.fhir.definitions.generators.specification.TerminologyNotesGenerator;
@@ -667,6 +669,7 @@ public class Publisher implements URIResolver, SectionNumberer {
    */
   public void execute(String folder, String[] args) throws IOException {
     tester = new PublisherTestSuites();
+    sdm = new SDUsageMapper();
 
     page.log("Publish FHIR in folder " + folder + " @ " + Config.DATE_FORMAT().format(page.getGenDate().getTime()), LogMessageType.Process);
 
@@ -1088,28 +1091,32 @@ public class Publisher implements URIResolver, SectionNumberer {
       fpe = new FHIRPathEngine(page.getWorkerContext());
     }
     Set<String> set = new HashSet<>();
+    Set<String> invsFound = new HashSet<>();
+    Set<String> invsTested = new HashSet<>();
     for (StructureDefinition sd : page.getWorkerContext().fetchResourcesByType(StructureDefinition.class)) {
       if (sd.getDerivation() == TypeDerivationRule.SPECIALIZATION && !set.contains(sd.getUrl())) {
         set.add(sd.getUrl());
-        if (!checkInvariants(fpe, sd)) {
+        if (!checkInvariants(fpe, sd, invsFound)) {
           ok = false;
         }
       }
     }
+    page.log("    "+invsFound.size()+" invariants found", LogMessageType.Process);
 
     ZipGenerator zip = new ZipGenerator(Utilities.uncheckedPath(page.getFolders().dstDir, "invariant-tests.zip"));
     for (String rname : page.getDefinitions().sortedResourceNames()) {
-      if (!ei.testInvariants(page.getFolders().srcDir, page.getDefinitions().getResourceByName(rname), zip)) {
+      if (!ei.testInvariants(page.getFolders().srcDir, page.getDefinitions().getResourceByName(rname), zip, invsTested)) {
         ok = false;
       }
     }
     zip.close();
+    page.log("    "+invsTested.size()+" invariants tested ("+((invsTested.size() * 100) / invsFound.size())+"%)", LogMessageType.Process);
     if (!ok) {
       throw new Error("Some invariants failed testing");
     }
   }
   
-  private boolean checkInvariants(FHIRPathEngine fpe, StructureDefinition sd) {
+  private boolean checkInvariants(FHIRPathEngine fpe, StructureDefinition sd, Set<String> invsFound) {
     boolean result = true;
     Map<String, ElementDefinition> map = new HashMap<>();
     for (ElementDefinition ed : sd.getDifferential().getElement()) {
@@ -1118,6 +1125,7 @@ public class Publisher implements URIResolver, SectionNumberer {
     for (ElementDefinition ed : sd.getDifferential().getElement()) {
       for (ElementDefinitionConstraintComponent inv : ed.getConstraint()) {
         if (inv.hasExpression()) {
+          invsFound.add(inv.getKey());
           if (!checkInvariant(fpe, sd, map, ed, inv)) {
             result = false;
           }
@@ -3522,6 +3530,7 @@ public class Publisher implements URIResolver, SectionNumberer {
       zip.addFileName("ig-template.zip", Utilities.uncheckedPath(page.getFolders().tmpDir, "ig-template.zip"), false);
       zip.addFiles(page.getFolders().dstDir, "", ".png", null);
       zip.addFiles(page.getFolders().dstDir, "", ".gif", null);
+      zip.addBytes("sdmap.details", sdm.asJson().getBytes(StandardCharsets.UTF_8), false);
       zip.close();
       page.log("....IG Builder (2)", LogMessageType.Process);
 
@@ -3984,11 +3993,17 @@ public class Publisher implements URIResolver, SectionNumberer {
           page.getValidationErrors().add(new ValidationMessage(Source.Publisher, IssueType.INVALID, -1, -1, "Bundle "+bnd.getId(), "URL is non-FHIR "+Integer.toString(i)+" : "+e.getFullUrl()+" should start with http://hl7.org/fhir/ for HL7-defined artifacts",IssueSeverity.WARNING));
         if (e.getResource() instanceof CanonicalResource) {
           CanonicalResource m = (CanonicalResource) e.getResource();
+          ToolingExtensions.removeExtension(m, BuildExtensions.EXT_NOTES);
+          ToolingExtensions.removeExtension(m, BuildExtensions.EXT_INTRODUCTION);
+          sdm.seeResource(m.present(), m.getUserString("path"), m);
           String url = m.getUrl();
           if (url != null && url.startsWith("http://hl7.org/fhir") && !SIDUtilities.isKnownSID(url) && !isExtension(m)) {
             if (!page.getVersion().toCode().equals(m.getVersion())) 
               page.getValidationErrors().add(new ValidationMessage(Source.Publisher, IssueType.INVALID, -1, -1, "Bundle "+bnd.getId(), "definitions in FHIR space should have the correct version (url = "+url+", version = "+m.getVersion()+" not "+page.getVersion()+")", IssueSeverity.ERROR));              
           }
+        } else {
+          sdm.seeResource("??", e.getResource().getUserString("path"),e.getResource());
+
         }
       }
     }
@@ -5054,6 +5069,7 @@ public class Publisher implements URIResolver, SectionNumberer {
   private FHIRPathEngine fpe;
 
   private ContextUtilities cu;
+  private SDUsageMapper sdm;
 
   private void processExample(Example e, ResourceDefn resn, StructureDefinition profile, Profile pack, ImplementationGuideDefn ig) throws Exception {
     if (e.getType() == ExampleType.Tool)
@@ -5229,6 +5245,7 @@ public class Publisher implements URIResolver, SectionNumberer {
           page.getValueSets().see(vs, page.packageInfo());
         addToResourceFeed(vs, valueSetsFeed, file.getName());
         page.getDefinitions().getValuesets().see(vs, page.packageInfo());
+        sdm.seeResource(vs.present(), vs.getUserString("path"), vs);
       } catch (Exception ex) {
         if (VersionUtilities.isR4BVer(page.getVersion().toCode())) {
           System.out.println("Value set "+file.getAbsolutePath()+" couldn't be parsed - ignoring! msg = "+ex.getMessage());
@@ -5247,6 +5264,7 @@ public class Publisher implements URIResolver, SectionNumberer {
       cs.setUserData("path", prefix +n + ".html");
       addToResourceFeed(cs, valueSetsFeed, file.getName());
       page.getCodeSystems().see(cs, page.packageInfo());
+      sdm.seeResource(cs.present(), cs.getUserString("path"), cs);
       // There's no longer a reason to exclude R4B concept maps
       //    } else if (rt.equals("ConceptMap") && !VersionUtilities.isR4BVer(page.getVersion().toCode())) {
     } else if (rt.equals("ConceptMap")) {
@@ -5261,6 +5279,7 @@ public class Publisher implements URIResolver, SectionNumberer {
       page.getDefinitions().getConceptMaps().see(cm, page.packageInfo());
       cm.setUserData("path", prefix +n + ".html");
       page.getConceptMaps().see(cm, page.packageInfo());
+      sdm.seeResource(cm.present(), cm.getUserString("path"), cm);
     } else if (rt.equals("Library")) {
       try {
         Library lib = (Library) loadExample(file);
@@ -5271,9 +5290,18 @@ public class Publisher implements URIResolver, SectionNumberer {
         lib.setUserData("filename", Utilities.changeFileExt(file.getName(), ""));
         lib.setUserData("path", prefix +n + ".html");
         page.getWorkerContext().cacheResource(lib);
+        sdm.seeResource(lib.present(), lib.getUserString("path"), lib);
       } catch (Exception ex) {
         System.out.println("Internal exception processing Library "+file.getName()+": "+ex.getMessage()+". Does the libary code need regenerating?");
         ex.printStackTrace();
+      }
+    } else {
+      if (e.getResource() != null) {
+        sdm.seeResource(e.present(), prefix +n + ".html", e.getResource());        
+      } else if (e.getElement() != null) {
+        sdm.seeResource(e.present(), prefix +n + ".html", e.getElement());        
+      } else {
+        page.log("?", LogMessageType.Error);
       }
     }
 

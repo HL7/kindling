@@ -12,6 +12,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 
 import javax.xml.parsers.ParserConfigurationException;
 
@@ -692,22 +693,24 @@ public class ExampleInspector implements IValidatorResourceFetcher, IValidationP
   }
 
 
-  public boolean testInvariants(String srcDir, ResourceDefn rd, ZipGenerator zip) throws IOException {
+  public boolean testInvariants(String srcDir, ResourceDefn rd, ZipGenerator zip, Set<String> invsTested) throws IOException {
     boolean result = true;
     File testsDir = new File(Utilities.path(srcDir, rd.getName().toLowerCase(), "invariant-tests"));
     if (testsDir.exists()) {
-      result = testInvariants(rd, result, testsDir, zip);
+      result = testInvariants(rd, result, testsDir, zip, invsTested);
     }
     return result;
   }
 
-  private boolean testInvariants(ResourceDefn rd, boolean result, File testsDir, ZipGenerator zip) throws IOException {
+  private boolean testInvariants(ResourceDefn rd, boolean result, File testsDir, ZipGenerator zip, Set<String> invsTested) throws IOException {
     for (File f : testsDir.listFiles()) {
       zip.addFileName(Utilities.path(rd.getName(), f.getName()), f.getAbsolutePath(), false);
       if (f.getName().endsWith(".json")) {
+        invsTested.add(f.getName().substring(0, f.getName().indexOf(".")));
         result = testInvariant(rd, f, FhirFormat.JSON) && result;
       }
       if (f.getName().endsWith(".xml")) {
+        invsTested.add(f.getName().substring(0, f.getName().indexOf(".")));
         result = testInvariant(rd, f, FhirFormat.XML) && result;
       }
     }

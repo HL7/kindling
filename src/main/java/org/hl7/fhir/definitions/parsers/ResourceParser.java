@@ -590,7 +590,7 @@ public class ResourceParser {
       ed.setDisplayHint(BuildExtensions.readStringExtension(focus, BuildExtensions.EXT_HINT));
     }
 
-    if (focus.hasExtension(BuildExtensions.EXT_NO_BINDING)) {
+    if (focus.hasExtension(BuildExtensions.EXT_NO_BINDING) || focus.hasExtension(ToolingExtensions.EXT_NO_BINDING)) {
       ed.setNoBindingAllowed(focus.getExtensionString(BuildExtensions.EXT_NO_BINDING).equals("true"));
     }    
     

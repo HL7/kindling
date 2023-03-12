@@ -299,4 +299,9 @@ public class Example {
   }
 
 
+  public String present() {
+    return description != null && !description.contains("\n") ? description : title;
+  }
+
+
 }

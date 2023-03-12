@@ -153,7 +153,7 @@ public class SpecNPMPackageGenerator {
       }
     }
     for (String k : files.keySet()) {
-      if (k.endsWith(".png") || k.endsWith(".css") || k.endsWith(".template") || k.endsWith(".zip") || k.endsWith(".gif") 
+      if (k.endsWith(".png") || k.endsWith(".css") || k.endsWith(".template") || k.endsWith(".zip") || k.endsWith(".gif") || k.endsWith(".details") 
           || k.equals("spec.internals") || k.equals("mappingSpaces.details"))
         npm.addFile(Category.OTHER, k, files.get(k));
     }
