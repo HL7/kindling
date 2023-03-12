@@ -893,10 +893,10 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
         src = s1+genResourceTable(definitions.getResourceByName(com[1]), genlevel(level), "X")+s3;
       } else if (com[0].equals("resource-table-all")) {
         src = s1+genResourceTable(definitions.getResourceByName(com[1]), genlevel(level), "A")+s3;
-      } else if (com[0].equals("dtextras")) {
-        src = s1+produceDataTypeExtras(com[1], false)+s3;
+      } else if (com[0].equals("dtprofiles")) {
+        src = s1+produceDataTypeProfiles(com[1])+s3;
       } else if (com[0].equals("dtextensions")) {
-        src = s1+produceDataTypeExtras(com[1], true)+s3;
+        src = s1+produceDataTypeExtensions(com[1])+s3;
       } else if (com[0].equals("tx")) {
         src = s1+produceDataTypeTx(com[1])+s3;
       } else if (com[0].equals("extension-diff")) {
@@ -973,7 +973,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
       } else if (com[0].equals("fmmshort")) {
         String fmm = resource == null || !(resource instanceof CanonicalResource) ? getFmm(com[1], true) : ToolingExtensions.readStringExtension((DomainResource) resource, ToolingExtensions.EXT_FMM_LEVEL);
         String npr = resource == null || !(resource instanceof CanonicalResource) ? getNormativePackageRef(com[1]) : "";
-        src = s1+getFmmShortFromlevel(genlevel(level), fmm)+npr+s3;
+        src = s1+fmm+npr+s3;
       } else if (com[0].equals("normative-pages")) {
         src = s1+getNormativeList(genlevel(level), com[1])+s3;
       } else if (s2.startsWith("search-additions\r\n")) {
@@ -4294,7 +4294,8 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     b.append(makeHeaderTab("Examples", "datatypes-examples.html", mode==null || "examples".equals(mode)));
     b.append(makeHeaderTab("Detailed Descriptions", "datatypes-definitions.html", mode==null || "definitions".equals(mode)));
     b.append(makeHeaderTab("Mappings", "datatypes-mappings.html", mode==null || "mappings".equals(mode)));
-    b.append(makeHeaderTab("Profiles and Extensions", "datatypes-extras.html", mode==null || "extras".equals(mode)));
+    b.append(makeHeaderTab("Profiles", "datatypes-profiles.html", mode==null || "profiles".equals(mode)));
+    b.append(makeHeaderTab("Extensions", "datatypes-extensions.html", mode==null || "extensions".equals(mode)));
     b.append(makeHeaderTab("R3 Conversions", "datatypes-version-maps.html", mode==null || "conversions".equals(mode)));
     b.append("</ul>\r\n");
     return b.toString();
@@ -4306,7 +4307,8 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     b.append(makeHeaderTab("Type Framework", "types.html", mode==null || "base".equals(mode)));
     b.append(makeHeaderTab("Detailed Descriptions", "types-definitions.html", mode==null || "definitions".equals(mode)));
     b.append(makeHeaderTab("Mappings", "types-mappings.html", mode==null || "mappings".equals(mode)));
-    b.append(makeHeaderTab("Profiles and Extensions", "types-extras.html", mode==null || "extras".equals(mode)));
+    b.append(makeHeaderTab("Profiles", "types-profiles.html", mode==null || "profiles".equals(mode)));
+    b.append(makeHeaderTab("Extensions", "types-extensions.html", mode==null || "extensions".equals(mode)));
     b.append(makeHeaderTab("R3 Conversions", "types-version-maps.html", mode==null || "conversions".equals(mode)));
     b.append("</ul>\r\n");
     return b.toString();
@@ -4319,6 +4321,9 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     b.append(makeHeaderTab("Examples", "metadatatypes-examples.html", mode==null || "examples".equals(mode)));
     b.append(makeHeaderTab("Detailed Descriptions", "metadatatypes-definitions.html", mode==null || "definitions".equals(mode)));
     b.append(makeHeaderTab("Mappings", "metadatatypes-mappings.html", mode==null || "mappings".equals(mode)));
+    b.append(makeHeaderTab("Profiles", "metadatatypes-profiles.html", mode==null || "profiles".equals(mode)));
+    b.append(makeHeaderTab("Extensions", "metadatatypes-extensions.html", mode==null || "extensions".equals(mode)));
+    b.append(makeHeaderTab("R4 Conversions", "metadatatypes-version-maps.html", mode==null || "conversions".equals(mode)));
     b.append("</ul>\r\n");
     return b.toString();
   }
@@ -4367,7 +4372,9 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     b.append(makeHeaderTab("Examples", t+"-examples.html", mode==null || "examples".equals(mode)));
     b.append(makeHeaderTab("Detailed Descriptions", t+"-definitions.html", mode==null || "definitions".equals(mode)));
     b.append(makeHeaderTab("Mappings", t+"-mappings.html", mode==null || "mappings".equals(mode)));
-    b.append(makeHeaderTab("Profiles &amp; Extensions", t+"-extras.html", mode==null || "profiles".equals(mode)));
+    b.append(makeHeaderTab("Profiles", t+"-profiles.html", mode==null || "profiles".equals(mode)));
+    b.append(makeHeaderTab("Extensions", t+"-extensions.html", mode==null || "extensions".equals(mode)));
+    b.append(makeHeaderTab("R4 Conversions", t+"-version-maps.html", mode==null || "conversions".equals(mode)));
     b.append("</ul>\r\n");
     return b.toString();
   }
@@ -4381,6 +4388,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     b.append(makeHeaderTab("Examples", "extensibility-examples.html", mode==null || "examples".equals(mode)));
     b.append(makeHeaderTab("Detailed Descriptions", "extensibility-definitions.html", mode==null || "definitions".equals(mode)));
     b.append(makeHeaderTab("Registry", "extensibility-registry.html", mode==null || "registry".equals(mode)));
+    b.append(makeHeaderTab("R4 Conversions", "extensibility-version-maps.html", mode==null || "conversions".equals(mode)));
     b.append("</ul>\r\n");
     return b.toString();
   }
@@ -4391,6 +4399,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     b.append(makeHeaderTab("Narrative", "narrative.html", mode==null || "base".equals(mode)));
     b.append(makeHeaderTab("Examples", "narrative-example.html", mode==null || "examples".equals(mode)));
     b.append(makeHeaderTab("Detailed Descriptions", "narrative-definitions.html", mode==null || "definitions".equals(mode)));
+    b.append(makeHeaderTab("R4 Conversions", "narrative-version-maps.html", mode==null || "conversions".equals(mode)));
     b.append("</ul>\r\n");
     return b.toString();
   }
@@ -4419,7 +4428,9 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     b.append("<ul class=\"nav nav-tabs\">");
     b.append(makeHeaderTab("References", "references.html", mode==null || "base".equals(mode)));
     b.append(makeHeaderTab("Detailed Descriptions", "references-definitions.html", mode==null || "definitions".equals(mode)));
-    b.append(makeHeaderTab("Profiles &amp; Extensions", "references-extras.html", mode==null || "profiles".equals(mode)));
+    b.append(makeHeaderTab("Profiles", "references-profiles.html", mode==null || "profiles".equals(mode)));
+    b.append(makeHeaderTab("Extensions", "references-extensions.html", mode==null || "extensions".equals(mode)));
+    b.append(makeHeaderTab("R4 Conversions", "extensibility-version-maps.html", mode==null || "conversions".equals(mode)));
     b.append("</ul>\r\n");
     return b.toString();
   }
@@ -5661,10 +5672,10 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
           src = s1+igRegistryList(com[1], com[2])+s3;
       } else if (com[0].equals("ig.registry")) {
         src = s1+buildIgRegistry(ig, com[1])+s3;
-      } else if (com[0].equals("dtextras")) {
-        src = s1+produceDataTypeExtras(com[1], true)+s3;
+      } else if (com[0].equals("dtprofiles")) {
+        src = s1+produceDataTypeProfiles(com[1])+s3;
       } else if (com[0].equals("dtextensions")) {
-        src = s1+produceDataTypeExtras(com[1], false)+s3;
+        src = s1+produceDataTypeExtensions(com[1])+s3;
       } else if (com[0].equals("resource-table")) {
         src = s1+genResourceTable(definitions.getResourceByName(com[1]), genlevel(level), "X")+s3;
       } else if (com[0].equals("resource-table-all")) {
@@ -6366,8 +6377,10 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
         src = s1 + genOtherTabs(com[1], tabs) + s3;
       else if (com[0].equals("svg"))
         src = s1+new SvgGenerator(this, genlevel(level), resource.getLayout(), true, "", version).generate(resource, com[1])+s3;
+      else if (com[0].equals("dtprofiles")) 
+        src = s1+produceDataTypeProfiles(com[1])+s3;
       else if (com[0].equals("dtextensions")) 
-        src = s1+produceDataTypeExtras(com[1], false)+s3;
+        src = s1+produceDataTypeExtensions(com[1])+s3;
       else if (com[0].equals("normative")) {
         String np = null;
         if (com[2].equals("%check") || com[2].equals("%check-op")) {
@@ -8622,7 +8635,49 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     return b.toString();
   }
 
-  private String produceDataTypeExtras(String tn, boolean profiles) {
+  private String produceDataTypeProfiles(String tn) {
+    int count = 0;
+    Map<String, StructureDefinition> map = new HashMap<String, StructureDefinition>();
+    for (StructureDefinition sd : workerContext.getExtensionDefinitions()) {
+      boolean inc = false;
+      for (StructureDefinitionContextComponent ec : sd.getContext()) {
+        if (ec.getType() == ExtensionContextType.ELEMENT) {
+          inc = inc || matchesType(tn, ec.getExpression());
+        }
+      }
+      if (inc)
+        map.put(sd.getId(), sd);
+    }
+    count = 0;
+    Map<String, CSPair> pmap = new HashMap<String, CSPair>();
+    for (Profile ap: definitions.getPackList()) {
+      for (ConstraintStructure cs : ap.getProfiles()) {
+        if (coversType(cs, tn))
+          pmap.put(cs.getTitle(), new CSPair(ap, cs));
+      }
+    }
+    StringBuilder b = new StringBuilder();
+
+    b.append("  <tr><td colspan=\"3\"><b>Profiles</b></td></tr>\r\n");
+    for (String s : sorted(pmap.keySet())) {
+      CSPair cs = pmap.get(s);
+      ImplementationGuideDefn ig = definitions.getIgs().get(cs.p.getCategory());
+      count++;
+      b.append("  <tr>\r\n");
+      String ref = (ig.isCore() ? "" : ig.getCode()+File.separator)+cs.cs.getId()+".html";
+      b.append("    <td><a href=\"").append(ref).append("\">").append(Utilities.escapeXml(cs.cs.getTitle())).append("</a></td>\r\n");
+      b.append("    <td>").append(Utilities.escapeXml(cs.p.getDescription())).append("</td>\r\n");
+      ref = (ig.isCore() ? "" : ig.getCode()+File.separator)+cs.p.getId().toLowerCase()+".html";
+      b.append("    <td>for <a href=\"").append(ref).append("\">").append(Utilities.escapeXml(cs.p.getTitle())).append("</a></td>\r\n");
+      b.append(" </tr>\r\n");
+    }
+    if (count == 0)
+      b.append("<tr><td>No Profiles defined for for "+(tn.equals("primitives")? "primitive types" : "this type")+"</td></tr>");
+
+    return b.toString();
+  }
+
+  private String produceDataTypeExtensions(String tn) {
     int count = 0;
     Map<String, StructureDefinition> map = new HashMap<String, StructureDefinition>();
     for (StructureDefinition sd : workerContext.getExtensionDefinitions()) {
@@ -8656,33 +8711,6 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     }
     if (count == 0)
       b.append("<tr><td>No Extensions defined for "+(tn.equals("primitives")? "primitive types" : "this type")+" (though see <a href=\"element-extensions.html\">extensions on all Elements</a>)</td></tr>");
-
-    if (profiles) {
-      count = 0;
-      Map<String, CSPair> pmap = new HashMap<String, CSPair>();
-      for (Profile ap: definitions.getPackList()) {
-        for (ConstraintStructure cs : ap.getProfiles()) {
-          if (coversType(cs, tn))
-            pmap.put(cs.getTitle(), new CSPair(ap, cs));
-        }
-      }
-
-      b.append("  <tr><td colspan=\"3\"><b>Profiles</b></td></tr>\r\n");
-      for (String s : sorted(pmap.keySet())) {
-        CSPair cs = pmap.get(s);
-        ImplementationGuideDefn ig = definitions.getIgs().get(cs.p.getCategory());
-        count++;
-        b.append("  <tr>\r\n");
-        String ref = (ig.isCore() ? "" : ig.getCode()+File.separator)+cs.cs.getId()+".html";
-        b.append("    <td><a href=\"").append(ref).append("\">").append(Utilities.escapeXml(cs.cs.getTitle())).append("</a></td>\r\n");
-        b.append("    <td>").append(Utilities.escapeXml(cs.p.getDescription())).append("</td>\r\n");
-        ref = (ig.isCore() ? "" : ig.getCode()+File.separator)+cs.p.getId().toLowerCase()+".html";
-        b.append("    <td>for <a href=\"").append(ref).append("\">").append(Utilities.escapeXml(cs.p.getTitle())).append("</a></td>\r\n");
-        b.append(" </tr>\r\n");
-      }
-      if (count == 0)
-        b.append("<tr><td>No Profiles defined for for "+(tn.equals("primitives")? "primitive types" : "this type")+"</td></tr>");
-    }
     return b.toString();
   }
 
@@ -11352,7 +11380,7 @@ private int countContains(List<ValueSetExpansionContainsComponent> list) {
       throw new Exception("unable to find resource '"+resourceName+"'");
     if (rd.getNormativePackage() != null || rd.getNormativeVersion() != null) {
       if (hideNormative)
-        return "n/a";
+        return "";
       else
         return "&nbsp;<a href=\"versions.html#maturity\" title=\"Maturity Level\">Normative</a>";
     } else
@@ -11368,16 +11396,17 @@ private int countContains(List<ValueSetExpansionContainsComponent> list) {
     else
       return " <a href=\"versions.html#std-process\" title=\"Normative Content\" class=\"normative-flag\">N</a>";
   }
+  
   private String getFmmShort(String resourceName) throws Exception {
     ResourceDefn rd = definitions.getResourceByName(resourceName);
     if (rd == null)
       throw new Exception("unable to find resource '"+resourceName+"'");
     if (rd.getNormativePackage() != null || rd.getNormativeVersion() != null)
-      return "<a href=\"versions.html#std-process\" style=\"color: maroon; hover: maroon; visited; maroon; opacity: 0.7\" title=\"Maturity Level\">"+rd.getFmmLevel()+"</a>"+
-        "<a href=\"versions.html#std-process\" title=\"Normative Content\" class=\"normative-flag\">N</a>";
+      return "<a href=\"versions.html#std-process\" title=\"Normative Content\" class=\"normative-flag\">N</a>";
     else
-      return "<a href=\"versions.html#std-process\" style=\"color: maroon; hover: maroon; visited; maroon; opacity: 0.7\" title=\"Maturity Level\">"+rd.getFmmLevel()+"</a>";
+      return "<a href=\"versions.html#std-process\" style=\"color: maroon; opacity: 0.7\" title=\"Maturity Level\">"+rd.getFmmLevel()+"</a>";
   }
+  
   private String getFmmFromlevel(String prefix, String level) throws Exception {
     return "&nbsp;<a href=\""+prefix+"versions.html#maturity\" title=\"Maturity Level\">Maturity Level</a>: "+(Utilities.noString(level) ? "0" : level);
   }
@@ -11386,7 +11415,7 @@ private int countContains(List<ValueSetExpansionContainsComponent> list) {
     if (level == "n/a")
       return "";
     else
-      return "<a href=\""+prefix+"versions.html#std-process\" style=\"color: maroon; hover: maroon; visited; maroon; opacity: 0.7\" title=\"Maturity Level\">"+(Utilities.noString(level) ? "0" : level)+"</a>";
+      return "<a href=\""+prefix+"versions.html#std-process\" style=\"color: maroon; opacity: 0.7\" title=\"Maturity Level\">"+(Utilities.noString(level) ? "0" : level)+"</a>";
   }
 
   private String getXcm(String param) {

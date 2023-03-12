@@ -905,7 +905,7 @@ public class Definitions {
     if (VersionUtilities.isR4BVer(version.toCode())) {
       return "element-extras.html";
     } else {
-      return "types-extras.html#Element";
+      return "types-extensions.html#Element";
     }
   }
 
