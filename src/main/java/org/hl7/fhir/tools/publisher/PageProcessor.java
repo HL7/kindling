@@ -693,8 +693,9 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     Map<String, Integer> resDesc = new HashMap<>();
     ExampleStatusTracker est = new ExampleStatusTracker();
 
+    src = processTypeLinks(src);
     while (src.contains("<%") || src.contains("[%"))
-    {
+    {      
       int i1 = src.indexOf("<%");
       int i2 = i1 == -1 ? -1 : src.substring(i1).indexOf("%>")+i1;
       if (i1 == -1) {
@@ -1441,6 +1442,22 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
         src = s1+macros.get(com[0])+s3;
       } else
         throw new Exception("Instruction <%"+s2+"%> not understood parsing page "+file);
+    }
+    return src;
+  }
+
+  private String processTypeLinks(String src) {
+    while (src.contains("[[%")) {
+      int i1 = src.indexOf("[[%");
+      int i2 = i1 == -1 ? -1 : src.substring(i1).indexOf("%]]")+i1;
+      String s1 = src.substring(0, i1);
+      String s2 = src.substring(i1 + 3, i2).trim();
+      String s3 = src.substring(i2+3);
+      StructureDefinition sd = workerContext.fetchTypeDefinition(s2);
+      if (sd != null && sd.hasUserData("path")) {
+        s2 ="<a href=\""+sd.getUserString("path")+"\">"+s2+"</a>";
+      }
+      src = s1+s2+s3; 
     }
     return src;
   }
@@ -5115,6 +5132,9 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     List<String> tabs = new ArrayList<String>();
     Map<String, Integer> resDesc = new HashMap<>();
     
+
+    src = processTypeLinks(src);
+
     while (src.contains("<%") || src.contains("[%"))
 	  {
 		  int i1 = src.indexOf("<%");
@@ -5521,6 +5541,8 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     List<String> tabs = new ArrayList<String>();
     Map<String, Integer> resDesc = new HashMap<>();
     ExampleStatusTracker est = new ExampleStatusTracker();
+
+    src = processTypeLinks(src);
 
     while (src.contains("<%") || src.contains("[%"))
 	  {
@@ -6338,6 +6360,8 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     String workingTitle = Utilities.escapeXml(resource.present());
     List<String> tabs = new ArrayList<String>();
     int level = (ig == null || ig.isCore()) ? 0 : 1;
+
+    src = processTypeLinks(src);
 
     while (src.contains("<%") || src.contains("[%"))
     {
@@ -9241,6 +9265,9 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
 
     int level = (ig == null || ig.isCore()) ? 0 : 1;
 
+
+    src = processTypeLinks(src);
+
     while (src.contains("<%") || src.contains("[%"))
     {
       int i1 = src.indexOf("<%");
@@ -9784,6 +9811,9 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
       String pagePath, ImplementationGuideDefn ig, String usages, String searches) throws Exception {
     String workingTitle = null;
     int level = ig.isCore() ? 0 : 1;
+
+
+    src = processTypeLinks(src);
 
     while (src.contains("<%") || src.contains("[%"))
     {
@@ -10828,6 +10858,9 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     String workingTitle = null;
     int level = (ig == null || ig.isCore()) ? 0 : 1;
     //boolean even = false;
+
+
+    src = processTypeLinks(src);
 
     while (src.contains("<%") || src.contains("[%"))
     {
