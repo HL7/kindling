@@ -257,16 +257,18 @@ public class ResourceDependencyGenerator  extends BaseGenerator {
     if (elementStatus == null)
       elementStatus = sstatus;
     
-    if (tgtFMM == null)
+    if (vs == null) {
       addError(gen, row, dc, "Binding Error: Unable to resolve vs '"+binding.getReference()+"' to check dependencies", null);
-    else {
-      boolean ok = elementStatus.canDependOn(tgtSS);
-      if (ok)
+    } else if ((tgtFMM == null || tgtSS == null) && !vs.getUrl().contains("terminology.hl7.org")) {
+      addError(gen, row, dc, "Binding Error: Non THO value set  '"+binding.getReference()+"' doesn't have FMM and standards-status", null);      
+    } else {
+      boolean ok = tgtSS == null || elementStatus.canDependOn(tgtSS);
+      if (ok && tgtFMM != null)
         ok = fmm.compareTo(tgtFMM) <= 0;
       if (ok)
         ; // addInfo(gen, row, dc, "Binding OK (ValueSet = FMM"+tgtFMM+"-"+tgtSS.toDisplay()+" vs. Element = FMM"+fmm+"-"+elementStatus.toDisplay()+")", null);
       else
-        addError(gen, row, dc, "Binding Error: (ValueSet = FMM"+tgtFMM+"-"+tgtSS.toDisplay()+" vs. Element = FMM"+fmm+"-"+elementStatus.toDisplay()+")", vs.getUserString("path"));
+        addError(gen, row, dc, "Binding Error: (ValueSet = FMM"+tgtFMM+"-"+(tgtSS == null ? "null" : tgtSS.toDisplay())+" vs. Element = FMM"+fmm+"-"+elementStatus.toDisplay()+")", vs.getUserString("path"));
     }      
   }
 
