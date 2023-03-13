@@ -13,30 +13,43 @@ import org.hl7.fhir.utilities.Utilities;
 public class DataTypeCrossLinkGenerator {
 
   public static void main(String[] args) throws FileNotFoundException, IOException {
-    new DataTypeCrossLinkGenerator().generate(new File(args[0]));
+    new DataTypeCrossLinkGenerator().generate(new File(args[0]), new File(args[1]));
   }
 
-  private void generate(File file) throws FileNotFoundException, IOException {
-    for (File f : file.listFiles()) {
+  private void generate(File core, File ig) throws FileNotFoundException, IOException {
+    System.out.println("Process "+core.getAbsolutePath());
+    for (File f : core.listFiles()) {
       if (f.getName().endsWith(".html")) {
-        System.out.print(f.getName());
         String source = TextFile.fileToString(f);
         List<String> lines = new ArrayList<>();
         for (String s : TextFile.fileToString(f).split("\\r?\\n|\\r")) {
           lines.add(s);
         };        
-        if (scanLines(f.getName().replace(".html", ""), lines)) {
-          System.out.println("... saved");
+        if (scanLinesCore(f.getName().replace(".html", ""), lines)) {
+          System.out.println("- saved "+f.getName());
           source = String.join("\r\n", lines);
           TextFile.stringToFile(source, f);
-        } else {
-          System.out.println("... no change");
         }
+      }
+    }
+    System.out.println("Process "+ig.getAbsolutePath());
+    for (File f : ig.listFiles()) {
+      if (f.getName().endsWith(".xml")) {
+        String source = TextFile.fileToString(f);
+        List<String> lines = new ArrayList<>();
+        for (String s : TextFile.fileToString(f).split("\\r?\\n|\\r")) {
+          lines.add(s);
+        };        
+        if (scanLinesIG(f.getName().replace(".xml", ""), lines)) {
+          source = String.join("\r\n", lines);
+          TextFile.stringToFile(source, f);
+          System.out.println(" - saved "+f.getName());
+        } 
       }
     }
   }
 
-  private boolean scanLines(String name, List<String> lines) {
+  private boolean scanLinesCore(String name, List<String> lines) {
     String base = name.contains("-") ? name.substring(0, name.indexOf("-")) : name;
     boolean changed = false;
     for (int i = 0; i < lines.size(); i++) {
@@ -47,25 +60,62 @@ public class DataTypeCrossLinkGenerator {
         String type = t.substring(8);
         CommaSeparatedStringBuilder b = new CommaSeparatedStringBuilder(", ", " and ");
         if (name.contains("-")) {
-          b.append("<a href=\""+base+".html#"+type+"\">Base Definition</a>");
+          b.append("<a no-external=\"true\" href=\""+base+".html#"+type+"\">Base Definition</a>");
         }
         if (!name.contains("-examples") && !Utilities.existsInList(base, "types")) {
-          b.append("<a href=\""+base+"-examples.html#"+type+"\">Examples</a>");          
+          b.append("<a no-external=\"true\" href=\""+base+"-examples.html#"+type+"\">Examples</a>");          
         }
         if (!name.contains("-definitions")) {
-          b.append("<a href=\""+base+"-definitions.html#"+type+"\">Detailed Descriptions</a>");          
+          b.append("<a no-external=\"true\" href=\""+base+"-definitions.html#"+type+"\">Detailed Descriptions</a>");          
         }
         if (!name.contains("-mappings")) {
-          b.append("<a href=\""+base+"-mappings.html#"+type+"\">Mappings</a>");          
+          b.append("<a no-external=\"true\" href=\""+base+"-mappings.html#"+type+"\">Mappings</a>");          
         }
         if (!name.contains("-profiles") && !Utilities.existsInList(base, "narrative")) {
-          b.append("<a href=\""+base+"-profiles.html#"+type+"\">Profiles</a>");          
+          b.append("<a no-external=\"true\" href=\""+base+"-profiles.html#"+type+"\">Profiles</a>");          
         }
         if (!name.contains("-extensions") && !Utilities.existsInList(base, "narrative")) {
-          b.append("<a href=\""+base+"-extensions.html#"+type+"\">Extensions</a>");          
+          b.append("<a no-external=\"true\" href=\"[%extensions-location%]extensions-"+base+".html#"+type+"\">Extensions</a>");          
         }
         if (!name.contains("-version-maps")) {
-          b.append("<a href=\""+base+"-version-maps.html#"+type+"\">R4 Conversions</a>");          
+          b.append("<a no-external=\"true\" href=\"[%extensions-location%]conversions-"+base+".html#"+type+"\">R4 Conversions</a>");          
+        }
+        lines.set(i, "<!--xlp:"+type+"-->See also "+b.toString());
+      }
+    }
+    return changed;
+  }
+  
+  private boolean scanLinesIG(String name, List<String> lines) {
+    String base = name.contains("-") ? name.substring(name.indexOf("-")+1) : name;
+    boolean changed = false;
+    for (int i = 0; i < lines.size(); i++) {
+      String s = lines.get(i);
+      if (s.startsWith("<!--xlp:")) {
+        changed = true;
+        String t = s.substring(0, s.indexOf("-->"));
+        String type = t.substring(8);
+        CommaSeparatedStringBuilder b = new CommaSeparatedStringBuilder(", ", " and ");
+        if (name.contains("-")) {
+          b.append("<a no-external=\"true\" href=\"{{site.data.fhir.path}}"+base+".html#"+type+"\">Base Definition</a>");
+        }
+        if (!name.contains("-examples") && !Utilities.existsInList(base, "types")) {
+          b.append("<a no-external=\"true\" href=\"{{site.data.fhir.path}}"+base+"-examples.html#"+type+"\">Examples</a>");          
+        }
+        if (!name.contains("-definitions")) {
+          b.append("<a no-external=\"true\" href=\"{{site.data.fhir.path}}"+base+"-definitions.html#"+type+"\">Detailed Descriptions</a>");          
+        }
+        if (!name.contains("-mappings")) {
+          b.append("<a no-external=\"true\" href=\"{{site.data.fhir.path}}"+base+"-mappings.html#"+type+"\">Mappings</a>");          
+        }
+        if (!name.contains("-profiles") && !Utilities.existsInList(base, "narrative")) {
+          b.append("<a no-external=\"true\" href=\"{{site.data.fhir.path}}"+base+"-profiles.html#"+type+"\">Profiles</a>");          
+        }
+        if (!name.contains("-extensions") && !Utilities.existsInList(base, "narrative")) {
+          b.append("<a no-external=\"true\" href=\"extensions-"+base+".html#"+type+"\">Extensions</a>");          
+        }
+        if (!name.contains("-version-maps")) {
+          b.append("<a no-external=\"true\" href=\"conversions-"+base+".html#"+type+"\">R4 Conversions</a>");          
         }
         lines.set(i, "<!--xlp:"+type+"-->See also "+b.toString());
       }
