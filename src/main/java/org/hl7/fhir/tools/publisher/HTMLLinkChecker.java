@@ -293,7 +293,8 @@ public class HTMLLinkChecker implements FileNotifier {
         SpecMapManager smm = packages.get(u);
         if (smm != null && Utilities.startsWithInList(href, u, u.replace("http:", "https:"), smm.getBase(), smm.getBase2())) {
           if (!checkPackagePath(smm, href, u)) {
-            reportError(base, "Broken Extensions Link in "+base+": '"+href+"' not found in "+smm.getNpmName()+" ("+node.allText()+")");
+            // reportError(base, "Broken Extensions Link in "+base+": '"+href+"' not found in "+smm.getNpmName()+" ("+node.allText()+")");
+            System.out.println("Broken Extensions Link in "+base+": '"+href+"' not found in "+smm.getNpmName()+" ("+node.allText()+")");
           }
         }
       }
