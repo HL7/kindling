@@ -4729,14 +4729,14 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     b.append(makeHeaderTab("Detailed Descriptions", n+"-definitions.html", "definitions".equals(mode)));
     if (!isAbstract)
       b.append(makeHeaderTab("Mappings", n+"-mappings.html", "mappings".equals(mode)));
+    b.append(makeHeaderTab("Operations", n+"-operations.html", "operations".equals(mode)));
+    b.append(makeHeaderTab("Search Params", n+"-search.html", "search".equals(mode)));
     b.append(makeHeaderTab("Profiles", n+"-profiles.html", "profiles".equals(mode)));
     b.append(makeHeaderTab("Extensions", extensionsLocation+"extensions-"+ res.getName()+".html", "extensions".equals(mode)));
 //    if (!isAbstract)
 //      b.append(makeHeaderTab("HTML Form", n+"-questionnaire.html", "questionnaire".equals(mode)));
-    b.append(makeHeaderTab("Operations", n+"-operations.html", "operations".equals(mode)));
     if (new File(Utilities.path(folders.rootDir, "implementations", "r3maps", "R4toR3", title+".map")).exists())
       b.append(makeHeaderTab("R4 Conversions", extensionsLocation+"conversions-"+ res.getName()+".html", "conversion".equals(mode)));
-    b.append(makeHeaderTab("Search Params", n+"-search.html", "search".equals(mode)));
     b.append("</ul>\r\n");
 
     return b.toString();
