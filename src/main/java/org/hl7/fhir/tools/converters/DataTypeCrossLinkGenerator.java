@@ -62,13 +62,13 @@ public class DataTypeCrossLinkGenerator {
         if (name.contains("-")) {
           b.append("<a no-external=\"true\" href=\""+base+".html#"+type+"\">Base Definition</a>");
         }
-        if (!name.contains("-examples") && !Utilities.existsInList(base, "types")) {
+        if (!name.contains("-examples") && !Utilities.existsInList(base, "types", "references")) {
           b.append("<a no-external=\"true\" href=\""+base+"-examples.html#"+type+"\">Examples</a>");          
         }
         if (!name.contains("-definitions")) {
           b.append("<a no-external=\"true\" href=\""+base+"-definitions.html#"+type+"\">Detailed Descriptions</a>");          
         }
-        if (!name.contains("-mappings")) {
+        if (!name.contains("-mappings") && !Utilities.existsInList(base, "references")) {
           b.append("<a no-external=\"true\" href=\""+base+"-mappings.html#"+type+"\">Mappings</a>");          
         }
         if (!name.contains("-profiles") && !Utilities.existsInList(base, "narrative")) {
@@ -99,13 +99,13 @@ public class DataTypeCrossLinkGenerator {
         if (name.contains("-")) {
           b.append("<a no-external=\"true\" href=\"{{site.data.fhir.path}}"+base+".html#"+type+"\">Base Definition</a>");
         }
-        if (!name.contains("-examples") && !Utilities.existsInList(base, "types")) {
+        if (!name.contains("-examples") && !Utilities.existsInList(base, "types", "references")) {
           b.append("<a no-external=\"true\" href=\"{{site.data.fhir.path}}"+base+"-examples.html#"+type+"\">Examples</a>");          
         }
         if (!name.contains("-definitions")) {
           b.append("<a no-external=\"true\" href=\"{{site.data.fhir.path}}"+base+"-definitions.html#"+type+"\">Detailed Descriptions</a>");          
         }
-        if (!name.contains("-mappings")) {
+        if (!name.contains("-mappings") && !Utilities.existsInList(base, "references")) {
           b.append("<a no-external=\"true\" href=\"{{site.data.fhir.path}}"+base+"-mappings.html#"+type+"\">Mappings</a>");          
         }
         if (!name.contains("-profiles") && !Utilities.existsInList(base, "narrative")) {

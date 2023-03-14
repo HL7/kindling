@@ -3624,6 +3624,7 @@ public class Publisher implements URIResolver, SectionNumberer {
 
       page.log("Check HTML Links", LogMessageType.Process);
       page.getHTMLChecker().produce();
+      page.getHTMLChecker().close();
       checkAllOk();
     } else
       page.log("Partial Build - terminating now", LogMessageType.Error);
