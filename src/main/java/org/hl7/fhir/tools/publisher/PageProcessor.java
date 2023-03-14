@@ -8479,7 +8479,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
       b.append("  <tr>\r\n");
       String ref = (ig.isCore() ? "" : ig.getCode()+File.separator)+cs.cs.getId()+".html";
       b.append("    <td><a href=\"").append(ref).append("\">").append(Utilities.escapeXml(cs.cs.getTitle())).append("</a></td>\r\n");
-      b.append("    <td>").append(Utilities.escapeXml(cs.p.getDescription())).append("</td>\r\n");
+      b.append("    <td>").append(processMarkdown("cs.desc", cs.cs.getResource().getDescriptionElement())).append("</td>\r\n");
       ref = (ig.isCore() ? "" : ig.getCode()+File.separator)+cs.p.getId().toLowerCase()+".html";
       b.append("    <td><a href=\"").append(ref).append("\">").append(Utilities.escapeXml(cs.p.getTitle())).append("</a></td>\r\n");
       b.append(" </tr>\r\n");
