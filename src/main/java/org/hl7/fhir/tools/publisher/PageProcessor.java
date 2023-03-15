@@ -2067,7 +2067,9 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
           ResourceDefn rd = definitions.getResourceByName(r);
           if (rd.getNormativePackage() != null || rd.getNormativeVersion() != null)
             b.append("  <li><a title=\"[%resdesc "+r+"%]\" href=\""+r.toLowerCase()+".html\">"+r+"</a> <a href=\"versions.html#std-process\"  title=\"Normative Content\" class=\"normative-flag\">N</a></li>\r\n");
-          else
+          else if (rd.getApproval() != FMGApproval.APPROVED) {
+            b.append("  <li><a title=\"[%resdesc "+r+"%]\" href=\""+r.toLowerCase()+".html\">"+r+"</a> <span style=\"border: 1px grey solid; background-color: #dbae6e; padding-left: 3px; padding-right: 3px; color: black; font-weight: bold\">U</span></li>\r\n");            
+          } else
             b.append("  <li><a title=\"[%resdesc "+r+"%]\" href=\""+r.toLowerCase()+".html\">"+r+"</a></li>\r\n");
         }
       }
@@ -2137,8 +2139,11 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
           }
           if (rd.getNormativePackage() != null || rd.getNormativeVersion() != null)
             b.append("  <li><a title=\"[%resdesc "+rn+"%]\" href=\""+rn.toLowerCase()+".html\">"+rn+"</a> <a href=\"versions.html#std-process\" title=\"Normative Content\" class=\"normative-flag\">N</a></li>\r\n");
-          else
+          else if (rd.getApproval() != FMGApproval.APPROVED) {
+            b.append("  <li><a title=\"[%resdesc "+rn+"%]\" href=\""+rn.toLowerCase()+".html\">"+rn+"</a> <span style=\"border: 1px grey solid; background-color: #dbae6e; padding-left: 3px; padding-right: 3px; color: black; font-weight: bold\">U</span></li>\r\n");            
+          } else {
             b.append("  <li><a title=\"[%resdesc "+rn+"%]\" href=\""+rn.toLowerCase()+".html\">"+rn+"</a></li>\r\n");
+          }
         }
       }
       if (!first)

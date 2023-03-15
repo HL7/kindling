@@ -120,6 +120,10 @@ public class ResourceDefn  {
       return NOPROPOSAL;
     }
 
+    public boolean isOK() {
+      return this == APPROVED || this == NOTRELEVANT;
+    }
+
   }
 
   public static class PointSpec {
