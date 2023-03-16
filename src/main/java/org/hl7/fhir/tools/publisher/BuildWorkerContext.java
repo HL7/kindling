@@ -762,7 +762,7 @@ public class BuildWorkerContext extends BaseWorkerContext implements IWorkerCont
 
 
   @Override
-  public int loadFromPackage(NpmPackage pi, IContextResourceLoader loader, String[] types) throws FileNotFoundException, IOException, FHIRException {
+  public int loadFromPackage(NpmPackage pi, IContextResourceLoader loader, List<String> types) throws FileNotFoundException, IOException, FHIRException {
     throw new Error("Not implemented yet");    
   }
 
@@ -777,15 +777,15 @@ public class BuildWorkerContext extends BaseWorkerContext implements IWorkerCont
   }
 
 
-  public static String[] defaultTypesToLoad() {
+  public static List<String> defaultTypesToLoad() {
     // there's no penalty for listing resources that don't exist, so we just all the relevant possibilities for all versions 
-    return new String[] {"CodeSystem", "ValueSet", "ConceptMap", "NamingSystem"};
+    return Utilities.strings("CodeSystem", "ValueSet", "ConceptMap", "NamingSystem");
   }
 
 
-  public static String[] extensionTypesToLoad() {
+  public static List<String> extensionTypesToLoad() {
     // there's no penalty for listing resources that don't exist, so we just all the relevant possibilities for all versions 
-    return new String[] {"CodeSystem", "ValueSet", "ConceptMap", "NamingSystem", "StructureDefinition", "SearchParameter"};
+    return Utilities.strings("CodeSystem", "ValueSet", "ConceptMap", "NamingSystem", "StructureDefinition", "SearchParameter");
   }
 
   @Override
@@ -793,7 +793,7 @@ public class BuildWorkerContext extends BaseWorkerContext implements IWorkerCont
     throw new Error("Not implemented yet");
   }
 
-  public int loadFromPackageInt(NpmPackage pi, IContextResourceLoader loader, String... types) throws FileNotFoundException, IOException, FHIRException {
+  public int loadFromPackageInt(NpmPackage pi, IContextResourceLoader loader, List<String> types) throws FileNotFoundException, IOException, FHIRException {
     int t = 0;
     System.out.println("Load Package "+pi.name()+"#"+pi.version());
     if (loadedPackages .contains(pi.id()+"#"+pi.version())) {
@@ -802,7 +802,7 @@ public class BuildWorkerContext extends BaseWorkerContext implements IWorkerCont
     loadedPackages.add(pi.id()+"#"+pi.version());
 
     
-    if ((types == null || types.length == 0) &&  loader != null) {
+    if ((types == null || types.size() == 0) &&  loader != null) {
       types = loader.getTypes();
     }
     for (PackageResourceInformation pri : pi.listIndexedResources(types)) {
