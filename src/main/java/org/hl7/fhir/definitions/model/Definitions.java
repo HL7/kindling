@@ -405,6 +405,7 @@ public class Definitions {
   private boolean loaded;
   private int valueSetCount;
   private FHIRVersion version;
+  private List<Operation> genOpList = new ArrayList<>();
   
   public List<String> sortedResourceNames() {
     if (sortedNames == null) {
@@ -904,7 +905,7 @@ public class Definitions {
     if (VersionUtilities.isR4BVer(version.toCode())) {
       return "element-extras.html";
     } else {
-      return "types-extras.html#Element";
+      return "extensions-types.html#Element";
     }
   }
 
@@ -997,5 +998,9 @@ public class Definitions {
 
   public Map<String, String> getAllowedSearchTypes() {
     return allowedSearchTypes;
+  }
+
+  public List<Operation> genOpList() {
+    return genOpList;
   }
 }

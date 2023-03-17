@@ -266,7 +266,7 @@ public class Regenerator {
     StructureDefinition sd = cs.getResource().copy();
     sd.setSnapshot(null);
     if (!Utilities.noString(cs.getSummary())) {
-      sd.addExtension(BuildExtensions.EXT_SUMMARY, new StringType(cs.getSummary()));
+      sd.addExtension(ToolingExtensions.EXT_SUMMARY, new MarkdownType(cs.getSummary()));
     }
     File fn = new File(Utilities.path(root,  sd.fhirType().toLowerCase()+"-profile-"+sd.getId()+".gen.xml"));
     new XmlParser().setOutputStyle(OutputStyle.PRETTY).compose(new FileOutputStream(fn), sd);

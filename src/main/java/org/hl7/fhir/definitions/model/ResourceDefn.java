@@ -117,7 +117,13 @@ public class ResourceDefn  {
         return FMGApproval.PENDING;
       if (s.equals("n/a"))
         return FMGApproval.NOTRELEVANT;
+      if (s.equals("no-proposal"))
+        return FMGApproval.NOTRELEVANT;
       return NOPROPOSAL;
+    }
+
+    public boolean isOK() {
+      return this == APPROVED || this == NOTRELEVANT;
     }
 
   }

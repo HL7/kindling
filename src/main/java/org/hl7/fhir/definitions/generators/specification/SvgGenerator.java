@@ -967,7 +967,7 @@ public class SvgGenerator extends BaseGenerator {
     String src = definitions.getSrcFile(tn);
     String sfx = suffix;
     if (src.equals("metadatatypes")) {
-      if (Utilities.existsInList(sfx, "-extras", "-version-maps")) {
+      if (Utilities.existsInList(sfx, "-extensions", "-profiles", "-version-maps")) {
         sfx = "";
       }
     }
@@ -982,17 +982,17 @@ public class SvgGenerator extends BaseGenerator {
       }
     }
     if (src.equals("narrative")) {
-      if (Utilities.existsInList(sfx, "-extras", "-mappings", "-examples", "-version-maps")) {
+      if (Utilities.existsInList(sfx, "-extensions", "-profiles", "-mappings", "-examples", "-version-maps")) {
         sfx = "";
       }
     }
     if (src.equals("extensibility")) {
-      if (Utilities.existsInList(sfx, "-examples", "-mappings", "-extras", "-version-maps")) {
+      if (Utilities.existsInList(sfx, "-examples", "-mappings", "-extensions", "-profiles", "-version-maps")) {
         sfx = "";
       }
     }
     if (src.equals("resource")) {
-      if (Utilities.existsInList(sfx, "-examples", "-mappings", "-extras", "-version-maps")) {
+      if (Utilities.existsInList(sfx, "-examples", "-mappings", "-extensions", "-profiles", "-version-maps")) {
         sfx = "";
       }
     }

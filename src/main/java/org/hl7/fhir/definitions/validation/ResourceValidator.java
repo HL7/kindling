@@ -35,6 +35,7 @@ import org.hl7.fhir.r5.model.CanonicalType;
 import org.hl7.fhir.r5.model.CodeSystem;
 import org.hl7.fhir.r5.model.CodeSystem.ConceptDefinitionComponent;
 import org.hl7.fhir.r5.model.Enumerations.BindingStrength;
+import org.hl7.fhir.r5.model.SearchParameter.SearchProcessingModeType;
 import org.hl7.fhir.r5.model.ValueSet;
 import org.hl7.fhir.r5.model.ValueSet.ConceptSetComponent;
 import org.hl7.fhir.r5.renderers.RendererFactory;
@@ -371,8 +372,9 @@ public class ResourceValidator extends BaseValidator {
               else if (definitions.getPrimitives().containsKey(tn) && definitions.getPrimitives().get(tn) instanceof DefinedStringPattern && !tn.equals("code") && !tn.equals("canonical"))
                 tn = ((DefinedStringPattern) definitions.getPrimitives().get(tn)).getBase();
               usagest.get(p.getType()).usage.add(tn);
-            } else
-              warning(errors, ValidationMessage.NO_RULE_DATE, IssueType.STRUCTURE, rd.getName(), tlist.size() > 1, "Search Parameter " + p.getCode() + " : " + p.getType().name() + " type illegal for " + path + " : " + tn + " (" + e.typeCode() + ")");
+            } else {
+              warning(errors, ValidationMessage.NO_RULE_DATE, IssueType.STRUCTURE, rd.getName(), tlist.size() > 1 || p.getProcessingMode() == SearchProcessingModeType.OTHER, "Search Parameter " + p.getCode() + " : " + p.getType().name() + " type illegal for " + path + " : " + tn + " (" + e.typeCode() + ")");
+            }
           }
         }
       } catch (Exception e1) {
@@ -621,6 +623,7 @@ public class ResourceValidator extends BaseValidator {
         name.equals("Query") ||
         name.equals("ValueSet") ||
         name.equals("OperationDefinition") ||
+        name.equals("SubscriptionStatus") ||
         name.equals("OperationOutcome");
   }
 
@@ -661,6 +664,9 @@ public class ResourceValidator extends BaseValidator {
         }
         e.setNormativeVersion(null);
       }
+    }
+    if (e.getStandardsStatus() != null) {
+      status = e.getStandardsStatus();
     }
     if (!hasSummary)
       e.setSummaryItem(true);
@@ -787,10 +793,10 @@ public class ResourceValidator extends BaseValidator {
           else if (e.getBinding().getStrength() == BindingStrength.PREFERRED)
             ValueSetUtilities.markStatus(cd.getValueSet(), parent.getWg().getCode(), null, null, null, context, null);
           else
-            ValueSetUtilities.markStatus(cd.getValueSet(), parent.getWg().getCode(), parent.getStatus(), parent.getNormativePackage(), parent.getFmmLevel(), context, parent.getNormativeVersion());
+            ValueSetUtilities.markStatus(cd.getValueSet(), parent.getWg().getCode(), status, parent.getNormativePackage(), parent.getFmmLevel(), context, parent.getNormativeVersion());
           for (AdditionalBinding vsc : cd.getAdditionalBindings()) {
             if (vsc.getValueSet() != null) {
-              ValueSetUtilities.markStatus(vsc.getValueSet(), parent.getWg().getCode(), parent.getStatus(), parent.getNormativePackage(), parent.getFmmLevel(), context, parent.getNormativeVersion());
+              ValueSetUtilities.markStatus(vsc.getValueSet(), parent.getWg().getCode(), status, parent.getNormativePackage(), parent.getFmmLevel(), context, parent.getNormativeVersion());
             }
           }
           Integer w = (Integer) cd.getValueSet().getUserData("warnings");

@@ -5,7 +5,10 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import org.hl7.fhir.r5.model.Enumerations.FHIRVersion;
 import org.hl7.fhir.r5.model.StructureDefinition;
@@ -69,13 +72,18 @@ public class HTMLLinkChecker implements FileNotifier {
   private String webPath;
   private FHIRVersion version;
   private List<StructureDefinition> extensions = new ArrayList<>();
+  private String extensionsLocation;
+  private Set<String> extensionPaths = new HashSet<>();
+  private Map<String, SpecMapManager> packages;
 
   
-  public HTMLLinkChecker(PageProcessor page, List<ValidationMessage> issues, String webPath) {
+  public HTMLLinkChecker(PageProcessor page, List<ValidationMessage> issues, String webPath, String extensionsLocation, Map<String, SpecMapManager> packages) {
     super();
     this.page = page;
     this.issues = issues;
     this.webPath = webPath;
+    this.extensionsLocation = extensionsLocation;
+    this.packages = packages;
   }
 
   public FHIRVersion getVersion() {
@@ -91,6 +99,12 @@ public class HTMLLinkChecker implements FileNotifier {
       if (sd.getType().equals("Extension") && sd.getDerivation() == TypeDerivationRule.CONSTRAINT) {
         extensions.add(sd);
       }
+    }
+  }
+  
+  public void close() {
+    for (String s : extensionPaths) {
+  //    System.out.println(" - "+s);
     }
   }
   
@@ -271,10 +285,23 @@ public class HTMLLinkChecker implements FileNotifier {
   }
 
   private void check(XhtmlNode node, String href, String base, String source) throws FileNotFoundException, Exception {
-    if (href == null)
+    if (href == null) {
       throw new Exception("no ref at "+node.allText());
-    if (href.startsWith("http:") || href.startsWith("https:") || href.startsWith("ftp:") || href.startsWith("mailto:"))
+    }
+    if (Utilities.isAbsoluteUrl(href)) {
+      for (String u : packages.keySet()) {
+        SpecMapManager smm = packages.get(u);
+        if (smm != null && Utilities.startsWithInList(href, u, u.replace("http:", "https:"), smm.getBase(), smm.getBase2())) {
+          if (!checkPackagePath(smm, href, u)) {
+            // reportError(base, "Broken Extensions Link in "+base+": '"+href+"' not found in "+smm.getNpmName()+" ("+node.allText()+")");
+            System.out.println("Broken Extensions Link in "+base+": '"+href+"' not found in "+smm.getNpmName()+" ("+node.allText()+")");
+          }
+        }
+      }
+    }
+    if (href.startsWith("http:") || href.startsWith("https:") || href.startsWith("ftp:") || href.startsWith("mailto:")) {
       return;
+    }
     String path = href;
     String anchor = null;
     if (href.contains("#")) {
@@ -325,6 +352,17 @@ public class HTMLLinkChecker implements FileNotifier {
 //td          reportError("Broken Link in "+base+": '"+href+"' anchor not found ("+node.allText()+")");
       }
     }
+  }
+
+  private boolean checkPackagePath(SpecMapManager smm, String href, String base) {
+    if (href.contains("#")) {
+      href = href.substring(0, href.indexOf("#"));
+    }
+    if (href.startsWith(base)) {
+      String filename = href.substring(base.length());
+      return smm.getTargets().contains(filename);
+    }
+    return false;
   }
 
   private boolean isValidExtensionLink(String target) {

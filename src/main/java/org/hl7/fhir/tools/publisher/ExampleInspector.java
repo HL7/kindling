@@ -12,6 +12,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 
 import javax.xml.parsers.ParserConfigurationException;
 
@@ -67,6 +68,7 @@ import org.hl7.fhir.utilities.SimpleHTTPClient;
 import org.hl7.fhir.utilities.SimpleHTTPClient.HTTPResult;
 import org.hl7.fhir.utilities.TextFile;
 import org.hl7.fhir.utilities.Utilities;
+import org.hl7.fhir.utilities.ZipGenerator;
 import org.hl7.fhir.utilities.validation.ValidationMessage;
 import org.hl7.fhir.utilities.validation.ValidationMessage.IssueSeverity;
 import org.hl7.fhir.utilities.validation.ValidationMessage.IssueType;
@@ -81,7 +83,7 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonSyntaxException;
 
-public class ExampleInspector implements IValidatorResourceFetcher, IValidationPolicyAdvisor {
+public class ExampleInspector implements IValidatorResourceFetcher, IValidationPolicyAdvisor, IEvaluationContext {
 
   public static class EValidationFailed extends Exception {
     private static final long serialVersionUID = 1538324138218778487L;
@@ -216,6 +218,7 @@ public class ExampleInspector implements IValidatorResourceFetcher, IValidationP
     validator.setForPublication(true);
     
     fpe = new FHIRPathEngine(context);
+    fpe.setHostServices(this);
   }
 
   public void prepare2() throws Exception {
@@ -690,21 +693,24 @@ public class ExampleInspector implements IValidatorResourceFetcher, IValidationP
   }
 
 
-  public boolean testInvariants(String srcDir, ResourceDefn rd) throws IOException {
+  public boolean testInvariants(String srcDir, ResourceDefn rd, ZipGenerator zip, Set<String> invsTested) throws IOException {
     boolean result = true;
     File testsDir = new File(Utilities.path(srcDir, rd.getName().toLowerCase(), "invariant-tests"));
     if (testsDir.exists()) {
-      result = testInvariants(rd, result, testsDir);
+      result = testInvariants(rd, result, testsDir, zip, invsTested);
     }
     return result;
   }
 
-  private boolean testInvariants(ResourceDefn rd, boolean result, File testsDir) throws FileNotFoundException {
+  private boolean testInvariants(ResourceDefn rd, boolean result, File testsDir, ZipGenerator zip, Set<String> invsTested) throws IOException {
     for (File f : testsDir.listFiles()) {
+      zip.addFileName(Utilities.path(rd.getName(), f.getName()), f.getAbsolutePath(), false);
       if (f.getName().endsWith(".json")) {
+        invsTested.add(f.getName().substring(0, f.getName().indexOf(".")));
         result = testInvariant(rd, f, FhirFormat.JSON) && result;
       }
       if (f.getName().endsWith(".xml")) {
+        invsTested.add(f.getName().substring(0, f.getName().indexOf(".")));
         result = testInvariant(rd, f, FhirFormat.XML) && result;
       }
     }
@@ -736,6 +742,69 @@ public class ExampleInspector implements IValidatorResourceFetcher, IValidationP
       System.out.println("Didn't find invariant for "+f.getName());
       return false;
     }
+  }
+
+  @Override
+  public List<Base> resolveConstant(Object appContext, String name, boolean beforeContext) throws PathEngineException {
+    throw new NotImplementedException();
+  }
+
+  @Override
+  public TypeDetails resolveConstantType(Object appContext, String name) throws PathEngineException {
+    throw new NotImplementedException();
+  }
+
+  @Override
+  public boolean log(String argument, List<Base> focus) {
+    throw new NotImplementedException();
+  }
+
+  @Override
+  public FunctionDetails resolveFunction(String functionName) {
+    throw new NotImplementedException();
+  }
+
+  @Override
+  public TypeDetails checkFunction(Object appContext, String functionName, List<TypeDetails> parameters) throws PathEngineException {
+    throw new NotImplementedException();
+  }
+
+  @Override
+  public List<Base> executeFunction(Object appContext, List<Base> focus, String functionName, List<List<Base>> parameters) {
+    throw new NotImplementedException();
+  }
+
+  @Override
+  public Base resolveReference(Object appContext, String url, Base refContext) throws FHIRException {
+    if (Utilities.charCount(url, '/') == 1) {
+     String type = url.substring(0, url.indexOf("/"));
+     String id = url.substring(url.indexOf("/")+1);
+     ResourceDefn rd = definitions.getResourceByName(type);
+     if (rd != null) {
+       for (Example ex : rd.getExamples()) {
+         if (ex.getId().equals(id)) {
+           if (ex.getResource() != null) {
+             return ex.getResource();
+           } else {
+             return ex.getElement(); // new XmlParser().parse(ex.getXml());
+           }
+         }
+       }
+     }
+     return null;
+    } else {
+      throw new NotImplementedException();
+    }
+  }
+
+  @Override
+  public boolean conformsToProfile(Object appContext, Base item, String url) throws FHIRException {
+    throw new NotImplementedException();
+  }
+
+  @Override
+  public ValueSet resolveValueSet(Object appContext, String url) {
+    throw new NotImplementedException();
   }
 
 

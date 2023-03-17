@@ -295,7 +295,11 @@ public class ResourceParser {
       String id = le.getItem().getReference().substring(le.getItem().getReference().indexOf("/")+1);
       OperationDefinition opd = (OperationDefinition) parseXml("operationdefinition-"+id+".xml");
       opd.setVersion(version);
-      r.getOperations().add(convertOperation(opd));
+      Operation op = convertOperation(opd);
+      r.getOperations().add(op);
+      if (r.getName().equals("Resource")) {
+        definitions.genOpList().add(op);    
+      }
     }
   }
 
@@ -352,7 +356,7 @@ public class ResourceParser {
           indent = Integer.parseInt(filename.substring(0, filename.indexOf(" ")));
           filename = filename.substring(filename.indexOf(" ")).trim();
         }
-        String json = new JsonParser().setOutputStyle(OutputStyle.PRETTY).composeString(new XmlParser().parse(new FileInputStream(Utilities.path(folder, filename))));
+        String json = new JsonParser().setOutputStyle(OutputStyle.PRETTY).composeString(new XmlParser().parse(new FileInputStream(Utilities.uncheckedPath(folder, filename))));
         process(content, indent, json);
       } else if (l.startsWith("$include ")) {
         int indent = 0;
@@ -361,7 +365,7 @@ public class ResourceParser {
           indent = Integer.parseInt(filename.substring(0, filename.indexOf(" ")));
           filename = filename.substring(filename.indexOf(" ")).trim();
         }
-        process(content, indent, TextFile.fileToString(Utilities.path(folder, filename)));
+        process(content, indent, TextFile.fileToString(Utilities.uncheckedPath(folder, filename)));
       } else {
         content.append(Utilities.escapeXml(l));
         content.append("\r\n");
@@ -586,7 +590,7 @@ public class ResourceParser {
       ed.setDisplayHint(BuildExtensions.readStringExtension(focus, BuildExtensions.EXT_HINT));
     }
 
-    if (focus.hasExtension(BuildExtensions.EXT_NO_BINDING)) {
+    if (focus.hasExtension(BuildExtensions.EXT_NO_BINDING) || focus.hasExtension(ToolingExtensions.EXT_NO_BINDING)) {
       ed.setNoBindingAllowed(focus.getExtensionString(BuildExtensions.EXT_NO_BINDING).equals("true"));
     }    
     
@@ -821,7 +825,7 @@ public class ResourceParser {
       if (!id.equals(cs.getId())) {
         throw new FHIRException("Error loading "+csfn+": id mismatch. Expected "+id+" but found "+cs.getId());        
       }
-      boolean save = CodeSystemUtilities.makeCSShareable(cs);
+      boolean save = CodeSystemUtilities.checkMakeShareable(cs);
       if (!cs.hasUrl()) {
         cs.setUrl("http://hl7.org/fhir/"+cs.getId());
         save = true;
@@ -895,6 +899,7 @@ public class ResourceParser {
         cm.setUserData("filename", cmid);
         cm.setUserData("path", cmid+".html");
         cm.setUserData("generate", "true");
+        ConceptMapUtilities.makeShareable(cm);
         if (!ConceptMapUtilities.hasOID(cm)) {
           String oid = registry.getOID(cm.getUrl());
           if (oid != null) {

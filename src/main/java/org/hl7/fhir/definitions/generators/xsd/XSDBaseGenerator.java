@@ -303,7 +303,7 @@ public class XSDBaseGenerator  extends XSDRootGenerator {
             write("    </xs:restriction>\r\n");
           } else if (!Utilities.noString(pt.getRegex())) {
             write("    <xs:restriction base=\"xs:"+pt.getSchemaType()+"\">\r\n");
-            write("      <xs:pattern value=\""+pt.getRegex()+"\"/>\r\n");
+            write("      <xs:pattern value=\""+trimRegex(pt.getRegex())+"\"/>\r\n");
             write("    </xs:restriction>\r\n");
           } else {
             write("    <xs:restriction base=\"xs:"+pt.getSchemaType()+"\"/>\r\n");
@@ -328,7 +328,7 @@ public class XSDBaseGenerator  extends XSDRootGenerator {
         write("  <xs:simpleType name=\"" + sp.getCode()+ "-primitive\">\r\n");
         if (sp.getSchema().endsWith("+")) {
           write("    <xs:restriction base=\""+sp.getSchema().substring(0, sp.getSchema().length()-1)+"\">\r\n");
-          write("      <xs:pattern value=\"" + sp.getRegex() + "\"/>\r\n");
+          write("      <xs:pattern value=\"" + trimRegex(sp.getRegex()) + "\"/>\r\n");
           write("      <xs:minLength value=\"1\"/>\r\n");
           if (sp.getCode().equals("id"))
             write("      <xs:maxLength value=\"64\"/>\r\n");
@@ -340,7 +340,7 @@ public class XSDBaseGenerator  extends XSDRootGenerator {
              write("      <xs:minLength value=\"1\"/>\r\n");
           }
           if (!Utilities.noString(sp.getRegex())) {
-            write("      <xs:pattern value=\""+sp.getRegex()+"\"/>\r\n");
+            write("      <xs:pattern value=\""+trimRegex(sp.getRegex())+"\"/>\r\n");
           }
           write("    </xs:restriction>\r\n");
           write("  </xs:simpleType>\r\n");        
@@ -360,6 +360,16 @@ public class XSDBaseGenerator  extends XSDRootGenerator {
         write("  </xs:complexType>\r\n");
       }
     }
+  }
+
+  private String trimRegex(String regex) {
+    if (regex.startsWith("^")) {
+      regex = regex.substring(1);
+    }
+    if (regex.endsWith("$")) {
+      regex = regex.substring(0, regex.length()-1);
+    }
+    return regex;
   }
 
   private void genInfrastructure(ElementDefn elem) throws Exception {
@@ -485,7 +495,7 @@ public class XSDBaseGenerator  extends XSDRootGenerator {
       String n = regexQueue.keySet().iterator().next();
       write("  <xs:simpleType name=\""+n+"-primitive\">\r\n");
       write("     <xs:restriction base=\"xs:string\">\r\n");
-      write("      <xs:pattern value=\""+regexQueue.get(n)+"\"/>\r\n");
+      write("      <xs:pattern value=\""+trimRegex(regexQueue.get(n))+"\"/>\r\n");
       write("    </xs:restriction>\r\n");
       write("  </xs:simpleType>\r\n");    
       write("    <xs:complexType name=\""+n+"\">\r\n");
