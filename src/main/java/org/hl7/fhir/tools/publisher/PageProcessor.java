@@ -9213,7 +9213,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
         }
       }
     }
-    List<String> allowed = Arrays.asList("div", "h2", "h3", "h4", "h5", "i", "b", "code", "pre", "blockquote", "p", "a", "img", "table", "thead", "tbody", "tr", "th", "td", "ol", "ul", "li", "br", "span", "em", "strong");
+    List<String> allowed = Arrays.asList("div", "h2", "h3", "h4", "h5", "i", "b", "code", "pre", "blockquote", "p", "a", "img", "table", "thead", "tbody", "tr", "th", "td", "ol", "ul", "li", "br", "span", "em", "strong", "sup", "sub");
     iterateAllChildNodes(doc, allowed);
     } catch (Exception e) {
       throw new FHIRException("Error processing "+filename+": "+e.getMessage(), e);
