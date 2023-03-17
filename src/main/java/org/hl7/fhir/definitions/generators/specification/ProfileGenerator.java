@@ -2253,6 +2253,7 @@ public class ProfileGenerator {
 
   private void addMapping(StructureDefinition p, ElementDefinition definition, String target, String map, Profile pack) {
     if (!Utilities.noString(map)) {
+      map = map.trim();
       String id;
       if (pack != null && pack.getMappingSpaces().containsKey(target))
         id = pack.getMappingSpaces().get(target).getId();
@@ -2271,7 +2272,15 @@ public class ProfileGenerator {
       }
       boolean found = false;
       for (ElementDefinitionMappingComponent m : definition.getMapping()) {
-        found = found || (m.getIdentity().equals(id) && m.getMap().equals(map)); 
+        if (m.getIdentity().equals(id) && m.getMap().equals(map)) {
+          found = true;
+        } else if (m.getIdentity().equals(id)) {
+          found = true;
+          m.setMap(m.getMap()+";"+map);
+        }
+        if (found) {
+          break;
+        }
       }
       if (!found) {
         ElementDefinitionMappingComponent m = new ElementDefinitionMappingComponent();
