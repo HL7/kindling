@@ -1239,8 +1239,9 @@ public class OldSpreadsheetParser {
         if (ig != null) {
           vs.setUserDataINN(ToolResourceUtilities.NAME_RES_IG, ig);
           vs.setUserData("path", ig.getCode()+"/valueset-"+vs.getId()+".html");
-        } else
+        } else if (!vs.hasUserData("path")) {
           vs.setUserData("path", "valueset-"+vs.getId()+".html");
+        }
         if (definitions != null)
           definitions.getBoundValueSets().put(vs.getUrl(), vs);
         else
