@@ -1745,7 +1745,7 @@ public class ProfileGenerator {
         myParents.add(hnd);
         if (path.contains(".")) { // We don't want a slice name on the root
           ce.setSliceName(e.getProfileName());
-          ce.setId(ce.getId()+":"+e.getProfileName());
+          ce.setId(ce.getId()+","+e.getProfileName());
         }
       }
     }
@@ -2276,7 +2276,9 @@ public class ProfileGenerator {
           found = true;
         } else if (m.getIdentity().equals(id)) {
           found = true;
-          m.setMap(m.getMap()+";"+map);
+          if (!Utilities.splitStrings(m.getMap(), "\\,").contains(map)) {
+            m.setMap(m.getMap()+","+map);
+          }
         }
         if (found) {
           break;
