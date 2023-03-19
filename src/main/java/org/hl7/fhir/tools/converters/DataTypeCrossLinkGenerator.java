@@ -32,6 +32,22 @@ public class DataTypeCrossLinkGenerator {
         }
       }
     }
+    File res = new File(Utilities.path(core.getAbsolutePath(), "resource"));
+    System.out.println("Process "+res.getAbsolutePath());
+    for (File f : res.listFiles()) {
+      if (f.getName().endsWith(".xml")) {
+        String source = TextFile.fileToString(f);
+        List<String> lines = new ArrayList<>();
+        for (String s : TextFile.fileToString(f).split("\\r?\\n|\\r")) {
+          lines.add(s);
+        };        
+        if (scanLinesCore(f.getName().replace(".html", ""), lines)) {
+          System.out.println("- saved "+f.getName());
+          source = String.join("\r\n", lines);
+          TextFile.stringToFile(source, f);
+        }
+      }
+    }
     System.out.println("Process "+ig.getAbsolutePath());
     for (File f : ig.listFiles()) {
       if (f.getName().endsWith(".xml")) {

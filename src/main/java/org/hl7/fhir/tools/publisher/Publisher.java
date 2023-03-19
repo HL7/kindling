@@ -4714,12 +4714,6 @@ public class Publisher implements URIResolver, SectionNumberer {
     dgen.close();
     String dict = TextFile.fileToString(tmp.getAbsolutePath());
 
-    if (extraTypeForDefn != null) {
-      dgen = new DictHTMLGenerator(new FileOutputStream(tmp), page, "");
-      dgen.generate(page.getDefinitions().getElementDefn(extraTypeForDefn));
-      dgen.close();
-      dict = dict +"\r\n"+ TextFile.fileToString(tmp.getAbsolutePath());
-    }
     Map<String, String> values = new HashMap<String, String>();
 
     MappingsGenerator mgen = new MappingsGenerator(page.getDefinitions());
@@ -4737,7 +4731,7 @@ public class Publisher implements URIResolver, SectionNumberer {
       st.start("");
       page.getSectionTrackerCache().put(n, st);
 
-      String template = isInterface ? "template-intf" : isAbstract ? "template-abstract" : "template";
+      String template = isInterface ? "template-intf" : "resource".equals(n) ? "template-resource" : isAbstract ? "template-abstract" : "template";
       String src = TextFile.fileToString(page.getFolders().templateDir + template+".html");
       src = insertSectionNumbers(page.processResourceIncludes(n, resource, xml, json, ttl, tx, dict, src, mappings, mappingsList, "resource", n + ".html", null, values, resource.getWg(), null), st, n + ".html", 0, null);
       TextFile.stringToFile(src, page.getFolders().dstDir + n + ".html");
@@ -4780,13 +4774,11 @@ public class Publisher implements URIResolver, SectionNumberer {
               + "-definitions.html", 0, null), page.getFolders().dstDir + n + "-definitions.html");
       page.getHTMLChecker().registerFile(n + "-definitions.html", "Detailed Descriptions for " + resource.getName(), HTMLLinkChecker.XHTML_TYPE, true);
 
-      if (!isAbstract) {
-        src = TextFile.fileToString(page.getFolders().templateDir + "template-mappings.html");
-        TextFile.stringToFile(
-            insertSectionNumbers(page.processResourceIncludes(n, resource, xml, json, ttl, tx, dict, src, mappings, mappingsList, "res-Mappings", n + "-mappings.html", null, values, resource.getWg(), null), st, n + "-mappings.html", 0, null),
-            page.getFolders().dstDir + n + "-mappings.html");
-        page.getHTMLChecker().registerFile(n + "-mappings.html", "Formal Mappings for " + resource.getName(), HTMLLinkChecker.XHTML_TYPE, true);
-      }
+      src = TextFile.fileToString(page.getFolders().templateDir + "template-mappings.html");
+      TextFile.stringToFile(
+          insertSectionNumbers(page.processResourceIncludes(n, resource, xml, json, ttl, tx, dict, src, mappings, mappingsList, "res-Mappings", n + "-mappings.html", null, values, resource.getWg(), null), st, n + "-mappings.html", 0, null),
+          page.getFolders().dstDir + n + "-mappings.html");
+      page.getHTMLChecker().registerFile(n + "-mappings.html", "Formal Mappings for " + resource.getName(), HTMLLinkChecker.XHTML_TYPE, true);
       src = TextFile.fileToString(page.getFolders().templateDir + (resource.getName().equals("Resource") ? "template-resource-profiles.html" : "template-profiles.html"));
       TextFile.stringToFile(
           insertSectionNumbers(page.processResourceIncludes(n, resource, xml, json, ttl, tx, dict, src, mappings, mappingsList, "res-Profiles", n + "-profiles.html", null, values, resource.getWg(), null), st, n + "-profiles.html", 0, null),
@@ -6835,6 +6827,9 @@ public class Publisher implements URIResolver, SectionNumberer {
 
 
   private void generateValueSetPart2(ValueSet vs) throws Exception {
+    if (vs.hasUserData("external.url")) {
+      return;
+    }
     checkShareableValueSet(vs);
     
     String n = vs.getUserString("filename");
