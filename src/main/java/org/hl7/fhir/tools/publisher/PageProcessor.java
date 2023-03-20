@@ -9306,6 +9306,10 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
       } else if (com[0].equals("settitle")) {
         workingTitle = s2.substring(9).replace("{", "<%").replace("}", "%>");
         src = s1+s3;
+      } else if (com[0].equals("stu-note")) {
+        src = s1+getSTUNoteHeader(com[1])+s3;
+      } else if (com[0].equals("ballot-note")) {
+        src = s1+getBallotNoteHeader(com[1])+s3;
       }      else if (com.length != 1)
         throw new Exception("Instruction <%"+s2+"%> not understood parsing resource "+filename);
       else if (com[0].equals("pageheader"))
