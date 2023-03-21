@@ -66,6 +66,14 @@ public class ExampleAdorner implements XhtmlGeneratorAdorner {
         definition.setCoveredByExample(true);
     }
 
+    public ExampleAdornerState(State state, String path, ElementDefn definition, String prefix, String suffix, String altText) {
+      super(path, prefix, suffix, altText);
+      this.state = state;
+      this.definition = definition;
+      if (definition != null)
+        definition.setCoveredByExample(true);
+    }
+
     public ExampleAdornerState(State state, String path, ElementDefn definition, String suppressionMessage) {
       super(path, suppressionMessage);
       this.state = state;
@@ -215,7 +223,7 @@ public class ExampleAdorner implements XhtmlGeneratorAdorner {
     }
   }
 
-  @Override
+  @Override 
   public XhtmlGeneratorAdornerState getAttributeMarkup(XhtmlGenerator xhtmlGenerator, XhtmlGeneratorAdornerState state, Element node, String nodeName, String textContent) throws Exception {
     ExampleAdornerState s = (ExampleAdornerState) state;
     if (s != null && s.getState() == ExampleAdorner.State.Reference && node.getNodeName().equals("type") && nodeName.equals("value")) 
@@ -224,6 +232,8 @@ public class ExampleAdorner implements XhtmlGeneratorAdorner {
       return new ExampleAdornerState(State.Unknown, s.getPath(), null, state.getPrefix(), state.getSuffix());
     else if (s != null && s.getState() == ExampleAdorner.State.Reference && node.getNodeName().equals("url") && nodeName.equals("value")) 
       return new ExampleAdornerState(State.Unknown, s.getPath(), null, state.getPrefix(), state.getSuffix());
+    else if (node.getNodeName().equals("img") && nodeName.equals("src") && textContent.startsWith("data:")) 
+      return new ExampleAdornerState(State.Unknown, s.getPath(), null, state.getPrefix(), state.getSuffix(), "data:(snipped in html view)");
     else
       return new ExampleAdornerState(State.Unknown, s.getPath(), null, "", "");
   }
