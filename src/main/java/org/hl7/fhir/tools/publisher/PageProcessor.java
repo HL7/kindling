@@ -4737,10 +4737,10 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     b.append(makeHeaderTab("Operations", n+"-operations.html", "operations".equals(mode)));
     b.append(makeHeaderTab("Search Params", n+"-search.html", "search".equals(mode)));
     b.append(makeHeaderTab("Profiles", n+"-profiles.html", "profiles".equals(mode)));
-    b.append(makeHeaderTab("Extensions", extensionsLocation+"extensions-"+ res.getName()+".html", "extensions".equals(mode)));
+    b.append(makeHeaderTab("Extensions", extensionsLocation+"extensions-"+ ("Resource".equals(res.getName()) ? "resource" : res.getName())+".html", "extensions".equals(mode)));
 //    if (!isAbstract)
 //      b.append(makeHeaderTab("HTML Form", n+"-questionnaire.html", "questionnaire".equals(mode)));
-    b.append(makeHeaderTab("R4 Conversions", extensionsLocation+"conversions-"+ res.getName()+".html", "conversion".equals(mode)));
+    b.append(makeHeaderTab("R4 Conversions", extensionsLocation+"conversions-"+  ("Resource".equals(res.getName()) ? "resource" : res.getName())+".html", "conversion".equals(mode)));
     b.append("</ul>\r\n");
 
     return b.toString();
@@ -5438,11 +5438,8 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
   private String expandValueSet(String fileTitle, ValueSet vs, String prefix) throws Exception {
     if (vs == null)
       throw new Exception("no vs?");
-    if (hasUnfixedContent(vs)) {
-      String s = "<p>&nbsp;</p>\r\n<a name=\"expansion\"> </a>\r\n<h2>Expansion</h2>\r\n<p>This expansion generated "+new SimpleDateFormat("dd MMM yyyy", new Locale("en", "US")).format(genDate.getTime())+"</p>\r\n";
-      return s + expandVS(vs, prefix, "");
-    } else
-      return "";
+    String s = "<p>&nbsp;</p>\r\n<a name=\"expansion\"> </a>\r\n<h2>Expansion</h2>\r\n<p>This expansion generated "+new SimpleDateFormat("dd MMM yyyy", new Locale("en", "US")).format(genDate.getTime())+"</p>\r\n";
+    return s + expandVS(vs, prefix, "");
   }
 
   private boolean hasUnfixedContent(ValueSet vs) {
@@ -6498,6 +6495,8 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
         src = s1+name+s3;
       else if (com[0].equals("cname"))
         src = s1+resource.getName()+s3;
+      else if (com[0].equals("extcname"))
+        src = s1+("Resource".equals(resource.getName()) ? "resource" : resource.getName())+s3;
       else if (com[0].equals("search-additions")) {
         searchAdditions = s2.substring(16).trim();
         src = s1+s3;
@@ -11352,6 +11351,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
 
   public String expandVS(ValueSet vs, String prefix, String base) {
     try {
+
       ValueSetExpansionOutcome result = workerContext.expandVS(vs, true, true);
       if (result.getError() != null)
         return "<hr/>\r\n"+VS_INC_START+"<!--3-->"+processExpansionError(result.getError())+VS_INC_END;
@@ -12076,29 +12076,29 @@ private int countContains(List<ValueSetExpansionContainsComponent> list) {
   }
 
   public String r4r5StatusForResource(String name) throws IOException {
-    ResourceSummary rs = getResourceSummary(name);
-    if (!rs.isMapped())
-      return "Not Mapped";
-
-    StringBuilder b = new StringBuilder();
-    b.append(rs.getTestCount());
-    b.append(rs.getTestCount() == 1 ? " test" : " tests");
-    if (rs.getExecuteFailCount() == 0)
-      b.append(" that all execute ok.");
-    else
-      b.append(" <span style=\"background-color: #ffcccc\">of which "+Integer.toString(rs.getExecuteFailCount())+" fail to execute</span>.");
-    if (rs.getTestCount() - rs.getExecuteFailCount() > 0) {
-      if (rs.getRoundTripFailCount() == 0)
-        b.append(" All tests pass round-trip testing ");
-      else
-        b.append(" <span style=\"background-color: #ccffcc\">"+Integer.toString(rs.getRoundTripFailCount())+" fail round-trip testing</span>");
-      if (rs.getR5ValidationFailCount() == 0)
-        b.append(" and all r4 resources are valid.");
-      else
-        b.append(" and <span style=\"background-color: #E0B0FF\">"+Integer.toString(rs.getR5ValidationFailCount())+" r4 resources are invalid ("+Integer.toString(rs.getR5ValidationErrors())+" errors).</span>");
-    }
-    return b.toString();
-
+//    ResourceSummary rs = getResourceSummary(name);
+//    if (!rs.isMapped())
+//      return "Not Mapped";
+//
+//    StringBuilder b = new StringBuilder();
+//    b.append(rs.getTestCount());
+//    b.append(rs.getTestCount() == 1 ? " test" : " tests");
+//    if (rs.getExecuteFailCount() == 0)
+//      b.append(" that all execute ok.");
+//    else
+//      b.append(" <span style=\"background-color: #ffcccc\">of which "+Integer.toString(rs.getExecuteFailCount())+" fail to execute</span>.");
+//    if (rs.getTestCount() - rs.getExecuteFailCount() > 0) {
+//      if (rs.getRoundTripFailCount() == 0)
+//        b.append(" All tests pass round-trip testing ");
+//      else
+//        b.append(" <span style=\"background-color: #ccffcc\">"+Integer.toString(rs.getRoundTripFailCount())+" fail round-trip testing</span>");
+//      if (rs.getR5ValidationFailCount() == 0)
+//        b.append(" and all r4 resources are valid.");
+//      else
+//        b.append(" and <span style=\"background-color: #E0B0FF\">"+Integer.toString(rs.getR5ValidationFailCount())+" r4 resources are invalid ("+Integer.toString(rs.getR5ValidationErrors())+" errors).</span>");
+//    }
+//    return b.toString();
+    return "See <a href=\""+extensionsLocation+"conversion-registry.html\">Conversions Summary</a>.";
   }
 
   @Override
