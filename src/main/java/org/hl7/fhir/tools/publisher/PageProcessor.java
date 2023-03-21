@@ -7688,7 +7688,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
       b.append("N/A");
     else {
       if (names.isEmpty())
-        b.append("Not linked to any defined compartments");
+        b.append("No defined compartments");
       else {
         Collections.sort(names);
         boolean first = true;
