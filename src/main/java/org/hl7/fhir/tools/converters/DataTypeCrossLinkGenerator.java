@@ -78,7 +78,7 @@ public class DataTypeCrossLinkGenerator {
         if (name.contains("-")) {
           b.append("<a no-external=\"true\" href=\""+base+".html#"+type+"\">Base Definition</a>");
         }
-        if (!name.contains("-examples") && !Utilities.existsInList(base, "types", "references")) {
+        if (!name.contains("-examples") && !Utilities.existsInList(base, "types", "references", "resource")) {
           b.append("<a no-external=\"true\" href=\""+base+"-examples.html#"+type+"\">Examples</a>");          
         }
         if (!name.contains("-definitions")) {
