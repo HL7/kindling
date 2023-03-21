@@ -636,9 +636,8 @@ public class ResourceParser {
       String uri = getMappingUri(sd, map.getIdentity());
       if ("http://hl7.org/fhir/fivews".equals(uri)) {
         ed.setW5(reverseW5(map.getMap()));
-      } else {
-        ed.getMappings().put(uri, map.getMap());
       }
+      ed.getMappings().put(uri, map.getMap());
     }
     
     if (focus.hasContentReference()) {
