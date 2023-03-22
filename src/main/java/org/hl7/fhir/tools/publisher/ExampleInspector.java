@@ -729,7 +729,7 @@ public class ExampleInspector implements IValidatorResourceFetcher, IValidationP
 
       boolean fail = false;
       for (ValidationMessage vm : errs) {
-        if (vm.getMessage().contains(inv)) {
+        if (vm.getMessage().contains(inv+":")) {
           fail = true;
         }
       }

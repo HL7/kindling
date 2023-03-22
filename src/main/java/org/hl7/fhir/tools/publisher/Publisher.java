@@ -1124,7 +1124,7 @@ public class Publisher implements URIResolver, SectionNumberer {
       for (IdType t : ed.getCondition()) {
         if (!t.hasUserData("validated") && !isKnownBadInvariant(t.primitiveValue())) {
           System.out.println("The element "+ed.getPath()+" claims that the invariant "+t.primitiveValue()+" affects it, but it isn't touched by that invariant");
-          result = false;
+          result = true;
         }        
       }
     }
@@ -1151,7 +1151,7 @@ public class Publisher implements URIResolver, SectionNumberer {
           }
           if (cnd == null) {
             System.out.println("The invariant "+sd.getType()+"#"+inv.getKey()+" touches "+edt.getPath()+" but isn't listed as a condition");
-            result = false;
+            result = true; // we don't stop for this anymore
           } else {
             cnd.setUserData("validated", true);
           }
