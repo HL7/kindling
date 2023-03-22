@@ -3245,14 +3245,14 @@ public class Publisher implements URIResolver, SectionNumberer {
       Gson gson = new GsonBuilder().setPrettyPrinting().create();
       Gson gsonp = new GsonBuilder().create();
       String json = gson.toJson(diff);
-      TextFile.stringToFile(json, uncheckedPath(page.getFolders().dstDir, "fhir.r4.diff.json"));
+      TextFile.stringToFile(json, Utilities.path(page.getFolders().dstDir, "fhir.r4.diff.json"));
 
       diff = new com.google.gson.JsonObject();
       page.getDiffEngine().getDiffAsJson(diff, false);
       gson = new GsonBuilder().setPrettyPrinting().create();
       gsonp = new GsonBuilder().create();
       json = gson.toJson(diff);
-      TextFile.stringToFile(json, uncheckedPath(page.getFolders().dstDir, "fhir.r4b.diff.json"));
+      TextFile.stringToFile(json, Utilities.path(page.getFolders().dstDir, "fhir.r4b.diff.json"));
 
       DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
       DocumentBuilder builder = dbf.newDocumentBuilder();
@@ -3260,7 +3260,7 @@ public class Publisher implements URIResolver, SectionNumberer {
       Element element = doc.createElement("difference");
       doc.appendChild(element);
       page.getDiffEngine().getDiffAsXml(doc, element, true);
-      prettyPrint(doc, uncheckedPath(page.getFolders().dstDir, "fhir.r4.diff.xml"));
+      prettyPrint(doc, Utilities.path(page.getFolders().dstDir, "fhir.r4.diff.xml"));
 
       dbf = DocumentBuilderFactory.newInstance();
       builder = dbf.newDocumentBuilder();
@@ -3268,7 +3268,7 @@ public class Publisher implements URIResolver, SectionNumberer {
       element = doc.createElement("difference");
       doc.appendChild(element);
       page.getDiffEngine().getDiffAsXml(doc, element, false);
-      prettyPrint(doc, uncheckedPath(page.getFolders().dstDir, "fhir.r4b.diff.xml"));
+      prettyPrint(doc, Utilities.path(page.getFolders().dstDir, "fhir.r4b.diff.xml"));
       
 
       checkBundleURLs(page.getResourceBundle());
@@ -3528,7 +3528,7 @@ public class Publisher implements URIResolver, SectionNumberer {
       zip.addFileName("redirect.asp.template", page.getFolders().srcDir + "redirect.asp", false);
       zip.addFileName("redirect.cgi.template", page.getFolders().srcDir + "redirect.cgi", false);
       zip.addFileName("redirect.php.template", page.getFolders().srcDir + "redirect.php", false);
-      zip.addFileName("ig-template.zip", uncheckedPath(page.getFolders().tmpDir, "ig-template.zip"), false);
+      zip.addFileName("ig-template.zip", Utilities.path(page.getFolders().tmpDir, "ig-template.zip"), false);
       zip.addFiles(page.getFolders().dstDir, "", ".png", null);
       zip.addFiles(page.getFolders().dstDir, "", ".gif", null);
       zip.addBytes("sdmap.details", sdm.asJson().getBytes(StandardCharsets.UTF_8), false);
@@ -3538,7 +3538,8 @@ public class Publisher implements URIResolver, SectionNumberer {
       SpecNPMPackageGenerator self = new SpecNPMPackageGenerator();
       self.generate(page.getFolders().dstDir, page.getWebLocation(), false, page.getGenDate().getTime(), pidRoot());
       if (!isCIBuild) {
-        new FilesystemPackageCacheManager(true, ToolsVersion.TOOLS_VERSION).addPackageToCache(pidRoot()+".core", "current", new FileInputStream(uncheckedPath(page.getFolders().dstDir, pidRoot() + ".core.tgz")), uncheckedPath(page.getFolders().dstDir, pidRoot() + ".core.tgz"));
+        String packagePath = Utilities.path(page.getFolders().dstDir, pidRoot() + ".core.tgz");
+        new FilesystemPackageCacheManager(true, ToolsVersion.TOOLS_VERSION).addPackageToCache(pidRoot()+".core", "current", new FileInputStream(packagePath), packagePath);
       }
 
       page.log(" ...zips", LogMessageType.Process);
@@ -4379,7 +4380,7 @@ public class Publisher implements URIResolver, SectionNumberer {
     Utilities.copyDirectory(page.getFolders().rootDir + page.getIni().getStringProperty("html", "source"), page.getFolders().dstDir, page.getHTMLChecker());
     TextFile.stringToFile("\r\n[FHIR]\r\nFhirVersion=" + page.getVersion().toCode() + "\r\nversion=" + page.getVersion().toCode()
         + "\r\nbuildId=" + page.getBuildId() + "\r\ndate=" + new SimpleDateFormat("yyyyMMddHHmmss").format(page.getGenDate().getTime()),
-            uncheckedPath(page.getFolders().dstDir, "version.info"), false);
+            Utilities.path(page.getFolders().dstDir, "version.info"), false);
 
     for (String n : page.getDefinitions().getDiagrams().keySet()) {
       page.log(" ...diagram " + n, LogMessageType.Process);
