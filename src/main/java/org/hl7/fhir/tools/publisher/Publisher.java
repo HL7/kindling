@@ -2075,7 +2075,7 @@ public class Publisher implements URIResolver, SectionNumberer {
       json.compose(new FileOutputStream(Utilities.path(page.getFolders().dstDir, baseFileName + ".json")), r);
       if (showCanonical) {
         json.setOutputStyle(OutputStyle.CANONICAL);
-        json.compose(new FileOutputStream(uncheckedPath(page.getFolders().dstDir, baseFileName + ".canonical.json")), r);
+        json.compose(new FileOutputStream(Utilities.path(page.getFolders().dstDir, baseFileName + ".canonical.json")), r);
       }
       if (showTtl) {
         IParser rdf = new RdfParser().setOutputStyle(OutputStyle.PRETTY);
@@ -4837,7 +4837,7 @@ public class Publisher implements URIResolver, SectionNumberer {
 
     StructureDefinitionSpreadsheetGenerator sdr = new StructureDefinitionSpreadsheetGenerator(page.getWorkerContext(), false, false);
     sdr.renderStructureDefinition(resource.getProfile(), false);
-    sdr.finish(new FileOutputStream(uncheckedPath(page.getFolders().dstDir, n + ".xlsx")));
+    sdr.finish(new FileOutputStream(Utilities.path(page.getFolders().dstDir, n + ".xlsx")));
 
     // because we'll pick up a little more information as we process the
     // resource
@@ -4846,12 +4846,12 @@ public class Publisher implements URIResolver, SectionNumberer {
     page.getDiffEngine().getDiffAsJson(diff, p, true);
     Gson gson = new GsonBuilder().setPrettyPrinting().create();
     json = gson.toJson(diff);
-    TextFile.stringToFile(json, uncheckedPath(page.getFolders().dstDir, resource.getName().toLowerCase() + ".r4.diff.json"));
+    TextFile.stringToFile(json, Utilities.path(page.getFolders().dstDir, resource.getName().toLowerCase() + ".r4.diff.json"));
     diff = new com.google.gson.JsonObject();
     page.getDiffEngine().getDiffAsJson(diff, p, false);
     gson = new GsonBuilder().setPrettyPrinting().create();
     json = gson.toJson(diff);
-    TextFile.stringToFile(json, uncheckedPath(page.getFolders().dstDir, resource.getName().toLowerCase() + ".r4b.diff.json"));
+    TextFile.stringToFile(json, Utilities.path(page.getFolders().dstDir, resource.getName().toLowerCase() + ".r4b.diff.json"));
 
     DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
     DocumentBuilder builder = dbf.newDocumentBuilder();
@@ -4859,7 +4859,7 @@ public class Publisher implements URIResolver, SectionNumberer {
     Element element = doc.createElement("difference");
     doc.appendChild(element);
     page.getDiffEngine().getDiffAsXml(doc, element, p, true);
-    prettyPrint(doc, uncheckedPath(page.getFolders().dstDir, resource.getName().toLowerCase() + ".r4.diff.xml"));
+    prettyPrint(doc, Utilities.path(page.getFolders().dstDir, resource.getName().toLowerCase() + ".r4.diff.xml"));
 
     dbf = DocumentBuilderFactory.newInstance();
     builder = dbf.newDocumentBuilder();
@@ -4867,7 +4867,7 @@ public class Publisher implements URIResolver, SectionNumberer {
     element = doc.createElement("difference");
     doc.appendChild(element);
     page.getDiffEngine().getDiffAsXml(doc, element, p, false);
-    prettyPrint(doc, uncheckedPath(page.getFolders().dstDir, resource.getName().toLowerCase() + ".r4b.diff.xml"));
+    prettyPrint(doc, Utilities.path(page.getFolders().dstDir, resource.getName().toLowerCase() + ".r4b.diff.xml"));
 }
 
   public void prettyPrint(Document xml, String filename) throws Exception {
@@ -5302,13 +5302,13 @@ public class Publisher implements URIResolver, SectionNumberer {
     // build json and ttl formats
     e.setResourceName(resn.getName());
     ParserBase xp = Manager.makeParser(page.getWorkerContext(), FhirFormat.XML);
-    org.hl7.fhir.r5.elementmodel.Element exe = xp.parseSingle(new FileInputStream(uncheckedPath(page.getFolders().dstDir, prefix + n + ".xml")));
-    xp.compose(exe, new FileOutputStream(uncheckedPath(page.getFolders().dstDir, prefix + n + ".canonical.xml")), OutputStyle.CANONICAL, null);
+    org.hl7.fhir.r5.elementmodel.Element exe = xp.parseSingle(new FileInputStream(Utilities.path(page.getFolders().dstDir, prefix + n + ".xml")));
+    xp.compose(exe, new FileOutputStream(Utilities.path(page.getFolders().dstDir, prefix + n + ".canonical.xml")), OutputStyle.CANONICAL, null);
     ParserBase jp = Manager.makeParser(page.getWorkerContext(), FhirFormat.JSON);
-    jp.compose(exe, new FileOutputStream(uncheckedPath(page.getFolders().dstDir, prefix + n + ".json")), OutputStyle.PRETTY, null);
-    jp.compose(exe, new FileOutputStream(uncheckedPath(page.getFolders().dstDir, prefix + n + ".canonical.json")), OutputStyle.CANONICAL, null);
+    jp.compose(exe, new FileOutputStream(Utilities.path(page.getFolders().dstDir, prefix + n + ".json")), OutputStyle.PRETTY, null);
+    jp.compose(exe, new FileOutputStream(Utilities.path(page.getFolders().dstDir, prefix + n + ".canonical.json")), OutputStyle.CANONICAL, null);
     ParserBase tp = Manager.makeParser(page.getWorkerContext(), FhirFormat.TURTLE);
-    tp.compose(exe, new FileOutputStream(uncheckedPath(page.getFolders().dstDir, prefix + n + ".ttl")), OutputStyle.PRETTY, null);
+    tp.compose(exe, new FileOutputStream(Utilities.path(page.getFolders().dstDir, prefix + n + ".ttl")), OutputStyle.PRETTY, null);
     
     String json = TextFile.fileToString(page.getFolders().dstDir + prefix+n + ".json");
     //        String json2 = "<div class=\"example\">\r\n<p>" + Utilities.escapeXml(e.getDescription()) + "</p>\r\n<p><a href=\""+ n + ".json\">Raw JSON</a> (<a href=\""+n + ".canonical.json\">Canonical</a>)</p>\r\n<pre class=\"json\" style=\"white-space: pre; overflow: hidden\">\r\n" + Utilities.escapeXml(json)
@@ -6067,7 +6067,9 @@ public class Publisher implements URIResolver, SectionNumberer {
 
     if (lm.getDefinition() != null) {
       //FIXME This makes a path with a blank first entry
-      String fName = uncheckedPath(ig.getPrefix(), n);
+      String fName = ig.getPrefix() != null && ig.getPrefix().length() > 0
+              ? Utilities.path(ig.getPrefix(), n)
+              : n;
       fixCanonicalResource(lm.getDefinition(), fName);
       serializeResource(lm.getDefinition(), fName, "Logical Model "+lm.getDefinition().getName(), "logical-model", lm.getDefinition().getName(), lm.getWg(), false, true);
     }
@@ -6234,7 +6236,7 @@ public class Publisher implements URIResolver, SectionNumberer {
 
 //    TextFile.stringToFile(src, Utilities.path(page.getFolders().dstDir, dstName));
     src = addSectionNumbers(Utilities.path("sid-"+ logicalName+ ".html"), "sid:terminologies-systems", src, "3." + Integer.toString(i), 0, null, null);
-    TextFile.stringToFile(src, uncheckedPath(page.getFolders().dstDir, dstName));
+    TextFile.stringToFile(src, Utilities.path(page.getFolders().dstDir, dstName));
     page.getHTMLChecker().registerFile(Utilities.path("sid-"+ logicalName+ ".html"), logicalName, HTMLLinkChecker.XHTML_TYPE, true);
   }
 
