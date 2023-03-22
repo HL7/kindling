@@ -63,7 +63,6 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.zip.ZipEntry;
-import javax.annotation.Nonnull;
 import javax.xml.XMLConstants;
 import javax.xml.validation.Schema;
 import javax.xml.validation.SchemaFactory;
@@ -868,7 +867,7 @@ public class Publisher implements URIResolver, SectionNumberer {
       page.log("FHIR build failure @ " + Config.DATE_FORMAT().format(Calendar.getInstance().getTime()), LogMessageType.Process);
       System.out.println("Error: " + e.getMessage());
       e.printStackTrace();
-      TextFile.stringToFile(StringUtils.defaultString(e.getMessage()), uncheckedPath(outputdir, "simple-error.txt"));
+      TextFile.stringToFile(StringUtils.defaultString(e.getMessage()), Utilities.path(outputdir, "simple-error.txt"));
       System.exit(1);
     }
   }
@@ -1283,7 +1282,7 @@ public class Publisher implements URIResolver, SectionNumberer {
       if (c == '/')
         level = level +"../";
 
-    String fullFileName = uncheckedPath(page.getFolders().dstDir, n.replace("/", File.separator));
+    String fullFileName = Utilities.path(page.getFolders().dstDir, n.replace("/", File.separator));
     Utilities.createDirectory(fullFileName);
     // simple html version
 //    String pagecnt = "<html>\r\n<head>\r\n<title>Redirect Page for "+Utilities.escapeXml(desc)+" </title>\r\n<meta http-equiv=\"REFRESH\" content=\"0;url="+
@@ -1293,7 +1292,7 @@ public class Publisher implements URIResolver, SectionNumberer {
     String pagecnt = TextFile.fileToString(Utilities.path(page.getFolders().rootDir, "tools", "html", "redirect.asp"));
     pagecnt = pagecnt.replace("<%filename%>", Utilities.changeFileExt(pn, ""));
 
-    String fn = uncheckedPath(fullFileName, "index.asp");
+    String fn = Utilities.path(fullFileName, "index.asp");
     if (!(new File(fn).exists()))
       TextFile.stringToFile(pagecnt, fn);
 
@@ -2037,20 +2036,20 @@ public class Publisher implements URIResolver, SectionNumberer {
     if (VersionUtilities.isR4BVer(page.getVersion().toCode())) {
       org.hl7.fhir.r4.model.Resource r2 = VersionConvertorFactory_40_50.convertResource(r);
       org.hl7.fhir.r4.formats.IParser xml = new org.hl7.fhir.r4.formats.XmlParser().setOutputStyle(org.hl7.fhir.r4.formats.IParser.OutputStyle.PRETTY);
-      xml.compose(new FileOutputStream(uncheckedPath(page.getFolders().dstDir, baseFileName + ".xml")), r2);
+      xml.compose(new FileOutputStream(Utilities.path(page.getFolders().dstDir, baseFileName + ".xml")), r2);
       if (showCanonical) {
         xml.setOutputStyle(org.hl7.fhir.r4.formats.IParser.OutputStyle.CANONICAL);
-        xml.compose(new FileOutputStream(uncheckedPath(page.getFolders().dstDir, baseFileName + ".canonical.xml")), r2);
+        xml.compose(new FileOutputStream(Utilities.path(page.getFolders().dstDir, baseFileName + ".canonical.xml")), r2);
       }
       org.hl7.fhir.r4.formats.IParser json = new org.hl7.fhir.r4.formats.JsonParser().setOutputStyle(org.hl7.fhir.r4.formats.IParser.OutputStyle.PRETTY);
-      json.compose(new FileOutputStream(uncheckedPath(page.getFolders().dstDir, baseFileName + ".json")), r2);
+      json.compose(new FileOutputStream(Utilities.path(page.getFolders().dstDir, baseFileName + ".json")), r2);
       if (showCanonical) {
         json.setOutputStyle(org.hl7.fhir.r4.formats.IParser.OutputStyle.CANONICAL);
-        json.compose(new FileOutputStream(uncheckedPath(page.getFolders().dstDir, baseFileName + ".canonical.json")), r2);
+        json.compose(new FileOutputStream(Utilities.path(page.getFolders().dstDir, baseFileName + ".canonical.json")), r2);
       }
       if (showTtl) { 
         org.hl7.fhir.r4.formats.IParser rdf = new org.hl7.fhir.r4.formats.RdfParser().setOutputStyle(org.hl7.fhir.r4.formats.IParser.OutputStyle.PRETTY);
-        rdf.compose(new FileOutputStream(uncheckedPath(page.getFolders().dstDir, baseFileName + ".ttl")), r2);
+        rdf.compose(new FileOutputStream(Utilities.path(page.getFolders().dstDir, baseFileName + ".ttl")), r2);
       }
     } else {
       IParser xml = new XmlParser().setOutputStyle(OutputStyle.PRETTY);
@@ -4408,11 +4407,11 @@ public class Publisher implements URIResolver, SectionNumberer {
         }
       });
       for (File f : files) {
-        Utilities.copyFile(f, new CSFile(uncheckedPath(page.getFolders().dstDir, prefix + f.getName())));
+        Utilities.copyFile(f, new CSFile(Utilities.path(page.getFolders().dstDir, prefix + f.getName())));
         page.getHTMLChecker().registerFile(prefix+f.getName(), "Support File", HTMLLinkChecker.determineType(f.getName()), true);
       }
     } else {
-      Utilities.copyFile(file, new CSFile(uncheckedPath(page.getFolders().dstDir, prefix + file.getName())));
+      Utilities.copyFile(file, new CSFile(Utilities.path(page.getFolders().dstDir, prefix + file.getName())));
       page.getHTMLChecker().registerFile(prefix+file.getName(), "Support File", HTMLLinkChecker.determineType(file.getName()), true);
     }
   }
@@ -5938,7 +5937,7 @@ public class Publisher implements URIResolver, SectionNumberer {
     String logicalName = Utilities.fileTitle(actualName);
     String src;
     if (IgParser.getKind(p) == GuidePageKind.TOC)
-      src = TextFile.fileToString(uncheckedPath(page.getFolders().templateDir, "template-ig-toc.html"));
+      src = TextFile.fileToString(Utilities.path(page.getFolders().templateDir, "template-ig-toc.html"));
     else
       throw new Exception("Unsupported special page kind "+IgParser.getKind(p).toCode());
 
@@ -5950,9 +5949,9 @@ public class Publisher implements URIResolver, SectionNumberer {
 
     src = addSectionNumbers(file, logicalName, src, null, 1, null, ig);
 
-    TextFile.stringToFile(src, uncheckedPath(page.getFolders().dstDir, file));
+    TextFile.stringToFile(src, Utilities.path(page.getFolders().dstDir, file));
 
-    src = TextFile.fileToString(uncheckedPath(page.getFolders().dstDir, file)).replace("<body>", "<body style=\"margin: 10px\">");
+    src = TextFile.fileToString(Utilities.path(page.getFolders().dstDir, file)).replace("<body>", "<body style=\"margin: 10px\">");
     src = page.processPageIncludesForBook(file, src, "page", null, ig, null);
     cachePage(file, src, logicalName, true);
   }
@@ -7101,8 +7100,4 @@ private String csCounter() {
             '}';
   }
 
-  @Nonnull
-  private String uncheckedPath(String folder, String filename) {
-    return Utilities.uncheckedPath(folder, filename);
-  }
 }
