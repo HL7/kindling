@@ -52,7 +52,7 @@ public class JsonSpecGenerator extends OutputStreamWriter {
     if (bs == null)
       return "terminologies.html#unbound";
     if (bs.getValueSet() != null) 
-      return bs.getValueSet().hasUserData("external.url") ? bs.getValueSet().getUserString("external.url") : bs.getValueSet().getUserString("path");
+      return bs.getValueSet().hasUserData("external.url") ? bs.getValueSet().getUserString("external.url") : bs.getValueSet().getWebPath();
     else if (!Utilities.noString(bs.getReference()))
       return bs.getReference();      
     else 
@@ -614,7 +614,7 @@ public class JsonSpecGenerator extends OutputStreamWriter {
       if (elem.hasBinding() && elem.getBinding().hasValueSet()) {
         ValueSet vs = resolveValueSet(elem.getBinding().getValueSet());
         if (vs != null)
-          write("<span style=\"color: navy; opacity: 0.8\"><a href=\""+(Utilities.isAbsoluteUrl(vs.getUserString("path")) ? "": prefix)+vs.getUserData("path")+"\" style=\"color: navy\">" + Utilities.escapeXml(elem.getShort()) + "</a></span>");
+          write("<span style=\"color: navy; opacity: 0.8\"><a href=\""+(Utilities.isAbsoluteUrl(vs.getWebPath()) ? "": prefix)+vs.getWebPath()+"\" style=\"color: navy\">" + Utilities.escapeXml(elem.getShort()) + "</a></span>");
         else
           write("<span style=\"color: navy; opacity: 0.8\"><a href=\""+elem.getBinding().getValueSet()+".html\" style=\"color: navy\">" + Utilities.escapeXml(elem.getShort()) + "</a></span>");          
       } else

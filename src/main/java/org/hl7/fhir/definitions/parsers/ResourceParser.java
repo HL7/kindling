@@ -230,7 +230,7 @@ public class ResourceParser {
         StructureDefinition sd;
         if (new File(Utilities.path(folder, "structuredefinition-extension-"+rid+".xml")).exists()) {
           sd = (StructureDefinition) parseXml("structuredefinition-extension-"+rid+".xml");
-          sd.setUserData("path", "extension-"+sd.getId()+".html");
+          sd.setWebPath("extension-"+sd.getId()+".html");
           sd.setVersion(context.getVersion());
           p.getExtensions().add(sd);
           context.cacheResource(sd);
@@ -238,7 +238,7 @@ public class ResourceParser {
           ConstraintStructure tp = processProfile(rid, ig.getId().substring(ig.getId().indexOf("-")+1), res, wg);
           sd = tp.getResource();
           sd.setVersion(context.getVersion());
-          sd.setUserData("path", sd.getId()+".html");
+          sd.setWebPath(sd.getId()+".html");
           p.getProfiles().add(tp); 
         }
         if (ProfileUtilities.isExtensionDefinition(sd)) {
@@ -830,7 +830,7 @@ public class ResourceParser {
         save = true;
       }
       cs.setUserData("filename", "codesystem-"+cs.getId());
-      cs.setUserData("path", "codesystem-"+cs.getId()+".html");
+      cs.setWebPath("codesystem-"+cs.getId()+".html");
 
       if (!cs.hasContent()) {
         System.out.println("The CodeSystem "+csfn+" doesn't have a content element");
@@ -896,7 +896,7 @@ public class ResourceParser {
           throw new FHIRException("Error loading "+f.getAbsolutePath()+": URL mismatch. Expected http://hl7.org/fhir/ConceptMap/"+cmid+" but found "+cm.getUrl());
         }
         cm.setUserData("filename", cmid);
-        cm.setUserData("path", cmid+".html");
+        cm.setWebPath(cmid+".html");
         cm.setUserData("generate", "true");
         ConceptMapUtilities.makeShareable(cm);
         if (!ConceptMapUtilities.hasOID(cm)) {
@@ -930,7 +930,7 @@ public class ResourceParser {
       }
       boolean save = ValueSetUtilities.makeVSShareable(vs);
       vs.setUserData("filename", "valueset-"+vs.getId());
-      vs.setUserData("path", "valueset-"+vs.getId()+".html");
+      vs.setWebPath("valueset-"+vs.getId()+".html");
       vs.setExperimental(false);
       if (!vs.hasDescription()) {
         vs.setDescription("Description Needed Here");
@@ -952,7 +952,7 @@ public class ResourceParser {
       }
       ValueSetUtilities.makeShareable(vs);
 
-      vs.setUserData("path", "valueset-"+vs.getId()+".html");
+      vs.setWebPath("valueset-"+vs.getId()+".html");
       if (!ValueSetUtilities.hasOID(vs)) {
         String oid = registry.getOID(vs.getUrl());
         if (oid != null) {

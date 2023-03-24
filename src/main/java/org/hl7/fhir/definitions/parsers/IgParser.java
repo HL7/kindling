@@ -187,7 +187,7 @@ return null;
             vs.setUrl("http://hl7.org/fhir/ValueSet/"+id);
           }
           vs.setUserData(ToolResourceUtilities.NAME_RES_IG, igd);
-          vs.setUserData("path", igd.getPath()+"valueset-"+id+".html");
+          vs.setWebPath(igd.getPath()+"valueset-"+id+".html");
           vs.setUserData("filename", "valueset-"+id);
           if (committee != null) {
           if (!vs.hasExtension(ToolingExtensions.EXT_WORKGROUP)) {
@@ -277,7 +277,7 @@ return null;
           for (BindingSpecification bs : sparser.getBindings().values()) {
             if (!commonBindings.containsValue(bs) && bs.getValueSet() != null) {
               ValueSet vs  = bs.getValueSet();
-              String path = vs.getUserString("path");
+              String path = vs.getWebPath();
               path = path.substring(path.lastIndexOf("/")+1);              
               ig.getDefinition().addResource().setName(vs.getName()).setDescription(vs.getDescription()).setReference(new Reference(path)).setUserData(ToolResourceUtilities.RES_ACTUAL_RESOURCE, vs);
             }
@@ -363,7 +363,7 @@ return null;
 ////          vs.setUrl("http://hl7.org/fhir/ValueSet/"+vs.getId());
 ////        }
 ////        vs.setUserData(ToolResourceUtilities.NAME_RES_IG, igd);
-////        vs.setUserData("path", igd.getCode()+File.separator+"valueset-"+vs.getId()+".html");
+////        vs.setWebPath(igd.getCode()+File.separator+"valueset-"+vs.getId()+".html");
 ////        vs.setUserData("filename", "valueset-"+vs.getId());
 ////        vs.setUserData("committee", committee);
 ////        igd.getValueSets().add(vs);

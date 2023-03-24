@@ -175,7 +175,7 @@ import org.hl7.fhir.r5.model.CapabilityStatement.SystemInteractionComponent;
 import org.hl7.fhir.r5.model.CapabilityStatement.SystemRestfulInteraction;
 import org.hl7.fhir.r5.model.CapabilityStatement.TypeRestfulInteraction;
 import org.hl7.fhir.r5.model.CodeSystem;
-import org.hl7.fhir.r5.model.CodeSystem.CodeSystemContentMode;
+import org.hl7.fhir.r5.model.Enumerations.CodeSystemContentMode;
 import org.hl7.fhir.r5.model.CodeSystem.ConceptDefinitionComponent;
 import org.hl7.fhir.r5.model.CodeType;
 import org.hl7.fhir.r5.model.CompartmentDefinition;
@@ -194,6 +194,7 @@ import org.hl7.fhir.r5.model.ElementDefinition.ElementDefinitionBindingComponent
 import org.hl7.fhir.r5.model.ElementDefinition.ElementDefinitionConstraintComponent;
 import org.hl7.fhir.r5.model.ElementDefinition.TypeRefComponent;
 import org.hl7.fhir.r5.model.Enumeration;
+import org.hl7.fhir.r5.model.Enumerations;
 import org.hl7.fhir.r5.model.Enumerations.BindingStrength;
 import org.hl7.fhir.r5.model.Enumerations.CapabilityStatementKind;
 import org.hl7.fhir.r5.model.Enumerations.CompartmentType;
@@ -1232,7 +1233,7 @@ public class Publisher implements URIResolver, SectionNumberer {
 
   private ConceptMap buildConceptMap(String path, ValueSet vs, ResourceDefn rd) throws EOperationOutcome, FHIRException, IOException {
     ConceptMap cm = new ConceptMap();
-    cm.setUserData("path", "sc-"+vs.getUserString("path"));
+    cm.setWebPath("sc-"+vs.getWebPath());
     cm.setUserData("resource-definition", rd);
     cm.setId("sc-"+vs.getId());
     cm.setUrl("http://hl7.org/fhir/ConceptMap/"+cm.getId());
@@ -1582,12 +1583,12 @@ public class Publisher implements URIResolver, SectionNumberer {
     }
     if (!Utilities.noString(filename))
       profile.getResource().setUserData("filename", filename+".html");
-    if (Utilities.noString(profile.getResource().getUserString("path"))) {
+    if (Utilities.noString(profile.getResource().getWebPath())) {
       String path = "";
       ImplementationGuideDefn ig = page.getDefinitions().getUsageIG(ap.getCategory(), "processProfile");
       if (ig!=null && !ig.isCore())
         path = ig.getCode() + File.separator; 
-      profile.getResource().setUserData("path", path + filename+".html");
+      profile.getResource().setWebPath(path + filename+".html");
     }
   }
 
@@ -1957,7 +1958,7 @@ public class Publisher implements URIResolver, SectionNumberer {
               oid = oid.substring(8);
             ns.addUniqueId().setType(NamingSystemIdentifierType.OID).setValue(oid).setPreferred(false);
           }
-          ns.setUserData("path", cs.getUserData("path"));
+          ns.setWebPath(cs.getWebPath());
           bnd.addEntry().setResource(ns).setFullUrl("http://hl7.org/fhir/"+ns.fhirType()+"/"+ns.getId());
         }
       }
@@ -1982,8 +1983,8 @@ public class Publisher implements URIResolver, SectionNumberer {
           oid = id.getValue();
       }
       String link = "terminologies-systems.html#"+uri;
-      if (ns.getUserData("path") != null)
-        link = ns.getUserString("path");
+      if (ns.getWebPath() != null)
+        link = ns.getWebPath();
       b.append(" <tr>");
       b.append("<td><a href=\""+link+"\">"+Utilities.escapeXml(ns.getName())+"</a></td>");
       b.append("<td>"+Utilities.escapeXml(uri)+"</td>");
@@ -2019,7 +2020,7 @@ public class Publisher implements URIResolver, SectionNumberer {
     if (r instanceof CodeSystem) {
       // Set the caseSensitive to 'true' for all HL7 code systems that aren't supplements
       CodeSystem cs = (CodeSystem)r;
-      if (!cs.hasCaseSensitive() && !cs.getContent().equals(CodeSystem.CodeSystemContentMode.SUPPLEMENT) && cs.getUrl().contains("hl7.org"))
+      if (!cs.hasCaseSensitive() && !cs.getContent().equals(Enumerations.CodeSystemContentMode.SUPPLEMENT) && cs.getUrl().contains("hl7.org"))
         cs.setCaseSensitive(true);
     }
   }
@@ -3095,7 +3096,7 @@ public class Publisher implements URIResolver, SectionNumberer {
 //      if (ig == null) {
 //        ig = page.getDefinitions().getIgs().get("core");
 //      }
-//      ed.setUserData("path", (ig.isCore() ? "" : ig.getCode()+File.separator) + filename+".html");
+//      ed.setWebPath((ig.isCore() ? "" : ig.getCode()+File.separator) + filename+".html");
 //    }
 
     page.updateDiffEngineDefinitions();
@@ -3653,7 +3654,7 @@ public class Publisher implements URIResolver, SectionNumberer {
   private void produceConceptMap(ConceptMap cm, ResourceDefn rd, SectionTracker st) throws Exception {
     RenderingContext lrc = page.getRc().copy().setLocalPrefix("");
     RendererFactory.factory(cm, lrc).render(cm);
-    String n = cm.getUserString("path");
+    String n = cm.getWebPath();
     String fName = Utilities.changeFileExt(n,"");
     fixCanonicalResource(cm, fName);
     serializeResource(cm, fName, cm.getTitle(), "conceptmap-instance", "Profile", ((ResourceDefn) cm.getUserData("resource-definition")).getWg(), true, true);
@@ -3740,15 +3741,15 @@ public class Publisher implements URIResolver, SectionNumberer {
     SpecMapManager spm = new SpecMapManager("hl7.fhir.core", page.getVersion().toCode(), page.getVersion().toCode(), page.getBuildId(), page.getGenDate(), page.getWebLocation());
         
     for (StructureDefinition sd : new ContextUtilities(page.getWorkerContext()).allStructures()) {
-      if (sd.hasUserData("path")) {
-        spm.path(sd.getUrl(), sd.getUserString("path").replace("\\", "/"));
-        spm.target(sd.getUserString("path").replace("\\", "/"));
+      if (sd.hasWebPath()) {
+        spm.path(sd.getUrl(), sd.getWebPath().replace("\\", "/"));
+        spm.target(sd.getWebPath().replace("\\", "/"));
       }
     }
     for (StructureDefinition sd : page.getWorkerContext().getExtensionDefinitions()) {
-      if (sd.hasUserData("path")) {
-        spm.path(sd.getUrl(), sd.getUserString("path").replace("\\", "/"));
-        spm.target(sd.getUserString("path").replace("\\", "/"));
+      if (sd.hasWebPath()) {
+        spm.path(sd.getUrl(), sd.getWebPath().replace("\\", "/"));
+        spm.target(sd.getWebPath().replace("\\", "/"));
       }
     }
     for (String s : page.getCodeSystems().keys()) {
@@ -3757,21 +3758,21 @@ public class Publisher implements URIResolver, SectionNumberer {
         System.out.println("No code system resource found for "+s);
     }
     for (CodeSystem cs : page.getCodeSystems().getList()) {
-      if (cs != null && cs.hasUserData("path")) {
-        spm.path(cs.getUrl(), cs.getUserString("path").replace("\\", "/"));
-        spm.target(cs.getUserString("path").replace("\\", "/"));      
+      if (cs != null && cs.hasWebPath()) {
+        spm.path(cs.getUrl(), cs.getWebPath().replace("\\", "/"));
+        spm.target(cs.getWebPath().replace("\\", "/"));      
       }
     }
     for (ValueSet vs : page.getValueSets().getList()) {
-      if (vs.hasUserData("path")) {
-        spm.path(vs.getUrl(), vs.getUserString("path").replace("\\", "/"));
-        spm.target(vs.getUserString("path").replace("\\", "/"));      
+      if (vs.hasWebPath()) {
+        spm.path(vs.getUrl(), vs.getWebPath().replace("\\", "/"));
+        spm.target(vs.getWebPath().replace("\\", "/"));      
       }
     }
     for (ConceptMap cm : page.getConceptMaps().getList()) {
-      if (cm.hasUserData("path")) {
-        spm.path(cm.getUrl(), cm.getUserString("path").replace("\\", "/"));
-        spm.target(cm.getUserString("path").replace("\\", "/"));      
+      if (cm.hasWebPath()) {
+        spm.path(cm.getUrl(), cm.getWebPath().replace("\\", "/"));
+        spm.target(cm.getWebPath().replace("\\", "/"));      
       }
     }
     for (String s : page.getDefinitions().getPageTitles().keySet()) {
@@ -3869,7 +3870,7 @@ public class Publisher implements URIResolver, SectionNumberer {
         
       if ((!inDiff || tr.hasCode()) && tc != null)
         if (ed.getPath().contains("."))
-          check(page.getDefinitions().hasBaseType(tc) || tc.equals("Resource"), sd, ed.getPath()+": type '"+tc+"' is not valid (a)");
+          check(page.getDefinitions().hasBaseType(tc) || tc.equals("Resource"), sd, ed.getPath()+": type '"+tc+"' is not valid (a) on "+sd.getUrl());
         else if (sd.hasBaseDefinition()) {
           if (sd.getDerivation() == TypeDerivationRule.CONSTRAINT)
             check(page.getDefinitions().hasConcreteResource(tc) || page.getDefinitions().hasBaseType(tc) , sd, ed.getPath()+": type '"+tc+"' is not valid (b)");
@@ -3922,7 +3923,7 @@ public class Publisher implements URIResolver, SectionNumberer {
   }
 
   private boolean checkMetaData(StructureDefinition sd) {
-    check(tail(sd.getUrl()).equals(sd.getId()), sd, "id must equal tail of URL");
+    check(tail(sd.getUrl()).equals(sd.getId()), sd, "id '"+sd.getId()+"' must equal tail of URL '"+sd.getUrl()+"'");
     check(VersionUtilities.versionsCompatible(page.getVersion().toCode(), sd.getFhirVersion().toCode()), sd, "FhirVersion is wrong (should be "+page.getVersion().toCode()+", is "+sd.getFhirVersion().toCode()+")");
     switch (sd.getKind()) {
     case COMPLEXTYPE: return checkDataType(sd);
@@ -3996,14 +3997,14 @@ public class Publisher implements URIResolver, SectionNumberer {
           CanonicalResource m = (CanonicalResource) e.getResource();
           ToolingExtensions.removeExtension(m, BuildExtensions.EXT_NOTES);
           ToolingExtensions.removeExtension(m, BuildExtensions.EXT_INTRODUCTION);
-          sdm.seeResource(m.present(), m.getUserString("path"), m);
+          sdm.seeResource(m.present(), m.getWebPath(), m);
           String url = m.getUrl();
           if (url != null && url.startsWith("http://hl7.org/fhir") && !SIDUtilities.isKnownSID(url) && !isExtension(m)) {
             if (!page.getVersion().toCode().equals(m.getVersion())) 
               page.getValidationErrors().add(new ValidationMessage(Source.Publisher, IssueType.INVALID, -1, -1, "Bundle "+bnd.getId(), "definitions in FHIR space should have the correct version (url = "+url+", version = "+m.getVersion()+" not "+page.getVersion()+")", IssueSeverity.ERROR));              
           }
         } else {
-          sdm.seeResource("??", e.getResource().getUserString("path"),e.getResource());
+          sdm.seeResource("??", e.getResource().getWebPath(),e.getResource());
 
         }
       }
@@ -4300,7 +4301,7 @@ public class Publisher implements URIResolver, SectionNumberer {
     List<StringPair> refs = new ArrayList<>();
     for (CanonicalResource cr : page.getWorkerContext().fetchResourcesByType(CanonicalResource.class)) {
       if (ToolingExtensions.usesExtension(ed.getUrl(), cr) && page.isLocalResource(cr)) {
-        refs.add(new StringPair(cr.present(), cr.getUserString("path")));
+        refs.add(new StringPair(cr.present(), cr.getWebPath()));
       }
     }
     
@@ -5167,7 +5168,7 @@ public class Publisher implements URIResolver, SectionNumberer {
                 if (!ns.hasUrl() || ns.getUrl().startsWith("http://hl7.org/fhir"))
                   ns.setVersion(page.getVersion().toCode());
                 
-                ns.setUserData("path", prefix +n+".html");
+                ns.setWebPath(prefix +n+".html");
                 page.getDefinitions().getNamingSystems().add(ns);
               }
             }
@@ -5233,12 +5234,12 @@ public class Publisher implements URIResolver, SectionNumberer {
         page.getVsValidator().validate(page.getValidationErrors(), "Value set Example "+prefix +n, vs, false, false);
         if (vs.getUrl() == null)
           throw new Exception("Value set example " + e.getTitle() + " has no url");
-        vs.setUserData("path", prefix +n + ".html");
+        vs.setWebPath(prefix +n + ".html");
         if (vs.getUrl().startsWith("http:"))
           page.getValueSets().see(vs, page.packageInfo());
         addToResourceFeed(vs, valueSetsFeed, file.getName());
         page.getDefinitions().getValuesets().see(vs, page.packageInfo());
-        sdm.seeResource(vs.present(), vs.getUserString("path"), vs);
+        sdm.seeResource(vs.present(), vs.getWebPath(), vs);
       } catch (Exception ex) {
         if (VersionUtilities.isR4BVer(page.getVersion().toCode())) {
           System.out.println("Value set "+file.getAbsolutePath()+" couldn't be parsed - ignoring! msg = "+ex.getMessage());
@@ -5254,10 +5255,10 @@ public class Publisher implements URIResolver, SectionNumberer {
       cs.setUserData("example", "true");
       cs.setUserData("filename", Utilities.changeFileExt(file.getName(), ""));
       cs.addExtension().setUrl(ToolingExtensions.EXT_WORKGROUP).setValue(new CodeType("fhir"));
-      cs.setUserData("path", prefix +n + ".html");
+      cs.setWebPath(prefix +n + ".html");
       addToResourceFeed(cs, valueSetsFeed, file.getName());
       page.getCodeSystems().see(cs, page.packageInfo());
-      sdm.seeResource(cs.present(), cs.getUserString("path"), cs);
+      sdm.seeResource(cs.present(), cs.getWebPath(), cs);
       // There's no longer a reason to exclude R4B concept maps
       //    } else if (rt.equals("ConceptMap") && !VersionUtilities.isR4BVer(page.getVersion().toCode())) {
     } else if (rt.equals("ConceptMap")) {
@@ -5270,9 +5271,9 @@ public class Publisher implements URIResolver, SectionNumberer {
         cm.setVersion(page.getVersion().toCode());
       addToResourceFeed(cm, conceptMapsFeed, file.getName());
       page.getDefinitions().getConceptMaps().see(cm, page.packageInfo());
-      cm.setUserData("path", prefix +n + ".html");
+      cm.setWebPath(prefix +n + ".html");
       page.getConceptMaps().see(cm, page.packageInfo());
-      sdm.seeResource(cm.present(), cm.getUserString("path"), cm);
+      sdm.seeResource(cm.present(), cm.getWebPath(), cm);
     } else if (rt.equals("Library")) {
       try {
         Library lib = (Library) loadExample(file);
@@ -5281,9 +5282,9 @@ public class Publisher implements URIResolver, SectionNumberer {
           lib.setVersion(page.getVersion().toCode());
         lib.setUserData("example", "true");
         lib.setUserData("filename", Utilities.changeFileExt(file.getName(), ""));
-        lib.setUserData("path", prefix +n + ".html");
+        lib.setWebPath(prefix +n + ".html");
         page.getWorkerContext().cacheResource(lib);
-        sdm.seeResource(lib.present(), lib.getUserString("path"), lib);
+        sdm.seeResource(lib.present(), lib.getWebPath(), lib);
       } catch (Exception ex) {
         System.out.println("Internal exception processing Library "+file.getName()+": "+ex.getMessage()+". Does the libary code need regenerating?");
         ex.printStackTrace();
@@ -6720,7 +6721,7 @@ public class Publisher implements URIResolver, SectionNumberer {
     for (Resource ae : page.getIgResources().values()) {
       if (ae instanceof ValueSet) {
         ValueSet vs = (ValueSet) ae;
-        String name = Utilities.fileTitle((String) ae.getUserData("path"));
+        String name = Utilities.fileTitle((String) ae.getWebPath());
         String title = vs.getName();
 
         if (vs.getText() == null || vs.getText().getDiv() == null || vs.getText().getDiv().allChildrenAreText()
@@ -6851,8 +6852,8 @@ public class Publisher implements URIResolver, SectionNumberer {
 
       addToResourceFeed(vs, valueSetsFeed, null);
 
-      if (vs.getUserData("path") == null)
-        vs.setUserData("path", n + ".html");
+      if (vs.getWebPath() == null)
+        vs.setWebPath(n + ".html");
       page.setId(vs.getId());
       String sf;
       try {
@@ -6914,8 +6915,8 @@ public class Publisher implements URIResolver, SectionNumberer {
       fixCanonicalResource(cs, n);
       addToResourceFeed(cs, valueSetsFeed, null);
 
-      if (cs.getUserData("path") == null)
-        cs.setUserData("path", n + ".html");
+      if (cs.getWebPath() == null)
+        cs.setWebPath(n + ".html");
       page.setId(cs.getId());
       String sf;
       WorkGroup wg = wg(cs, "vocab");
@@ -7010,7 +7011,7 @@ private String csCounter() {
   }
   
   private void generateConceptMap(ConceptMap cm) throws Exception {
-    String filename = cm.getUserString("path");
+    String filename = cm.getWebPath();
     RenderingContext lrc = page.getRc().copy().setLocalPrefix("").setTooCostlyNoteEmpty(PageProcessor.TOO_MANY_CODES_TEXT_EMPTY).setTooCostlyNoteNotEmpty(PageProcessor.TOO_MANY_CODES_TEXT_NOT_EMPTY);
     RendererFactory.factory(cm, lrc).render(cm);
 

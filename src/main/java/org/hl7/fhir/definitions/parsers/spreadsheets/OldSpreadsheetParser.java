@@ -1190,10 +1190,10 @@ public class OldSpreadsheetParser {
         }
         if (ig != null) {
           cd.getValueSet().setUserDataINN(ToolResourceUtilities.NAME_RES_IG, ig);
-          cd.getValueSet().setUserData("path", "valueset-"+cd.getValueSet().getId()+".html");
+          cd.getValueSet().setWebPath("valueset-"+cd.getValueSet().getId()+".html");
         } else
-          cd.getValueSet().setUserData("path", "valueset-"+cd.getValueSet().getId()+".html");
-        if (!cd.getValueSet().getUserData("path").equals(cd.getValueSet().getUserData("filename")+".html"))
+          cd.getValueSet().setWebPath("valueset-"+cd.getValueSet().getId()+".html");
+        if (!cd.getValueSet().getWebPath().equals(cd.getValueSet().getUserData("filename")+".html"))
           throw new Exception("Mis-identified value set");
         if (!ref.startsWith("#"))
           throw new Exception("Error parsing binding "+cd.getName()+": code list reference '"+ref+"' must started with '#'");
@@ -1238,9 +1238,9 @@ public class OldSpreadsheetParser {
 
         if (ig != null) {
           vs.setUserDataINN(ToolResourceUtilities.NAME_RES_IG, ig);
-          vs.setUserData("path", ig.getCode()+"/valueset-"+vs.getId()+".html");
-        } else if (!vs.hasUserData("path")) {
-          vs.setUserData("path", "valueset-"+vs.getId()+".html");
+          vs.setWebPath(ig.getCode()+"/valueset-"+vs.getId()+".html");
+        } else if (!vs.hasWebPath()) {
+          vs.setWebPath("valueset-"+vs.getId()+".html");
         }
         if (definitions != null)
           definitions.getBoundValueSets().put(vs.getUrl(), vs);
@@ -1349,7 +1349,7 @@ public class OldSpreadsheetParser {
 	    if (!result.hasVersion() || result.getUrl().startsWith("http://hl7.org/fhir"))
 	      result.setVersion(version.toCode());
       result.setUserData("filename", ref);
-      result.setUserData("path", ((ig == null || ig.isCore()) ? "" : ig.getCode()+"/")+ ref+".html");
+      result.setWebPath(((ig == null || ig.isCore()) ? "" : ig.getCode()+"/")+ ref+".html");
       if (!result.hasExtension(ToolingExtensions.EXT_WORKGROUP)) {
         result.addExtension().setUrl(ToolingExtensions.EXT_WORKGROUP).setValue(new CodeType(committee.getCode()));
       } else {
@@ -2203,7 +2203,7 @@ public class OldSpreadsheetParser {
   	  ex.setUrl(uri+name);
 	  }
     ex.setId(tail(ex.getUrl()));
-    ex.setUserData("path", "extension-"+ex.getId().toLowerCase()+".html");
+    ex.setWebPath("extension-"+ex.getId().toLowerCase()+".html");
 	  ap.getExtensions().add(ex);
 	  if (context == null) {
 	    ExtensionContextType ct = readContextType(sheet.getColumn(row, "Context Type"), row);

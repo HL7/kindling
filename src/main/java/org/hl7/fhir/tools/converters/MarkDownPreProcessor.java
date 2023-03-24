@@ -36,7 +36,7 @@ public class MarkDownPreProcessor {
         if (exp.getValueset() != null)
           text = left+presentExpansion(exp.getValueset().getExpansion().getContains(), workerContext)+right;
         else
-          text = left+"["+vs.getName()+"]("+vs.getUserData("path")+")"+right;
+          text = left+"["+vs.getName()+"]("+vs.getWebPath()+")"+right;
       } else {
         String url = "";
         String[] parts = linkText.split("\\#");
@@ -44,7 +44,7 @@ public class MarkDownPreProcessor {
           StructureDefinition ed = workerContext.getExtensionStructure(null, parts[0]);
           if (ed == null)
             throw new Error(location + ": Unable to find extension "+parts[0]);
-          url = ed.getUserString("path");
+          url = ed.getWebPath();
           if (url == null && ed.hasUserData("filename")) {
             url = ed.getUserData("filename")+".html";
           }

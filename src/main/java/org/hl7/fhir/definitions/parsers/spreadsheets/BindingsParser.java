@@ -51,7 +51,7 @@ import org.hl7.fhir.r5.formats.IParser;
 import org.hl7.fhir.r5.formats.JsonParser;
 import org.hl7.fhir.r5.formats.XmlParser;
 import org.hl7.fhir.r5.model.CodeSystem;
-import org.hl7.fhir.r5.model.CodeSystem.CodeSystemContentMode;
+import org.hl7.fhir.r5.model.Enumerations.CodeSystemContentMode;
 import org.hl7.fhir.r5.model.CodeSystem.CodeSystemHierarchyMeaning;
 import org.hl7.fhir.r5.model.CodeSystem.ConceptDefinitionComponent;
 import org.hl7.fhir.r5.model.CodeSystem.ConceptDefinitionDesignationComponent;
@@ -145,7 +145,7 @@ public class BindingsParser {
           cd.getValueSet().addExtension().setUrl(ToolingExtensions.EXT_WORKGROUP).setValue(new CodeType(sheet.getColumn(row, "Committee").toLowerCase()));
         }
         cd.getValueSet().setUserData("filename", "valueset-"+cd.getValueSet().getId());
-        cd.getValueSet().setUserData("path", "valueset-"+cd.getValueSet().getId()+".html");
+        cd.getValueSet().setWebPath("valueset-"+cd.getValueSet().getId()+".html");
         cd.getValueSet().setName(cd.getName());
         cd.getValueSet().setTitle(cd.getName());
         cd.getValueSet().setDateElement(new DateTimeType(genDate));
@@ -256,7 +256,7 @@ public class BindingsParser {
       if (!ec.equals("fhir"))
         System.out.println("ValueSet "+vs.getUrl()+" WG mismatch 11: is "+ec+", want to set to "+"fhir");
     }     
-    vs.setUserData("path", "valueset-"+vs.getId()+".html");
+    vs.setWebPath("valueset-"+vs.getId()+".html");
     KindlingUtilities.makeUniversal(vs);
 
     ContactDetail c = vs.addContact();
@@ -354,7 +354,7 @@ public class BindingsParser {
         } 
       }
       result.setUserData("filename", "valueset-"+ref.substring(9));
-      result.setUserData("path", "valueset-"+ref.substring(9)+".html");
+      result.setWebPath("valueset-"+ref.substring(9)+".html");
       String oid = registry.getOID(result.getUrl());
       if (oid != null) {
         ValueSetUtilities.setOID(result, oid);

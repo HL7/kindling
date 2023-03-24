@@ -295,7 +295,7 @@ public class ProfileGenerator {
     p.setKind(StructureDefinitionKind.PRIMITIVETYPE);
     p.setAbstract(false);
     p.setUserData("filename", type.getCode().toLowerCase());
-    p.setUserData("path", "datatypes.html#"+type.getCode());
+    p.setWebPath("datatypes.html#"+type.getCode());
     if (VersionUtilities.isR4BVer(version.toCode())) {      
       p.setBaseDefinition("http://hl7.org/fhir/StructureDefinition/Element");
     } else {
@@ -536,7 +536,7 @@ public class ProfileGenerator {
     p.setKind(StructureDefinitionKind.PRIMITIVETYPE);
     p.setAbstract(false);
     p.setUserData("filename", "xhtml");
-    p.setUserData("path", "narrative.html#xhtml");
+    p.setWebPath("narrative.html#xhtml");
     p.setBaseDefinition("http://hl7.org/fhir/StructureDefinition/Element");
     p.setType("xhtml");
     p.setDerivation(TypeDerivationRule.SPECIALIZATION);
@@ -672,7 +672,7 @@ public class ProfileGenerator {
     p.setKind(StructureDefinitionKind.PRIMITIVETYPE);
     p.setAbstract(false);
     p.setUserData("filename", type.getCode().toLowerCase());
-    p.setUserData("path", "datatypes.html#"+type.getCode());
+    p.setWebPath("datatypes.html#"+type.getCode());
     p.setFhirVersion(version);
     p.setVersion(version.toCode());
     p.setFhirVersion(version);
@@ -799,7 +799,7 @@ public class ProfileGenerator {
     p.setKind(StructureDefinitionKind.COMPLEXTYPE);
     p.setAbstract(t.isAbstractType());
     p.setUserData("filename", t.getName().toLowerCase());
-    p.setUserData("path", definitions.getSrcFile(t.getName())+".html#"+t.getName());
+    p.setWebPath(definitions.getSrcFile(t.getName())+".html#"+t.getName());
     assert !Utilities.noString(t.typeCode());
     String b = (t.typeCode().equals("Type") ? "Element" : t.typeCode().equals("Structure") ? "BackboneElement" : t.typeCode());
     if (!Utilities.noString(b)) {
@@ -928,7 +928,7 @@ public class ProfileGenerator {
     p.setDerivation(TypeDerivationRule.CONSTRAINT);
     p.setAbstract(false);
     p.setUserData("filename", pt.getName().toLowerCase());
-    p.setUserData("path", "datatypes.html#"+pt.getName());
+    p.setWebPath("datatypes.html#"+pt.getName());
     p.setFhirVersion(version);
     p.setVersion(version.toCode());
     ToolingExtensions.setStandardsStatus(p, StandardsStatus.NORMATIVE, "4.0.0");
@@ -1091,7 +1091,7 @@ public class ProfileGenerator {
     }
     p.setType(r.getRoot().getName());
     p.setUserData("filename", r.getName().toLowerCase());
-    p.setUserData("path", r.getName().toLowerCase()+".html");
+    p.setWebPath(r.getName().toLowerCase()+".html");
     p.setTitle(pack.metadata("display"));
     p.setFhirVersion(version);
     p.setVersion(version.toCode());
@@ -1204,7 +1204,7 @@ public class ProfileGenerator {
     p.setDerivation(TypeDerivationRule.CONSTRAINT);
     p.setAbstract(false);
     p.setUserData("filename", id);
-    p.setUserData("path", ((usage == null || usage.isCore()) ? "" : usage.getCode()+File.separator)+id+".html");
+    p.setWebPath(((usage == null || usage.isCore()) ? "" : usage.getCode()+File.separator)+id+".html");
     p.setTitle(pack.metadata("display"));
     p.setFhirVersion(version);
     p.setVersion(version.toCode());
@@ -1364,7 +1364,7 @@ public class ProfileGenerator {
     KindlingUtilities.makeUniversal(sp);
 
     if (created) {
-      sp.setUserData("path", p.getName().toLowerCase()+"-search.html#"+sp.getId());        
+      sp.setWebPath(p.getName().toLowerCase()+"-search.html#"+sp.getId());        
       sp.setUrl("http://hl7.org/fhir/SearchParameter/"+sp.getId());
       sp.setVersion(version.toCode());
       if (context.getSearchParameter(sp.getUrl()) != null)
@@ -2551,7 +2551,7 @@ public class ProfileGenerator {
     opd.addResource(VersionIndependentResourceTypesAll.fromCode(resourceName));
     opd.setType(op.isType()); 
     opd.setInstance(op.isInstance());
-    opd.setUserData("path", resourceName.toLowerCase()+"-operation-"+op.getName().toLowerCase()+".html");
+    opd.setWebPath(resourceName.toLowerCase()+"-operation-"+op.getName().toLowerCase()+".html");
     KindlingUtilities.makeUniversal(opd);
 
     if (op.getIdempotent() == null) {
@@ -2667,7 +2667,7 @@ public class ProfileGenerator {
     p.setKind(StructureDefinitionKind.LOGICAL);
     p.setAbstract(false);
     p.setUserData("filename", r.getName().toLowerCase());
-    p.setUserData("path", igd.getPrefix()+ r.getName().toLowerCase()+".html");
+    p.setWebPath(igd.getPrefix()+ r.getName().toLowerCase()+".html");
     p.setTitle(r.getName());
     p.setFhirVersion(version);
     p.setVersion(version.toCode());

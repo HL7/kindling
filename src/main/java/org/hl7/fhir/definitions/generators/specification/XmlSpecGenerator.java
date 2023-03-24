@@ -82,7 +82,7 @@ public class XmlSpecGenerator extends OutputStreamWriter {
     if (bs == null)
       return "terminologies.html#unbound";
     if (bs.getValueSet() != null) 
-      return bs.getValueSet().hasUserData("external.url") ? bs.getValueSet().getUserString("external.url") : bs.getValueSet().getUserString("path");
+      return bs.getValueSet().hasUserData("external.url") ? bs.getValueSet().getUserString("external.url") : bs.getValueSet().getWebPath();
     else if (!Utilities.noString(bs.getReference()))
       return bs.getReference();      
     else 
@@ -558,7 +558,7 @@ public class XmlSpecGenerator extends OutputStreamWriter {
           if (elem.hasBinding() && elem.getBinding().hasValueSet()) {
             ValueSet vs = resolveValueSet(elem.getBinding().getValueSet());
             if (vs != null)
-              write("<span style=\"color: navy\"><a href=\""+(Utilities.isAbsoluteUrl(vs.getUserString("path")) ? "" : prefix)+vs.getUserData("path")+"\" style=\"color: navy\">" + Utilities.escapeXml(elem.getShort()) + "</a><!--A--></span>");
+              write("<span style=\"color: navy\"><a href=\""+(Utilities.isAbsoluteUrl(vs.getWebPath()) ? "" : prefix)+vs.getWebPath()+"\" style=\"color: navy\">" + Utilities.escapeXml(elem.getShort()) + "</a><!--A--></span>");
             else 
               write("<span style=\"color: navy\"><a href=\""+elem.getBinding().getValueSet()+"\" style=\"color: navy\">" + Utilities.escapeXml(elem.getShort()) + "</a><!--B--></span>");          
           } else
@@ -812,7 +812,7 @@ public class XmlSpecGenerator extends OutputStreamWriter {
           } else {
             StructureDefinition sd = page.getProfiles().get(pt);
             if (sd != null)
-              write("<a href=\"" + prefix+sd.getUserString("path") + "\">" + sd.getName() + "</a>");
+              write("<a href=\"" + prefix+sd.getWebPath() + "\">" + sd.getName() + "</a>");
             else
               write("<a href=\"" + pt + "\">" + pt + "</a>");
           }
