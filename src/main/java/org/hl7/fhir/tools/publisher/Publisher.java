@@ -273,6 +273,7 @@ import org.hl7.fhir.utilities.ZipGenerator;
 import org.hl7.fhir.utilities.i18n.I18nConstants;
 import org.hl7.fhir.utilities.json.JsonUtilities;
 import org.hl7.fhir.utilities.npm.FilesystemPackageCacheManager;
+import org.hl7.fhir.utilities.npm.NpmPackage;
 import org.hl7.fhir.utilities.npm.PackageGenerator.PackageType;
 import org.hl7.fhir.utilities.npm.ToolsVersion;
 import org.hl7.fhir.utilities.validation.ValidationMessage;
@@ -834,6 +835,7 @@ public class Publisher implements URIResolver, SectionNumberer {
         AudioUtilities.tone(1000, 10);
         AudioUtilities.tone(800, 10);
       }
+      checkPackages();
       page.log("Finished publishing FHIR @ " + Config.DATE_FORMAT().format(Calendar.getInstance().getTime()), LogMessageType.Process);
     } catch (Exception e) {
 
@@ -882,6 +884,26 @@ public class Publisher implements URIResolver, SectionNumberer {
       e.printStackTrace();
       TextFile.stringToFile(StringUtils.defaultString(e.getMessage()), Utilities.uncheckedPath(outputdir, "simple-error.txt"));
       System.exit(1);
+    }
+  }
+
+  private void checkPackages() throws FileNotFoundException, IOException {
+    NpmPackage npm = NpmPackage.fromPackage(new FileInputStream(Utilities.path(page.getFolders().dstDir, "hl7.fhir.r5.core.tgz")));
+    dumpPackage("hl7.fhir.r5.core", npm);
+    npm = NpmPackage.fromPackage(new FileInputStream(Utilities.path(page.getFolders().dstDir, "hl7.fhir.r5.expansions.tgz")));
+    dumpPackage("hl7.fhir.r5.expansions", npm);
+    npm = NpmPackage.fromPackage(new FileInputStream(Utilities.path(page.getFolders().dstDir, "hl7.fhir.r5.examples.tgz")));
+    dumpPackage("hl7.fhir.r5.examples", npm);
+    npm = NpmPackage.fromPackage(new FileInputStream(Utilities.path(page.getFolders().dstDir, "hl7.fhir.r5.search.tgz")));
+    dumpPackage("hl7.fhir.r5.search", npm);
+    npm = NpmPackage.fromPackage(new FileInputStream(Utilities.path(page.getFolders().dstDir, "hl7.fhir.r5.corexml.tgz")));
+    dumpPackage("hl7.fhir.r5.corexml", npm);
+  }
+
+  private void dumpPackage(String name, NpmPackage npm) {
+    System.out.println(Utilities.padRight(name,' ', 25)+": "+Utilities.padRight(npm.id()+"#"+npm.version(), ' ', 30)+" = "+npm.canonical()+" @ "+npm.getWebLocation()+". "+npm.description());
+    for (String f : npm.getFolders().keySet()) {
+      System.out.println("  "+f+": "+npm.getFolders().get(f).listFiles().size());      
     }
   }
 
@@ -3344,7 +3366,7 @@ public class Publisher implements URIResolver, SectionNumberer {
       expIg.setLicense(ImplementationGuide.SPDXLicense.CC01_0);
       expIg.setTitle("FHIR "+page.getVersion().getDisplay()+" package : Expansions");
       expIg.setDescription("Expansions for the "+page.getVersion().getDisplay()+" version of the FHIR standard");
-      NPMPackageGenerator npm = new NPMPackageGenerator(Utilities.uncheckedPath(page.getFolders().dstDir, pidRoot() + ".expansions.tgz"), "http://hl7.org/fhir", "http://hl7.org/fhir", PackageType.CORE, expIg, page.getGenDate().getTime(), true);
+      NPMPackageGenerator npm = new NPMPackageGenerator(Utilities.uncheckedPath(page.getFolders().dstDir, pidRoot() + ".expansions.tgz"), "http://hl7.org/fhir", page.getWebLocation(), PackageType.CORE, expIg, page.getGenDate().getTime(), true);
       Bundle expansionFeed = new Bundle();
       Set<String> urlset = new HashSet<>();
       expansionFeed.setId("valueset-expansions");
@@ -3554,7 +3576,7 @@ public class Publisher implements URIResolver, SectionNumberer {
       exIg.setLicense(ImplementationGuide.SPDXLicense.CC01_0);
       exIg.setTitle("FHIR "+page.getVersion().getDisplay()+" package : Examples");
       exIg.setDescription("Examples for the "+page.getVersion().getDisplay()+" version of the FHIR standard");
-      npm = new NPMPackageGenerator(Utilities.uncheckedPath(page.getFolders().dstDir, pidRoot() + ".examples.tgz"), "http://hl7.org/fhir", "http://hl7.org/fhir", PackageType.EXAMPLES, exIg, page.getGenDate().getTime(), true);
+      npm = new NPMPackageGenerator(Utilities.uncheckedPath(page.getFolders().dstDir, pidRoot() + ".examples.tgz"), "http://hl7.org/fhir", page.getWebLocation(), PackageType.EXAMPLES, exIg, page.getGenDate().getTime(), true);
 
       zip = new ZipGenerator(page.getFolders().dstDir + "examples-json.zip");
       File f = new CSFile(page.getFolders().dstDir);
@@ -3603,8 +3625,8 @@ public class Publisher implements URIResolver, SectionNumberer {
       spIg.setVersion(page.getVersion().toCode());
       spIg.setLicense(ImplementationGuide.SPDXLicense.CC01_0);
       spIg.setTitle("FHIR "+page.getVersion().getDisplay()+" package : ungrouped search parameters");
-      exIg.setDescription("FHIR "+page.getVersion().getDisplay()+" package : Search Parameters (break out combined parmaeters for server execution convenience)");
-      npm = new NPMPackageGenerator(Utilities.uncheckedPath(page.getFolders().dstDir, pidRoot() + ".search.tgz"), "http://hl7.org/fhir", "http://hl7.org/fhir", PackageType.EXAMPLES, exIg, page.getGenDate().getTime(), true);
+      spIg.setDescription("FHIR "+page.getVersion().getDisplay()+" package : Search Parameters (break out combined parameters for server execution convenience)");
+      npm = new NPMPackageGenerator(Utilities.uncheckedPath(page.getFolders().dstDir, pidRoot() + ".search.tgz"), "http://hl7.org/fhir", page.getWebLocation(), PackageType.EXAMPLES, spIg, page.getGenDate().getTime(), true);
       for (ResourceDefn r : page.getDefinitions().getBaseResources().values()) {
         addToSearchPackage(r, npm);
       }
