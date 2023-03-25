@@ -4430,7 +4430,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     StringBuilder b = new StringBuilder();
     b.append("<ul class=\"nav nav-tabs\">");
     b.append(makeHeaderTab("Narrative", "narrative.html", mode==null || "base".equals(mode)));
-    b.append(makeHeaderTab("Examples", "narrative-example.html", mode==null || "examples".equals(mode)));
+    b.append(makeHeaderTab("Examples", "narrative-examples.html", mode==null || "examples".equals(mode)));
     b.append(makeHeaderTab("Detailed Descriptions", "narrative-definitions.html", mode==null || "definitions".equals(mode)));
     b.append(makeHeaderTab("R4 Conversions", extensionsLocation+"conversions-Narrative.html", mode==null || "conversions".equals(mode)));
     b.append("</ul>\r\n");
@@ -10494,7 +10494,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     htmlchecker.setVersion(version);
     uml.setVersion(version.toCode());
     
-    webLocation = webLocation.replace("{version}", version.toCode());
+    webLocation = webLocation.replace("{version}", version == FHIRVersion._5_0_0 ? "R5" : version.toCode());
   }
 
   private org.hl7.fhir.tools.publisher.SpecMapManager loadSpecMap(NpmPackage npm) throws IOException {
