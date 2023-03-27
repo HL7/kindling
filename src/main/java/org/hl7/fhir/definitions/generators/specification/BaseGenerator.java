@@ -23,7 +23,7 @@ public class BaseGenerator {
   
   public static String getBindingLink(String prefix, BindingSpecification bs, PageProcessor page) throws Exception {
     if (bs.getValueSet() != null) 
-      return bs.getValueSet().hasUserData("external.url") ? bs.getValueSet().getUserString("external.url") :  prefix+bs.getValueSet().getUserString("path");
+      return bs.getValueSet().hasUserData("external.url") ? bs.getValueSet().getUserString("external.url") :  prefix+bs.getValueSet().getWebPath();
     else if (bs.getReference() != null) {
       ValueSet vs = page.getWorkerContext().fetchResource(ValueSet.class, bs.getReference());
       if (vs == null) {
@@ -51,7 +51,7 @@ public class BaseGenerator {
         return vs.getUserString("external.url");
       }
       if (vs.hasUserData("v")) {
-        return prefix+vs.getUserString("path");
+        return prefix+vs.getWebPath();
       }
       System.out.println("Found direct reference to weird value set "+bs.getReference());
       return bs.getReference();

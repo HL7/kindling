@@ -20,7 +20,7 @@ import org.hl7.fhir.definitions.model.ResourceDefn;
 import org.hl7.fhir.definitions.model.TypeRef;
 import org.hl7.fhir.r5.context.IWorkerContext;
 import org.hl7.fhir.r5.model.CodeSystem;
-import org.hl7.fhir.r5.model.CodeSystem.CodeSystemContentMode;
+import org.hl7.fhir.r5.model.Enumerations.CodeSystemContentMode;
 import org.hl7.fhir.r5.model.CodeSystem.CodeSystemHierarchyMeaning;
 import org.hl7.fhir.r5.model.CodeSystem.ConceptDefinitionComponent;
 import org.hl7.fhir.r5.model.CodeSystem.ConceptDefinitionDesignationComponent;
@@ -93,7 +93,7 @@ public class ValueSetGenerator {
       if (!ec.equals("fhir"))
         System.out.println("ValueSet "+vs.getUrl()+" WG mismatch 6: is "+ec+", want to set to "+"fhir");
     }     
-    vs.setUserData("path", "valueset-"+vs.getId()+".html");
+    vs.setWebPath("valueset-"+vs.getId()+".html");
     KindlingUtilities.makeUniversal(vs);
 
     CodeSystem cs = new CodeSystem();
@@ -171,7 +171,7 @@ public class ValueSetGenerator {
       if (!ec.equals("fhir"))
         System.out.println("ValueSet "+vs.getUrl()+" WG mismatch 7: is "+ec+", want to set to "+"fhir");
     }     
-    vs.setUserData("path", "valueset-"+vs.getId()+".html");
+    vs.setWebPath("valueset-"+vs.getId()+".html");
     KindlingUtilities.makeUniversal(vs);
 
     CodeSystem cs = new CodeSystem();
@@ -247,12 +247,12 @@ public class ValueSetGenerator {
       if (!ec.equals("fhir"))
         System.out.println("ValueSet "+vs.getUrl()+" WG mismatch 8: is "+ec+", want to set to "+"fhir");
     }     
-    vs.setUserData("path", "valueset-"+vs.getId()+".html");
+    vs.setWebPath("valueset-"+vs.getId()+".html");
     KindlingUtilities.makeUniversal(vs);
 
     CodeSystem cs = new CodeSystem();
     cs.setUserData("filename", vs.getUserString("filename").replace("valueset-", "codesystem-"));
-    cs.setUserData("path", vs.getUserString("path").replace("valueset-", "codesystem-"));
+    cs.setWebPath(vs.getWebPath().replace("valueset-", "codesystem-"));
     CodeSystemConvertor.populate(cs, vs);
     cs.setUrl("http://hl7.org/fhir/abstract-types");
     cs.setVersion(version);
@@ -281,12 +281,12 @@ public class ValueSetGenerator {
       if (!ec.equals("fhir"))
         System.out.println("ValueSet "+vs.getUrl()+" WG mismatch 8: is "+ec+", want to set to "+"fhir");
     }     
-    vs.setUserData("path", "valueset-"+vs.getId()+".html");
+    vs.setWebPath("valueset-"+vs.getId()+".html");
     KindlingUtilities.makeUniversal(vs);
     
     CodeSystem cs = new CodeSystem();
     cs.setUserData("filename", vs.getUserString("filename").replace("valueset-", "codesystem-"));
-    cs.setUserData("path", vs.getUserString("path").replace("valueset-", "codesystem-"));
+    cs.setWebPath(vs.getWebPath().replace("valueset-", "codesystem-"));
     CodeSystemConvertor.populate(cs, vs);
     cs.setUrl("http://hl7.org/fhir/fhir-types");
     cs.setVersion(version);
@@ -315,7 +315,7 @@ public class ValueSetGenerator {
       if (!ec.equals("fhir"))
         System.out.println("ValueSet "+vs.getUrl()+" WG mismatch 9: is "+ec+", want to set to "+"fhir");
     }     
-    vs.setUserData("path", "valueset-"+vs.getId()+".html");
+    vs.setWebPath("valueset-"+vs.getId()+".html");
     markSpecialStatus(vs, null, true);
   }
 
@@ -331,12 +331,12 @@ public class ValueSetGenerator {
       if (!ec.equals("fhir"))
         System.out.println("ValueSet "+vs.getUrl()+" WG mismatch 10: is "+ec+", want to set to "+"fhir");
     }     
-    vs.setUserData("path", "valueset-"+vs.getId()+".html");
+    vs.setWebPath("valueset-"+vs.getId()+".html");
     
     CodeSystem cs = new CodeSystem();
     CodeSystemConvertor.populate(cs, vs);
     cs.setUserData("filename", vs.getUserString("filename").replace("valueset-", "codesystem-"));
-    cs.setUserData("path", vs.getUserString("path").replace("valueset-", "codesystem-"));
+    cs.setWebPath(vs.getWebPath().replace("valueset-", "codesystem-"));
     cs.setUrl("http://hl7.org/fhir/message-events");
     cs.setVersion(version);
     cs.setCaseSensitive(true);
@@ -431,7 +431,7 @@ public class ValueSetGenerator {
       if (!ec.equals("fhir"))
         System.out.println("ValueSet "+vs.getUrl()+" WG mismatch 11: is "+ec+", want to set to "+"fhir");
     }     
-    vs.setUserData("path", "valueset-"+vs.getId()+".html");
+    vs.setWebPath("valueset-"+vs.getId()+".html");
     
     ContactDetail c = vs.addContact();
     c.addTelecom().setSystem(ContactPointSystem.URL).setValue("http://hl7.org/fhir");

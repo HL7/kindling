@@ -446,7 +446,7 @@ public class SourceParser {
     Resource res = new XmlParser().parse(new FileInputStream(file));
     if (res instanceof CanonicalResource) {
       res.setUserData("external.url", stated);
-      res.setUserData("path", stated);
+      res.setWebPath(stated);
       context.cacheResource(res);
       externals.addEntry().setFullUrl("http://hl7.org/fhir/"+res.fhirType()+"/"+res.getId()).setResource(res).addLink().setRelation(LinkRelationTypes.VIA).setUrl(stated);
     } else
@@ -926,7 +926,7 @@ public class SourceParser {
       cs.setId(FormatUtilities.makeId(n));
     if (cs.getUrl().startsWith("http://hl7.org/fhir") || !cs.hasVersion())
       cs.setVersion(version.toCode());
-    cs.setUserData("path", "codesystem-"+cs.getId()+".html");
+    cs.setWebPath("codesystem-"+cs.getId()+".html");
     cs.setUserData("filename", "codesystem-"+cs.getId());
     if (!cs.hasContent()) {
       System.out.println("The CodeSystem "+fn+" doesn't have a content element");
@@ -966,7 +966,7 @@ public class SourceParser {
     }
     
     vs.setExperimental(false);
-    vs.setUserData("path", "valueset-"+vs.getId()+".html");
+    vs.setWebPath("valueset-"+vs.getId()+".html");
     vs.setUserData("filename", "valueset-"+vs.getId());
     page.getWorkerContext().cacheResource(vs);
     definitions.getExtraValuesets().put(n, vs) ;

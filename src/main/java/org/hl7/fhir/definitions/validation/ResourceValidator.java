@@ -678,7 +678,7 @@ public class ResourceValidator extends BaseValidator {
     rule(errors, ValidationMessage.NO_RULE_DATE, IssueType.STRUCTURE, path, optionalParent || e.isSummary() || !path.contains(".") || e.getMinCardinality() == 0, "An element with a minimum cardinality = 1 must be in the summary (" + path + ")");
     optionalParent = optionalParent || e.getMinCardinality() == 0;
 
-    hint(errors, ValidationMessage.NO_RULE_DATE, IssueType.STRUCTURE, path, !nameOverlaps(e.getName(), parentName), "Name of child (" + e.getName() + ") overlaps with name of parent (" + parentName + ")");
+    hint(errors, ValidationMessage.NO_RULE_DATE, IssueType.STRUCTURE, path, !(nameOverlaps(e.getName(), parentName) && !isAllowedNameOverlap(e.getName(), parentName)), "Name of child (" + e.getName() + ") overlaps with name of parent (" + parentName + ")");
     checkDefinitions(errors, path, e);
     warning(errors, ValidationMessage.NO_RULE_DATE, IssueType.STRUCTURE, path, !path.contains(".") || !Utilities.isPlural(e.getName()) || !e.unbounded(), "Element names should be singular");
     rule(errors, ValidationMessage.NO_RULE_DATE, IssueType.STRUCTURE, path, !e.getName().equals("id"), "Element named \"id\" not allowed");
@@ -745,7 +745,7 @@ public class ResourceValidator extends BaseValidator {
     if (e.typeCode().equals("code") && parent != null && !e.isNoBindingAllowed()) {
       rule(errors, ValidationMessage.NO_RULE_DATE, IssueType.STRUCTURE, path, e.hasBinding(), "An element of type code must have a binding");
     }
-    if ((e.usesType("Coding") && !parentName.equals("CodeableConcept")) || e.usesType("CodeableConcept") && !e.isNoBindingAllowed()) {
+    if (((e.usesType("Coding") && !parentName.equals("CodeableConcept")) || (e.usesType("CodeableConcept"))) && !e.isNoBindingAllowed()) {
       hint(errors, ValidationMessage.NO_RULE_DATE, IssueType.STRUCTURE, path, e.hasBinding() || (e.usesType("Reference") || e.usesType("Quantity") || e.usesType("SimpleQuantity")), "An element of type CodeableConcept or Coding must have a binding");
     }
     if (e.getTypes().size() > 1) {
@@ -841,6 +841,14 @@ public class ResourceValidator extends BaseValidator {
       vsWarnings = vsWarnings + checkElement(errors, path + "." + c.getName(), c, parent, e.getName(), needsRimMapping, optionalParent, hasSummary, vsWarns, parentInSummary && hasSummary(e), status, invIds);
     }
     return vsWarnings;
+  }
+
+  private boolean isAllowedNameOverlap(String name, String parentName) {
+    if ("HealthcareService".equals(parentName)) {
+      return "serviceProvisionCode".equals(name);
+    } else {
+      return false;
+    }
   }
 
   private void checkForCodeableReferenceCandidates(ElementDefn e, String path) {

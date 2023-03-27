@@ -6,7 +6,7 @@ import java.util.Map;
 
 import org.hl7.fhir.r5.context.CanonicalResourceManager;
 import org.hl7.fhir.r5.model.CodeSystem;
-import org.hl7.fhir.r5.model.CodeSystem.CodeSystemContentMode;
+import org.hl7.fhir.r5.model.Enumerations.CodeSystemContentMode;
 import org.hl7.fhir.r5.model.CodeSystem.ConceptDefinitionComponent;
 import org.hl7.fhir.r5.model.ConceptMap;
 import org.hl7.fhir.r5.model.ConceptMap.ConceptMapGroupComponent;
@@ -182,7 +182,7 @@ public class CodeListToValueSetParser {
     ConceptMap cm = new ConceptMap();
     cm.setId("cm-"+vs.getId()+"-v2");
     cm.setVersion(version);
-    cm.setUserData("path", cm.getId()+".html");
+    cm.setWebPath(cm.getId()+".html");
     cm.setUserData("generate", true);
     cm.setUrl("http://hl7.org/fhir/ConceptMap/" + cm.getId());
     cm.setName("v2."+vs.getName());
@@ -278,7 +278,7 @@ public class CodeListToValueSetParser {
     ConceptMap cm = new ConceptMap();
     cm.setVersion(version);
     cm.setId("cm-"+vs.getId()+"-v3");
-    cm.setUserData("path", cm.getId()+".html");
+    cm.setWebPath(cm.getId()+".html");
     cm.setUserData("generate", true);
     cm.setUrl("http://hl7.org/fhir/ConceptMap/" + cm.getId());
     cm.setName("v3." + vs.getName());

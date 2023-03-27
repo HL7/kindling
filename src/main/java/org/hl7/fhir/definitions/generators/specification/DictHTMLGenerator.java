@@ -96,7 +96,7 @@ public class DictHTMLGenerator  extends OutputStreamWriter {
 	        write("  <tr><td colspan=\"2\" class=\"structure\"><a name=\""+name+"\"> </a><b>"+title+"</b></td></tr>\r\n");
 	        generateElementInner(profile,  ec, 1, null);
 	      } else {
-	        String title = ec.getPath() + " (<a href=\""+prefix+(extDefn.hasUserData("path") ? extDefn.getUserData("path") : "extension-"+extDefn.getId().toLowerCase()+".html")+
+	        String title = ec.getPath() + " (<a href=\""+prefix+(extDefn.hasWebPath() ? extDefn.getWebPath() : "extension-"+extDefn.getId().toLowerCase()+".html")+
 	            "\">"+(ec.getType().get(0).getProfile().get(0).getValue().startsWith("#") ? profile.getUrl() : "")+ec.getType().get(0).getProfile()+"</a>)";
 	        write("  <tr><td colspan=\"2\" class=\"structure\"><a name=\""+name+"\"> </a><b>"+title+"</b></td></tr>\r\n");
 	        ElementDefinition valueDefn = getExtensionValueDefinition(extDefn);
@@ -357,7 +357,7 @@ public class DictHTMLGenerator  extends OutputStreamWriter {
       b.append(s);
     else {
       if (p.hasBaseDefinition() )
-        b.append("<a href=\""+prefix+p.getUserString("path")+"\" title=\""+s+"\">");
+        b.append("<a href=\""+prefix+p.getWebPath()+"\" title=\""+s+"\">");
       else if (p.getKind() == StructureDefinitionKind.COMPLEXTYPE || p.getKind() == StructureDefinitionKind.PRIMITIVETYPE)
         b.append("<a href=\""+prefix+definitions.getSrcFile(p.getName())+ ".html#" + p.getName()+"\" title=\""+p.getName()+"\">");
       else // if (p.getKind() == StructureDefinitionType.RESOURCE)

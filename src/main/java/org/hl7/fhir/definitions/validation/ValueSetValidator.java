@@ -11,7 +11,7 @@ import org.hl7.fhir.exceptions.FHIRException;
 import org.hl7.fhir.exceptions.TerminologyServiceException;
 import org.hl7.fhir.r5.model.CanonicalResource;
 import org.hl7.fhir.r5.model.CodeSystem;
-import org.hl7.fhir.r5.model.CodeSystem.CodeSystemContentMode;
+import org.hl7.fhir.r5.model.Enumerations.CodeSystemContentMode;
 import org.hl7.fhir.r5.model.CodeSystem.ConceptDefinitionComponent;
 import org.hl7.fhir.r5.model.Resource;
 import org.hl7.fhir.r5.model.ValueSet;
@@ -141,7 +141,7 @@ public class ValueSetValidator extends BaseValidator {
       warning(errors, ValidationMessage.NO_RULE_DATE, IssueType.BUSINESSRULE, getWg(cs)+":CodeSystem["+cs.getId()+"].copyright", s.startsWith("http://hl7.org") || s.startsWith("http://terminology.hl7.org") || s.startsWith("urn:iso") || s.startsWith("urn:ietf") || s.startsWith("http://need.a.uri.org")
             || s.contains("cdc.gov") || s.startsWith("urn:oid:"),
            "Value set "+nameForErrors+" ("+cs.getName()+"): A copyright statement should be present for any value set that includes non-HL7 sourced codes ("+s+")",
-           "<a href=\""+cs.getUserString("path")+"\">Value set "+nameForErrors+" ("+cs.getName()+")</a>: A copyright statement should be present for any code system that defines non-HL7 sourced codes ("+s+")");
+           "<a href=\""+cs.getWebPath()+"\">Value set "+nameForErrors+" ("+cs.getName()+")</a>: A copyright statement should be present for any code system that defines non-HL7 sourced codes ("+s+")");
     }
     if (fixups.contains(cs.getId()))
       fixup(cs);
@@ -176,7 +176,7 @@ public class ValueSetValidator extends BaseValidator {
         ruleHtml(errors, ValidationMessage.NO_RULE_DATE, IssueType.BUSINESSRULE, getWg(cs)+":CodeSystem["+cs.getId()+"].codeSystem", (cs.hasCaseSensitiveElement() && cs.getCaseSensitive()) || 
             Utilities.existsInList(cs.getUrl(), "http://terminology.hl7.org/CodeSystem/HCPCS", "http://terminology.hl7.org/CodeSystem/hl7TermMaintInfra", "http://terminology.hl7.org/CodeSystem/triggerEventID", "http://www.ada.org/snodent", "http://hl7.org/fhir/color-names"), // this list is known exceptions already dealt with            
           "Value set "+nameForErrors+" ("+cs.getName()+"): All Code Systems that define codes must mark them as case sensitive ("+cs.getUrl()+")",
-          "<a href=\""+cs.getUserString("path")+"\">Value set "+nameForErrors+" ("+cs.getName()+")</a>: All value sets that define codes must mark them as case sensitive");
+          "<a href=\""+cs.getWebPath()+"\">Value set "+nameForErrors+" ("+cs.getName()+")</a>: All value sets that define codes must mark them as case sensitive");
       }
       checkCodeCaseDuplicates(errors, nameForErrors, cs, codes, cs.getConcept());
       if (!cs.getUrl().startsWith("http://terminology.hl7.org/CodeSystem/v2-") && 
@@ -218,11 +218,11 @@ public class ValueSetValidator extends BaseValidator {
       for (String s : sources) {
         ruleHtml(errors, ValidationMessage.NO_RULE_DATE, IssueType.BUSINESSRULE, getWg(vs)+":ValueSet["+vs.getId()+"].copyright", !s.equals("http://snomed.info/sct") && !s.equals("http://loinc.org"), 
            "Value set "+nameForErrors+" ("+vs.getName()+"): A copyright statement is required for any value set that includes Snomed or Loinc codes",
-           "<a href=\""+vs.getUserString("path")+"\">Value set "+nameForErrors+" ("+vs.getName()+")</a>: A copyright statement is required for any value set that includes Snomed or Loinc codes");
+           "<a href=\""+vs.getWebPath()+"\">Value set "+nameForErrors+" ("+vs.getName()+")</a>: A copyright statement is required for any value set that includes Snomed or Loinc codes");
         warning(errors, ValidationMessage.NO_RULE_DATE, IssueType.BUSINESSRULE, getWg(vs)+":ValueSet["+vs.getId()+"].copyright", s.startsWith("http://hl7.org") || s.startsWith("http://terminology.hl7.org") || s.startsWith("urn:iso") || s.startsWith("urn:ietf") || s.startsWith("http://need.a.uri.org")
             || s.contains("cdc.gov") || s.startsWith("urn:oid:"),
            "Value set "+nameForErrors+" ("+vs.getName()+"): A copyright statement should be present for any value set that includes non-HL7 sourced codes ("+s+")",
-           "<a href=\""+vs.getUserString("path")+"\">Value set "+nameForErrors+" ("+vs.getName()+")</a>: A copyright statement should be present for any value set that includes non-HL7 sourced codes ("+s+")");
+           "<a href=\""+vs.getWebPath()+"\">Value set "+nameForErrors+" ("+vs.getName()+")</a>: A copyright statement should be present for any value set that includes non-HL7 sourced codes ("+s+")");
       }
     }
     
@@ -253,7 +253,7 @@ public class ValueSetValidator extends BaseValidator {
         if (inc.getSystem().equals("http://dicom.nema.org/resources/ontology/DCM"))
           warning(errors, ValidationMessage.NO_RULE_DATE, IssueType.BUSINESSRULE, getWg(vs)+":ValueSet["+vs.getId()+"].compose.include["+Integer.toString(i)+"]", isValidCode(cc.getCode(), inc.getSystem(), inc.getVersion()), 
               "The code '"+cc.getCode()+"' is not valid in the system "+inc.getSystem()+" (1)",
-              "<a href=\""+vs.getUserString("path")+"\">Value set "+nameForErrors+" ("+vs.getName()+")</a>: The code '"+cc.getCode()+"' is not valid in the system "+inc.getSystem()+" (1a)");             
+              "<a href=\""+vs.getWebPath()+"\">Value set "+nameForErrors+" ("+vs.getName()+")</a>: The code '"+cc.getCode()+"' is not valid in the system "+inc.getSystem()+" (1a)");             
         else if (!isValidCode(cc.getCode(), inc.getSystem(), inc.getVersion()) && !inc.getSystem().equals("http://hl7.org/fhir/fhir-types")) // http://hl7.org/fhir/fhir-types isn't filled ou yet
           rule(errors, ValidationMessage.NO_RULE_DATE, IssueType.BUSINESSRULE, getWg(vs)+":ValueSet["+vs.getId()+"].compose.include["+Integer.toString(i)+"]", false, 
             "The code '"+cc.getCode()+"' is not valid in the system "+inc.getSystem()+" (2)");
@@ -441,10 +441,10 @@ public class ValueSetValidator extends BaseValidator {
     for (ConceptDefinitionComponent cc : concept) {
       String p = path +"["+Integer.toString(i)+"]";
       if (!suppressedwarning(errors, ValidationMessage.NO_RULE_DATE, IssueType.BUSINESSRULE, p, !CodeSystemUtilities.isNotSelectable(cs, cc) || !cc.hasCode() || cc.hasDisplay(), "Code System '"+cs.getUrl()+"' has a code without a display ('"+cc.getCode()+"')",
-        "<a href=\""+cs.getUserString("path")+"\">Value set "+nameForErrors+" ("+cs.getName()+")</a>: Code System '"+cs.getUrl()+"' has a code without a display ('"+cc.getCode()+"')"))
+        "<a href=\""+cs.getWebPath()+"\">Value set "+nameForErrors+" ("+cs.getName()+")</a>: Code System '"+cs.getUrl()+"' has a code without a display ('"+cc.getCode()+"')"))
         return;
       if (!suppressedwarning(errors, ValidationMessage.NO_RULE_DATE, IssueType.BUSINESSRULE, p, cc.hasDefinition() && (!cc.getDefinition().toLowerCase().equals("todo") || cc.getDefinition().toLowerCase().equals("to do")), "Code System '"+cs.getUrl()+"' has a code without a definition ('"+cc.getCode()+"')",
-        "<a href=\""+cs.getUserString("path")+"\">Value set "+nameForErrors+" ("+cs.getName()+")</a>: Code System '"+cs.getUrl()+"' has a code without a definition ('"+cc.getCode()+"')"))
+        "<a href=\""+cs.getWebPath()+"\">Value set "+nameForErrors+" ("+cs.getName()+")</a>: Code System '"+cs.getUrl()+"' has a code without a definition ('"+cc.getCode()+"')"))
         return;
       checkCodesForDisplayAndDefinition(errors, p+".concept", cc.getConcept(), cs, nameForErrors);
       i++;
@@ -486,10 +486,10 @@ public class ValueSetValidator extends BaseValidator {
           if (rule(errors, ValidationMessage.NO_RULE_DATE, IssueType.BUSINESSRULE, committee+":ValueSetComparison", !vd1.id.equals(vd2.id), "Duplicate Value Set ids : "+vd1.id+"("+vd1.vs.getName()+") & "+vd2.id+"("+vd2.vs.getName()+") (id)") &&
               rule(errors, ValidationMessage.NO_RULE_DATE, IssueType.BUSINESSRULE, committee+":ValueSetComparison", !vd1.url.equals(vd2.url), "Duplicate Value Set URLs: "+vd1.id+"("+vd1.vs.getName()+") & "+vd2.id+"("+vd2.vs.getName()+") (url)")) {
             if (isInternal(vd1.url) || isInternal(vd2.url)) {
-              warning(errors, ValidationMessage.NO_RULE_DATE, IssueType.BUSINESSRULE, committee+":ValueSetComparison", areDisjoint(vd1.name, vd2.name), "Duplicate Valueset Names: "+vd1.vs.getUserString("path")+" ("+vd1.vs.getName()+") & "+vd2.vs.getUserString("path")+" ("+vd2.vs.getName()+") (name: "+vd1.name.toString()+" / "+vd2.name.toString()+"))", 
-                  "Duplicate Valueset Names: <a href=\""+vd1.vs.getUserString("path")+"\">"+vd1.id+"</a> ("+vd1.vs.getName()+") &amp; <a href=\""+vd2.vs.getUserString("path")+"\">"+vd2.id+"</a> ("+vd2.vs.getName()+") (name: "+vd1.name.toString()+" / "+vd2.name.toString()+"))");
-              warning(errors, ValidationMessage.NO_RULE_DATE, IssueType.BUSINESSRULE, committee+":ValueSetComparison", areDisjoint(vd1.description, vd2.description), "Duplicate Valueset Definitions: "+vd1.vs.getUserString("path")+" ("+vd1.vs.getName()+") & "+vd2.vs.getUserString("path")+" ("+vd2.vs.getName()+") (description: "+vd1.description.toString()+" / "+vd2.description.toString()+")",
-                  "Duplicate Valueset descriptions: <a href=\""+vd1.vs.getUserString("path")+"\">"+vd1.id+"</a> ("+vd1.vs.getName()+") &amp; <a href=\""+vd2.vs.getUserString("path")+"\">"+vd2.id+"</a> ("+vd2.vs.getName()+") (description: "+vd1.description.toString()+" / "+vd2.description.toString()+"))");
+              warning(errors, ValidationMessage.NO_RULE_DATE, IssueType.BUSINESSRULE, committee+":ValueSetComparison", areDisjoint(vd1.name, vd2.name), "Duplicate Valueset Names: "+vd1.vs.getWebPath()+" ("+vd1.vs.getName()+") & "+vd2.vs.getWebPath()+" ("+vd2.vs.getName()+") (name: "+vd1.name.toString()+" / "+vd2.name.toString()+"))", 
+                  "Duplicate Valueset Names: <a href=\""+vd1.vs.getWebPath()+"\">"+vd1.id+"</a> ("+vd1.vs.getName()+") &amp; <a href=\""+vd2.vs.getWebPath()+"\">"+vd2.id+"</a> ("+vd2.vs.getName()+") (name: "+vd1.name.toString()+" / "+vd2.name.toString()+"))");
+              warning(errors, ValidationMessage.NO_RULE_DATE, IssueType.BUSINESSRULE, committee+":ValueSetComparison", areDisjoint(vd1.description, vd2.description), "Duplicate Valueset Definitions: "+vd1.vs.getWebPath()+" ("+vd1.vs.getName()+") & "+vd2.vs.getWebPath()+" ("+vd2.vs.getName()+") (description: "+vd1.description.toString()+" / "+vd2.description.toString()+")",
+                  "Duplicate Valueset descriptions: <a href=\""+vd1.vs.getWebPath()+"\">"+vd1.id+"</a> ("+vd1.vs.getName()+") &amp; <a href=\""+vd2.vs.getWebPath()+"\">"+vd2.id+"</a> ("+vd2.vs.getName()+") (description: "+vd1.description.toString()+" / "+vd2.description.toString()+"))");
             }
           }
         }

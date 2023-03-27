@@ -79,7 +79,7 @@ public class TerminologyNotesGenerator extends OutputStreamWriter {
 
   protected String getBindingLink(BindingSpecification bs) throws Exception {
     if (bs.getValueSet() != null) 
-      return bs.getValueSet().hasUserData("external.url") ? bs.getValueSet().getUserString("external.url") : bs.getValueSet().getUserString("path");
+      return bs.getValueSet().hasUserData("external.url") ? bs.getValueSet().getUserString("external.url") : bs.getValueSet().getWebPath();
     else if (bs.getReference() != null)
       return bs.getReference();      
     else 
@@ -206,7 +206,7 @@ public class TerminologyNotesGenerator extends OutputStreamWriter {
             throw new Exception("Unknown special type "+name);
         } else if (cd.getValueSet() != null) {
           ValueSet vs = cd.getValueSet();
-          String pp = vs.hasUserData("external.url") ? vs.getUserString("external.url") : vs.getUserString("path");
+          String pp = vs.hasUserData("external.url") ? vs.getUserString("external.url") : vs.getWebPath();
           if (pp == null)
             throw new Exception("unknown path on "+cd.getReference());
           write("<a href=\""+prefix+pp.replace(File.separatorChar, '/')+"\">"+vs.getName()+"</a><!-- b -->");
@@ -231,13 +231,13 @@ public class TerminologyNotesGenerator extends OutputStreamWriter {
           else if (cd.getReference().startsWith("http://hl7.org/fhir")) {
             if (cd.getReference().startsWith("http://terminology.hl7.org/ValueSet/v3-")) {
               ValueSet vs = page.getValueSets().get(cd.getReference());
-              String pp = vs.hasUserData("external.url") ? vs.getUserString("external.url") : vs.getUserString("path");
+              String pp = vs.hasUserData("external.url") ? vs.getUserString("external.url") : vs.getWebPath();
               if (pp == null)
                 throw new Exception("unknown path on "+cd.getReference());
               write("<a href=\""+prefix+pp.replace(File.separatorChar, '/')+"\">"+cd.getReference()+"</a><!-- b -->");
             } else if (cd.getReference().startsWith("http://terminology.hl7.org/ValueSet/v2-")) {
                 ValueSet vs = page.getValueSets().get(cd.getReference());
-                String pp = vs.hasUserData("external.url") ? vs.getUserString("external.url") : vs.getUserString("path");
+                String pp = vs.hasUserData("external.url") ? vs.getUserString("external.url") : vs.getWebPath();
                 write("<a href=\""+prefix+pp.replace(File.separatorChar, '/')+"\">"+cd.getReference()+"</a><!-- c -->");
             } else if (cd.getReference().startsWith("http://hl7.org/fhir/ValueSet/")) {
               String ref = getBindingLink(cd);
@@ -272,7 +272,7 @@ public class TerminologyNotesGenerator extends OutputStreamWriter {
         write(" <tr>\r\n");
         write("   <td style=\"border-top: none\">&nbsp;</td>\r\n");
         if (ab.getValueSet() != null) {          
-          write("   <td"+(cd.getAdditionalBindings().size() == 0 ? "" : " style=\"border-top: 1px silver dotted\"")+"><a href=\""+ab.getValueSet().getUserString("path")+"\">"+Utilities.escapeXml(ab.getValueSet().present())+"</a></td>\r\n");
+          write("   <td"+(cd.getAdditionalBindings().size() == 0 ? "" : " style=\"border-top: 1px silver dotted\"")+"><a href=\""+ab.getValueSet().getWebPath()+"\">"+Utilities.escapeXml(ab.getValueSet().present())+"</a></td>\r\n");
         } else {
           write("   <td"+(cd.getAdditionalBindings().size() == 0 ? "" : " style=\"border-top: 1px silver dotted\"")+"><code>"+Utilities.escapeXml(ab.getRef())+"</code></td>\r\n");
         }
@@ -307,7 +307,7 @@ public class TerminologyNotesGenerator extends OutputStreamWriter {
     String ref = def.getValueSet();
     ValueSet vs = page.getValueSets().get(ref);
     if (vs != null) {
-      String pp = vs.hasUserData("external.url") ? vs.getUserString("external.url") : vs.getUserString("path");
+      String pp = vs.hasUserData("external.url") ? vs.getUserString("external.url") : vs.getWebPath();
       return def.getDescription()+"<br/>"+conf(def)+ "<a href=\""+(Utilities.isAbsoluteUrl(pp) ? "" : prefix)+pp.replace(File.separatorChar, '/')+"\">"+vs.present()+"</a>"+confTail(def);
     }
     if (ref.startsWith("http:") || ref.startsWith("https:"))
@@ -371,7 +371,7 @@ public class TerminologyNotesGenerator extends OutputStreamWriter {
     String bs = "<a href=\""+prefix+"terminologies.html#"+cd.getStrength().toCode()+"\">"+cd.getStrength().getDisplay()+"</a>";
     if (cd.getValueSet() != null) {
       ValueSet vs = cd.getValueSet();
-      String pp = vs.hasUserData("external.url") ? vs.getUserString("external.url") : vs.getUserString("path");
+      String pp = vs.hasUserData("external.url") ? vs.getUserString("external.url") : vs.getWebPath();
       return "<a href=\""+prefix+pp.replace(File.separatorChar, '/')+"\">"+cd.getValueSet().present()+"</a> ("+bs+")"+mx;      
     } else if (cd.getBinding() == BindingSpecification.BindingMethod.ValueSet) {
       if (Utilities.noString(cd.getReference())) 

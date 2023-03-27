@@ -174,7 +174,7 @@ public class ResourceDependencyGenerator  extends BaseGenerator {
 //        cc.getPieces().add(gen.new Piece(prefix+"terminologies.html#"+b.getStrength().toCode(), b.getStrength().getDisplay(),  b.getStrength().getDefinition()));
 //        cc.getPieces().add(gen.new Piece(null, " but limited to ", null));
 //        ValueSet vs = b.getMaxValueSet();
-//        cc.getPieces().add(gen.new Piece(vs.getUserString("path"), vs.getName(), null));
+//        cc.getPieces().add(gen.new Piece(vs.getWebPath(), vs.getName(), null));
 //      }  else
 //        cc.getPieces().add(gen.new Piece(prefix+"terminologies.html#"+b.getStrength().toCode(), b.getStrength().getDisplay(),  b.getStrength().getDefinition()));
 //      cc.getPieces().add(gen.new Piece(null, ")", null));
@@ -268,7 +268,7 @@ public class ResourceDependencyGenerator  extends BaseGenerator {
       if (ok)
         ; // addInfo(gen, row, dc, "Binding OK (ValueSet = FMM"+tgtFMM+"-"+tgtSS.toDisplay()+" vs. Element = FMM"+fmm+"-"+elementStatus.toDisplay()+")", null);
       else
-        addError(gen, row, dc, "Binding Error: (ValueSet = FMM"+tgtFMM+"-"+(tgtSS == null ? "null" : tgtSS.toDisplay())+" vs. Element = FMM"+fmm+"-"+elementStatus.toDisplay()+")", vs.getUserString("path"));
+        addError(gen, row, dc, "Binding Error: (ValueSet = FMM"+tgtFMM+"-"+(tgtSS == null ? "null" : tgtSS.toDisplay())+" vs. Element = FMM"+fmm+"-"+elementStatus.toDisplay()+")", vs.getWebPath());
     }      
   }
 
