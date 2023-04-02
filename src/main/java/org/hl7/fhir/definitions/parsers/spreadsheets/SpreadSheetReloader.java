@@ -262,7 +262,7 @@ public class SpreadSheetReloader extends SpreadSheetBase {
       ElementDefinitionBindingComponent bs = ed.getBinding();
       bs.removeExtension(BuildExtensions.EXT_NAME);
       readExt(bs, row, cols, CN_BINDING_NAME, BuildExtensions.EXT_BINDING_NAME, ExtensionType.String);
-      readExt(bs, row, cols, CN_DEFINITION, BuildExtensions.EXT_BINDING_DEFINITION, ExtensionType.String);
+      readExt(bs, row, cols, CN_DEFINITION, BuildExtensions.EXT_BINDING_DEFINITION, ExtensionType.Markdown);
       bs.setStrength(BindingStrength.fromCode(getValue(row, cols, CN_STRENGTH)));
       bs.setValueSet(getValue(row, cols, CN_VALUE_SET));
       readExt(bs, row, cols, CN_URI, BuildExtensions.EXT_URI, ExtensionType.String);
@@ -286,7 +286,7 @@ public class SpreadSheetReloader extends SpreadSheetBase {
       OperationDefinitionParameterBindingComponent bs = param.getBinding();
       bs.removeExtension(BuildExtensions.EXT_NAME);
       readExt(bs, row, cols, CN_BINDING_NAME, BuildExtensions.EXT_BINDING_NAME, ExtensionType.String);
-      readExt(bs, row, cols, CN_DEFINITION, BuildExtensions.EXT_BINDING_DEFINITION, ExtensionType.String);
+      readExt(bs, row, cols, CN_DEFINITION, BuildExtensions.EXT_BINDING_DEFINITION, ExtensionType.Markdown);
       bs.setStrength(BindingStrength.fromCode(getValue(row, cols, CN_STRENGTH)));
       bs.setValueSet(getValue(row, cols, CN_VALUE_SET));
       readExt(bs, row, cols, CN_URI, BuildExtensions.EXT_URI, ExtensionType.String);
