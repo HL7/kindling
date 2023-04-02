@@ -30,6 +30,8 @@ public class XmlJsonCloneMaker {
   }
 
   private void checkXmlJsonClones(File dir) throws IOException {
+    System.out.println("");
+    System.out.print(dir.getAbsolutePath());
     for (File f : dir.listFiles()) {
       counter++;
       if (counter % 500 == 0) {
