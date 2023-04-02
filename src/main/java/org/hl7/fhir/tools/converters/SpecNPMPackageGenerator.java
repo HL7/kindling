@@ -202,7 +202,9 @@ public class SpecNPMPackageGenerator {
 }
 
   private void addConvertedIg(NPMPackageGenerator npm, ImplementationGuide ig, String version) throws IOException, FHIRException {
-    if (VersionUtilities.isR5Ver(version))
+    if (VersionUtilities.isR6Ver(version))
+      addConvertedIg6(npm, ig);
+    else if (VersionUtilities.isR5Ver(version))
       addConvertedIg5(npm, ig);
     else if (VersionUtilities.isR4Ver(version))
       addConvertedIg4(npm, ig);
@@ -212,6 +214,10 @@ public class SpecNPMPackageGenerator {
       addConvertedIg14(npm, ig);
     else if (VersionUtilities.isR2Ver(version))
       addConvertedIg10(npm, ig);
+  }
+
+  private void addConvertedIg6(NPMPackageGenerator npm, ImplementationGuide ig) throws IOException {
+    npm.addFile(Category.RESOURCE, "ImplementationGuide-"+ig.getId()+".json", new JsonParser().composeBytes(ig));
   }
 
   private void addConvertedIg5(NPMPackageGenerator npm, ImplementationGuide ig) throws IOException {
@@ -328,7 +334,9 @@ public class SpecNPMPackageGenerator {
 
   private List<ResourceEntry> makeResourceList(Map<String, byte[]> files, String version) throws FHIRFormatError, IOException {
     List<ResourceEntry> res = new ArrayList<SpecNPMPackageGenerator.ResourceEntry>();
-    if (VersionUtilities.isR5Ver(version))
+    if (VersionUtilities.isR6Ver(version))
+      makeResourceList6(files, version, res);
+    else if (VersionUtilities.isR5Ver(version))
       makeResourceList5(files, version, res);
     else if (VersionUtilities.isR4BVer(version))
       makeResourceList4B(files, version, res);
@@ -392,7 +400,6 @@ public class SpecNPMPackageGenerator {
     return null;
   }
 
-  
   private List<ResourceEntry> makeResourceList5(Map<String, byte[]> files, String version, List<ResourceEntry> res) throws FHIRFormatError, IOException {
     for (String k : files.keySet()) {
       if (k.endsWith(".xml") && !k.contains("dataelements")) {
@@ -415,6 +422,28 @@ public class SpecNPMPackageGenerator {
     return null;
   }
 
+  private List<ResourceEntry> makeResourceList6(Map<String, byte[]> files, String version, List<ResourceEntry> res) throws FHIRFormatError, IOException {
+    for (String k : files.keySet()) {
+      if (k.endsWith(".xml") && !k.contains("dataelements")) {
+        Bundle b = (Bundle) new org.hl7.fhir.r5.formats.XmlParser().parse(files.get(k));
+        for (org.hl7.fhir.r5.model.Bundle.BundleEntryComponent be : b.getEntry()) {
+          if (be.hasResource()) {
+            ResourceEntry e = new ResourceEntry();
+            e.type = be.getResource().fhirType();
+            e.id = be.getResource().getId();
+            e.json = new org.hl7.fhir.r5.formats.JsonParser().composeBytes(be.getResource());
+            e.xml = new org.hl7.fhir.r5.formats.XmlParser().composeBytes(be.getResource());
+            e.conf = true;
+            if (be.getResource() instanceof org.hl7.fhir.r5.model.CanonicalResource)
+              e.canonical = ((org.hl7.fhir.r5.model.CanonicalResource) be.getResource()).getUrl();
+            res.add(e);
+          }
+        }
+      }
+    }
+    return null;
+  }
+  
   private List<ResourceEntry> makeResourceList3(Map<String, byte[]> files, String version, List<ResourceEntry> res) throws FHIRFormatError, IOException {
     for (String k : files.keySet()) {
       if (k.endsWith(".xml")) {

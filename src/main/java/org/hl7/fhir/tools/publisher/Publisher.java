@@ -888,16 +888,16 @@ public class Publisher implements URIResolver, SectionNumberer {
   }
 
   private void checkPackages() throws FileNotFoundException, IOException {
-    NpmPackage npm = NpmPackage.fromPackage(new FileInputStream(Utilities.path(page.getFolders().dstDir, "hl7.fhir.r5.core.tgz")));
-    dumpPackage("hl7.fhir.r5.core", npm);
-    npm = NpmPackage.fromPackage(new FileInputStream(Utilities.path(page.getFolders().dstDir, "hl7.fhir.r5.expansions.tgz")));
-    dumpPackage("hl7.fhir.r5.expansions", npm);
-    npm = NpmPackage.fromPackage(new FileInputStream(Utilities.path(page.getFolders().dstDir, "hl7.fhir.r5.examples.tgz")));
-    dumpPackage("hl7.fhir.r5.examples", npm);
-    npm = NpmPackage.fromPackage(new FileInputStream(Utilities.path(page.getFolders().dstDir, "hl7.fhir.r5.search.tgz")));
-    dumpPackage("hl7.fhir.r5.search", npm);
-    npm = NpmPackage.fromPackage(new FileInputStream(Utilities.path(page.getFolders().dstDir, "hl7.fhir.r5.corexml.tgz")));
-    dumpPackage("hl7.fhir.r5.corexml", npm);
+    NpmPackage npm = NpmPackage.fromPackage(new FileInputStream(Utilities.path(page.getFolders().dstDir, "hl7.fhir.r6.core.tgz")));
+    dumpPackage("hl7.fhir.r6.core", npm);
+    npm = NpmPackage.fromPackage(new FileInputStream(Utilities.path(page.getFolders().dstDir, "hl7.fhir.r6.expansions.tgz")));
+    dumpPackage("hl7.fhir.r6.expansions", npm);
+    npm = NpmPackage.fromPackage(new FileInputStream(Utilities.path(page.getFolders().dstDir, "hl7.fhir.r6.examples.tgz")));
+    dumpPackage("hl7.fhir.r6.examples", npm);
+    npm = NpmPackage.fromPackage(new FileInputStream(Utilities.path(page.getFolders().dstDir, "hl7.fhir.r6.search.tgz")));
+    dumpPackage("hl7.fhir.r6.search", npm);
+    npm = NpmPackage.fromPackage(new FileInputStream(Utilities.path(page.getFolders().dstDir, "hl7.fhir.r6.corexml.tgz")));
+    dumpPackage("hl7.fhir.r6.corexml", npm);
   }
 
   private void dumpPackage(String name, NpmPackage npm) {
@@ -3403,7 +3403,7 @@ public class Publisher implements URIResolver, SectionNumberer {
       npm.finish();
       if (!isCIBuild) {
         String id = pidRoot()+".expansions";
-        new FilesystemPackageCacheManager(true, ToolsVersion.TOOLS_VERSION).addPackageToCache(id, "current", new FileInputStream(Utilities.uncheckedPath(page.getFolders().dstDir, id + ".tgz")), Utilities.uncheckedPath(page.getFolders().dstDir, id + ".tgz"));
+        new FilesystemPackageCacheManager(org.hl7.fhir.utilities.npm.FilesystemPackageCacheManager.FilesystemPackageCacheMode.USER).addPackageToCache(id, "current", new FileInputStream(Utilities.uncheckedPath(page.getFolders().dstDir, id + ".tgz")), Utilities.uncheckedPath(page.getFolders().dstDir, id + ".tgz"));
       }
       
       serializeResource(expansionFeed, "expansions", false);
@@ -3560,7 +3560,7 @@ public class Publisher implements URIResolver, SectionNumberer {
       SpecNPMPackageGenerator self = new SpecNPMPackageGenerator();
       self.generate(page.getFolders().dstDir, page.getWebLocation(), false, page.getGenDate().getTime(), pidRoot());
       if (!isCIBuild) {
-        new FilesystemPackageCacheManager(true, ToolsVersion.TOOLS_VERSION).addPackageToCache(pidRoot()+".core", "current", new FileInputStream(Utilities.uncheckedPath(page.getFolders().dstDir, pidRoot() + ".core.tgz")), Utilities.uncheckedPath(page.getFolders().dstDir, pidRoot() + ".core.tgz"));
+        new FilesystemPackageCacheManager(org.hl7.fhir.utilities.npm.FilesystemPackageCacheManager.FilesystemPackageCacheMode.USER).addPackageToCache(pidRoot()+".core", "current", new FileInputStream(Utilities.uncheckedPath(page.getFolders().dstDir, pidRoot() + ".core.tgz")), Utilities.uncheckedPath(page.getFolders().dstDir, pidRoot() + ".core.tgz"));
       }
 
       page.log(" ...zips", LogMessageType.Process);
@@ -3663,7 +3663,13 @@ public class Publisher implements URIResolver, SectionNumberer {
   }
 
   private String pidRoot() {
-    return VersionUtilities.isR4BVer(page.getVersion().toCode()) ? "hl7.fhir.r4b" : "hl7.fhir.r5";
+    if (VersionUtilities.isR4BVer(page.getVersion().toCode())) {
+      return "hl7.fhir.r4b";
+    } else if (VersionUtilities.isR5Ver(page.getVersion().toCode())) {
+      return "hl7.fhir.r5";      
+    } else {
+      return "hl7.fhir.r6";            
+    }
   }
 
 
