@@ -85,12 +85,9 @@ import org.hl7.fhir.r5.terminologies.ValueSetUtilities;
 import org.hl7.fhir.r5.utils.BuildExtensions;
 import org.hl7.fhir.r5.utils.ToolingExtensions;
 import org.hl7.fhir.tools.publisher.BuildWorkerContext;
-import org.hl7.fhir.tools.publisher.KindlingUtilities;
-import org.hl7.fhir.utilities.CSFile;
-import org.hl7.fhir.utilities.CSFileInputStream;
-import org.hl7.fhir.utilities.StandardsStatus;
-import org.hl7.fhir.utilities.TextFile;
-import org.hl7.fhir.utilities.Utilities;
+import org.hl7.fhir.utilities.*;
+
+import javax.annotation.Nonnull;
 
 public class ResourceParser {
 
@@ -356,7 +353,7 @@ public class ResourceParser {
           indent = Integer.parseInt(filename.substring(0, filename.indexOf(" ")));
           filename = filename.substring(filename.indexOf(" ")).trim();
         }
-        String json = new JsonParser().setOutputStyle(OutputStyle.PRETTY).composeString(new XmlParser().parse(new FileInputStream(Utilities.uncheckedPath(folder, filename))));
+        String json = new JsonParser().setOutputStyle(OutputStyle.PRETTY).composeString(new XmlParser().parse(new FileInputStream(PathBuilder.getPathBuilder().withRequiredTarget(srcDir).buildPath(folder, filename))));
         process(content, indent, json);
       } else if (l.startsWith("$include ")) {
         int indent = 0;
@@ -365,14 +362,14 @@ public class ResourceParser {
           indent = Integer.parseInt(filename.substring(0, filename.indexOf(" ")));
           filename = filename.substring(filename.indexOf(" ")).trim();
         }
-        process(content, indent, TextFile.fileToString(Utilities.uncheckedPath(folder, filename)));
+        process(content, indent, TextFile.fileToString(PathBuilder.getPathBuilder().withRequiredTarget(srcDir).buildPath(folder, filename)));
       } else {
         content.append(Utilities.escapeXml(l));
         content.append("\r\n");
       }
     return new OperationExample(content.toString(), comment, resp);
   }
-  
+
   private void process(StringBuilder content, int indent, String s) {
     String pfx = Utilities.padLeft("",  ' ', indent);
     String[] lines = s.trim().split("\\r?\\n");
