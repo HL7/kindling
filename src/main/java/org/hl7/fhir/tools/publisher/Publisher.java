@@ -264,6 +264,7 @@ import org.hl7.fhir.utilities.npm.FilesystemPackageCacheManager;
 import org.hl7.fhir.utilities.npm.NpmPackage;
 import org.hl7.fhir.utilities.npm.PackageGenerator.PackageType;
 import org.hl7.fhir.utilities.npm.ToolsVersion;
+import org.hl7.fhir.utilities.settings.FhirSettings;
 import org.hl7.fhir.utilities.validation.ValidationMessage;
 import org.hl7.fhir.utilities.validation.ValidationMessage.IssueSeverity;
 import org.hl7.fhir.utilities.validation.ValidationMessage.IssueType;
@@ -294,6 +295,8 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 
 public class Publisher implements URIResolver, SectionNumberer {
+
+  public static final String FHIR_SETTINGS_PARAM = "-fhir-settings";
 
   public enum ValidationMode {
     NORMAL, NONE, EXTENDED;
@@ -505,11 +508,15 @@ public class Publisher implements URIResolver, SectionNumberer {
   private boolean isCIBuild;
   private boolean isPostPR;
   private String validateId;
-  private IniFile apiKeyFile;
+
   private Validator mappingExceptionsValidator;
 
   public static void main(String[] args) throws Exception {
     org.hl7.fhir.utilities.FileFormat.checkCharsetAndWarnIfNotUTF8(System.out);
+
+    if (hasParam(args, FHIR_SETTINGS_PARAM)) {
+      FhirSettings.setExplicitFilePath(getNamedParam(args, FHIR_SETTINGS_PARAM));
+    }
 
     Publisher pub = new Publisher();
     pub.page = new PageProcessor(KindlingConstants.DEF_TS_SERVER);
@@ -558,9 +565,6 @@ public class Publisher implements URIResolver, SectionNumberer {
       pub.page.setExtensionsLocation(PageProcessor.LOCAL_EXTN_LOCATION);
     }
 
-    if (hasParam(args, "-api-key-file")) {
-      pub.apiKeyFile = new IniFile(new File(getNamedParam(args, "-api-key-file")).getAbsolutePath());
-    }
     pub.execute(dir, args);
   }
 
@@ -686,10 +690,8 @@ public class Publisher implements URIResolver, SectionNumberer {
     if (outputdir != null) {
       page.log("Create output in "+outputdir, LogMessageType.Process);
     }
-    if (apiKeyFile == null) {
-      apiKeyFile = new IniFile(Utilities.path(System.getProperty("user.home"), "fhir-build-keys.ini"));
-    }
-    page.log("API keys loaded from "+apiKeyFile.getFileName(), LogMessageType.Process);
+
+    page.log("API keys loaded from "+ FhirSettings.getInstance().getFilePath(), LogMessageType.Process);
 
     try {
       tester.initialTests();
@@ -798,8 +800,8 @@ public class Publisher implements URIResolver, SectionNumberer {
       page.saveSnomed();
       page.getWorkerContext().saveCache();
       if (isGenerate && buildFlags.get("all")) {
-        if (apiKeyFile.hasProperty("keys", "tx.fhir.org")) {
-          page.commitTerminologyCache(apiKeyFile.getStringProperty("keys", "tx.fhir.org"));
+        if (FhirSettings.getInstance().hasApiKey("tx.fhir.org")) {
+          page.commitTerminologyCache(FhirSettings.getInstance().getApiKey("tx.fhir.org"));
         }
       }
       
