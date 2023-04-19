@@ -691,7 +691,7 @@ public class Publisher implements URIResolver, SectionNumberer {
       page.log("Create output in "+outputdir, LogMessageType.Process);
     }
 
-    page.log("API keys loaded from "+ FhirSettings.getInstance().getFilePath(), LogMessageType.Process);
+    page.log("API keys loaded from "+ FhirSettings.getFilePath(), LogMessageType.Process);
 
     try {
       tester.initialTests();
@@ -800,8 +800,8 @@ public class Publisher implements URIResolver, SectionNumberer {
       page.saveSnomed();
       page.getWorkerContext().saveCache();
       if (isGenerate && buildFlags.get("all")) {
-        if (FhirSettings.getInstance().hasApiKey("tx.fhir.org")) {
-          page.commitTerminologyCache(FhirSettings.getInstance().getApiKey("tx.fhir.org"));
+        if (FhirSettings.hasApiKey("tx.fhir.org")) {
+          page.commitTerminologyCache(FhirSettings.getApiKey("tx.fhir.org"));
         }
       }
       
