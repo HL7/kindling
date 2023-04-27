@@ -10446,7 +10446,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     breadCrumbManager.setDefinitions(definitions);
     TerminologyClient client;
     try {
-      client = new TerminologyClientR5(tsServer, "fhir/main-build");
+      client = new TerminologyClientR5("tx.fhir.org", tsServer, "fhir/main-build");
       client.setTimeout(60000);
     } catch(Exception e) {
       System.out.println("Warning @ PageProcessor client initialize: " + e.getLocalizedMessage());

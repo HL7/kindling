@@ -59,10 +59,12 @@ import org.hl7.fhir.r5.model.ValueSet;
 import org.hl7.fhir.r5.model.ValueSet.ConceptSetComponent;
 import org.hl7.fhir.r5.model.ValueSet.ValueSetExpansionContainsComponent;
 import org.hl7.fhir.r5.terminologies.TerminologyClient;
+import org.hl7.fhir.r5.terminologies.ValueSetCheckerSimple;
 import org.hl7.fhir.r5.utils.client.EFhirClientException;
 import org.hl7.fhir.r5.utils.validation.IResourceValidator;
 import org.hl7.fhir.utilities.CSFileInputStream;
 import org.hl7.fhir.utilities.CommaSeparatedStringBuilder;
+
 import org.hl7.fhir.utilities.TextFile;
 import org.hl7.fhir.utilities.TranslatorXml;
 import org.hl7.fhir.utilities.Utilities;
@@ -70,6 +72,7 @@ import org.hl7.fhir.utilities.i18n.I18nConstants;
 import org.hl7.fhir.utilities.npm.BasePackageCacheManager;
 import org.hl7.fhir.utilities.npm.NpmPackage;
 import org.hl7.fhir.utilities.npm.NpmPackage.PackageResourceInformation;
+import org.hl7.fhir.utilities.settings.FhirSettings;
 import org.hl7.fhir.utilities.validation.ValidationMessage;
 import org.hl7.fhir.utilities.validation.ValidationMessage.IssueSeverity;
 import org.hl7.fhir.utilities.validation.ValidationMessage.IssueType;
@@ -270,18 +273,18 @@ public class BuildWorkerContext extends BaseWorkerContext implements IWorkerCont
       response = queryForTerm(code);
     if (snomedCodes.containsKey(code))
       if (display == null)
-        return new ValidationResult("http://snomed.info/sct", new ConceptDefinitionComponent().setCode(code).setDisplay(snomedCodes.get(code).display));
+        return new ValidationResult("http://snomed.info/sct", new ConceptDefinitionComponent().setCode(code).setDisplay(snomedCodes.get(code).display), null);
       else if (snomedCodes.get(code).has(display))
-        return new ValidationResult("http://snomed.info/sct", new ConceptDefinitionComponent().setCode(code).setDisplay(display));
+        return new ValidationResult("http://snomed.info/sct", new ConceptDefinitionComponent().setCode(code).setDisplay(display), display);
       else 
-        return new ValidationResult(IssueSeverity.WARNING, "Snomed Display Name for "+code+" must be one of '"+snomedCodes.get(code).summary()+"'");
+        return new ValidationResult(IssueSeverity.WARNING, "Snomed Display Name for "+code+" must be one of '"+snomedCodes.get(code).summary()+"'", null);
     
     if (response != null) // this is a wrong expression 
-      return new ValidationResult(IssueSeverity.ERROR, "The Snomed Expression "+code+" must use the form "+response.correctExpression);
+      return new ValidationResult(IssueSeverity.ERROR, "The Snomed Expression "+code+" must use the form "+response.correctExpression, null);
     else  if (serverOk)
-      return new ValidationResult(IssueSeverity.ERROR, "Unknown Snomed Code "+code);
+      return new ValidationResult(IssueSeverity.ERROR, "Unknown Snomed Code "+code, null);
     else
-      return new ValidationResult(IssueSeverity.WARNING, "Unknown Snomed Code "+code);
+      return new ValidationResult(IssueSeverity.WARNING, "Unknown Snomed Code "+code, null);
   }
 
   private static class SnomedServerResponse  {
@@ -293,7 +296,7 @@ public class BuildWorkerContext extends BaseWorkerContext implements IWorkerCont
     if (!triedServer || serverOk) {
       triedServer = true;
       HttpClient httpclient = new DefaultHttpClient();
-      HttpGet httpget = new HttpGet(KindlingConstants.TX_SERVER+"/snomed/tool/"+SNOMED_EDITION+"/"+URLEncoder.encode(code, "UTF-8").replace("+", "%20")); 
+      HttpGet httpget = new HttpGet(FhirSettings.getTxFhirProduction()+"/snomed/tool/"+SNOMED_EDITION+"/"+URLEncoder.encode(code, "UTF-8").replace("+", "%20")); 
 //      HttpGet httpget = new HttpGet("http://local.fhir.org:960/r4/snomed/tool/"+SNOMED_EDITION+"/"+URLEncoder.encode(code, "UTF-8").replace("+", "%20")); // don't like the url encoded this way
       HttpResponse response = httpclient.execute(httpget);
       HttpEntity entity = response.getEntity();
@@ -355,34 +358,34 @@ public class BuildWorkerContext extends BaseWorkerContext implements IWorkerCont
       if (d != null)
         loincCodes.put(code, new Concept(d));
       else
-        return new ValidationResult(IssueSeverity.ERROR, "Unknown Loinc Code "+code);
+        return new ValidationResult(IssueSeverity.ERROR, "Unknown Loinc Code "+code, null);
     }
     Concept lc = loincCodes.get(code);
     if (display == null)
-      return new ValidationResult("http://loinc.org", new ConceptDefinitionComponent().setCode(code).setDisplay(lc.display));
+      return new ValidationResult("http://loinc.org", new ConceptDefinitionComponent().setCode(code).setDisplay(lc.display), lc.display);
     if (!lc.has(display))
-      return new ValidationResult(IssueSeverity.WARNING, "Loinc Display Name for "+code+" must be one of '"+lc.summary()+"'");
-    return new ValidationResult("http://loinc.org", new ConceptDefinitionComponent().setCode(code).setDisplay(lc.display));
+      return new ValidationResult(IssueSeverity.WARNING, "Loinc Display Name for "+code+" must be one of '"+lc.summary()+"'", null);
+    return new ValidationResult("http://loinc.org", new ConceptDefinitionComponent().setCode(code).setDisplay(lc.display), lc.display);
   }
 
   private ValidationResult verifyCode(CodeSystem cs, String code, String display) throws Exception {
     ConceptDefinitionComponent cc = findCodeInConcept(cs.getConcept(), code);
     if (cc == null)
-      return new ValidationResult(IssueSeverity.ERROR, "Unknown Code "+code+" in "+cs.getUrl());
+      return new ValidationResult(IssueSeverity.ERROR, "Unknown Code "+code+" in "+cs.getUrl(), null);
     if (display == null)
-      return new ValidationResult(cs.getUrl(), cc);
+      return new ValidationResult(cs.getUrl(), cc, null);
     CommaSeparatedStringBuilder b = new CommaSeparatedStringBuilder();
     if (cc.hasDisplay()) {
       b.append(cc.getDisplay());
       if (display.equalsIgnoreCase(cc.getDisplay()))
-        return new ValidationResult(cs.getUrl(), cc);
+        return new ValidationResult(cs.getUrl(), cc, null);
     }
     for (ConceptDefinitionDesignationComponent ds : cc.getDesignation()) {
       b.append(ds.getValue());
       if (display.equalsIgnoreCase(ds.getValue()))
-        return new ValidationResult(cs.getUrl(), cc);
+        return new ValidationResult(cs.getUrl(), cc, null);
     }
-    return new ValidationResult(IssueSeverity.ERROR, "Display Name for "+code+" must be one of '"+b.toString()+"'");
+    return new ValidationResult(IssueSeverity.ERROR, "Display Name for "+code+" must be one of '"+b.toString()+"'", null);
   }
 
   private ValueSetExpansionContainsComponent findCode(List<ValueSetExpansionContainsComponent> contains, String code) {
@@ -413,7 +416,7 @@ public class BuildWorkerContext extends BaseWorkerContext implements IWorkerCont
       if (system.equals("http://snomed.info/sct"))
         return verifySnomed(code, display);
     } catch (Exception e) {
-      return new ValidationResult(IssueSeverity.WARNING, "Error validating snomed code \""+code+"\": "+e.getMessage());
+      return new ValidationResult(IssueSeverity.WARNING, "Error validating snomed code \""+code+"\": "+e.getMessage(), null);
     }
     try {
       if (system.equals("http://loinc.org"))
@@ -425,12 +428,12 @@ public class BuildWorkerContext extends BaseWorkerContext implements IWorkerCont
         return verifyCode(cs, code, display);
       }
       if (system.startsWith("http://example.org"))
-        return new ValidationResult(system, new ConceptDefinitionComponent());
+        return new ValidationResult(system, new ConceptDefinitionComponent(), null);
       if (system.equals("urn:iso:std:iso:11073:10101") && Utilities.isInteger(code)) {
-        return new ValidationResult(system, new ConceptDefinitionComponent());
+        return new ValidationResult(system, new ConceptDefinitionComponent(), null);
       }
     } catch (Exception e) {
-      return new ValidationResult(IssueSeverity.ERROR, "Error validating code \""+code+"\" in system \""+system+"\": "+e.getMessage());
+      return new ValidationResult(IssueSeverity.ERROR, "Error validating code \""+code+"\" in system \""+system+"\": "+e.getMessage(), null);
     }
     return super.validateCode(options, system, version, code, display);
   }
@@ -440,12 +443,12 @@ public class BuildWorkerContext extends BaseWorkerContext implements IWorkerCont
     String s = ucum.validate(code);
     if (s != null) {
       System.out.println("UCUM eror: "+s);
-      return new ValidationResult(IssueSeverity.ERROR, s);
+      return new ValidationResult(IssueSeverity.ERROR, s, null);
     } else {
       ConceptDefinitionComponent def = new ConceptDefinitionComponent();
       def.setCode(code);
       def.setDisplay(ucum.getCommonDisplay(code));
-      return new ValidationResult("http://unitsofmeasure.org", def);
+      return new ValidationResult("http://unitsofmeasure.org", def, null);
     }
   }
 
@@ -551,7 +554,7 @@ public class BuildWorkerContext extends BaseWorkerContext implements IWorkerCont
         triedServer = true;
         // for this, we use the FHIR client
         if (txClient == null) {
-          txClient = new TerminologyClientR5(tsServer, "fhir/main-build");
+          txClient = new TerminologyClientR5("tx.fhir.org", tsServer, "fhir/main-build");
           this.txLog = new HTMLClientLogger(null);
         }
         Map<String, String> params = new HashMap<String, String>();
