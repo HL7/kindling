@@ -273,9 +273,9 @@ public class BuildWorkerContext extends BaseWorkerContext implements IWorkerCont
       response = queryForTerm(code);
     if (snomedCodes.containsKey(code))
       if (display == null)
-        return new ValidationResult("http://snomed.info/sct", new ConceptDefinitionComponent().setCode(code).setDisplay(snomedCodes.get(code).display), null);
+        return new ValidationResult("http://snomed.info/sct", null, new ConceptDefinitionComponent().setCode(code).setDisplay(snomedCodes.get(code).display), null);
       else if (snomedCodes.get(code).has(display))
-        return new ValidationResult("http://snomed.info/sct", new ConceptDefinitionComponent().setCode(code).setDisplay(display), display);
+        return new ValidationResult("http://snomed.info/sct", null, new ConceptDefinitionComponent().setCode(code).setDisplay(display), display);
       else 
         return new ValidationResult(IssueSeverity.WARNING, "Snomed Display Name for "+code+" must be one of '"+snomedCodes.get(code).summary()+"'", null);
     
@@ -362,10 +362,10 @@ public class BuildWorkerContext extends BaseWorkerContext implements IWorkerCont
     }
     Concept lc = loincCodes.get(code);
     if (display == null)
-      return new ValidationResult("http://loinc.org", new ConceptDefinitionComponent().setCode(code).setDisplay(lc.display), lc.display);
+      return new ValidationResult("http://loinc.org", null, new ConceptDefinitionComponent().setCode(code).setDisplay(lc.display), lc.display);
     if (!lc.has(display))
       return new ValidationResult(IssueSeverity.WARNING, "Loinc Display Name for "+code+" must be one of '"+lc.summary()+"'", null);
-    return new ValidationResult("http://loinc.org", new ConceptDefinitionComponent().setCode(code).setDisplay(lc.display), lc.display);
+    return new ValidationResult("http://loinc.org", null, new ConceptDefinitionComponent().setCode(code).setDisplay(lc.display), lc.display);
   }
 
   private ValidationResult verifyCode(CodeSystem cs, String code, String display) throws Exception {
@@ -373,17 +373,17 @@ public class BuildWorkerContext extends BaseWorkerContext implements IWorkerCont
     if (cc == null)
       return new ValidationResult(IssueSeverity.ERROR, "Unknown Code "+code+" in "+cs.getUrl(), null);
     if (display == null)
-      return new ValidationResult(cs.getUrl(), cc, null);
+      return new ValidationResult(cs.getUrl(), null, cc, null);
     CommaSeparatedStringBuilder b = new CommaSeparatedStringBuilder();
     if (cc.hasDisplay()) {
       b.append(cc.getDisplay());
       if (display.equalsIgnoreCase(cc.getDisplay()))
-        return new ValidationResult(cs.getUrl(), cc, null);
+        return new ValidationResult(cs.getUrl(), null, cc, null);
     }
     for (ConceptDefinitionDesignationComponent ds : cc.getDesignation()) {
       b.append(ds.getValue());
       if (display.equalsIgnoreCase(ds.getValue()))
-        return new ValidationResult(cs.getUrl(), cc, null);
+        return new ValidationResult(cs.getUrl(), null, cc, null);
     }
     return new ValidationResult(IssueSeverity.ERROR, "Display Name for "+code+" must be one of '"+b.toString()+"'", null);
   }
@@ -428,9 +428,9 @@ public class BuildWorkerContext extends BaseWorkerContext implements IWorkerCont
         return verifyCode(cs, code, display);
       }
       if (system.startsWith("http://example.org"))
-        return new ValidationResult(system, new ConceptDefinitionComponent(), null);
+        return new ValidationResult(system, null, new ConceptDefinitionComponent(), null);
       if (system.equals("urn:iso:std:iso:11073:10101") && Utilities.isInteger(code)) {
-        return new ValidationResult(system, new ConceptDefinitionComponent(), null);
+        return new ValidationResult(system, null, new ConceptDefinitionComponent(), null);
       }
     } catch (Exception e) {
       return new ValidationResult(IssueSeverity.ERROR, "Error validating code \""+code+"\" in system \""+system+"\": "+e.getMessage(), null);
@@ -448,7 +448,7 @@ public class BuildWorkerContext extends BaseWorkerContext implements IWorkerCont
       ConceptDefinitionComponent def = new ConceptDefinitionComponent();
       def.setCode(code);
       def.setDisplay(ucum.getCommonDisplay(code));
-      return new ValidationResult("http://unitsofmeasure.org", def, null);
+      return new ValidationResult("http://unitsofmeasure.org", null, def, null);
     }
   }
 
