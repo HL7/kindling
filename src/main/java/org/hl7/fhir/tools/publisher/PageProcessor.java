@@ -225,8 +225,8 @@ import org.hl7.fhir.r5.renderers.utils.Resolver.IReferenceResolver;
 import org.hl7.fhir.r5.renderers.utils.Resolver.ResourceWithReference;
 import org.hl7.fhir.r5.terminologies.CodeSystemUtilities;
 import org.hl7.fhir.r5.terminologies.TerminologyCacheManager;
-import org.hl7.fhir.r5.terminologies.TerminologyClient;
-import org.hl7.fhir.r5.terminologies.ValueSetExpander.ValueSetExpansionOutcome;
+import org.hl7.fhir.r5.terminologies.client.ITerminologyClient;
+import org.hl7.fhir.r5.terminologies.expansion.ValueSetExpansionOutcome;
 import org.hl7.fhir.r5.terminologies.ValueSetUtilities;
 import org.hl7.fhir.r5.utils.EOperationOutcome;
 import org.hl7.fhir.r5.utils.FHIRPathEngine.IEvaluationContext;
@@ -10444,7 +10444,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
   public void setDefinitions(Definitions definitions) throws Exception {
     this.definitions = definitions;
     breadCrumbManager.setDefinitions(definitions);
-    TerminologyClient client;
+    ITerminologyClient client;
     try {
       client = new TerminologyClientR5("tx.fhir.org", tsServer, "fhir/main-build");
       client.setTimeout(60000);
