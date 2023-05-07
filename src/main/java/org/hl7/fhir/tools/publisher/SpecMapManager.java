@@ -364,5 +364,11 @@ public class SpecMapManager {
     return res;
   }
 
+  public String getPath(String s) {
+    List<String> res = new ArrayList<String>();
+    JsonElement e = paths.get(s);
+    return e == null ? null : e.getAsJsonPrimitive().getAsString();
+  }
+
 
 }
