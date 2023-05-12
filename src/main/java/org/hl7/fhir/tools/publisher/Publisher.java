@@ -2419,7 +2419,7 @@ public class Publisher implements URIResolver, SectionNumberer {
     page.setDefinitions(new Definitions());
     page.getWorkerContext().setCanRunWithoutTerminology(!web);
 
-    page.log("Checking Source for " + folder, LogMessageType.Process);
+    page.log("Checking Source for directory " + folder, LogMessageType.Process);
 
     List<String> errors = new ArrayList<String>();
 
