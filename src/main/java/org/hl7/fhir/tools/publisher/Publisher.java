@@ -2427,10 +2427,9 @@ public class Publisher implements URIResolver, SectionNumberer {
     if (checkFile("required", page.getFolders().rootDir, "publish.ini", errors, "all")) {
       checkFile("required", page.getFolders().srcDir, "navigation.xml", errors, "all");
       page.setIni(new IniFile(page.getFolders().rootDir + "publish.ini"));
-      if (isCIBuild) {
-        page.setVersion(FHIRVersion.fromCode(Constants.VERSION_BASE+"-cibuild"));
-      } else {
         page.setVersion(FHIRVersion.fromCode(page.getIni().getStringProperty("FHIR", "version")));
+
+      if (!isCIBuild) {
         if (page.getPublicationType() == null) {
           page.setPublicationType(page.getIni().getStringProperty("FHIR", "version-name"));
         }
