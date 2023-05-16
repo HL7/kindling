@@ -878,16 +878,17 @@ public class Publisher implements URIResolver, SectionNumberer {
   }
 
   private void checkPackages() throws FileNotFoundException, IOException {
-    NpmPackage npm = NpmPackage.fromPackage(new FileInputStream(Utilities.path(page.getFolders().dstDir, "hl7.fhir.r6.core.tgz")));
-    dumpPackage("hl7.fhir.r6.core", npm);
-    npm = NpmPackage.fromPackage(new FileInputStream(Utilities.path(page.getFolders().dstDir, "hl7.fhir.r6.expansions.tgz")));
-    dumpPackage("hl7.fhir.r6.expansions", npm);
-    npm = NpmPackage.fromPackage(new FileInputStream(Utilities.path(page.getFolders().dstDir, "hl7.fhir.r6.examples.tgz")));
-    dumpPackage("hl7.fhir.r6.examples", npm);
-    npm = NpmPackage.fromPackage(new FileInputStream(Utilities.path(page.getFolders().dstDir, "hl7.fhir.r6.search.tgz")));
-    dumpPackage("hl7.fhir.r6.search", npm);
-    npm = NpmPackage.fromPackage(new FileInputStream(Utilities.path(page.getFolders().dstDir, "hl7.fhir.r6.corexml.tgz")));
-    dumpPackage("hl7.fhir.r6.corexml", npm);
+    String prefix = VersionUtilities.isR5Ver(page.getWorkerContext().getVersion()) ? "hl7.fhir.r5." : "hl7.fhir.r6 .";
+    NpmPackage npm = NpmPackage.fromPackage(new FileInputStream(Utilities.path(page.getFolders().dstDir, prefix+"core.tgz")));
+    dumpPackage(prefix+"core", npm);
+    npm = NpmPackage.fromPackage(new FileInputStream(Utilities.path(page.getFolders().dstDir, prefix+"expansions.tgz")));
+    dumpPackage(prefix+"expansions", npm);
+    npm = NpmPackage.fromPackage(new FileInputStream(Utilities.path(page.getFolders().dstDir, prefix+"examples.tgz")));
+    dumpPackage(prefix+"examples", npm);
+    npm = NpmPackage.fromPackage(new FileInputStream(Utilities.path(page.getFolders().dstDir, prefix+"search.tgz")));
+    dumpPackage(prefix+"search", npm);
+    npm = NpmPackage.fromPackage(new FileInputStream(Utilities.path(page.getFolders().dstDir, prefix+"corexml.tgz")));
+    dumpPackage(prefix+"corexml", npm);
   }
 
   private void dumpPackage(String name, NpmPackage npm) {
