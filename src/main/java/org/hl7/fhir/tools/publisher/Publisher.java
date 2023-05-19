@@ -878,7 +878,7 @@ public class Publisher implements URIResolver, SectionNumberer {
   }
 
   private void checkPackages() throws FileNotFoundException, IOException {
-    String prefix = VersionUtilities.isR5Ver(page.getWorkerContext().getVersion()) ? "hl7.fhir.r5." : "hl7.fhir.r6 .";
+    String prefix = VersionUtilities.isR5Ver(page.getWorkerContext().getVersion()) ? "hl7.fhir.r5." : "hl7.fhir.r6.";
     NpmPackage npm = NpmPackage.fromPackage(new FileInputStream(Utilities.path(page.getFolders().dstDir, prefix+"core.tgz")));
     dumpPackage(prefix+"core", npm);
     npm = NpmPackage.fromPackage(new FileInputStream(Utilities.path(page.getFolders().dstDir, prefix+"expansions.tgz")));
