@@ -1,5 +1,5 @@
 name: gradle-dependency-submit
- on:
+on:
   push:
     branches: 
      - main
