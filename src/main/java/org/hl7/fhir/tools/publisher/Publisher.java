@@ -237,9 +237,8 @@ import org.hl7.fhir.r5.renderers.utils.DOMWrappers;
 import org.hl7.fhir.r5.renderers.utils.ElementWrappers;
 import org.hl7.fhir.r5.renderers.utils.RenderingContext;
 import org.hl7.fhir.r5.terminologies.CodeSystemUtilities;
-import org.hl7.fhir.r5.terminologies.LoincToDEConvertor;
-import org.hl7.fhir.r5.terminologies.ValueSetExpander.ValueSetExpansionOutcome;
 import org.hl7.fhir.r5.terminologies.ValueSetUtilities;
+import org.hl7.fhir.r5.terminologies.expansion.ValueSetExpansionOutcome;
 import org.hl7.fhir.r5.utils.BuildExtensions;
 import org.hl7.fhir.r5.utils.EOperationOutcome;
 import org.hl7.fhir.r5.utils.FHIRPathEngine;
@@ -264,6 +263,7 @@ import org.hl7.fhir.utilities.npm.FilesystemPackageCacheManager;
 import org.hl7.fhir.utilities.npm.NpmPackage;
 import org.hl7.fhir.utilities.npm.PackageGenerator.PackageType;
 import org.hl7.fhir.utilities.npm.ToolsVersion;
+import org.hl7.fhir.utilities.settings.FhirSettings;
 import org.hl7.fhir.utilities.validation.ValidationMessage;
 import org.hl7.fhir.utilities.validation.ValidationMessage.IssueSeverity;
 import org.hl7.fhir.utilities.validation.ValidationMessage.IssueType;
@@ -278,6 +278,7 @@ import org.hl7.fhir.utilities.xml.XMLUtil;
 import org.hl7.fhir.utilities.xml.XhtmlGenerator;
 import org.hl7.fhir.utilities.xml.XmlGenerator;
 import org.hl7.fhir.validation.profile.ProfileValidator;
+import org.hl7.fhir.convertors.misc.LoincToDEConvertor;
 import org.stringtemplate.v4.ST;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -294,6 +295,8 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 
 public class Publisher implements URIResolver, SectionNumberer {
+
+  public static final String FHIR_SETTINGS_PARAM = "-fhir-settings";
 
   public enum ValidationMode {
     NORMAL, NONE, EXTENDED;
@@ -505,11 +508,15 @@ public class Publisher implements URIResolver, SectionNumberer {
   private boolean isCIBuild;
   private boolean isPostPR;
   private String validateId;
-  private IniFile apiKeyFile;
+
   private Validator mappingExceptionsValidator;
 
   public static void main(String[] args) throws Exception {
     org.hl7.fhir.utilities.FileFormat.checkCharsetAndWarnIfNotUTF8(System.out);
+
+    if (hasParam(args, FHIR_SETTINGS_PARAM)) {
+      FhirSettings.setExplicitFilePath(getNamedParam(args, FHIR_SETTINGS_PARAM));
+    }
 
     Publisher pub = new Publisher();
     pub.page = new PageProcessor(KindlingConstants.DEF_TS_SERVER);
@@ -558,9 +565,6 @@ public class Publisher implements URIResolver, SectionNumberer {
       pub.page.setExtensionsLocation(PageProcessor.LOCAL_EXTN_LOCATION);
     }
 
-    if (hasParam(args, "-api-key-file")) {
-      pub.apiKeyFile = new IniFile(new File(getNamedParam(args, "-api-key-file")).getAbsolutePath());
-    }
     pub.execute(dir, args);
   }
 
@@ -686,10 +690,8 @@ public class Publisher implements URIResolver, SectionNumberer {
     if (outputdir != null) {
       page.log("Create output in "+outputdir, LogMessageType.Process);
     }
-    if (apiKeyFile == null) {
-      apiKeyFile = new IniFile(Utilities.path(System.getProperty("user.home"), "fhir-build-keys.ini"));
-    }
-    page.log("API keys loaded from "+apiKeyFile.getFileName(), LogMessageType.Process);
+
+    page.log("API keys loaded from "+ FhirSettings.getFilePath(), LogMessageType.Process);
 
     try {
       tester.initialTests();
@@ -798,8 +800,8 @@ public class Publisher implements URIResolver, SectionNumberer {
       page.saveSnomed();
       page.getWorkerContext().saveCache();
       if (isGenerate && buildFlags.get("all")) {
-        if (apiKeyFile.hasProperty("keys", "tx.fhir.org")) {
-          page.commitTerminologyCache(apiKeyFile.getStringProperty("keys", "tx.fhir.org"));
+        if (FhirSettings.hasApiKey("tx.fhir.org")) {
+          page.commitTerminologyCache(FhirSettings.getApiKey("tx.fhir.org"));
         }
       }
       
@@ -870,22 +872,23 @@ public class Publisher implements URIResolver, SectionNumberer {
       page.log("FHIR build failure @ " + Config.DATE_FORMAT().format(Calendar.getInstance().getTime()), LogMessageType.Process);
       System.out.println("Error: " + e.getMessage());
       e.printStackTrace();
-      TextFile.stringToFile(StringUtils.defaultString(e.getMessage()), Utilities.path(outputdir, "simple-error.txt"));
+      TextFile.stringToFile(StringUtils.defaultString(e.getMessage()), Utilities.path(page.getFolders().dstDir, "simple-error.txt"));
       System.exit(1);
     }
   }
 
   private void checkPackages() throws FileNotFoundException, IOException {
-    NpmPackage npm = NpmPackage.fromPackage(new FileInputStream(Utilities.path(page.getFolders().dstDir, "hl7.fhir.r6.core.tgz")));
-    dumpPackage("hl7.fhir.r6.core", npm);
-    npm = NpmPackage.fromPackage(new FileInputStream(Utilities.path(page.getFolders().dstDir, "hl7.fhir.r6.expansions.tgz")));
-    dumpPackage("hl7.fhir.r6.expansions", npm);
-    npm = NpmPackage.fromPackage(new FileInputStream(Utilities.path(page.getFolders().dstDir, "hl7.fhir.r6.examples.tgz")));
-    dumpPackage("hl7.fhir.r6.examples", npm);
-    npm = NpmPackage.fromPackage(new FileInputStream(Utilities.path(page.getFolders().dstDir, "hl7.fhir.r6.search.tgz")));
-    dumpPackage("hl7.fhir.r6.search", npm);
-    npm = NpmPackage.fromPackage(new FileInputStream(Utilities.path(page.getFolders().dstDir, "hl7.fhir.r6.corexml.tgz")));
-    dumpPackage("hl7.fhir.r6.corexml", npm);
+    String prefix = VersionUtilities.isR5Ver(page.getWorkerContext().getVersion()) ? "hl7.fhir.r5." : "hl7.fhir.r6.";
+    NpmPackage npm = NpmPackage.fromPackage(new FileInputStream(Utilities.path(page.getFolders().dstDir, prefix+"core.tgz")));
+    dumpPackage(prefix+"core", npm);
+    npm = NpmPackage.fromPackage(new FileInputStream(Utilities.path(page.getFolders().dstDir, prefix+"expansions.tgz")));
+    dumpPackage(prefix+"expansions", npm);
+    npm = NpmPackage.fromPackage(new FileInputStream(Utilities.path(page.getFolders().dstDir, prefix+"examples.tgz")));
+    dumpPackage(prefix+"examples", npm);
+    npm = NpmPackage.fromPackage(new FileInputStream(Utilities.path(page.getFolders().dstDir, prefix+"search.tgz")));
+    dumpPackage(prefix+"search", npm);
+    npm = NpmPackage.fromPackage(new FileInputStream(Utilities.path(page.getFolders().dstDir, prefix+"corexml.tgz")));
+    dumpPackage(prefix+"corexml", npm);
   }
 
   private void dumpPackage(String name, NpmPackage npm) {
@@ -2417,7 +2420,7 @@ public class Publisher implements URIResolver, SectionNumberer {
     page.setDefinitions(new Definitions());
     page.getWorkerContext().setCanRunWithoutTerminology(!web);
 
-    page.log("Checking Source for " + folder, LogMessageType.Process);
+    page.log("Checking Source for directory " + folder, LogMessageType.Process);
 
     List<String> errors = new ArrayList<String>();
 
@@ -2425,10 +2428,9 @@ public class Publisher implements URIResolver, SectionNumberer {
     if (checkFile("required", page.getFolders().rootDir, "publish.ini", errors, "all")) {
       checkFile("required", page.getFolders().srcDir, "navigation.xml", errors, "all");
       page.setIni(new IniFile(page.getFolders().rootDir + "publish.ini"));
-      if (isCIBuild) {
-        page.setVersion(FHIRVersion.fromCode(Constants.VERSION_BASE+"-cibuild"));
-      } else {
         page.setVersion(FHIRVersion.fromCode(page.getIni().getStringProperty("FHIR", "version")));
+
+      if (!isCIBuild) {
         if (page.getPublicationType() == null) {
           page.setPublicationType(page.getIni().getStringProperty("FHIR", "version-name"));
         }

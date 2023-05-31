@@ -1,10 +1,9 @@
 package org.hl7.fhir.tools.publisher;
 
-public class KindlingConstants {
+import org.hl7.fhir.utilities.settings.FhirSettings;
 
-  public static final String TX_SERVER = "http://tx.fhir.org";
-//   public final static String TX_SERVER = "http://local.fhir.org:960";
+public class KindlingConstants {
   
-  public final static String DEF_TS_SERVER = TX_SERVER+"/r4"; 
+  public final static String DEF_TS_SERVER = FhirSettings.getTxFhirProduction()+"/r4"; 
 
 }

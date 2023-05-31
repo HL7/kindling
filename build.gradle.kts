@@ -6,7 +6,7 @@ plugins {
 }
 
 group = "org.hl7.fhir"
-version = "1.8.1-SNAPSHOT"
+version = "1.8.7-SNAPSHOT"
 
 java {
     withJavadocJar()
@@ -39,7 +39,7 @@ repositories {
 }
 
 dependencies {
-    implementation("ca.uhn.hapi.fhir", "hapi-fhir-base", "4.0.0")
+    implementation("ca.uhn.hapi.fhir", "hapi-fhir-base", "6.4.1")
     implementation("ca.uhn.hapi.fhir", "org.hl7.fhir.utilities", property("fhirCoreVersion").toString())
     implementation("ca.uhn.hapi.fhir", "org.hl7.fhir.dstu2", property("fhirCoreVersion").toString())
     implementation("ca.uhn.hapi.fhir", "org.hl7.fhir.dstu2016may", property("fhirCoreVersion").toString())

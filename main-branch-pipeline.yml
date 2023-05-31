@@ -6,16 +6,8 @@ trigger:
 
 pr: none
 
-# Different users have different machine setups, we run the build three times, on ubuntu, osx, and windows
-strategy:
-  matrix:
-    linux:
-      imageName: "ubuntu-20.04"
-    mac:
-      imageName: "macos-10.15"
-    windows:
-      imageName: "windows-2019"
-  maxParallel: 3
+pool:
+  vmImage: "ubuntu-22.04"
 
 # We cannot store things like gpg passwords and sonatype credentials as plain text within the 
 # pipeline's yaml file, so we've created variable groups in our library to store sensitive variables.
