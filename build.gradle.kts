@@ -6,7 +6,7 @@ plugins {
 }
 
 group = "org.hl7.fhir"
-version = "1.8.7-SNAPSHOT"
+version = "1.8.8-SNAPSHOT"
 
 java {
     withJavadocJar()
@@ -80,7 +80,7 @@ dependencies {
     implementation("org.eclipse.emf", "org.eclipse.emf.common", "2.9.2-v20131212-0545")
     implementation("org.apache.poi", "poi", property("apachePoiVersion").toString())
     implementation("org.apache.poi", "poi-ooxml", property("apachePoiVersion").toString())
-    implementation("org.apache.poi", "poi-ooxml-schemas", property("apachePoiVersion").toString())
+    //implementation("org.apache.poi", "poi-ooxml-schemas", property("apachePoiVersion").toString())
     implementation("org.apache.xmlbeans", "xmlbeans", "3.1.0")
     implementation("org.mozilla", "rhino", "1.7R4")
     implementation("org.hamcrest", "hamcrest-core", "1.3")
@@ -137,7 +137,7 @@ dependencies {
     implementation("org.apache.logging.log4j", "log4j", "2.15.0")
     implementation("com.squareup.okhttp3", "okhttp", "4.9.0")
     implementation("com.squareup.okio", "okio", "2.9.0")
-    implementation("org.jetbrains.kotlin", "kotlin-stdlib", "1.4.21")
+    implementation("org.jetbrains.kotlin", "kotlin-stdlib", "1.6.10")
 
     testImplementation("org.junit.jupiter","junit-jupiter","5.8.2")
 
