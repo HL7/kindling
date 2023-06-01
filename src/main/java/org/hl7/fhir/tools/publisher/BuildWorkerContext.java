@@ -304,6 +304,7 @@ public class BuildWorkerContext extends BaseWorkerContext implements IWorkerCont
       try {
         DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
         DocumentBuilder builder = factory.newDocumentBuilder();
+        factory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
         Document xdoc = builder.parse(instream);
         // we always get back a version, and a type. What we do depends on the type 
         String t = xdoc.getDocumentElement().getAttribute("type");
