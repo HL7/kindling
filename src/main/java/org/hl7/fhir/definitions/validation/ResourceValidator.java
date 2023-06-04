@@ -1,6 +1,7 @@
 package org.hl7.fhir.definitions.validation;
 
 import java.io.IOException;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -42,6 +43,7 @@ import org.hl7.fhir.r5.renderers.RendererFactory;
 import org.hl7.fhir.r5.terminologies.ValueSetUtilities;
 import org.hl7.fhir.r5.utils.Translations;
 import org.hl7.fhir.utilities.StandardsStatus;
+import org.hl7.fhir.utilities.TextFile;
 import org.hl7.fhir.utilities.Utilities;
 import org.hl7.fhir.utilities.validation.ValidationMessage;
 import org.hl7.fhir.utilities.validation.ValidationMessage.IssueSeverity;
@@ -86,6 +88,7 @@ public class ResourceValidator extends BaseValidator {
   private List<String> suppressedMessages;
   private IWorkerContext context;
   private Set<String> txurls = new HashSet<String>();
+  private Set<String> allowedPluralNames = new HashSet<>();
 
 
 
@@ -100,7 +103,20 @@ public class ResourceValidator extends BaseValidator {
     patternFinder = new PatternFinder(definitions);
     speller = new SpellChecker(srcFolder, definitions);
     this.suppressedMessages = suppressedMessages;
+    loadAllowedPluralNames(srcFolder);
 //    System.out.println("\n###########################\nDumping Resource Validator ::\n" + this.toString() + "\n\n###########################\n\n");
+  }
+
+  private void loadAllowedPluralNames(String srcFolder) throws IOException {
+    File pnSource = new File(Utilities.path(srcFolder, "plural-names.txt"));
+    if (pnSource.exists()) {
+      String txt = TextFile.fileToString(pnSource);
+      for (String s : Utilities.splitLines(txt)) {
+        if (!s.startsWith("#")) {
+          allowedPluralNames.add(s);
+        }
+      }
+    }
   }
 
   public void checkStucture(List<ValidationMessage> errors, String name, ElementDefn structure) throws Exception {
@@ -680,7 +696,7 @@ public class ResourceValidator extends BaseValidator {
 
     hint(errors, ValidationMessage.NO_RULE_DATE, IssueType.STRUCTURE, path, !(nameOverlaps(e.getName(), parentName) && !isAllowedNameOverlap(e.getName(), parentName)), "Name of child (" + e.getName() + ") overlaps with name of parent (" + parentName + ")");
     checkDefinitions(errors, path, e);
-    warning(errors, ValidationMessage.NO_RULE_DATE, IssueType.STRUCTURE, path, !path.contains(".") || !Utilities.isPlural(e.getName()) || !e.unbounded(), "Element names should be singular");
+    warning(errors, ValidationMessage.NO_RULE_DATE, IssueType.STRUCTURE, path, !path.contains(".") || !Utilities.isPlural(e.getName()) || !e.unbounded() || allowedPluralNames.contains(e.getName()), "Element names should be singular");
     rule(errors, ValidationMessage.NO_RULE_DATE, IssueType.STRUCTURE, path, !e.getName().equals("id"), "Element named \"id\" not allowed");
     warning(errors, ValidationMessage.NO_RULE_DATE, IssueType.STRUCTURE, path, !e.getName().equals("comments"), "Element named \"comments\" not allowed - use 'comment'");
     warning(errors, ValidationMessage.NO_RULE_DATE, IssueType.STRUCTURE, path, !e.getName().equals("notes"), "Element named \"notes\" not allowed - use 'note'");
