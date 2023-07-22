@@ -3353,7 +3353,7 @@ public class Publisher implements URIResolver, SectionNumberer {
       expIg.addFhirVersion(page.getVersion());
       expIg.setPackageId(pidRoot()+".expansions");
       expIg.setVersion(page.getVersion().toCode());
-      expIg.setLicense(ImplementationGuide.SPDXLicense.CC01_0);
+      expIg.setLicense(ImplementationGuide.SPDXLicense.CC0_1_0);
       expIg.setTitle("FHIR "+page.getVersion().getDisplay()+" package : Expansions");
       expIg.setDescription("Expansions for the "+page.getVersion().getDisplay()+" version of the FHIR standard");
       NPMPackageGenerator npm = new NPMPackageGenerator(Utilities.path(page.getFolders().dstDir, pidRoot() + ".expansions.tgz"), "http://hl7.org/fhir", page.getWebLocation(), PackageType.CORE, expIg, page.getGenDate().getTime(), true);
@@ -3563,7 +3563,7 @@ public class Publisher implements URIResolver, SectionNumberer {
       exIg.addFhirVersion(page.getVersion());
       exIg.setPackageId(pidRoot()+".examples");
       exIg.setVersion(page.getVersion().toCode());
-      exIg.setLicense(ImplementationGuide.SPDXLicense.CC01_0);
+      exIg.setLicense(ImplementationGuide.SPDXLicense.CC0_1_0);
       exIg.setTitle("FHIR "+page.getVersion().getDisplay()+" package : Examples");
       exIg.setDescription("Examples for the "+page.getVersion().getDisplay()+" version of the FHIR standard");
       npm = new NPMPackageGenerator(Utilities.path(page.getFolders().dstDir, pidRoot() + ".examples.tgz"), "http://hl7.org/fhir", page.getWebLocation(), PackageType.EXAMPLES, exIg, page.getGenDate().getTime(), true);
@@ -3613,7 +3613,7 @@ public class Publisher implements URIResolver, SectionNumberer {
       spIg.addFhirVersion(page.getVersion());
       spIg.setPackageId(pidRoot()+".search");
       spIg.setVersion(page.getVersion().toCode());
-      spIg.setLicense(ImplementationGuide.SPDXLicense.CC01_0);
+      spIg.setLicense(ImplementationGuide.SPDXLicense.CC0_1_0);
       spIg.setTitle("FHIR "+page.getVersion().getDisplay()+" package : ungrouped search parameters");
       spIg.setDescription("FHIR "+page.getVersion().getDisplay()+" package : Search Parameters (break out combined parameters for server execution convenience)");
       npm = new NPMPackageGenerator(Utilities.path(page.getFolders().dstDir, pidRoot() + ".search.tgz"), "http://hl7.org/fhir", page.getWebLocation(), PackageType.EXAMPLES, spIg, page.getGenDate().getTime(), true);
