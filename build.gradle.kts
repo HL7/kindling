@@ -3,6 +3,7 @@ plugins {
     `maven-publish`
     signing
     id("com.github.johnrengelman.shadow") version "7.0.0"
+    id("org.owasp.dependencycheck") version "8.4.0"
 }
 
 group = "org.hl7.fhir"
@@ -255,4 +256,8 @@ tasks.javadoc {
     if (JavaVersion.current().isJava9Compatible) {
         (options as StandardJavadocDocletOptions).addBooleanOption("html5", true)
     }
+}
+
+dependencyCheck {
+    formats = arrayListOf("SARIF", "HTML")
 }
