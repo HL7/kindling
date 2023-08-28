@@ -39,23 +39,15 @@ import org.hl7.fhir.r5.context.CanonicalResourceManager;
 import org.hl7.fhir.r5.context.HTMLClientLogger;
 import org.hl7.fhir.r5.context.IWorkerContext;
 import org.hl7.fhir.r5.context.SimpleWorkerContext.PackageResourceLoader;
-import org.hl7.fhir.r5.model.CodeSystem;
+import org.hl7.fhir.r5.model.*;
 import org.hl7.fhir.r5.model.Enumerations.CodeSystemContentMode;
 import org.hl7.fhir.r5.model.CodeSystem.ConceptDefinitionComponent;
 import org.hl7.fhir.r5.model.CodeSystem.ConceptDefinitionDesignationComponent;
-import org.hl7.fhir.r5.model.ConceptMap;
 import org.hl7.fhir.r5.model.ElementDefinition.ElementDefinitionBindingComponent;
 import org.hl7.fhir.r5.model.ElementDefinition.TypeRefComponent;
-import org.hl7.fhir.r5.model.ImplementationGuide;
-import org.hl7.fhir.r5.model.OperationOutcome;
-import org.hl7.fhir.r5.model.PackageInformation;
-import org.hl7.fhir.r5.model.Parameters;
 import org.hl7.fhir.r5.model.Parameters.ParametersParameterComponent;
-import org.hl7.fhir.r5.model.StringType;
-import org.hl7.fhir.r5.model.StructureDefinition;
 import org.hl7.fhir.r5.model.StructureDefinition.StructureDefinitionKind;
 import org.hl7.fhir.r5.model.StructureDefinition.TypeDerivationRule;
-import org.hl7.fhir.r5.model.ValueSet;
 import org.hl7.fhir.r5.model.ValueSet.ConceptSetComponent;
 import org.hl7.fhir.r5.model.ValueSet.ValueSetExpansionContainsComponent;
 import org.hl7.fhir.r5.terminologies.client.ITerminologyClient;
@@ -197,6 +189,12 @@ public class BuildWorkerContext extends BaseWorkerContext implements IWorkerCont
   public IResourceValidator newValidator() {
     throw new Error("check this");
 //    return new InstanceValidator(this, null);
+  }
+
+  @Override
+  public <T extends Resource> T fetchResourceRaw(Class<T> aClass, String s) {
+    T r = super.fetchResource(aClass, s);
+    return r;
   }
 
   @Override

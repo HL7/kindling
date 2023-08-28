@@ -598,10 +598,8 @@ public class ExampleInspector implements IValidatorResourceFetcher, IValidationP
       return null;
   }
 
-
- 
   @Override
-  public boolean resolveURL(IResourceValidator validator,Object appContext, String path, String url, String type) throws IOException, FHIRException {
+  public boolean resolveURL(IResourceValidator validator,Object appContext, String path, String url, String type, boolean canonical) throws IOException, FHIRException {
     if (path.endsWith(".fullUrl"))
       return true;
     if (url.startsWith("http://hl7.org/fhir")) {

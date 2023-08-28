@@ -439,9 +439,9 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
   private final Map<String, SectionTracker> sectionTrackerCache = new HashMap<String, SectionTracker>();
   private final Map<String, TocEntry> toc = new HashMap<String, TocEntry>();
   private final QaTracker qa = new QaTracker();
-  private CanonicalResourceManager<ConceptMap> conceptMaps = new CanonicalResourceManager<ConceptMap>(false);
-  private CanonicalResourceManager<StructureDefinition> profiles = new CanonicalResourceManager<StructureDefinition>(false);
-  private CanonicalResourceManager<ImplementationGuide> guides = new CanonicalResourceManager<ImplementationGuide>(false);
+  private CanonicalResourceManager<ConceptMap> conceptMaps = new CanonicalResourceManager<ConceptMap>(false, false);
+  private CanonicalResourceManager<StructureDefinition> profiles = new CanonicalResourceManager<StructureDefinition>(false, false);
+  private CanonicalResourceManager<ImplementationGuide> guides = new CanonicalResourceManager<ImplementationGuide>(false, false);
   private Map<String, ResourceDefn> logicalModels = new HashMap<String, ResourceDefn>();
   private Map<String, Resource> igResources = new HashMap<String, Resource>();
   private Map<String, String> svgs = new HashMap<String, String>();
@@ -4921,7 +4921,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     s.append("<table class=\"codes\">\r\n");
     s.append(" <tr><td><b>Name</b></td><td><b>Definition</b></td><td><b>Source</b></td></tr>\r\n");
     List<String> namespaces = new ArrayList<String>();
-    CanonicalResourceManager<ValueSet> vslist = new CanonicalResourceManager<ValueSet>(false);
+    CanonicalResourceManager<ValueSet> vslist = new CanonicalResourceManager<ValueSet>(false, false);
     for (String sn : definitions.getValuesets().keys()) {
       ValueSet vs = definitions.getValuesets().get(sn);
       if (vs.hasUrl() && isLocalResource(vs)) {

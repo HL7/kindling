@@ -92,7 +92,7 @@ public class SpecNPMPackageGenerator {
     ig.setUrl("http://hl7.org/fhir/ImplementationGuide/fhir");
     ig.setVersion(version.toCode());
     ig.addFhirVersion(version);
-    ig.setLicense(SPDXLicense.CC01_0);
+    ig.setLicense(SPDXLicense.CC0_1_0);
     ig.setTitle("FHIR Core package");
     ig.setDescription("FHIR Core package - the NPM package that contains all the definitions for the base FHIR specification");
     ig.setPublisher("HL7 Inc");

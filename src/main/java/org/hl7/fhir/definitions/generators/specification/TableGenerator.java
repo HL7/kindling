@@ -13,7 +13,7 @@ import org.hl7.fhir.definitions.model.Invariant;
 import org.hl7.fhir.definitions.model.ProfiledType;
 import org.hl7.fhir.definitions.model.TypeRef;
 import org.hl7.fhir.r4b.renderers.utils.RenderingContext;
-import org.hl7.fhir.r5.conformance.AdditionalBindingsRenderer;
+import org.hl7.fhir.r5.renderers.AdditionalBindingsRenderer;
 import org.hl7.fhir.r5.conformance.profile.ProfileKnowledgeProvider;
 import org.hl7.fhir.r5.conformance.profile.ProfileUtilities;
 import org.hl7.fhir.r5.model.Enumerations.FHIRVersion;
