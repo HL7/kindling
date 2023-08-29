@@ -3,6 +3,7 @@ plugins {
     `maven-publish`
     signing
     id("com.github.johnrengelman.shadow") version "7.0.0"
+    id("org.owasp.dependencycheck") version "8.4.0"
 }
 
 group = "org.hl7.fhir"
@@ -52,6 +53,12 @@ dependencies {
     implementation("org.eclipse.jgit", "org.eclipse.jgit", "5.13.0.202109080827-r")
     implementation("ch.qos.logback", "logback-classic", "1.2.3")
     implementation("com.google.code.gson", "gson", "2.8.9")
+    implementation("commons-beanutils","commons-beanutils")
+    constraints {
+        implementation("commons-beanutils:commons-beanutils:1.9.4") {
+            because("previous versions have a bug impacting this application")
+        }
+    }
     implementation("commons-codec", "commons-codec", "1.9")
     implementation("commons-discovery", "commons-discovery", "0.2")
     implementation("commons-httpclient", "commons-httpclient", "3.0.1")
@@ -249,4 +256,8 @@ tasks.javadoc {
     if (JavaVersion.current().isJava9Compatible) {
         (options as StandardJavadocDocletOptions).addBooleanOption("html5", true)
     }
+}
+
+dependencyCheck {
+    formats = arrayListOf("SARIF", "HTML")
 }
