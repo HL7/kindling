@@ -1181,6 +1181,7 @@ public class SourceParser {
       DataTypeTableGenerator dtg = new DataTypeTableGenerator(dstDir, page, t.getName(), true, version, "");
       t.getProfile().getText().setDiv(new XhtmlNode(NodeType.Element, "div"));
       t.getProfile().getText().getDiv().getChildNodes().add(dtg.generate(t, null, false));
+      context.dropResource(t.getProfile());
       context.cacheResource(t.getProfile());
     } catch (Exception e) {
       throw new Exception("Error generating profile for '"+t.getName()+"': "+e.getMessage(), e);

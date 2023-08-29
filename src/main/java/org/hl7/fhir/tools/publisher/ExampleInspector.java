@@ -49,6 +49,7 @@ import org.hl7.fhir.r5.model.TypeDetails;
 import org.hl7.fhir.r5.model.ValueSet;
 import org.hl7.fhir.r5.utils.FHIRPathEngine;
 import org.hl7.fhir.r5.utils.FHIRPathEngine.IEvaluationContext;
+import org.hl7.fhir.r5.utils.FHIRPathUtilityClasses.FunctionDetails;
 import org.hl7.fhir.r5.utils.validation.IResourceValidator;
 import org.hl7.fhir.r5.utils.validation.IValidationPolicyAdvisor;
 import org.hl7.fhir.r5.utils.validation.IValidatorResourceFetcher;
@@ -601,7 +602,7 @@ public class ExampleInspector implements IValidatorResourceFetcher, IValidationP
 
  
   @Override
-  public boolean resolveURL(IResourceValidator validator,Object appContext, String path, String url, String type) throws IOException, FHIRException {
+  public boolean resolveURL(IResourceValidator validator,Object appContext, String path, String url, String type, boolean canonical) throws IOException, FHIRException {
     if (path.endsWith(".fullUrl"))
       return true;
     if (url.startsWith("http://hl7.org/fhir")) {

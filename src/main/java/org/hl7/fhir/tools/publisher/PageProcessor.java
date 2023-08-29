@@ -230,6 +230,7 @@ import org.hl7.fhir.r5.terminologies.expansion.ValueSetExpansionOutcome;
 import org.hl7.fhir.r5.terminologies.ValueSetUtilities;
 import org.hl7.fhir.r5.utils.EOperationOutcome;
 import org.hl7.fhir.r5.utils.FHIRPathEngine.IEvaluationContext;
+import org.hl7.fhir.r5.utils.FHIRPathUtilityClasses.FunctionDetails;
 import org.hl7.fhir.r5.utils.ToolingExtensions;
 import org.hl7.fhir.r5.utils.Translations;
 import org.hl7.fhir.r5.utils.TypesUtilities;
@@ -439,9 +440,9 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
   private final Map<String, SectionTracker> sectionTrackerCache = new HashMap<String, SectionTracker>();
   private final Map<String, TocEntry> toc = new HashMap<String, TocEntry>();
   private final QaTracker qa = new QaTracker();
-  private CanonicalResourceManager<ConceptMap> conceptMaps = new CanonicalResourceManager<ConceptMap>(false);
-  private CanonicalResourceManager<StructureDefinition> profiles = new CanonicalResourceManager<StructureDefinition>(false);
-  private CanonicalResourceManager<ImplementationGuide> guides = new CanonicalResourceManager<ImplementationGuide>(false);
+  private CanonicalResourceManager<ConceptMap> conceptMaps = new CanonicalResourceManager<ConceptMap>(false, false);
+  private CanonicalResourceManager<StructureDefinition> profiles = new CanonicalResourceManager<StructureDefinition>(false, false);
+  private CanonicalResourceManager<ImplementationGuide> guides = new CanonicalResourceManager<ImplementationGuide>(false, false);
   private Map<String, ResourceDefn> logicalModels = new HashMap<String, ResourceDefn>();
   private Map<String, Resource> igResources = new HashMap<String, Resource>();
   private Map<String, String> svgs = new HashMap<String, String>();
@@ -2359,24 +2360,6 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     }
     return null;
   }
-
-//  private String genExample(Example example, int headerLevelContext, String genlevel) throws IOException, EOperationOutcome, FHIRException {
-//    if (example.getResource() == null) {
-//      String xml = XMLUtil.elementToString(example.getXml().getDocumentElement());
-//      example.setResource(new XmlParser().parse(xml));
-//    }
-//    if (!(example.getResource() instanceof DomainResource))
-//      return "";
-//    if (example.getResource().fhirType().equals("StructureMap")) {
-//      System.out.println("!!");
-//    }
-//    DomainResource dr = (DomainResource) example.getResource();
-//    if (!dr.hasText() || !dr.getText().hasDiv()) {
-//      RenderingContext lrc = rc.copy().setHeaderLevelContext(headerLevelContext);
-//      RendererFactory.factory(dr, lrc).render(dr);
-//    }
-//    return new XhtmlComposer(XhtmlComposer.HTML).compose(dr.getText().getDiv());
-//  }
 
   private String genMappingsTable() throws IOException {
     StringBuilder b = new  StringBuilder();
@@ -4921,7 +4904,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     s.append("<table class=\"codes\">\r\n");
     s.append(" <tr><td><b>Name</b></td><td><b>Definition</b></td><td><b>Source</b></td></tr>\r\n");
     List<String> namespaces = new ArrayList<String>();
-    CanonicalResourceManager<ValueSet> vslist = new CanonicalResourceManager<ValueSet>(false);
+    CanonicalResourceManager<ValueSet> vslist = new CanonicalResourceManager<ValueSet>(false, false);
     for (String sn : definitions.getValuesets().keys()) {
       ValueSet vs = definitions.getValuesets().get(sn);
       if (vs.hasUrl() && isLocalResource(vs)) {

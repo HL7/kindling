@@ -93,7 +93,7 @@ public class ResourceValidator extends BaseValidator {
 
 
   public ResourceValidator(Definitions definitions, Translations translations, CanonicalResourceManager<CodeSystem> map, String srcFolder, List<FHIRPathUsage> fpUsages, List<String> suppressedMessages, IWorkerContext context) throws IOException {
-    super(context, null);
+    super(context, null, true);
     source = Source.ResourceValidator;
     this.definitions = definitions;
     this.translations = translations;

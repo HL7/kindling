@@ -51,6 +51,7 @@ import org.hl7.fhir.r5.model.OperationOutcome;
 import org.hl7.fhir.r5.model.PackageInformation;
 import org.hl7.fhir.r5.model.Parameters;
 import org.hl7.fhir.r5.model.Parameters.ParametersParameterComponent;
+import org.hl7.fhir.r5.model.Resource;
 import org.hl7.fhir.r5.model.StringType;
 import org.hl7.fhir.r5.model.StructureDefinition;
 import org.hl7.fhir.r5.model.StructureDefinition.StructureDefinitionKind;
@@ -848,5 +849,10 @@ public class BuildWorkerContext extends BaseWorkerContext implements IWorkerCont
   @Override
   public String getSpecUrl() {
     return "";
+  }
+
+  @Override
+  public <T extends Resource> T fetchResourceRaw(Class<T> class_, String uri) {
+    throw new NotImplementedException();
   }
 }

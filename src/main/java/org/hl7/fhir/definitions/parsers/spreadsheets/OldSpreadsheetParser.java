@@ -1932,7 +1932,7 @@ public class OldSpreadsheetParser {
 		    System.out.println("!!");
 		  e.addMapping(n, ms.trim());
 		}
-    if (pack != null) {
+    if (pack != null) { 
       for (String n : pack.getMappingSpaces().keySet()) {
         e.addMapping(n, sheet.getColumn(row, pack.getMappingSpaces().get(n).getColumnName()).trim());
       }

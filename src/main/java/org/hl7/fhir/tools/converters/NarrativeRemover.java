@@ -69,7 +69,7 @@ public class NarrativeRemover {
     ini = new IniFile("/Users/grahamegrieve/work/r5/source/oids.ini");
     checkIni();
     r4 = new FilesystemPackageCacheManager(org.hl7.fhir.utilities.npm.FilesystemPackageCacheManager.FilesystemPackageCacheMode.USER).loadPackage("hl7.fhir.r4.core");
-    ctxt = new SimpleWorkerContextBuilder().fromPackage(r4, new R4ToR5Loader(BuildWorkerContext.defaultTypesToLoad(), new TempLoader(), "4.0.0"));
+    ctxt = new SimpleWorkerContextBuilder().fromPackage(r4, new R4ToR5Loader(BuildWorkerContext.defaultTypesToLoad(), new TempLoader(), "4.0.0"), false);
     remove(file);
   }
   

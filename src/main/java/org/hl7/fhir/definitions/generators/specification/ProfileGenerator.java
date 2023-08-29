@@ -851,6 +851,7 @@ public class ProfileGenerator {
     p.getText().setStatus(NarrativeStatus.GENERATED);
     p.getText().setDiv(div);
     checkHasTypes(p);
+    context.dropResource(p);
     context.cacheResource(p);
 
     return p;

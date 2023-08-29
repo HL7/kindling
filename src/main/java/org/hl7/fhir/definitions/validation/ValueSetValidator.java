@@ -73,7 +73,7 @@ public class ValueSetValidator extends BaseValidator {
   private Map<String, CodeSystem> codeSystems = new HashMap<String, CodeSystem>();
 
   public ValueSetValidator(BuildWorkerContext context, List<String> fixups, Set<String> styleExemptions) {
-    super(context, null);
+    super(context, null, true);
     this.context = context;
     this.fixups = fixups;
     this.styleExemptions = styleExemptions;
