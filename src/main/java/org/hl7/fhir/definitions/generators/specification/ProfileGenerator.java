@@ -404,7 +404,7 @@ public class ProfileGenerator {
 
     containedSlices.clear();
 
-    addElementConstraintToSnapshot(p);
+    addElementConstraintToSnapshot(p, true);
     XhtmlNode div = new XhtmlNode(NodeType.Element, "div");
     div.addText("to do");
     p.setText(new Narrative());
@@ -470,11 +470,12 @@ public class ProfileGenerator {
 
   }
 
-  private void addElementConstraintToSnapshot(StructureDefinition sd) {
+  private void addElementConstraintToSnapshot(StructureDefinition sd, boolean isPrimitive) {
     for (ElementDefinition ed : sd.getSnapshot().getElement())
       addElementConstraint(sd, ed);
     for (ElementDefinition ed : sd.getSnapshot().getElement())
-      addExtensionConstraint(sd, ed);
+      if (isPrimitive && !ed.getPath().contains(".") )
+        addExtensionConstraint(sd, ed);
     // to help with unit tests..
     ElementDefinitionConstraintSorter edcs = new ElementDefinitionConstraintSorter(); 
     for (ElementDefinition ed : sd.getSnapshot().getElement()) {
@@ -639,7 +640,7 @@ public class ProfileGenerator {
     generateElementDefinition(p, ec3, ec);
 
     containedSlices.clear();
-    addElementConstraintToSnapshot(p);
+    addElementConstraintToSnapshot(p, false);
 
     XhtmlNode div = new XhtmlNode(NodeType.Element, "div");
     div.addText("to do");
@@ -777,7 +778,7 @@ public class ProfileGenerator {
 //    generateElementDefinition(ecB, ecA);
 
     containedSlices.clear();
-    addElementConstraintToSnapshot(p);
+    addElementConstraintToSnapshot(p, true);
 
     XhtmlNode div = new XhtmlNode(NodeType.Element, "div");
     div.addText("to do");
@@ -839,7 +840,7 @@ public class ProfileGenerator {
         generateElementDefinition(p, ed, getParent(ed, p.getSnapshot().getElement()));
 
     containedSlices.clear();
-    addElementConstraintToSnapshot(p);
+    addElementConstraintToSnapshot(p, false);
 
     p.getDifferential().getElement().get(0).getType().clear();
     p.getSnapshot().getElement().get(0).getType().clear();
@@ -1021,7 +1022,7 @@ public class ProfileGenerator {
     p.setText(new Narrative());
     p.getText().setStatus(NarrativeStatus.GENERATED);
     p.getText().setDiv(div);    
-    addElementConstraintToSnapshot(p);
+    addElementConstraintToSnapshot(p, false);
 
     new ProfileUtilities(context, issues, pkp).setIds(p, false);
     checkHasTypes(p);
@@ -1153,7 +1154,7 @@ public class ProfileGenerator {
       }
     }
     containedSlices.clear();
-    addElementConstraintToSnapshot(p);
+    addElementConstraintToSnapshot(p, false);
 
     p.getDifferential().getElement().get(0).getType().clear();
     p.getSnapshot().getElement().get(0).getType().clear();
@@ -1285,7 +1286,7 @@ public class ProfileGenerator {
 
     p.getDifferential().getElement().get(0).getType().clear();
     p.getSnapshot().getElement().get(0).getType().clear();
-    addElementConstraintToSnapshot(p);
+    addElementConstraintToSnapshot(p, false);
 
     XhtmlNode div = new XhtmlNode(NodeType.Element, "div");
     div.addText("to do");
@@ -2210,6 +2211,12 @@ public class ProfileGenerator {
       return ed;
     if (hasConstraint(ed, "ext-1")) 
       return ed;
+    if (ed.getPath().equals("Element")) {
+      return ed;
+    }
+    if (ed.getPath().equals("DataType")) {
+      return ed;
+    }
     
     ElementDefinitionConstraintComponent inv = ed.addConstraint();
     inv.setKey("ext-1");
@@ -2700,7 +2707,7 @@ public class ProfileGenerator {
     // first, the differential
     p.setSnapshot(new StructureDefinitionSnapshotComponent());
     defineElement(null, p, p.getSnapshot().getElement(), r.getRoot(), r.getRoot().getName(), containedSlices, new ArrayList<ProfileGenerator.SliceHandle>(), SnapShotMode.None, true, "Element", "Element", true);
-    addElementConstraintToSnapshot(p);
+    addElementConstraintToSnapshot(p, false);
 
     XhtmlNode div = new XhtmlNode(NodeType.Element, "div");
     div.addText("to do");
