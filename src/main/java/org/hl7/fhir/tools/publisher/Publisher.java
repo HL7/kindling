@@ -6583,7 +6583,7 @@ public class Publisher implements URIResolver, SectionNumberer {
 
       page.log("Validating "+filesToValidate.size()+" files", LogMessageType.Process);
       
-      for (String n : Utilities.sorted(filesToValidate.keySet())) {
+      for (String n : Utilities.sortedCaseInsensitive(filesToValidate.keySet())) {
         ValidationInformation vi = filesToValidate.get(n);
         if (vi.getExample() == null) {
         ei.validate(n, vi.getResourceName());

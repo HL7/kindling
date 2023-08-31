@@ -10527,7 +10527,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
       MemoryMXBean mem = ManagementFactory.getMemoryMXBean();
       // mem.gc();
       long used = mem.getHeapMemoryUsage().getUsed() / (1024 * 1024);
-      System.out.println(String.format("%1$-74s", content)+" "+String.format("%1$5s", Float.toString(gap))+" "+String.format("%1$3s", Long.toString(secs))+"sec "+String.format("%1$4s", Long.toString(used))+"MB");
+      System.out.println(String.format("%1$-74s", content)+" "+String.format("%1$8s", Float.toString(gap))+" "+String.format("%1$3s", Long.toString(secs))+"sec "+String.format("%1$4s", Long.toString(used))+"MB");
     } else
       System.out.println(content);
   }

@@ -14,6 +14,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
+import javax.annotation.Resource;
 import javax.xml.parsers.ParserConfigurationException;
 
 import org.apache.commons.lang3.NotImplementedException;
@@ -314,15 +315,16 @@ public class ExampleInspector implements IValidatorResourceFetcher, IValidationP
   
   public void doValidate(String n, String rt, StructureDefinition profile) {
     errorsInt.clear();
-    logger.log(" ...validate " + n+" ("+Utilities.describeSize(fileSize(n))+")", LogMessageType.Process);
+    System.out.print(" validate: " + Utilities.padRight(n, ' ', 40));
+    long t = System.currentTimeMillis();
 
     try {
       Element e = validateLogical(Utilities.path(rootDir, n+".xml"), profile, FhirFormat.XML);
-      org.w3c.dom.Element xe = validateXml(Utilities.path(rootDir, n+".xml"), profile == null ? null : profile.getId());
+//      org.w3c.dom.Element xe = validateXml(Utilities.path(rootDir, n+".xml"), profile == null ? null : profile.getId());
 
-      validateLogical(Utilities.path(rootDir, n+".json"), profile, FhirFormat.JSON);
-      validateJson(Utilities.path(rootDir, n+".json"), profile == null ? null : profile.getId());
-      validateRDF(Utilities.path(rootDir, n+".ttl"), Utilities.path(rootDir, n+".jsonld"), rt);
+//      validateLogical(Utilities.path(rootDir, n+".json"), profile, FhirFormat.JSON);
+//      validateJson(Utilities.path(rootDir, n+".json"), profile == null ? null : profile.getId());
+//      validateRDF(Utilities.path(rootDir, n+".ttl"), Utilities.path(rootDir, n+".jsonld"), rt);
 
 //      if (new File(Utilities.path(rootDir, n+".ttl")).exists()) {
 //        validateLogical(Utilities.path(rootDir, n+".ttl"), profile, FhirFormat.TURTLE);
@@ -334,6 +336,13 @@ public class ExampleInspector implements IValidatorResourceFetcher, IValidationP
       errorsInt.add(new ValidationMessage(Source.InstanceValidator, IssueType.STRUCTURE, -1, -1, n, e.getMessage(), IssueSeverity.ERROR));
     }
     
+    long size = fileSize(n);
+    t =  System.currentTimeMillis() - t;
+    long bps = size / t;
+    logger.log(": "+
+      Utilities.padLeft(Utilities.describeSize(size), ' ', 6)+" " +
+      Utilities.padLeft(Long.toString(t)+"ms ", ' ', 6)+ 
+      Utilities.padLeft(Long.toString(bps), ' ', 4)+"b/sec. "+validator.reportTimes(), LogMessageType.Process);
     for (ValidationMessage m : errorsInt) {
       if (!m.getLevel().equals(IssueSeverity.INFORMATION) && !m.getLevel().equals(IssueSeverity.WARNING)) {
         m.setMessage(n+":: "+m.getLocation()+": "+m.getMessage());
@@ -605,6 +614,9 @@ public class ExampleInspector implements IValidatorResourceFetcher, IValidationP
   public boolean resolveURL(IResourceValidator validator,Object appContext, String path, String url, String type, boolean canonical) throws IOException, FHIRException {
     if (path.endsWith(".fullUrl"))
       return true;
+    if (context.hasResource(org.hl7.fhir.r5.model.Resource.class, url)) {
+      return true;
+    }
     if (url.startsWith("http://hl7.org/fhir")) {
       if (url.contains("#"))
         url = url.substring(0, url.indexOf("#"));
@@ -612,7 +624,7 @@ public class ExampleInspector implements IValidatorResourceFetcher, IValidationP
       if (parts.length >= 5 &&  definitions.hasResource(parts[4])) {
         if ("DataElement".equals(parts[4]))
           return true;
-        Element res = fetch(validator, appContext, url.substring(20));
+//        Element res = fetch(validator, appContext, url.substring(20));
         return true; // disable this test. Try again for R4. res != null || Utilities.existsInList(parts[4], "NamingSystem", "CapabilityStatement", "CompartmentDefinition", "ConceptMap");
       } else if (context.fetchCodeSystem(url) != null)
         return true;

@@ -966,7 +966,7 @@ public class ProfileGenerator {
     inv.setSeverity(ConstraintSeverity.ERROR);
     inv.setHuman(pt.getInvariant().getEnglish());
     if (!"n/a".equals(pt.getInvariant().getExpression())) {
-      fpUsages.add(new FHIRPathUsage(pt.getName(), pt.getName(), pt.getName(), null, pt.getInvariant().getExpression()));
+      fpUsages.add(new FHIRPathUsage(pt.getName(), pt.getBaseType(), pt.getBaseType(), null, pt.getInvariant().getExpression()));
       inv.setExpression(pt.getInvariant().getExpression());
     }
     e.getConstraint().add(inv);
@@ -2180,6 +2180,8 @@ public class ProfileGenerator {
     if (hasSystemType(ed))
       return ed;
     if (isResource(ed))
+      return ed;
+    if (ed.getPath().equals("Base"))
       return ed;
     if (hasConstraint(ed, "ele-1")) 
       return ed;
