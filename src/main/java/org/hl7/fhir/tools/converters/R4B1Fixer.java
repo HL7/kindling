@@ -12,8 +12,6 @@ import java.util.List;
 import java.util.Set;
 
 import org.hl7.fhir.exceptions.FHIRException;
-import org.hl7.fhir.tools.converters.R4B1Fixer.OIDMapping;
-import org.hl7.fhir.tools.converters.R4B1Fixer.OIDMappingsSorter;
 import org.hl7.fhir.utilities.CSVReader;
 import org.hl7.fhir.utilities.TextFile;
 import org.hl7.fhir.utilities.Utilities;
