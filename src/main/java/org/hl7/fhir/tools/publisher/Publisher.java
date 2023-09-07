@@ -2103,15 +2103,14 @@ public class Publisher implements URIResolver, SectionNumberer {
         json.compose(new FileOutputStream(Utilities.path(page.getFolders().dstDir, baseFileName + ".canonical.json")), r);
       }
       if (showTtl) {
-        IParser rdf = new RdfParser().setOutputStyle(OutputStyle.PRETTY);
-        rdf.compose(new FileOutputStream(Utilities.path(page.getFolders().dstDir, baseFileName + ".ttl")), r);
+        resource2Ttl(r, baseFileName);
       }
     }
     if (description!=null) {
       cloneToXhtml(baseFileName, description, false, pageType, crumbTitle, null, wg, r.fhirType()+"/"+r.getId());
       jsonToXhtml(baseFileName, description, resource2Json(r), pageType, crumbTitle, null, wg, r.fhirType()+"/"+r.getId());
       if (showTtl)
-        ttlToXhtml(baseFileName, description, resource2Ttl(r), pageType, crumbTitle, null, wg, r.fhirType()+"/"+r.getId());
+        ttlToXhtml(baseFileName, description, resource2Ttl(r, baseFileName), pageType, crumbTitle, null, wg, r.fhirType()+"/"+r.getId());
     }
   };
     
@@ -4473,16 +4472,18 @@ public class Publisher implements URIResolver, SectionNumberer {
     return new String(bytes.toByteArray());
   }
 
-  private String resource2Ttl(Resource r) throws Exception {
+  private String resource2Ttl(Resource r, String baseFileName) throws Exception {
     ByteArrayOutputStream bytes = new ByteArrayOutputStream();
     if (VersionUtilities.isR4BVer(page.getVersion().toCode())) {
       org.hl7.fhir.r4.formats.IParser rdf = new org.hl7.fhir.r4.formats.RdfParser().setOutputStyle(org.hl7.fhir.r4.formats.IParser.OutputStyle.PRETTY);
 //      rdf.setSuppressXhtml("Snipped for Brevity");
       rdf.compose(bytes, VersionConvertorFactory_40_50.convertResource(r));
     } else {
-      IParser rdf = new RdfParser().setOutputStyle(OutputStyle.PRETTY);
-//      rdf.setSuppressXhtml("Snipped for Brevity");
-      rdf.compose(bytes, r);      
+      // TODO get r5.elementmodel.Element direct from XML serialization (?) instead of re-parsing file
+        ParserBase xp = Manager.makeParser(page.getWorkerContext(), FhirFormat.XML);
+        org.hl7.fhir.r5.elementmodel.Element exe = xp.parseSingle(new FileInputStream(Utilities.path(page.getFolders().dstDir, baseFileName + ".xml")));
+        ParserBase tp = Manager.makeParser(page.getWorkerContext(), FhirFormat.TURTLE);
+        tp.compose(exe, bytes, OutputStyle.PRETTY, null);      
     }
     bytes.close();
     return new String(bytes.toByteArray());
@@ -5547,7 +5548,7 @@ public class Publisher implements URIResolver, SectionNumberer {
       saveAsPureHtml(rp, new FileOutputStream(page.getFolders().dstDir + "html" + File.separator + n + ".html"));
       cloneToXhtml(n + ".profile", "StructureDefinition for " + n, true, "profile-instance:resource:" + root.getName(), "Profile", root, root.getWg(), rp.fhirType()+"/"+rp.getId());
       jsonToXhtml(n + ".profile", "StructureDefinition for " + n, resource2Json(rp), "profile-instance:resource:" + root.getName(), "Profile", root, root.getWg(), rp.fhirType()+"/"+rp.getId());
-      ttlToXhtml(n + ".profile", "StructureDefinition for " + n, resource2Ttl(rp), "profile-instance:resource:" + root.getName(), "Profile", root, root.getWg(), rp.fhirType()+"/"+rp.getId());
+      ttlToXhtml(n + ".profile", "StructureDefinition for " + n, resource2Ttl(rp, fName), "profile-instance:resource:" + root.getName(), "Profile", root, root.getWg(), rp.fhirType()+"/"+rp.getId());
       String shex = new ShExGenerator(page.getWorkerContext()).generate(HTMLLinkPolicy.NONE, rp);
       TextFile.stringToFile(shex, page.getFolders().dstDir + n+".shex");
       shexToXhtml(n, "ShEx statement for " + n, shex, "profile-instance:type:" + root.getName(), "Type", root, root.getWg(), rp.fhirType()+"/"+rp.getId());
