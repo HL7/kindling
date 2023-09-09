@@ -54,11 +54,7 @@ dependencies {
     implementation("ch.qos.logback", "logback-classic", "1.2.3")
     implementation("com.google.code.gson", "gson", "2.8.9")
     implementation("commons-beanutils","commons-beanutils")
-    constraints {
-        implementation("commons-beanutils:commons-beanutils:1.9.4") {
-            because("previous versions have a bug impacting this application")
-        }
-    }
+
     implementation("commons-codec", "commons-codec", "1.9")
     implementation("commons-discovery", "commons-discovery", "0.2")
     implementation("commons-httpclient", "commons-httpclient", "3.0.1")
@@ -149,6 +145,15 @@ dependencies {
 
     configurations.implementation {
         exclude(group = "xml-apis")
+    }
+
+    constraints {
+        implementation("commons-beanutils:commons-beanutils:1.9.4") {
+            because("previous versions have a bug impacting this application")
+        }
+        implementation("org.apache.jena:jena-shex:4.9.0") {
+            because("previous versions have a bug impacting this application")
+        }
     }
 }
 
