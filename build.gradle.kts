@@ -54,11 +54,7 @@ dependencies {
     implementation("ch.qos.logback", "logback-classic", "1.2.3")
     implementation("com.google.code.gson", "gson", "2.8.9")
     implementation("commons-beanutils","commons-beanutils")
-    constraints {
-        implementation("commons-beanutils:commons-beanutils:1.9.4") {
-            because("previous versions have a bug impacting this application")
-        }
-    }
+
     implementation("commons-codec", "commons-codec", "1.9")
     implementation("commons-discovery", "commons-discovery", "0.2")
     implementation("commons-httpclient", "commons-httpclient", "3.0.1")
@@ -112,15 +108,15 @@ dependencies {
     implementation("com.google.code.javaparser", "javaparser", "1.0.11")
     implementation("com.google.guava", "guava", "30.0-jre")
     implementation("com.damnhandy", "handy-uri-templates", "2.1.6")
-    implementation("es.weso", "schema_2.12", "0.1.98-SNAPSHOT")
-    implementation("es.weso", "shacl_2.12", "0.1.75")
-    implementation("es.weso", "shex_2.12", "0.1.91")
-    implementation("es.weso", "srdfjena_2.12", "0.1.101")
-    implementation("es.weso", "srdf_2.12", "0.1.101")
-    implementation("es.weso", "utils_2.12", "0.1.94")
-    implementation("es.weso", "rbe_2.12", "0.1.91")
-    implementation("es.weso", "typing_2.12", "0.1.94")
-    implementation("es.weso", "validating_2.12", "0.1.94")
+    implementation("es.weso", "schema_2.12", "0.2.2")
+    implementation("es.weso", "shacl_2.12", "0.1.83")
+    implementation("es.weso", "shex_2.12", "0.2.32")
+    implementation("es.weso", "srdfjena_2.12", "0.1.124")
+    implementation("es.weso", "srdf_2.12", "0.1.124")
+    implementation("es.weso", "utils_2.12", "0.2.25")
+    implementation("es.weso", "rbe_2.12", "0.2.32")
+    implementation("es.weso", "typing_2.12", "0.2.25")
+    implementation("es.weso", "validating_2.12", "0.2.25")
     implementation("org.antlr", "antlr4-runtime", "4.6")
     implementation("io.circe", "circe-core_2.11", "0.7.0-M2")
     implementation("com.atlassian.commonmark", "commonmark", "0.12.1")
@@ -149,6 +145,21 @@ dependencies {
 
     configurations.implementation {
         exclude(group = "xml-apis")
+    }
+
+    constraints {
+        implementation("commons-beanutils:commons-beanutils:1.9.4") {
+            because("previous versions have a bug impacting this application")
+        }
+        implementation("org.apache.jena:jena-shex:4.9.0") {
+            because("previous versions have a bug impacting this application")
+        }
+        implementation("org.apache.solr:solr-solrj:9.3.0") {
+            because("previous versions have a bug impacting this application")
+        }
+        implementation("org.apache.jena:jena-shacl:4.9.0") {
+            because("previous versions have a bug impacting this application")
+        }
     }
 }
 
