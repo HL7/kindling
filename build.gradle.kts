@@ -157,6 +157,9 @@ dependencies {
         implementation("org.apache.solr:solr-solrj:9.3.0") {
             because("previous versions have a bug impacting this application")
         }
+        implementation("org.apache.jena:jena-shacl:4.9.0") {
+            because("previous versions have a bug impacting this application")
+        }
     }
 }
 
