@@ -137,8 +137,8 @@ dependencies {
     implementation("org.slf4j", "slf4j-api", property("slf4jVersion").toString())
     implementation("org.apache.logging.log4j", "log4j", property("log4jVersion").toString())
     implementation("org.apache.logging.log4j", "log4j-core", property("log4jVersion").toString())
-    implementation("com.squareup.okhttp3", "okhttp", "4.9.0")
-    implementation("com.squareup.okio", "okio", "2.9.0")
+    implementation("com.squareup.okhttp3", "okhttp", "4.11.0")
+    implementation("com.squareup.okio", "okio")
     implementation("org.jetbrains.kotlin", "kotlin-stdlib", "1.6.10")
 
     testImplementation("org.junit.jupiter","junit-jupiter","5.8.2")
@@ -158,6 +158,12 @@ dependencies {
             because("previous versions have a bug impacting this application")
         }
         implementation("org.apache.jena:jena-shacl:4.9.0") {
+            because("previous versions have a bug impacting this application")
+        }
+        implementation("com.squareup.okio:okio:3.4.0") {
+            because("previous versions have a bug impacting this application")
+        }
+        implementation("com.squareup.okio:okio-jvm:3.4.0") {
             because("previous versions have a bug impacting this application")
         }
     }
