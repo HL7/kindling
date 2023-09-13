@@ -337,7 +337,7 @@ public class ExampleInspector implements IValidatorResourceFetcher, IValidationP
     
     long size = fileSize(n);
     t =  System.currentTimeMillis() - t;
-    long bps = size / t;
+    long bps = t == 0 ? 0 : size / t;
     logger.log(": "+
       Utilities.padLeft(Utilities.describeSize(size), ' ', 7)+" " +
       Utilities.padLeft(Long.toString(t)+"ms ", ' ', 7)+ 
