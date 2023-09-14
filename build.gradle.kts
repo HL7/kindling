@@ -166,6 +166,9 @@ dependencies {
         implementation("com.squareup.okio:okio-jvm:3.4.0") {
             because("previous versions have a bug impacting this application")
         }
+        implementation("org.apache.zookeeper:zookeeper:3.9.0") {
+            because("previous versions have a bug impacting this application")
+        }
     }
 }
 
