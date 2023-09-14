@@ -50,7 +50,7 @@ dependencies {
     implementation("ca.uhn.hapi.fhir", "org.hl7.fhir.r5", property("fhirCoreVersion").toString())
     implementation("ca.uhn.hapi.fhir", "org.hl7.fhir.convertors", property("fhirCoreVersion").toString())
     implementation("ca.uhn.hapi.fhir", "org.hl7.fhir.validation", property("fhirCoreVersion").toString())
-    implementation("org.eclipse.jgit", "org.eclipse.jgit", "5.13.0.202109080827-r")
+    implementation("org.eclipse.jgit", "org.eclipse.jgit", "6.7.0.202309050840-r")
     implementation("ch.qos.logback", "logback-classic", "1.2.3")
     implementation("com.google.code.gson", "gson", "2.8.9")
     implementation("commons-beanutils","commons-beanutils")
