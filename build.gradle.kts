@@ -104,7 +104,7 @@ dependencies {
     implementation("org.slf4s", "slf4s-api_2.11", "1.7.13")
     implementation("com.typesafe.scala-logging", "scala-logging_2.12", "3.5.0")
     implementation("com.github.everit-org.json-schema", "org.everit.json.schema", "1.9.1")
-    implementation("org.json", "json", "20230227")
+    implementation("org.json", "json", "20230618")
     implementation("com.google.code.javaparser", "javaparser", "1.0.11")
     implementation("com.google.guava", "guava", "30.0-jre")
     implementation("com.damnhandy", "handy-uri-templates", "2.1.6")
