@@ -1481,7 +1481,7 @@ public class ProfileGenerator {
           boolean found = false;
           for (Enumeration<VersionIndependentResourceTypesAll> st : sp.getTarget())
             found = found || st.asStringValue().equals(resourceName);
-          if (!found)
+          if (!found && VersionIndependentResourceTypesAll.isValidCode(resourceName))
             sp.addTarget(VersionIndependentResourceTypesAll.fromCode(resourceName));
         }
       }
@@ -1489,8 +1489,8 @@ public class ProfileGenerator {
         boolean found = false;
         for (Enumeration<VersionIndependentResourceTypesAll> st : sp.getTarget())
           found = found || st.asStringValue().equals(target);
-        if (!found)
-          sp.addTarget(VersionIndependentResourceTypesAll.fromCode(target));
+          if (!found && VersionIndependentResourceTypesAll.isValidCode(target))
+            sp.addTarget(VersionIndependentResourceTypesAll.fromCode(target));
       }
     }
     context.cacheResource(sp);
