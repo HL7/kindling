@@ -1041,17 +1041,20 @@ public class Publisher implements URIResolver, SectionNumberer {
               String tn = tail(t);
               if (tn.equals("Resource")) {
                 for (String s : cu.getConcreteResources()) {
-                  if (!sp.hasTarget(VersionIndependentResourceTypesAll.fromCode(s))) {
+                  if (VersionIndependentResourceTypesAll.isValidCode(s)
+                  &&  !sp.hasTarget(VersionIndependentResourceTypesAll.fromCode(s))) {
                     sp.addTarget(VersionIndependentResourceTypesAll.fromCode(s));
                   }
                 }
               } else if (tn.equals("CanonicalResource")) {
                 for (String s : cu.getCanonicalResourceNames()) {
-                  if (!sp.hasTarget(VersionIndependentResourceTypesAll.fromCode(s))) {
+                  if (VersionIndependentResourceTypesAll.isValidCode(s)
+                  &&  !sp.hasTarget(VersionIndependentResourceTypesAll.fromCode(s))) {
                     sp.addTarget(VersionIndependentResourceTypesAll.fromCode(s));
                   }
                 }
-              } else if (!sp.hasTarget(VersionIndependentResourceTypesAll.fromCode(tn))) { 
+              } else if (VersionIndependentResourceTypesAll.isValidCode(tn)
+                  &&  !sp.hasTarget(VersionIndependentResourceTypesAll.fromCode(tn))) { 
                 sp.addTarget(VersionIndependentResourceTypesAll.fromCode(tn));
               }
             }
