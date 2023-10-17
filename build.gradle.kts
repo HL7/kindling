@@ -94,7 +94,7 @@ dependencies {
     implementation("org.apache.jena", "jena-arq", property("apacheJenaVersion").toString())
     implementation("org.apache.jena", "jena-iri", property("apacheJenaVersion").toString())
     implementation("org.apache.jena", "jena-base", property("apacheJenaVersion").toString())
-    implementation("org.apache.jena", "jena-shaded-guava", "4.8.0")
+    implementation("org.apache.jena", "jena-shaded-guava", "4.9.0")
     implementation("xerces", "xercesImpl", "2.12.2")
     implementation("com.fasterxml.jackson.core", "jackson-core", property("jacksonVersion").toString())
     implementation("com.fasterxml.jackson.core", "jackson-databind", property("jacksonVersion").toString())
