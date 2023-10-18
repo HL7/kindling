@@ -169,6 +169,13 @@ dependencies {
         implementation("org.apache.zookeeper:zookeeper:3.9.1") {
             because("previous versions have a bug impacting this application")
         }
+        implementation("org.eclipse.jetty.http2:http2-client:11.0.17") {
+            because("previous versions have a bug impacting this application")
+        }
+        implementation("org.eclipse.jetty.http2:http2-http-client-transport:11.0.17") {
+            because("previous versions have a bug impacting this application")
+        }
+
     }
 }
 
