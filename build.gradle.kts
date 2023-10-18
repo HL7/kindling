@@ -106,7 +106,7 @@ dependencies {
     implementation("com.github.everit-org.json-schema", "org.everit.json.schema", "1.9.1")
     implementation("org.json", "json", "20231013")
     implementation("com.google.code.javaparser", "javaparser", "1.0.11")
-    implementation("com.google.guava", "guava", "30.0-jre")
+    implementation("com.google.guava", "guava", "32.1.3-jre")
     implementation("com.damnhandy", "handy-uri-templates", "2.1.6")
     implementation("es.weso", "schema_2.12", "0.2.2")
     implementation("es.weso", "shacl_2.12", "0.1.83")
