@@ -178,6 +178,9 @@ dependencies {
         implementation("io.netty:netty-handler:4.1.100.Final") {
             because("previous versions have a bug impacting this application")
         }
+        implementation("io.netty:netty-transport-classes-epoll:4.1.100.Final") {
+            because("previous versions have a bug impacting this application")
+        }
     }
 }
 
