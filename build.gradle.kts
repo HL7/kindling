@@ -175,7 +175,9 @@ dependencies {
         implementation("org.eclipse.jetty.http2:http2-http-client-transport:11.0.17") {
             because("previous versions have a bug impacting this application")
         }
-
+        implementation("io.netty:netty-handler:4.1.100.Final") {
+            because("previous versions have a bug impacting this application")
+        }
     }
 }
 
