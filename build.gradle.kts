@@ -104,9 +104,9 @@ dependencies {
     implementation("org.slf4s", "slf4s-api_2.11", "1.7.13")
     implementation("com.typesafe.scala-logging", "scala-logging_2.12", "3.5.0")
     implementation("com.github.everit-org.json-schema", "org.everit.json.schema", "1.9.1")
-    implementation("org.json", "json", "20230618")
+    implementation("org.json", "json", "20231013")
     implementation("com.google.code.javaparser", "javaparser", "1.0.11")
-    implementation("com.google.guava", "guava", "30.0-jre")
+    implementation("com.google.guava", "guava", "32.1.3-jre")
     implementation("com.damnhandy", "handy-uri-templates", "2.1.6")
     implementation("es.weso", "schema_2.12", "0.2.2")
     implementation("es.weso", "shacl_2.12", "0.1.83")
@@ -154,7 +154,7 @@ dependencies {
         implementation("org.apache.jena:jena-shex:4.9.0") {
             because("previous versions have a bug impacting this application")
         }
-        implementation("org.apache.solr:solr-solrj:9.3.0") {
+        implementation("org.apache.solr:solr-solrj:9.4.0") {
             because("previous versions have a bug impacting this application")
         }
         implementation("org.apache.jena:jena-shacl:4.9.0") {
@@ -166,7 +166,19 @@ dependencies {
         implementation("com.squareup.okio:okio-jvm:3.4.0") {
             because("previous versions have a bug impacting this application")
         }
-        implementation("org.apache.zookeeper:zookeeper:3.9.0") {
+        implementation("org.apache.zookeeper:zookeeper:3.9.1") {
+            because("previous versions have a bug impacting this application")
+        }
+        implementation("org.eclipse.jetty.http2:http2-client:11.0.17") {
+            because("previous versions have a bug impacting this application")
+        }
+        implementation("org.eclipse.jetty.http2:http2-http-client-transport:11.0.17") {
+            because("previous versions have a bug impacting this application")
+        }
+        implementation("io.netty:netty-handler:4.1.100.Final") {
+            because("previous versions have a bug impacting this application")
+        }
+        implementation("io.netty:netty-transport-classes-epoll:4.1.100.Final") {
             because("previous versions have a bug impacting this application")
         }
     }
