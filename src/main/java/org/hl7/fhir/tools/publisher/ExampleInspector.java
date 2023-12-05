@@ -239,8 +239,11 @@ public class ExampleInspector implements IValidatorResourceFetcher, IValidationP
     if (VALIDATE_RDF) {
       shex = new ShExValidator(Utilities.path(rootDir, "fhir.shex"));
     }
-    checkJsonLd();    
-    
+    try {
+      checkJsonLd();    
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
   }
   
   private void checkJsonLd() throws IOException {

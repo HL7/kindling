@@ -3127,8 +3127,10 @@ public class Publisher implements URIResolver, SectionNumberer {
 //      ed.setWebPath((ig.isCore() ? "" : ig.getCode()+File.separator) + filename+".html");
 //    }
 
+    page.log(" ...diffEngine", LogMessageType.Process);
     page.updateDiffEngineDefinitions();
-    
+
+    page.log(" ...valuesets (2)", LogMessageType.Process);
     loadValueSets2();
     page.log(" ...extensions", LogMessageType.Process);
 
@@ -6862,10 +6864,13 @@ public class Publisher implements URIResolver, SectionNumberer {
   private void generateValueSetsPart2() throws Exception {
 
     for (ValueSet vs : page.getDefinitions().getBoundValueSets().values()) {
+
+      page.log(" ...value set: "+vs.getId(), LogMessageType.Process);
       generateValueSetPart2(vs);
     }
     for (String s : page.getDefinitions().getExtraValuesets().keySet()) {
       if (!s.startsWith("http:")) {
+        page.log(" ...value set: "+s, LogMessageType.Process);
         ValueSet vs = page.getDefinitions().getExtraValuesets().get(s);
         if (!page.getDefinitions().getBoundValueSets().containsKey(vs.getUrl())) {
           generateValueSetPart2(vs);
@@ -7005,8 +7010,10 @@ private String csCounter() {
 //  }
 
   private void generateValueSetsPart1() throws Exception {
-    page.log(" ...value sets", LogMessageType.Process);
+    page.log(" ...value sets (1)", LogMessageType.Process);
     for (ValueSet vs : page.getDefinitions().getBoundValueSets().values()) {
+
+      page.log(" ...value set: "+vs.getId(), LogMessageType.Process);
       KindlingUtilities.makeUniversal(vs);
       if (!vs.hasText()) {
         vs.setText(new Narrative());

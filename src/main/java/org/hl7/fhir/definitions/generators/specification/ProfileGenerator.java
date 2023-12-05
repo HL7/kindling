@@ -2572,6 +2572,7 @@ public class ProfileGenerator {
     opd.setDescription(preProcessMarkdown(op.getDoco(), "Operation Documentation"));
     opd.setStatus(op.getStandardsStatus() == StandardsStatus.NORMATIVE ?  PublicationStatus.ACTIVE : PublicationStatus.DRAFT);
     opd.setDate(genDate.getTime());
+    CanonicalResourceUtilities.setHl7WG(opd, rd.getWg().getCode());
     if (op.getKind().toLowerCase().equals("operation"))
       opd.setKind(OperationKind.OPERATION);
     else if (op.getKind().toLowerCase().equals("query"))

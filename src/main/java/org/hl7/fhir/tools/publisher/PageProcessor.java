@@ -245,6 +245,7 @@ import org.hl7.fhir.utilities.StandardsStatus;
 import org.hl7.fhir.utilities.TextFile;
 import org.hl7.fhir.utilities.Utilities;
 import org.hl7.fhir.utilities.VersionUtilities;
+import org.hl7.fhir.utilities.Logger.LogMessageType;
 import org.hl7.fhir.utilities.npm.FilesystemPackageCacheManager;
 import org.hl7.fhir.utilities.npm.NpmPackage;
 import org.hl7.fhir.utilities.validation.ValidationMessage;
@@ -2315,6 +2316,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
         if (vs.hasUserData("expansion"))
           evs = (ValueSet) vs.getUserData("expansion");
         else {
+          log(" ... expand vs "+vs.getVersionedUrl(), LogMessageType.Process);
           ValueSetExpansionOutcome vse = getWorkerContext().expandVS(vs, true, false);
           if (vse.getValueset() != null) {
             evs = vse.getValueset();
