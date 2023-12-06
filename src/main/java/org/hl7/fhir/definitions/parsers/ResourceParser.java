@@ -83,6 +83,7 @@ import org.hl7.fhir.r5.terminologies.CodeSystemUtilities;
 import org.hl7.fhir.r5.terminologies.ConceptMapUtilities;
 import org.hl7.fhir.r5.terminologies.ValueSetUtilities;
 import org.hl7.fhir.r5.utils.BuildExtensions;
+import org.hl7.fhir.r5.utils.CanonicalResourceUtilities;
 import org.hl7.fhir.r5.utils.ToolingExtensions;
 import org.hl7.fhir.tools.publisher.BuildWorkerContext;
 import org.hl7.fhir.utilities.CSFile;
@@ -233,12 +234,14 @@ public class ResourceParser {
           sd.setWebPath("extension-"+sd.getId()+".html");
           sd.setVersion(context.getVersion());
           p.getExtensions().add(sd);
+          CanonicalResourceUtilities.setHl7WG(sd, wg.getCode());
           context.cacheResource(sd);
         } else {
           ConstraintStructure tp = processProfile(rid, ig.getId().substring(ig.getId().indexOf("-")+1), res, wg);
           sd = tp.getResource();
           sd.setVersion(context.getVersion());
           sd.setWebPath(sd.getId()+".html");
+          CanonicalResourceUtilities.setHl7WG(sd, wg.getCode());
           p.getProfiles().add(tp); 
         }
         if (ProfileUtilities.isExtensionDefinition(sd)) {

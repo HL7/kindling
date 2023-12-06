@@ -25,6 +25,7 @@ import org.hl7.fhir.r5.model.ValueSet.ConceptReferenceComponent;
 import org.hl7.fhir.r5.model.ValueSet.ConceptSetComponent;
 import org.hl7.fhir.r5.model.ValueSet.ValueSetComposeComponent;
 import org.hl7.fhir.r5.terminologies.CodeSystemUtilities;
+import org.hl7.fhir.r5.utils.CanonicalResourceUtilities;
 import org.hl7.fhir.r5.utils.ToolingExtensions;
 import org.hl7.fhir.tools.publisher.KindlingUtilities;
 import org.hl7.fhir.utilities.StandardsStatus;
@@ -167,7 +168,7 @@ public class CodeListToValueSetParser {
             cc.addDesignation().setLanguage(ct.substring(8)).setValue(sheet.getColumn(row, ct));       
       }
     }
-
+    CanonicalResourceUtilities.setHl7WG(valueSet);
     if (!Utilities.noString(v2map)) {
       generateConceptMapV2(v2map, valueSet, cs);
     }

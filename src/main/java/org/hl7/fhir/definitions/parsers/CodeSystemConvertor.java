@@ -33,6 +33,8 @@ import org.hl7.fhir.r5.model.PackageInformation;
 import org.hl7.fhir.r5.model.UsageContext;
 import org.hl7.fhir.r5.model.ValueSet;
 import org.hl7.fhir.r5.terminologies.CodeSystemUtilities;
+import org.hl7.fhir.r5.utils.CanonicalResourceUtilities;
+import org.hl7.fhir.r5.utils.ToolingExtensions;
 import org.hl7.fhir.utilities.Utilities;
 
 public class CodeSystemConvertor {
@@ -112,6 +114,9 @@ public class CodeSystemConvertor {
           ctgt.addTelecom(cc);
       }
     }
+    CanonicalResourceUtilities.setHl7WG(vs);
+    String wg = ToolingExtensions.readStringExtension(vs, ToolingExtensions.EXT_WORKGROUP);
+    CanonicalResourceUtilities.setHl7WG(cs, wg);
     if (!cs.hasDate()) {
       cs.setDate(vs.getDate());
     }
