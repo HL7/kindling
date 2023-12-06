@@ -238,6 +238,7 @@ import org.hl7.fhir.r5.renderers.utils.BaseWrappers.ResourceWrapper;
 import org.hl7.fhir.r5.renderers.utils.DOMWrappers;
 import org.hl7.fhir.r5.renderers.utils.ElementWrappers;
 import org.hl7.fhir.r5.renderers.utils.RenderingContext;
+import org.hl7.fhir.r5.renderers.utils.RenderingContext.GenerationRules;
 import org.hl7.fhir.r5.terminologies.CodeSystemUtilities;
 import org.hl7.fhir.r5.terminologies.ValueSetUtilities;
 import org.hl7.fhir.r5.terminologies.expansion.ValueSetExpansionOutcome;
@@ -2338,6 +2339,7 @@ public class Publisher implements URIResolver, SectionNumberer {
 
     if (register) {
       RenderingContext lrc = page.getRc().copy().setLocalPrefix("").setTooCostlyNoteEmpty(PageProcessor.TOO_MANY_CODES_TEXT_EMPTY).setTooCostlyNoteNotEmpty(PageProcessor.TOO_MANY_CODES_TEXT_NOT_EMPTY);
+      lrc.setRules(GenerationRules.VALID_RESOURCE);
       RendererFactory.factory(cpbs, lrc).render(cpbs);
       String fName = "capabilitystatement-" + name;
       fixCanonicalResource(cpbs, fName);
@@ -2348,6 +2350,7 @@ public class Publisher implements URIResolver, SectionNumberer {
     }
     if (buildFlags.get("all")) {
       RenderingContext lrc = page.getRc().copy().setLocalPrefix("");
+      lrc.setRules(GenerationRules.VALID_RESOURCE);
       RendererFactory.factory(cpbs, lrc).render(cpbs);
       deletefromFeed(ResourceType.CapabilityStatement, name, page.getResourceBundle());
       addToResourceFeed(cpbs, page.getResourceBundle());
@@ -5167,7 +5170,7 @@ public class Publisher implements URIResolver, SectionNumberer {
             wantSave = updateVersion(((CapabilityStatement) res).getText().getDiv());
         }
         if (!res.hasText() || !res.getText().hasDiv()) {
-          RendererFactory.factory(res, lrc).render(res);
+          RendererFactory.factory(res, lrc.copy().setRules(GenerationRules.VALID_RESOURCE)).render(res);
         }
         if (wantSave) {
           if (VersionUtilities.isR4BVer(page.getVersion().toCode())) {

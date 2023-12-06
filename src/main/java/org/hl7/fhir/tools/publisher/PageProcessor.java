@@ -2316,7 +2316,6 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
         if (vs.hasUserData("expansion"))
           evs = (ValueSet) vs.getUserData("expansion");
         else {
-          log(" ... expand vs "+vs.getVersionedUrl(), LogMessageType.Process);
           ValueSetExpansionOutcome vse = getWorkerContext().expandVS(vs, true, false);
           if (vse.getValueset() != null) {
             evs = vse.getValueset();
