@@ -78,9 +78,16 @@ dependencies {
     implementation("org.apache.httpcomponents.core5", "httpcore5", property("apacheHttpcomponents5Version").toString())
     implementation("org.apache.httpcomponents", "httpmime", property("apacheHttpcomponentsVersion").toString())
     implementation("org.apache.httpcomponents", "httpclient-cache", property("apacheHttpcomponentsVersion").toString())
-    implementation("org.eclipse.emf", "org.eclipse.emf.ecore", "2.9.2-v20131212-0545")
-    implementation("org.eclipse.emf", "org.eclipse.emf.ecore.xmi", "2.9.1-v20131212-0545")
-    implementation("org.eclipse.emf", "org.eclipse.emf.common", "2.9.2-v20131212-0545")
+
+    /*These dependencies are interrelated, and do not share the same version. To evaluate the appropriate versions,
+    https://mvnrepository.com/ was used, and the following dependencies pattern was observed.
+     org.eclipse.emf.ecore depends on org.eclipse.emf.common
+     org.eclipse.emf.ecore.xmi depends on org.eclipse.emf.ecore
+    */
+    implementation("org.eclipse.emf", "org.eclipse.emf.ecore", "2.35.0")
+    implementation("org.eclipse.emf", "org.eclipse.emf.ecore.xmi", "2.36.0")
+    implementation("org.eclipse.emf", "org.eclipse.emf.common", "2.29.0")
+
     implementation("org.apache.poi", "poi", property("apachePoiVersion").toString())
     implementation("org.apache.poi", "poi-ooxml", property("apachePoiVersion").toString())
     implementation("org.apache.xmlbeans", "xmlbeans", "3.1.0")
