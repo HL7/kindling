@@ -1448,7 +1448,15 @@ public class ProfileGenerator {
         }
         sp.setMultipleOr(false);
       } 
-      sp.addBase(VersionIndependentResourceTypesAll.fromCode(p.getType()));
+      if (VersionIndependentResourceTypesAll.isValidCode(p.getType())) {
+        sp.addBase(VersionIndependentResourceTypesAll.fromCode(p.getType()));
+      } else {
+        // TODO: This is a problem with R5 enum at this point. For now,
+        // we leave it blank, but we have to figure this out before getting 
+        // serious r=with R6 QA
+        // sp.addBaseElement().setValueAsString(p.getType());
+        
+      }
     } else {
       if (sp.getType() != getSearchParamType(spd.getType()))
         throw new FHIRException("Type mismatch on common parameter: expected "+sp.getType().toCode()+" but found "+getSearchParamType(spd.getType()).toCode());
