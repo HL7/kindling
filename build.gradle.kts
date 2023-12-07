@@ -62,7 +62,7 @@ dependencies {
     implementation("commons-logging", "commons-logging-api", "1.1")
     implementation("commons-logging", "commons-logging", "1.1.1")
     implementation("commons-net", "commons-net", "3.9")
-    implementation("org.apache.commons", "commons-compress", "1.21")
+    implementation("org.apache.commons", "commons-compress", "1.25.0")
     implementation("org.apache.commons", "commons-exec", "1.3")
     implementation("com.trilead", "trilead-ssh2", "1.0.0-build217")
     implementation("de.regnis.q.sequence", "sequence-library", "1.0.2")
