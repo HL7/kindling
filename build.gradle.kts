@@ -62,7 +62,7 @@ dependencies {
     implementation("commons-logging", "commons-logging-api", "1.1")
     implementation("commons-logging", "commons-logging", "1.1.1")
     implementation("commons-net", "commons-net", "3.9")
-    implementation("org.apache.commons", "commons-compress", "1.21")
+    implementation("org.apache.commons", "commons-compress", "1.25.0")
     implementation("org.apache.commons", "commons-exec", "1.3")
     implementation("com.trilead", "trilead-ssh2", "1.0.0-build217")
     implementation("de.regnis.q.sequence", "sequence-library", "1.0.2")
@@ -78,9 +78,16 @@ dependencies {
     implementation("org.apache.httpcomponents.core5", "httpcore5", property("apacheHttpcomponents5Version").toString())
     implementation("org.apache.httpcomponents", "httpmime", property("apacheHttpcomponentsVersion").toString())
     implementation("org.apache.httpcomponents", "httpclient-cache", property("apacheHttpcomponentsVersion").toString())
-    implementation("org.eclipse.emf", "org.eclipse.emf.ecore", "2.9.2-v20131212-0545")
-    implementation("org.eclipse.emf", "org.eclipse.emf.ecore.xmi", "2.9.1-v20131212-0545")
-    implementation("org.eclipse.emf", "org.eclipse.emf.common", "2.9.2-v20131212-0545")
+
+    /*These dependencies are interrelated, and do not share the same version. To evaluate the appropriate versions,
+    https://mvnrepository.com/ was used, and the following dependencies pattern was observed.
+     org.eclipse.emf.ecore depends on org.eclipse.emf.common
+     org.eclipse.emf.ecore.xmi depends on org.eclipse.emf.ecore
+    */
+    implementation("org.eclipse.emf", "org.eclipse.emf.ecore", "2.35.0")
+    implementation("org.eclipse.emf", "org.eclipse.emf.ecore.xmi", "2.36.0")
+    implementation("org.eclipse.emf", "org.eclipse.emf.common", "2.29.0")
+
     implementation("org.apache.poi", "poi", property("apachePoiVersion").toString())
     implementation("org.apache.poi", "poi-ooxml", property("apachePoiVersion").toString())
     implementation("org.apache.xmlbeans", "xmlbeans", "3.1.0")
@@ -103,7 +110,7 @@ dependencies {
     implementation("net.sf.saxon", "Saxon-HE", "9.5.1-5")
     implementation("org.slf4s", "slf4s-api_2.11", "1.7.13")
     implementation("com.typesafe.scala-logging", "scala-logging_2.12", "3.5.0")
-    implementation("com.github.everit-org.json-schema", "org.everit.json.schema", "1.9.1")
+    implementation("com.github.everit-org.json-schema", "org.everit.json.schema", "1.14.3")
     implementation("org.json", "json", "20231013")
     implementation("com.google.code.javaparser", "javaparser", "1.0.11")
     implementation("com.google.guava", "guava", "32.1.3-jre")
