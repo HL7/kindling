@@ -51,7 +51,7 @@ dependencies {
     implementation("ca.uhn.hapi.fhir", "org.hl7.fhir.convertors", property("fhirCoreVersion").toString())
     implementation("ca.uhn.hapi.fhir", "org.hl7.fhir.validation", property("fhirCoreVersion").toString())
     implementation("org.eclipse.jgit", "org.eclipse.jgit", "6.7.0.202309050840-r")
-    implementation("ch.qos.logback", "logback-classic", "1.2.3")
+    implementation("ch.qos.logback", "logback-classic", property("logbackVersion").toString())
     implementation("com.google.code.gson", "gson", "2.8.9")
     implementation("commons-beanutils","commons-beanutils")
 
@@ -175,10 +175,13 @@ dependencies {
         implementation("org.eclipse.jetty.http2:http2-http-client-transport:11.0.17") {
             because("previous versions have a bug impacting this application")
         }
-        implementation("io.netty:netty-handler:4.1.100.Final") {
+        implementation("io.netty:netty-handler:" + property("nettyConstrainedVersion").toString()) {
             because("previous versions have a bug impacting this application")
         }
-        implementation("io.netty:netty-transport-classes-epoll:4.1.100.Final") {
+        implementation("io.netty:netty-transport-classes-epoll:" + property("nettyConstrainedVersion").toString()) {
+            because("previous versions have a bug impacting this application")
+        }
+        implementation("io.netty:netty-transport-native-epoll:" + property("nettyConstrainedVersion").toString()) {
             because("previous versions have a bug impacting this application")
         }
     }
