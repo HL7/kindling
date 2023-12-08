@@ -57,7 +57,7 @@ dependencies {
 
     implementation("commons-codec", "commons-codec", "1.9")
     implementation("commons-discovery", "commons-discovery", "0.2")
-    implementation("commons-httpclient", "commons-httpclient", "3.0.1")
+    implementation("org.apache.httpcomponents.client5", "httpclient5", "5.3")
     implementation("commons-io", "commons-io", "2.7")
     implementation("commons-logging", "commons-logging-api", "1.1")
     implementation("commons-logging", "commons-logging", "1.1.1")
