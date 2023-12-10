@@ -139,6 +139,7 @@ import org.hl7.fhir.r5.model.UriType;
 import org.hl7.fhir.r5.renderers.OperationDefinitionRenderer;
 import org.hl7.fhir.r5.renderers.utils.RenderingContext;
 import org.hl7.fhir.r5.utils.BuildExtensions;
+import org.hl7.fhir.r5.utils.CanonicalResourceUtilities;
 import org.hl7.fhir.r5.utils.ToolingExtensions;
 import org.hl7.fhir.r5.utils.TypesUtilities;
 import org.hl7.fhir.tools.converters.MarkDownPreProcessor;
@@ -249,6 +250,8 @@ public class ProfileGenerator {
       if (dataElements != null)
         dataElements.addEntry().setResource(de).setFullUrl(de.getUrl());
     }
+
+    CanonicalResourceUtilities.setHl7WG(de, "fhir");
     KindlingUtilities.makeUniversal(de);
       
     if (!de.hasMeta())
@@ -316,6 +319,8 @@ public class ProfileGenerator {
     p.setDate(genDate.getTime());
     p.setStatus(PublicationStatus.fromCode("active")); // normative now
 
+    CanonicalResourceUtilities.setHl7WG(p, "fhir");
+    
     Set<String> containedSlices = new HashSet<String>();
 
     // first, the differential
@@ -546,6 +551,7 @@ public class ProfileGenerator {
     KindlingUtilities.makeUniversal(p);
     populateCharacteristic(p, "has-size");
 
+    CanonicalResourceUtilities.setHl7WG(p, "fhir");
     
     ToolResourceUtilities.updateUsage(p, "core");
     p.setName("xhtml");
@@ -689,6 +695,7 @@ public class ProfileGenerator {
     p.setDate(genDate.getTime());
     p.setStatus(PublicationStatus.fromCode("active")); 
 
+    CanonicalResourceUtilities.setHl7WG(p, "fhir");
     Set<String> containedSlices = new HashSet<String>();
 
     // first, the differential
@@ -822,6 +829,7 @@ public class ProfileGenerator {
     p.setDate(genDate.getTime());
     p.setStatus(t.getStandardsStatus() == StandardsStatus.NORMATIVE ?  PublicationStatus.fromCode("active") : PublicationStatus.fromCode("draft")); 
 
+    CanonicalResourceUtilities.setHl7WG(p, "fhir");
 
     Set<String> containedSlices = new HashSet<String>();
 
@@ -945,6 +953,7 @@ public class ProfileGenerator {
     p.setDescription(pt.getDefinition());
     p.setDate(genDate.getTime());
 
+    CanonicalResourceUtilities.setHl7WG(p, "fhir");
     // first, the differential
     p.setName(pt.getName());
     ElementDefinition e = new ElementDefinition();
@@ -1099,6 +1108,7 @@ public class ProfileGenerator {
     ToolingExtensions.setStandardsStatus(p, r.getStatus(), r.getNormativeVersion());
     KindlingUtilities.makeUniversal(p);
 
+    CanonicalResourceUtilities.setHl7WG(p, "fhir");
     if (r.getFmmLevel() != null) {
       int fmm = Integer.parseInt(r.getFmmLevel());
       ToolingExtensions.addIntegerExtension(p, ToolingExtensions.EXT_FMM_LEVEL, fmm);
@@ -1110,11 +1120,14 @@ public class ProfileGenerator {
       ToolingExtensions.addCodeExtension(p, ToolingExtensions.EXT_SEC_CAT, r.getSecurityCategorization().toCode());
     ToolResourceUtilities.updateUsage(p, usage);
     p.setName(r.getRoot().getName());
-    p.setPublisher("Health Level Seven International"+(r.getWg() == null ? "" : " ("+r.getWg().getName()+")"));
-    p.addContact().getTelecom().add(Factory.newContactPoint(ContactPointSystem.URL, "http://hl7.org/fhir"));
-    if (r.getWg() != null)
+    if (r.getWg() != null) {
+      p.setPublisher("HL7 International"+(r.getWg() == null ? "" : " / "+r.getWg().getName()));
+      p.addContact().getTelecom().add(Factory.newContactPoint(ContactPointSystem.URL, "http://hl7.org/fhir"));
       p.addContact().getTelecom().add(Factory.newContactPoint(ContactPointSystem.URL, r.getWg().getUrl()));
-    ToolingExtensions.setCodeExtension(p, ToolingExtensions.EXT_WORKGROUP, r.getWg().getCode());
+      ToolingExtensions.setCodeExtension(p, ToolingExtensions.EXT_WORKGROUP, r.getWg().getCode());
+    } else {
+      CanonicalResourceUtilities.setHl7WG(p, "fhir");
+    }
     p.setDescription(r.getDefinition());
     p.setPurpose(r.getRoot().getRequirements());
     if (!p.hasPurpose())
@@ -1246,7 +1259,11 @@ public class ProfileGenerator {
     else if (resource.getWg() != null) 
       ToolingExtensions.setCodeExtension(p, ToolingExtensions.EXT_WORKGROUP, resource.getWg().getCode());      
     else if (baseResource != null && baseResource.getWg() != null) 
-      ToolingExtensions.setCodeExtension(p, ToolingExtensions.EXT_WORKGROUP, baseResource.getWg().getCode());      
+      ToolingExtensions.setCodeExtension(p, ToolingExtensions.EXT_WORKGROUP, baseResource.getWg().getCode());  
+    else 
+      ToolingExtensions.setCodeExtension(p, ToolingExtensions.EXT_WORKGROUP, "fhir");  
+    CanonicalResourceUtilities.setHl7WG(p);
+
     if (pack.hasMetadata("Standards-Status")) 
       ToolingExtensions.setStandardsStatus(p, StandardsStatus.fromCode(pack.metadata("Standards-Status")), null);
     else
@@ -1384,6 +1401,7 @@ public class ProfileGenerator {
       sp.setCode(spd.getCode());
       sp.setDate(genDate.getTime());
       sp.setPublisher(p.getPublisher());
+        
       for (ContactDetail tc : p.getContact()) {
         ContactDetail t = sp.addContact();
         if (tc.hasNameElement())
@@ -1391,6 +1409,13 @@ public class ProfileGenerator {
         for (ContactPoint ts : tc.getTelecom())
           t.getTelecom().add(ts.copy());
       }
+
+      if (p.hasExtension(ToolingExtensions.EXT_WORKGROUP)) {
+        CanonicalResourceUtilities.setHl7WG(sp, ToolingExtensions.readStringExtension(p, ToolingExtensions.EXT_WORKGROUP));
+      } else {
+        CanonicalResourceUtilities.setHl7WG(p, "fhir");
+      }
+      
       if (!definitions.hasResource(p.getType()) && !p.getType().equals("Resource") && !p.getType().equals("DomainResource"))
         throw new Exception("unknown resource type "+p.getType());
       sp.setType(getSearchParamType(spd.getType()));
@@ -1423,7 +1448,15 @@ public class ProfileGenerator {
         }
         sp.setMultipleOr(false);
       } 
-      sp.addBase(VersionIndependentResourceTypesAll.fromCode(p.getType()));
+      if (VersionIndependentResourceTypesAll.isValidCode(p.getType())) {
+        sp.addBase(VersionIndependentResourceTypesAll.fromCode(p.getType()));
+      } else {
+        // TODO: This is a problem with R5 enum at this point. For now,
+        // we leave it blank, but we have to figure this out before getting 
+        // serious r=with R6 QA
+        // sp.addBaseElement().setValueAsString(p.getType());
+        
+      }
     } else {
       if (sp.getType() != getSearchParamType(spd.getType()))
         throw new FHIRException("Type mismatch on common parameter: expected "+sp.getType().toCode()+" but found "+getSearchParamType(spd.getType()).toCode());
@@ -2547,6 +2580,7 @@ public class ProfileGenerator {
     opd.setDescription(preProcessMarkdown(op.getDoco(), "Operation Documentation"));
     opd.setStatus(op.getStandardsStatus() == StandardsStatus.NORMATIVE ?  PublicationStatus.ACTIVE : PublicationStatus.DRAFT);
     opd.setDate(genDate.getTime());
+    CanonicalResourceUtilities.setHl7WG(opd, rd.getWg().getCode());
     if (op.getKind().toLowerCase().equals("operation"))
       opd.setKind(OperationKind.OPERATION);
     else if (op.getKind().toLowerCase().equals("query"))
@@ -2688,12 +2722,16 @@ public class ProfileGenerator {
     
     ToolResourceUtilities.updateUsage(p, igd.getCode());
     p.setName(r.getRoot().getName());
-    p.setPublisher("Health Level Seven International"+(r.getWg() == null ? " "+igd.getCommittee() : " ("+r.getWg().getName()+")"));
+    p.setPublisher("HL7 International"+(r.getWg() == null ? " "+igd.getCommittee() : " / "+r.getWg().getName()));
     p.addContact().getTelecom().add(Factory.newContactPoint(ContactPointSystem.URL, "http://hl7.org/fhir"));
     if (r.getWg() != null) {
       p.addContact().getTelecom().add(Factory.newContactPoint(ContactPointSystem.URL, r.getWg().getUrl()));
       ToolingExtensions.setCodeExtension(p, ToolingExtensions.EXT_WORKGROUP, r.getWg().getCode());
+    } else {
+      CanonicalResourceUtilities.setHl7WG(p, "fhir");
     }
+
+    
     p.setDescription("Logical Model: "+r.getDefinition());
     p.setPurpose(r.getRoot().getRequirements());
     if (!p.hasPurpose())

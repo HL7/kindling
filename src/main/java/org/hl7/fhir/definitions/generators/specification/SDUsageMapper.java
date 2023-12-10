@@ -82,6 +82,9 @@ public class SDUsageMapper {
   }
 
   private void see(String name, String path, String url) {
+    if (path == null) {
+      System.out.println("!");
+    }
     if (Utilities.isAbsoluteUrl(url)) {
       Map<String, String> uses = usages.get(url);
       if (uses == null) {
@@ -130,7 +133,11 @@ public class SDUsageMapper {
       JsonObject uses = new JsonObject();
       json.add(s, uses);
       for (Entry<String, String> e : usages.get(s).entrySet()) {
-        uses.add(e.getKey(), e.getValue());
+        if (e.getKey() == null) {
+          System.out.println("!"); 
+        } else {
+          uses.add(e.getKey(), e.getValue());
+        }
       }
     }
     return JsonParser.compose(json, true);

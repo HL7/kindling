@@ -35,6 +35,10 @@ import org.hl7.fhir.r5.elementmodel.Element;
 import org.hl7.fhir.r5.elementmodel.Element.SpecialElement;
 import org.hl7.fhir.r5.elementmodel.Manager;
 import org.hl7.fhir.r5.elementmodel.Manager.FhirFormat;
+import org.hl7.fhir.r5.fhirpath.FHIRPathEngine;
+import org.hl7.fhir.r5.fhirpath.TypeDetails;
+import org.hl7.fhir.r5.fhirpath.FHIRPathEngine.IEvaluationContext;
+import org.hl7.fhir.r5.fhirpath.FHIRPathUtilityClasses.FunctionDetails;
 import org.hl7.fhir.r5.elementmodel.ObjectConverter;
 import org.hl7.fhir.r5.formats.XmlParser;
 import org.hl7.fhir.r5.model.Base;
@@ -45,11 +49,7 @@ import org.hl7.fhir.r5.model.Enumerations.FHIRVersion;
 import org.hl7.fhir.r5.model.OperationDefinition;
 import org.hl7.fhir.r5.model.SearchParameter;
 import org.hl7.fhir.r5.model.StructureDefinition;
-import org.hl7.fhir.r5.model.TypeDetails;
 import org.hl7.fhir.r5.model.ValueSet;
-import org.hl7.fhir.r5.utils.FHIRPathEngine;
-import org.hl7.fhir.r5.utils.FHIRPathEngine.IEvaluationContext;
-import org.hl7.fhir.r5.utils.FHIRPathUtilityClasses.FunctionDetails;
 import org.hl7.fhir.r5.utils.validation.IResourceValidator;
 import org.hl7.fhir.r5.utils.validation.IValidationPolicyAdvisor;
 import org.hl7.fhir.r5.utils.validation.IValidatorResourceFetcher;
@@ -96,12 +96,12 @@ public class ExampleInspector implements IValidatorResourceFetcher, IValidationP
   private class ExampleHostServices implements IEvaluationContext {
 
     @Override
-    public List<Base> resolveConstant(Object appContext, String name, boolean beforeContext) throws PathEngineException {
+    public List<Base> resolveConstant(FHIRPathEngine engine, Object appContext, String name, boolean beforeContext, boolean explicitConstant) throws PathEngineException {
       return new ArrayList<>();
     }
 
     @Override
-    public TypeDetails resolveConstantType(Object appContext, String name) throws PathEngineException {
+    public TypeDetails resolveConstantType(FHIRPathEngine engine, Object appContext, String name, boolean explicitConstant) throws PathEngineException {
       return null;
     }
 
@@ -112,22 +112,22 @@ public class ExampleInspector implements IValidatorResourceFetcher, IValidationP
     }
 
     @Override
-    public FunctionDetails resolveFunction(String functionName) {
+    public FunctionDetails resolveFunction(FHIRPathEngine engine, String functionName) {
       return null;
     }
 
     @Override
-    public TypeDetails checkFunction(Object appContext, String functionName, List<TypeDetails> parameters) throws PathEngineException {
+    public TypeDetails checkFunction(FHIRPathEngine engine, Object appContext, String functionName, TypeDetails focus, List<TypeDetails> parameters) throws PathEngineException {
       return null;
     }
 
     @Override
-    public List<Base> executeFunction(Object appContext, List<Base> focus, String functionName, List<List<Base>> parameters) {
+    public List<Base> executeFunction(FHIRPathEngine engine, Object appContext, List<Base> focus, String functionName, List<List<Base>> parameters) {
       return null;
     }
 
     @Override
-    public Base resolveReference(Object appContext, String url, Base refContext) {
+    public Base resolveReference(FHIRPathEngine engine, Object appContext, String url, Base refContext) {
       try {
         String[] s = url.split("/");
         if (s.length != 2 || !definitions.getResources().containsKey(s[0]))
@@ -144,7 +144,7 @@ public class ExampleInspector implements IValidatorResourceFetcher, IValidationP
     }
 
     @Override
-    public boolean conformsToProfile(Object appContext, Base item, String url) throws FHIRException {
+    public boolean conformsToProfile(FHIRPathEngine engine, Object appContext, Base item, String url) throws FHIRException {
       IResourceValidator val = context.newValidator();
       List<ValidationMessage> valerrors = new ArrayList<ValidationMessage>();
       if (item instanceof org.hl7.fhir.r5.model.Resource) {
@@ -158,8 +158,13 @@ public class ExampleInspector implements IValidatorResourceFetcher, IValidationP
     }
 
     @Override
-    public ValueSet resolveValueSet(Object appContext, String url) {
+    public ValueSet resolveValueSet(FHIRPathEngine engine, Object appContext, String url) {
       return null;
+    }
+
+    @Override
+    public boolean paramIsType(String name, int index) {
+      return false;
     }
   }
   
@@ -234,8 +239,11 @@ public class ExampleInspector implements IValidatorResourceFetcher, IValidationP
     if (VALIDATE_RDF) {
       shex = new ShExValidator(Utilities.path(rootDir, "fhir.shex"));
     }
-    checkJsonLd();    
-    
+    try {
+      checkJsonLd();    
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
   }
   
   private void checkJsonLd() throws IOException {
@@ -560,7 +568,7 @@ public class ExampleInspector implements IValidatorResourceFetcher, IValidationP
       ResourceDefn r = definitions.getResourceByName(parts[0]);
       for (Example e : r.getExamples()) {
         if (e.getElement() == null && e.hasXml()) {
-          e.setElement(new org.hl7.fhir.r5.elementmodel.XmlParser(context).parse(e.getXml()));
+          e.setElement(new org.hl7.fhir.r5.elementmodel.XmlParser(context).parse(new ArrayList<>(), e.getXml()));
           if (e.getElement() != null &&
               e.getElement().getProperty().getStructure() != null &&
               e.getElement().getProperty().getStructure().getBaseDefinition() != null &&
@@ -757,12 +765,12 @@ public class ExampleInspector implements IValidatorResourceFetcher, IValidationP
   }
 
   @Override
-  public List<Base> resolveConstant(Object appContext, String name, boolean beforeContext) throws PathEngineException {
+  public List<Base> resolveConstant(FHIRPathEngine engine, Object appContext, String name, boolean beforeContext, boolean explicitConstant) throws PathEngineException {
     throw new NotImplementedException();
   }
 
   @Override
-  public TypeDetails resolveConstantType(Object appContext, String name) throws PathEngineException {
+  public TypeDetails resolveConstantType(FHIRPathEngine engine, Object appContext, String name, boolean explicitConstant) throws PathEngineException {
     throw new NotImplementedException();
   }
 
@@ -772,22 +780,22 @@ public class ExampleInspector implements IValidatorResourceFetcher, IValidationP
   }
 
   @Override
-  public FunctionDetails resolveFunction(String functionName) {
+  public FunctionDetails resolveFunction(FHIRPathEngine engine, String functionName) {
     throw new NotImplementedException();
   }
 
   @Override
-  public TypeDetails checkFunction(Object appContext, String functionName, List<TypeDetails> parameters) throws PathEngineException {
+  public TypeDetails checkFunction(FHIRPathEngine engine, Object appContext, String functionName, TypeDetails focus, List<TypeDetails> parameters) throws PathEngineException {
     throw new NotImplementedException();
   }
 
   @Override
-  public List<Base> executeFunction(Object appContext, List<Base> focus, String functionName, List<List<Base>> parameters) {
+  public List<Base> executeFunction(FHIRPathEngine engine, Object appContext, List<Base> focus, String functionName, List<List<Base>> parameters) {
     throw new NotImplementedException();
   }
 
   @Override
-  public Base resolveReference(Object appContext, String url, Base refContext) throws FHIRException {
+  public Base resolveReference(FHIRPathEngine engine, Object appContext, String url, Base refContext) throws FHIRException {
     if (Utilities.charCount(url, '/') == 1) {
      String type = url.substring(0, url.indexOf("/"));
      String id = url.substring(url.indexOf("/")+1);
@@ -810,12 +818,17 @@ public class ExampleInspector implements IValidatorResourceFetcher, IValidationP
   }
 
   @Override
-  public boolean conformsToProfile(Object appContext, Base item, String url) throws FHIRException {
+  public boolean conformsToProfile(FHIRPathEngine engine, Object appContext, Base item, String url) throws FHIRException {
     throw new NotImplementedException();
   }
 
   @Override
-  public ValueSet resolveValueSet(Object appContext, String url) {
+  public ValueSet resolveValueSet(FHIRPathEngine engine, Object appContext, String url) {
+    throw new NotImplementedException();
+  }
+
+  @Override
+  public boolean paramIsType(String name, int index) {
     throw new NotImplementedException();
   }
 

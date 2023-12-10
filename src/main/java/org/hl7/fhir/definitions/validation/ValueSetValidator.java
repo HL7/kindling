@@ -20,6 +20,7 @@ import org.hl7.fhir.r5.model.ValueSet.ConceptSetComponent;
 import org.hl7.fhir.r5.terminologies.CodeSystemUtilities;
 import org.hl7.fhir.r5.utils.ToolingExtensions;
 import org.hl7.fhir.tools.publisher.BuildWorkerContext;
+import org.hl7.fhir.utilities.FhirPublication;
 import org.hl7.fhir.utilities.SIDUtilities;
 import org.hl7.fhir.utilities.Utilities;
 import org.hl7.fhir.utilities.validation.ValidationMessage;
@@ -386,7 +387,7 @@ public class ValueSetValidator extends BaseValidator {
   private boolean isValidCode(String code, String system, String version) {
     CodeSystem cs = context.fetchResource(CodeSystem.class, system);
     if (cs == null || cs.getContent() != CodeSystemContentMode.COMPLETE) 
-      return context.validateCode(new ValidationOptions("en-US"), system, version, code, null).isOk();
+      return context.validateCode(new ValidationOptions(FhirPublication.R5, "en-US"), system, version, code, null).isOk();
     else {
       if (hasCode(code, cs.getConcept()))
         return true;
