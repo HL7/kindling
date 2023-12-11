@@ -4036,7 +4036,11 @@ public class Publisher implements URIResolver, SectionNumberer {
           CanonicalResource m = (CanonicalResource) e.getResource();
           ToolingExtensions.removeExtension(m, BuildExtensions.EXT_NOTES);
           ToolingExtensions.removeExtension(m, BuildExtensions.EXT_INTRODUCTION);
-          sdm.seeResource(m.present(), m.getWebPath(), m);
+          if (m.getWebPath() != null) {
+            sdm.seeResource(m.present(), m.getWebPath(), m);
+          } else if (bnd.getWebPath() != null) {
+            sdm.seeResource(m.present(), bnd.getWebPath(), m);
+          }
           String url = m.getUrl();
           if (url != null && url.startsWith("http://hl7.org/fhir") && !SIDUtilities.isKnownSID(url) && !isExtension(m)) {
             if (!page.getVersion().toCode().equals(m.getVersion())) 
