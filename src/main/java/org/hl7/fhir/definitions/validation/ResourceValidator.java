@@ -743,7 +743,7 @@ public class ResourceValidator extends BaseValidator {
       warning(errors, ValidationMessage.NO_RULE_DATE, IssueType.STRUCTURE, path, e.unbounded(), "The max cardinality of 'note' must be *");
     }
     String sd = e.getShortDefn();
-    if (sd.length() > 0) {
+    if (sd != null && sd.length() > 0) {
       rule(errors, ValidationMessage.NO_RULE_DATE, IssueType.STRUCTURE, path, sd.contains("|") || Character.isUpperCase(sd.charAt(0)) || sd.startsWith("e.g. ") || !Character.isLetter(sd.charAt(0)) || Utilities.isURL(sd) || sd.startsWith("e.g. ") || startsWithType(sd), "Short Description must start with an uppercase character ('" + sd + "')");
       rule(errors, ValidationMessage.NO_RULE_DATE, IssueType.STRUCTURE, path, !sd.endsWith(".") || sd.endsWith("etc."), "Short Description must not end with a period ('" + sd + "')");
       rule(errors, ValidationMessage.NO_RULE_DATE, IssueType.STRUCTURE, path, e.getDefinition().contains("|") || Character.isUpperCase(e.getDefinition().charAt(0)) || !Character.isLetter(e.getDefinition().charAt(0)), "Long Description must start with an uppercase character ('" + e.getDefinition() + "')");
