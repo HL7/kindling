@@ -29,7 +29,7 @@ public class StructureDefinitionScanner {
   
   private void run(File file) throws FHIRException, IOException {
     System.out.println("Loading");
-    FilesystemPackageCacheManager pcm = new FilesystemPackageCacheManager(true);
+    FilesystemPackageCacheManager pcm = new FilesystemPackageCacheManager.Builder().build();
     NpmPackage npm = pcm.loadPackage("hl7.fhir.r5.core");
     context = new SimpleWorkerContextBuilder().fromPackage(npm);
     fpe = new FHIRPathEngine(context);

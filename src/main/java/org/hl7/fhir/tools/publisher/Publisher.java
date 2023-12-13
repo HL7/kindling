@@ -3415,7 +3415,7 @@ public class Publisher implements URIResolver, SectionNumberer {
       npm.finish();
       if (!isCIBuild) {
         String id = pidRoot()+".expansions";
-        new FilesystemPackageCacheManager(org.hl7.fhir.utilities.npm.FilesystemPackageCacheManager.FilesystemPackageCacheMode.USER).addPackageToCache(id, "current", new FileInputStream(Utilities.uncheckedPath(page.getFolders().dstDir, id + ".tgz")), Utilities.uncheckedPath(page.getFolders().dstDir, id + ".tgz"));
+        new FilesystemPackageCacheManager.Builder().build().addPackageToCache(id, "current", new FileInputStream(Utilities.uncheckedPath(page.getFolders().dstDir, id + ".tgz")), Utilities.uncheckedPath(page.getFolders().dstDir, id + ".tgz"));
       }
       
       serializeResource(expansionFeed, "expansions", false);
@@ -3572,7 +3572,7 @@ public class Publisher implements URIResolver, SectionNumberer {
       SpecNPMPackageGenerator self = new SpecNPMPackageGenerator();
       self.generate(page.getFolders().dstDir, page.getWebLocation(), false, page.getGenDate().getTime(), pidRoot());
       if (!isCIBuild) {
-        new FilesystemPackageCacheManager(org.hl7.fhir.utilities.npm.FilesystemPackageCacheManager.FilesystemPackageCacheMode.USER).addPackageToCache(pidRoot()+".core", "current", new FileInputStream(Utilities.uncheckedPath(page.getFolders().dstDir, pidRoot() + ".core.tgz")), Utilities.uncheckedPath(page.getFolders().dstDir, pidRoot() + ".core.tgz"));
+        new FilesystemPackageCacheManager.Builder().build().addPackageToCache(pidRoot()+".core", "current", new FileInputStream(Utilities.uncheckedPath(page.getFolders().dstDir, pidRoot() + ".core.tgz")), Utilities.uncheckedPath(page.getFolders().dstDir, pidRoot() + ".core.tgz"));
       }
 
       page.log(" ...zips", LogMessageType.Process);
