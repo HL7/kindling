@@ -82,6 +82,7 @@ import javax.xml.validation.Validator;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.tools.ant.DirectoryScanner;
+import org.apache.tools.ant.filters.StringInputStream;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.lib.Ref;
@@ -5263,13 +5264,14 @@ public class Publisher implements URIResolver, SectionNumberer {
         }
       }
       if (e.getResource() == null && e.getElement() == null) {
-        String xml = XMLUtil.elementToString(e.getXml().getDocumentElement());
+        String xml = XMLUtil.elementToString(e.getXml().getDocumentElement()).replace("<?xml version=\"1.0\" encoding=\"UTF-16\"?>", "").trim();
+        e.setElement(new Manager().parseSingle(page.getWorkerContext(), new StringInputStream(xml), FhirFormat.XML));
         e.setResource(new XmlParser().parse(xml));
       }
     } catch (Throwable ex) {
       StringWriter errors = new StringWriter();
       System.out.println("Error generating narrative for example "+e.getName()+": "+ex.getMessage());
-      ex.printStackTrace();
+//      ex.printStackTrace();
       XhtmlNode xhtml = new XhtmlNode(NodeType.Element, "div");
       xhtml.addTag("p").setAttribute("style", "color: maroon").addText("Error processing narrative: " + ex.getMessage());
       xhtml.addTag("p").setAttribute("style", "color: maroon").addText(errors.toString());
@@ -6871,13 +6873,12 @@ public class Publisher implements URIResolver, SectionNumberer {
   private void generateValueSetsPart2() throws Exception {
 
     for (ValueSet vs : page.getDefinitions().getBoundValueSets().values()) {
-
-      page.log(" ...value set: "+vs.getId(), LogMessageType.Process);
+//      page.log(" ...value set: "+vs.getId(), LogMessageType.Process);
       generateValueSetPart2(vs);
     }
     for (String s : page.getDefinitions().getExtraValuesets().keySet()) {
       if (!s.startsWith("http:")) {
-        page.log(" ...value set: "+s, LogMessageType.Process);
+//        page.log(" ...value set: "+s, LogMessageType.Process);
         ValueSet vs = page.getDefinitions().getExtraValuesets().get(s);
         if (!page.getDefinitions().getBoundValueSets().containsKey(vs.getUrl())) {
           generateValueSetPart2(vs);
