@@ -192,7 +192,7 @@ public class R5RedirectBuilder {
         }
       }
     }
-    FilesystemPackageCacheManager pcm = new FilesystemPackageCacheManager(true);
+    FilesystemPackageCacheManager pcm = new FilesystemPackageCacheManager.Builder().build();
     Map<String, String> urlMap = new HashMap<>();
     loadFromPackage(files, urlMap, "", pcm.loadPackage("hl7.fhir.r5.core"));
     loadFromPackage(files, urlMap, "", pcm.loadPackage("hl7.fhir.r5.examples"));

@@ -10447,16 +10447,16 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     workerContext.setLogger(this);
     workerContext.setAllowLoadingDuplicates(true);
     log("Load UTG Terminology", LogMessageType.Process);
-    utg = new FilesystemPackageCacheManager(org.hl7.fhir.utilities.npm.FilesystemPackageCacheManager.FilesystemPackageCacheMode.USER).loadPackage("hl7.terminology");
+    utg = new FilesystemPackageCacheManager.Builder().build().loadPackage("hl7.terminology");
     workerContext.loadFromPackage(utg, new R4ToR5Loader(BuildWorkerContext.defaultTypesToLoad(), new UTGLoader(utg.version()), workerContext.getVersion()));
     log("Load Extensions", LogMessageType.Process);
-    ext = new FilesystemPackageCacheManager(org.hl7.fhir.utilities.npm.FilesystemPackageCacheManager.FilesystemPackageCacheMode.USER).loadPackage("hl7.fhir.uv.extensions", "current");
+    ext = new FilesystemPackageCacheManager.Builder().build().loadPackage("hl7.fhir.uv.extensions", "current");
     workerContext.loadFromPackage(ext, new R4ToR5Loader(BuildWorkerContext.extensionTypesToLoad(), new ExtensionsLoader(ext.version(), extensionsLocation), workerContext.getVersion()));
     log("Load DICOM Terminology", LogMessageType.Process);
-    dicom = new FilesystemPackageCacheManager(org.hl7.fhir.utilities.npm.FilesystemPackageCacheManager.FilesystemPackageCacheMode.USER).loadPackage("fhir.dicom");
+    dicom = new FilesystemPackageCacheManager.Builder().build().loadPackage("fhir.dicom");
     workerContext.loadFromPackage(dicom, new R4ToR5Loader(BuildWorkerContext.defaultTypesToLoad(), new DICOMLoader(utg.version()), workerContext.getVersion()));
     log("Load IHE Format Codes", LogMessageType.Process);
-    NpmPackage ihe = new FilesystemPackageCacheManager(org.hl7.fhir.utilities.npm.FilesystemPackageCacheManager.FilesystemPackageCacheMode.USER).loadPackage("ihe.formatcode.fhir");
+    NpmPackage ihe = new FilesystemPackageCacheManager.Builder().build().loadPackage("ihe.formatcode.fhir");
     workerContext.loadFromPackage(ihe, new R4ToR5Loader(BuildWorkerContext.defaultTypesToLoad(), new IHELoader(), workerContext.getVersion()));
    
     Map<String, SpecMapManager> packages = new HashMap<>();
