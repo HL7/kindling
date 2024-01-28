@@ -1121,10 +1121,7 @@ public class ProfileGenerator {
     ToolResourceUtilities.updateUsage(p, usage);
     p.setName(r.getRoot().getName());
     if (r.getWg() != null) {
-      p.setPublisher("HL7 International"+(r.getWg() == null ? "" : " / "+r.getWg().getName()));
-      p.addContact().getTelecom().add(Factory.newContactPoint(ContactPointSystem.URL, "http://hl7.org/fhir"));
-      p.addContact().getTelecom().add(Factory.newContactPoint(ContactPointSystem.URL, r.getWg().getUrl()));
-      ToolingExtensions.setCodeExtension(p, ToolingExtensions.EXT_WORKGROUP, r.getWg().getCode());
+      CanonicalResourceUtilities.setHl7WG(p, r.getWg().getCode());
     } else {
       CanonicalResourceUtilities.setHl7WG(p, "fhir");
     }
@@ -1451,11 +1448,9 @@ public class ProfileGenerator {
       if (VersionIndependentResourceTypesAll.isValidCode(p.getType())) {
         sp.addBase(VersionIndependentResourceTypesAll.fromCode(p.getType()));
       } else {
-        // TODO: This is a problem with R5 enum at this point. For now,
-        // we leave it blank, but we have to figure this out before getting 
-        // serious r=with R6 QA
-        // sp.addBaseElement().setValueAsString(p.getType());
-        
+        Enumeration<VersionIndependentResourceTypesAll> t = sp.addBaseElement();
+        t.setValueAsString("Resource");
+        t.addExtension(ToolingExtensions.EXT_SEARCH_PARAMETER_BASE, new CodeType(p.getType()));
       }
     } else {
       if (sp.getType() != getSearchParamType(spd.getType()))
@@ -2731,7 +2726,6 @@ public class ProfileGenerator {
       CanonicalResourceUtilities.setHl7WG(p, "fhir");
     }
 
-    
     p.setDescription("Logical Model: "+r.getDefinition());
     p.setPurpose(r.getRoot().getRequirements());
     if (!p.hasPurpose())

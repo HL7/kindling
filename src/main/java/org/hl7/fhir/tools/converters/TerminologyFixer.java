@@ -43,7 +43,7 @@ public class TerminologyFixer {
   private void start(File file) throws FHIRException, IOException  {
     load(file);
     
-    NpmPackage npm = new FilesystemPackageCacheManager(true).loadPackage("hl7.terminology");
+    NpmPackage npm = new FilesystemPackageCacheManager.Builder().build().loadPackage("hl7.terminology");
     for (String s : npm.listResources("CodeSystem")) {
       CodeSystem cs = (CodeSystem) new JsonParser().parse(npm.load("package", s));
       tho.put(cs.getUrl(), cs);

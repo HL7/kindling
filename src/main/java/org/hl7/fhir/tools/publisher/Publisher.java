@@ -82,6 +82,7 @@ import javax.xml.validation.Validator;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.tools.ant.DirectoryScanner;
+import org.apache.tools.ant.filters.StringInputStream;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.lib.Ref;
@@ -3413,7 +3414,7 @@ public class Publisher implements URIResolver, SectionNumberer {
       npm.finish();
       if (!isCIBuild) {
         String id = pidRoot()+".expansions";
-        new FilesystemPackageCacheManager(org.hl7.fhir.utilities.npm.FilesystemPackageCacheManager.FilesystemPackageCacheMode.USER).addPackageToCache(id, "current", new FileInputStream(Utilities.uncheckedPath(page.getFolders().dstDir, id + ".tgz")), Utilities.uncheckedPath(page.getFolders().dstDir, id + ".tgz"));
+        new FilesystemPackageCacheManager.Builder().build().addPackageToCache(id, "current", new FileInputStream(Utilities.uncheckedPath(page.getFolders().dstDir, id + ".tgz")), Utilities.uncheckedPath(page.getFolders().dstDir, id + ".tgz"));
       }
       
       serializeResource(expansionFeed, "expansions", false);
@@ -3570,7 +3571,7 @@ public class Publisher implements URIResolver, SectionNumberer {
       SpecNPMPackageGenerator self = new SpecNPMPackageGenerator();
       self.generate(page.getFolders().dstDir, page.getWebLocation(), false, page.getGenDate().getTime(), pidRoot());
       if (!isCIBuild) {
-        new FilesystemPackageCacheManager(org.hl7.fhir.utilities.npm.FilesystemPackageCacheManager.FilesystemPackageCacheMode.USER).addPackageToCache(pidRoot()+".core", "current", new FileInputStream(Utilities.uncheckedPath(page.getFolders().dstDir, pidRoot() + ".core.tgz")), Utilities.uncheckedPath(page.getFolders().dstDir, pidRoot() + ".core.tgz"));
+        new FilesystemPackageCacheManager.Builder().build().addPackageToCache(pidRoot()+".core", "current", new FileInputStream(Utilities.uncheckedPath(page.getFolders().dstDir, pidRoot() + ".core.tgz")), Utilities.uncheckedPath(page.getFolders().dstDir, pidRoot() + ".core.tgz"));
       }
 
       page.log(" ...zips", LogMessageType.Process);
@@ -4035,7 +4036,11 @@ public class Publisher implements URIResolver, SectionNumberer {
           CanonicalResource m = (CanonicalResource) e.getResource();
           ToolingExtensions.removeExtension(m, BuildExtensions.EXT_NOTES);
           ToolingExtensions.removeExtension(m, BuildExtensions.EXT_INTRODUCTION);
-          sdm.seeResource(m.present(), m.getWebPath(), m);
+          if (m.getWebPath() != null) {
+            sdm.seeResource(m.present(), m.getWebPath(), m);
+          } else if (bnd.getWebPath() != null) {
+            sdm.seeResource(m.present(), bnd.getWebPath(), m);
+          }
           String url = m.getUrl();
           if (url != null && url.startsWith("http://hl7.org/fhir") && !SIDUtilities.isKnownSID(url) && !isExtension(m)) {
             if (!page.getVersion().toCode().equals(m.getVersion())) 
@@ -5260,13 +5265,14 @@ public class Publisher implements URIResolver, SectionNumberer {
         }
       }
       if (e.getResource() == null && e.getElement() == null) {
-        String xml = XMLUtil.elementToString(e.getXml().getDocumentElement());
+        String xml = XMLUtil.elementToString(e.getXml().getDocumentElement()).replace("<?xml version=\"1.0\" encoding=\"UTF-16\"?>", "").trim();
+        e.setElement(new Manager().parseSingle(page.getWorkerContext(), new StringInputStream(xml), FhirFormat.XML));
         e.setResource(new XmlParser().parse(xml));
       }
     } catch (Throwable ex) {
       StringWriter errors = new StringWriter();
       System.out.println("Error generating narrative for example "+e.getName()+": "+ex.getMessage());
-      ex.printStackTrace();
+//      ex.printStackTrace();
       XhtmlNode xhtml = new XhtmlNode(NodeType.Element, "div");
       xhtml.addTag("p").setAttribute("style", "color: maroon").addText("Error processing narrative: " + ex.getMessage());
       xhtml.addTag("p").setAttribute("style", "color: maroon").addText(errors.toString());
@@ -6868,13 +6874,12 @@ public class Publisher implements URIResolver, SectionNumberer {
   private void generateValueSetsPart2() throws Exception {
 
     for (ValueSet vs : page.getDefinitions().getBoundValueSets().values()) {
-
-      page.log(" ...value set: "+vs.getId(), LogMessageType.Process);
+//      page.log(" ...value set: "+vs.getId(), LogMessageType.Process);
       generateValueSetPart2(vs);
     }
     for (String s : page.getDefinitions().getExtraValuesets().keySet()) {
       if (!s.startsWith("http:")) {
-        page.log(" ...value set: "+s, LogMessageType.Process);
+//        page.log(" ...value set: "+s, LogMessageType.Process);
         ValueSet vs = page.getDefinitions().getExtraValuesets().get(s);
         if (!page.getDefinitions().getBoundValueSets().containsKey(vs.getUrl())) {
           generateValueSetPart2(vs);
