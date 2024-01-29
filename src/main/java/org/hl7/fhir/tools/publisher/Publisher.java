@@ -975,26 +975,32 @@ public class Publisher implements URIResolver, SectionNumberer {
 
   private void testSearchParameters() {
     boolean ok = true;
+    List<String> ids = new ArrayList<>();
+    
     for (ResourceDefn rd : page.getDefinitions().getBaseResources().values()) {
-      ok = testSearchParameters(rd) && ok;
+      ok = testSearchParameters(rd, ids) && ok;
     }
     
     for (ResourceDefn rd : page.getDefinitions().getResources().values()) {
-      ok = testSearchParameters(rd) && ok;
+      ok = testSearchParameters(rd, ids) && ok;
     }    
 
     if (!ok) {
-      throw new Error("Some invariants failed testing");
+      throw new Error("Some search parameters failed testing: "+CommaSeparatedStringBuilder.join(", ", ids));
     }
   }
 
-  private boolean testSearchParameters(ResourceDefn rd) {
+  private boolean testSearchParameters(ResourceDefn rd, List<String> ids) {
     if (fpe == null) {
       fpe = new FHIRPathEngine(page.getWorkerContext());
     }
     boolean ok = true;
     for (SearchParameterDefn spd : rd.getSearchParams().values()) {
-      ok = testSearchParameter(spd.getResource(), rd.getProfile()) && ok;
+      boolean sok = testSearchParameter(spd.getResource(), rd.getProfile());
+      if (!sok) {
+        ok = false;
+        ids.add(spd.getCode());
+      }
     }
     return ok;
   }
@@ -2191,7 +2197,7 @@ public class Publisher implements URIResolver, SectionNumberer {
       }
     }
     cpd.setWebPath("compartmentdefinition-"+c.getName()+".html");
-    RenderingContext lrc = page.getRc().copy().setLocalPrefix("").setTooCostlyNoteEmpty(PageProcessor.TOO_MANY_CODES_TEXT_EMPTY).setTooCostlyNoteNotEmpty(PageProcessor.TOO_MANY_CODES_TEXT_NOT_EMPTY);
+    RenderingContext lrc = page.getRc().copy().setLocalPrefix("");
     RendererFactory.factory(cpd, lrc).render(cpd);
     serializeResource(cpd, "compartmentdefinition-" + c.getName().toLowerCase(), "Compartment Definition for "+c.getName(), "resource-instance:CompartmentDefinition", wg("fhir"));
 
@@ -2339,7 +2345,7 @@ public class Publisher implements URIResolver, SectionNumberer {
     }
 
     if (register) {
-      RenderingContext lrc = page.getRc().copy().setLocalPrefix("").setTooCostlyNoteEmpty(PageProcessor.TOO_MANY_CODES_TEXT_EMPTY).setTooCostlyNoteNotEmpty(PageProcessor.TOO_MANY_CODES_TEXT_NOT_EMPTY);
+      RenderingContext lrc = page.getRc().copy().setLocalPrefix("");
       lrc.setRules(GenerationRules.VALID_RESOURCE);
       RendererFactory.factory(cpbs, lrc).render(cpbs);
       String fName = "capabilitystatement-" + name;
@@ -2891,7 +2897,7 @@ public class Publisher implements URIResolver, SectionNumberer {
     ShExGenerator shgen = new ShExGenerator(page.getWorkerContext());
     shgen.completeModel = true;
     shgen.withComments = false;
-    TextFile.stringToFile(shgen.generate(HTMLLinkPolicy.NONE, list), page.getFolders().dstDir+"fhir.shex", false);
+    TextFile.stringToFile(shgen.generate(HTMLLinkPolicy.NONE, list), page.getFolders().dstDir+"fhir.shex");
 
     new XVerPathsGenerator(page.getDefinitions(), Utilities.path(page.getFolders().dstDir, "xver-paths-" + Constants.VERSION_MM + ".json"), Utilities.path(page.getFolders().rootDir, "tools", "history", "release4b", "xver-paths-4.3.json")).execute();
     GraphQLSchemaGenerator gql = new GraphQLSchemaGenerator(page.getWorkerContext(), page.getVersion().toCode());
@@ -4423,7 +4429,7 @@ public class Publisher implements URIResolver, SectionNumberer {
     Utilities.copyDirectory(page.getFolders().rootDir + page.getIni().getStringProperty("html", "source"), page.getFolders().dstDir, page.getHTMLChecker());
     TextFile.stringToFile("\r\n[FHIR]\r\nFhirVersion=" + page.getVersion().toCode() + "\r\nversion=" + page.getVersion().toCode()
         + "\r\nbuildId=" + page.getBuildId() + "\r\ndate=" + new SimpleDateFormat("yyyyMMddHHmmss").format(page.getGenDate().getTime()),
-            Utilities.path(page.getFolders().dstDir, "version.info"), false);
+            Utilities.path(page.getFolders().dstDir, "version.info"));
 
     for (String n : page.getDefinitions().getDiagrams().keySet()) {
       page.log(" ...diagram " + n, LogMessageType.Process);
@@ -5146,7 +5152,7 @@ public class Publisher implements URIResolver, SectionNumberer {
     // n
     String rt = null;
     try {
-      RenderingContext lrc = page.getRc().copy().setLocalPrefix("").setTooCostlyNoteEmpty(PageProcessor.TOO_MANY_CODES_TEXT_EMPTY).setTooCostlyNoteNotEmpty(PageProcessor.TOO_MANY_CODES_TEXT_NOT_EMPTY);
+      RenderingContext lrc = page.getRc().copy().setLocalPrefix("");
       xdoc = loadDom(new FileInputStream(file), true);
       rt = xdoc.getDocumentElement().getNodeName();
       String id = XMLUtil.getNamedChildValue(xdoc.getDocumentElement(), "id");
@@ -6122,7 +6128,7 @@ public class Publisher implements URIResolver, SectionNumberer {
     page.getSectionTrackerCache().put(fn, st);
 
     if (lm.getDefinition() != null) {
-      //FIXME This makes a path with a blank first entry
+      // #TODO This makes a path with a blank first entry
       String fName = ig.getPrefix() != null && ig.getPrefix().length() > 0
               ? Utilities.path(ig.getPrefix(), n)
               : n;
@@ -6785,7 +6791,7 @@ public class Publisher implements URIResolver, SectionNumberer {
 
         if (vs.getText() == null || vs.getText().getDiv() == null || vs.getText().getDiv().allChildrenAreText()
             && (Utilities.noString(vs.getText().getDiv().allText()) || !vs.getText().getDiv().allText().matches(".*\\w.*"))) {
-          RenderingContext lrc = page.getRc().copy().setLocalPrefix("").setTooCostlyNoteEmpty(PageProcessor.TOO_MANY_CODES_TEXT_EMPTY).setTooCostlyNoteNotEmpty(PageProcessor.TOO_MANY_CODES_TEXT_NOT_EMPTY);
+          RenderingContext lrc = page.getRc().copy().setLocalPrefix("");
           RendererFactory.factory(vs, lrc).render(vs);
         }
         page.getVsValidator().validate(page.getValidationErrors(), name, vs, true, false);
@@ -6903,7 +6909,7 @@ public class Publisher implements URIResolver, SectionNumberer {
 
     if (!vs.hasText() || (vs.getText().getDiv().allChildrenAreText()
         && (Utilities.noString(vs.getText().getDiv().allText()) || !vs.getText().getDiv().allText().matches(".*\\w.*")))) {
-      RenderingContext lrc = page.getRc().copy().setLocalPrefix(ig != null ? "../" : "").setTooCostlyNoteEmpty(PageProcessor.TOO_MANY_CODES_TEXT_EMPTY).setTooCostlyNoteNotEmpty(PageProcessor.TOO_MANY_CODES_TEXT_NOT_EMPTY);
+      RenderingContext lrc = page.getRc().copy().setLocalPrefix(ig != null ? "../" : "");
       RendererFactory.factory(vs, lrc).render(vs);
     }
     page.getVsValidator().validate(page.getValidationErrors(), n, vs, true, false);
@@ -6965,7 +6971,7 @@ public class Publisher implements URIResolver, SectionNumberer {
 
     if (cs.getText().getDiv().allChildrenAreText()
         && (Utilities.noString(cs.getText().getDiv().allText()) || !cs.getText().getDiv().allText().matches(".*\\w.*"))) {
-      RenderingContext lrc = page.getRc().copy().setLocalPrefix(ig != null ? "../" : "").setTooCostlyNoteEmpty(PageProcessor.TOO_MANY_CODES_TEXT_EMPTY).setTooCostlyNoteNotEmpty(PageProcessor.TOO_MANY_CODES_TEXT_NOT_EMPTY);
+      RenderingContext lrc = page.getRc().copy().setLocalPrefix(ig != null ? "../" : "");
       RendererFactory.factory(cs, lrc).render(cs);
     }
     page.getVsValidator().validate(page.getValidationErrors(), n, cs, true, false);
@@ -7075,7 +7081,7 @@ private String csCounter() {
   
   private void generateConceptMap(ConceptMap cm) throws Exception {
     String filename = cm.getWebPath();
-    RenderingContext lrc = page.getRc().copy().setLocalPrefix("").setTooCostlyNoteEmpty(PageProcessor.TOO_MANY_CODES_TEXT_EMPTY).setTooCostlyNoteNotEmpty(PageProcessor.TOO_MANY_CODES_TEXT_NOT_EMPTY);
+    RenderingContext lrc = page.getRc().copy().setLocalPrefix("");
     RendererFactory.factory(cm, lrc).render(cm);
 
     String n = Utilities.changeFileExt(filename, "");

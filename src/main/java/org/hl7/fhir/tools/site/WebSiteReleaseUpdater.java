@@ -106,7 +106,7 @@ public class WebSiteReleaseUpdater {
           b = src.substring(0, b).lastIndexOf("\"");
           src = src.substring(0, b+1)+gen(depth)+src.substring(e);
           if (!src.equals(o)) {
-            TextFile.stringToFile(src, f, false);
+            TextFile.stringToFile(src, f);
             total++;
           }
           
