@@ -75,7 +75,6 @@ import org.fhir.ucum.UcumException;
 import org.hl7.fhir.convertors.SpecDifferenceEvaluator;
 import org.hl7.fhir.convertors.TypeLinkProvider;
 import org.hl7.fhir.convertors.loaders.loaderR5.R4ToR5Loader;
-import org.hl7.fhir.convertors.txClient.TerminologyClientR5;
 import org.hl7.fhir.definitions.Config;
 import org.hl7.fhir.definitions.generators.specification.BaseGenerator;
 import org.hl7.fhir.definitions.generators.specification.DataTypeTableGenerator;
@@ -224,6 +223,7 @@ import org.hl7.fhir.r5.terminologies.CodeSystemUtilities;
 import org.hl7.fhir.r5.terminologies.TerminologyCacheManager;
 import org.hl7.fhir.r5.terminologies.ValueSetUtilities;
 import org.hl7.fhir.r5.terminologies.client.ITerminologyClient;
+import org.hl7.fhir.r5.terminologies.client.TerminologyClientR5;
 import org.hl7.fhir.r5.terminologies.expansion.ValueSetExpansionOutcome;
 import org.hl7.fhir.r5.utils.ToolingExtensions;
 import org.hl7.fhir.r5.utils.Translations;
@@ -532,8 +532,6 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
   private static final String REASON_UNKNOWN = "Unknown";
   private static final String UNNOWN_DESCRIPTION =  "no reason provided";
   public static final String CODE_LIMIT_EXPANSION = "1000";
-  public static final String TOO_MANY_CODES_TEXT_NOT_EMPTY = "This value set has >1000 codes in it. In order to keep the publication size manageable, only a selection (1000 codes) of the whole set of codes is shown";
-  public static final String TOO_MANY_CODES_TEXT_EMPTY = "This value set cannot be expanded because of the way it is defined - it has an infinite number of members";
   private static final String NO_CODESYSTEM_TEXT = "This value set refers to code systems that the FHIR Publication Tooling does not support";
 
   private static final String VS_INC_START = ""; // "<div style=\"background-color: Floralwhite; border:1px solid maroon; padding: 5px;\">";
@@ -2316,7 +2314,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
         if (vs.hasUserData("expansion"))
           evs = (ValueSet) vs.getUserData("expansion");
         else {
-          ValueSetExpansionOutcome vse = getWorkerContext().expandVS(vs, true, false);
+          ValueSetExpansionOutcome vse = getWorkerContext().expandVS(vs, true, false, true);
           if (vse.getValueset() != null) {
             evs = vse.getValueset();
             vs.setUserData("expansion", evs);
@@ -2730,7 +2728,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
       String s = "\r\n[diagram]\r\n"+
           "classes="+dt+"\r\n"+
           "element-attributes=true\r\n";
-      TextFile.stringToFileNoPrefix(s, tmp.getAbsolutePath());
+      TextFile.stringToFile(s, tmp.getAbsolutePath());
       return new SvgGenerator(this, "", null, false, "", version).generate(tmp.getAbsolutePath(), id);
     } finally {
       tmp.delete();
@@ -5415,7 +5413,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
       exp.setCompose(null);
       exp.setText(null);
       exp.setDescription("Value Set Contents (Expansion) for "+vs.present()+" at "+Config.DATE_FORMAT().format(new Date()));
-      RenderingContext lrc = rc.copy().setTooCostlyNoteEmpty(TOO_MANY_CODES_TEXT_EMPTY).setTooCostlyNoteNotEmpty(TOO_MANY_CODES_TEXT_NOT_EMPTY);
+      RenderingContext lrc = rc.copy();
       RendererFactory.factory(exp, lrc).render(exp);
       return "<hr/>\r\n"+VS_INC_START+""+new XhtmlComposer(XhtmlComposer.HTML).compose(exp.getText().getDiv())+VS_INC_END;
     } catch (Exception e) {
@@ -5425,7 +5423,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
 
   private String processExpansionError(String error) {
     if (error.contains("Too many codes"))
-      return TOO_MANY_CODES_TEXT_NOT_EMPTY;
+      return "This value set has >1000 codes in it. In order to keep the publication size manageable, only a selection (1000 codes) of the whole set of codes is shown";
     if (error.contains("unable to provide support"))
       return NO_CODESYSTEM_TEXT;
     return "This value set could not be expanded by the publication tooling: "+Utilities.escapeXml(error);
@@ -5477,7 +5475,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     vs1.setExpansion(null);
     vs1.setText(null);
     ImplementationGuideDefn ig = (ImplementationGuideDefn) vs.getUserData(ToolResourceUtilities.NAME_RES_IG);
-    RenderingContext lrc = rc.copy().setLocalPrefix(prefix).setTooCostlyNoteNotEmpty(TOO_MANY_CODES_TEXT_NOT_EMPTY);
+    RenderingContext lrc = rc.copy().setLocalPrefix(prefix);
     RendererFactory.factory(vs1, lrc).render(vs1);
     return "<hr/>\r\n"+VS_INC_START+""+new XhtmlComposer(XhtmlComposer.HTML).compose(vs1.getText().getDiv())+VS_INC_END;
   }
@@ -11352,7 +11350,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
   public String expandVS(ValueSet vs, String prefix, String base) {
     try {
 
-      ValueSetExpansionOutcome result = workerContext.expandVS(vs, true, true);
+      ValueSetExpansionOutcome result = workerContext.expandVS(vs, true, true, true);
       if (result.getError() != null)
         return "<hr/>\r\n"+VS_INC_START+"<!--3-->"+processExpansionError(result.getError())+VS_INC_END;
 
@@ -11369,11 +11367,12 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
       IniFile sini = new IniFile(Utilities.path(folders.rootDir, "temp", "stats.ini"));
       sini.setIntegerProperty("valuesets", vs.getId(), i, null);
       sini.save();
-      RenderingContext lrc = rc.copy().setLocalPrefix(prefix).setTooCostlyNoteEmpty(TOO_MANY_CODES_TEXT_EMPTY).setTooCostlyNoteNotEmpty(TOO_MANY_CODES_TEXT_NOT_EMPTY);
+      RenderingContext lrc = rc.copy().setLocalPrefix(prefix);
       RendererFactory.factory(exp, lrc).render(exp);
       return "<hr/>\r\n"+VS_INC_START+""+new XhtmlComposer(XhtmlComposer.HTML).compose(exp.getText().getDiv())+VS_INC_END;
     } catch (Exception e) {
-      e.printStackTrace();
+      // e.printStackTrace();
+      System.err.println(e.getMessage());
       return "<hr/>\r\n"+VS_INC_START+"<!--5-->"+processExpansionError(e instanceof NullPointerException ? "NullPointerException" : e.getMessage())+" "+Utilities.escapeXml(stack(e))+VS_INC_END;
     }
   }
@@ -12423,7 +12422,7 @@ private int countContains(List<ValueSetExpansionContainsComponent> list) {
 
   @Override
   public boolean isDebugLogging() {
-    return true;
+    return false;
   }
 
   @Override
