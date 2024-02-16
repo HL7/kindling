@@ -2,7 +2,6 @@ package org.hl7.fhir.definitions.generators.specification;
 
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -11,13 +10,11 @@ import org.hl7.fhir.r5.elementmodel.Element;
 import org.hl7.fhir.r5.model.BackboneElement;
 import org.hl7.fhir.r5.model.BackboneType;
 import org.hl7.fhir.r5.model.Base;
-import org.hl7.fhir.r5.model.CanonicalResource;
 import org.hl7.fhir.r5.model.CanonicalType;
 import org.hl7.fhir.r5.model.DomainResource;
 import org.hl7.fhir.r5.model.Extension;
 import org.hl7.fhir.r5.model.Property;
 import org.hl7.fhir.r5.model.Resource;
-import org.hl7.fhir.r5.renderers.RendererFactory;
 import org.hl7.fhir.utilities.Utilities;
 import org.hl7.fhir.utilities.json.model.JsonObject;
 import org.hl7.fhir.utilities.json.parser.JsonParser;
@@ -85,6 +82,9 @@ public class SDUsageMapper {
   }
 
   private void see(String name, String path, String url) {
+    if (path == null) {
+      System.out.println("!");
+    }
     if (Utilities.isAbsoluteUrl(url)) {
       Map<String, String> uses = usages.get(url);
       if (uses == null) {
@@ -133,7 +133,11 @@ public class SDUsageMapper {
       JsonObject uses = new JsonObject();
       json.add(s, uses);
       for (Entry<String, String> e : usages.get(s).entrySet()) {
-        uses.add(e.getKey(), e.getValue());
+        if (e.getKey() == null) {
+          System.out.println("!"); 
+        } else {
+          uses.add(e.getKey(), e.getValue());
+        }
       }
     }
     return JsonParser.compose(json, true);

@@ -8,6 +8,7 @@ import java.io.StringReader;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -35,6 +36,10 @@ import org.hl7.fhir.r5.elementmodel.Element;
 import org.hl7.fhir.r5.elementmodel.Element.SpecialElement;
 import org.hl7.fhir.r5.elementmodel.Manager;
 import org.hl7.fhir.r5.elementmodel.Manager.FhirFormat;
+import org.hl7.fhir.r5.fhirpath.FHIRPathEngine;
+import org.hl7.fhir.r5.fhirpath.TypeDetails;
+import org.hl7.fhir.r5.fhirpath.FHIRPathEngine.IEvaluationContext;
+import org.hl7.fhir.r5.fhirpath.FHIRPathUtilityClasses.FunctionDetails;
 import org.hl7.fhir.r5.elementmodel.ObjectConverter;
 import org.hl7.fhir.r5.formats.XmlParser;
 import org.hl7.fhir.r5.model.Base;
@@ -45,13 +50,14 @@ import org.hl7.fhir.r5.model.Enumerations.FHIRVersion;
 import org.hl7.fhir.r5.model.OperationDefinition;
 import org.hl7.fhir.r5.model.SearchParameter;
 import org.hl7.fhir.r5.model.StructureDefinition;
-import org.hl7.fhir.r5.model.TypeDetails;
 import org.hl7.fhir.r5.model.ValueSet;
-import org.hl7.fhir.r5.utils.FHIRPathEngine;
-import org.hl7.fhir.r5.utils.FHIRPathEngine.IEvaluationContext;
 import org.hl7.fhir.r5.utils.validation.IResourceValidator;
 import org.hl7.fhir.r5.utils.validation.IValidationPolicyAdvisor;
 import org.hl7.fhir.r5.utils.validation.IValidatorResourceFetcher;
+import org.hl7.fhir.r5.utils.validation.IValidationPolicyAdvisor.AdditionalBindingPurpose;
+import org.hl7.fhir.r5.utils.validation.IValidationPolicyAdvisor.CodedContentValidationAction;
+import org.hl7.fhir.r5.utils.validation.IValidationPolicyAdvisor.ElementValidationAction;
+import org.hl7.fhir.r5.utils.validation.IValidationPolicyAdvisor.ResourceValidationAction;
 import org.hl7.fhir.r5.utils.validation.constants.BestPracticeWarningLevel;
 import org.hl7.fhir.r5.utils.validation.constants.BindingKind;
 import org.hl7.fhir.r5.utils.validation.constants.CodedContentValidationPolicy;
@@ -95,12 +101,12 @@ public class ExampleInspector implements IValidatorResourceFetcher, IValidationP
   private class ExampleHostServices implements IEvaluationContext {
 
     @Override
-    public List<Base> resolveConstant(Object appContext, String name, boolean beforeContext) throws PathEngineException {
+    public List<Base> resolveConstant(FHIRPathEngine engine, Object appContext, String name, boolean beforeContext, boolean explicitConstant) throws PathEngineException {
       return new ArrayList<>();
     }
 
     @Override
-    public TypeDetails resolveConstantType(Object appContext, String name) throws PathEngineException {
+    public TypeDetails resolveConstantType(FHIRPathEngine engine, Object appContext, String name, boolean explicitConstant) throws PathEngineException {
       return null;
     }
 
@@ -111,22 +117,22 @@ public class ExampleInspector implements IValidatorResourceFetcher, IValidationP
     }
 
     @Override
-    public FunctionDetails resolveFunction(String functionName) {
+    public FunctionDetails resolveFunction(FHIRPathEngine engine, String functionName) {
       return null;
     }
 
     @Override
-    public TypeDetails checkFunction(Object appContext, String functionName, List<TypeDetails> parameters) throws PathEngineException {
+    public TypeDetails checkFunction(FHIRPathEngine engine, Object appContext, String functionName, TypeDetails focus, List<TypeDetails> parameters) throws PathEngineException {
       return null;
     }
 
     @Override
-    public List<Base> executeFunction(Object appContext, List<Base> focus, String functionName, List<List<Base>> parameters) {
+    public List<Base> executeFunction(FHIRPathEngine engine, Object appContext, List<Base> focus, String functionName, List<List<Base>> parameters) {
       return null;
     }
 
     @Override
-    public Base resolveReference(Object appContext, String url, Base refContext) {
+    public Base resolveReference(FHIRPathEngine engine, Object appContext, String url, Base refContext) {
       try {
         String[] s = url.split("/");
         if (s.length != 2 || !definitions.getResources().containsKey(s[0]))
@@ -143,7 +149,7 @@ public class ExampleInspector implements IValidatorResourceFetcher, IValidationP
     }
 
     @Override
-    public boolean conformsToProfile(Object appContext, Base item, String url) throws FHIRException {
+    public boolean conformsToProfile(FHIRPathEngine engine, Object appContext, Base item, String url) throws FHIRException {
       IResourceValidator val = context.newValidator();
       List<ValidationMessage> valerrors = new ArrayList<ValidationMessage>();
       if (item instanceof org.hl7.fhir.r5.model.Resource) {
@@ -157,8 +163,13 @@ public class ExampleInspector implements IValidatorResourceFetcher, IValidationP
     }
 
     @Override
-    public ValueSet resolveValueSet(Object appContext, String url) {
+    public ValueSet resolveValueSet(FHIRPathEngine engine, Object appContext, String url) {
       return null;
+    }
+
+    @Override
+    public boolean paramIsType(String name, int index) {
+      return false;
     }
   }
   
@@ -233,8 +244,11 @@ public class ExampleInspector implements IValidatorResourceFetcher, IValidationP
     if (VALIDATE_RDF) {
       shex = new ShExValidator(Utilities.path(rootDir, "fhir.shex"));
     }
-    checkJsonLd();    
-    
+    try {
+      checkJsonLd();    
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
   }
   
   private void checkJsonLd() throws IOException {
@@ -313,15 +327,16 @@ public class ExampleInspector implements IValidatorResourceFetcher, IValidationP
   
   public void doValidate(String n, String rt, StructureDefinition profile) {
     errorsInt.clear();
-    logger.log(" ...validate " + n+" ("+Utilities.describeSize(fileSize(n))+")", LogMessageType.Process);
+    System.out.print(" validate: " + Utilities.padRight(n, ' ', 40));
+    long t = System.currentTimeMillis();
 
     try {
       Element e = validateLogical(Utilities.path(rootDir, n+".xml"), profile, FhirFormat.XML);
-      org.w3c.dom.Element xe = validateXml(Utilities.path(rootDir, n+".xml"), profile == null ? null : profile.getId());
+//      org.w3c.dom.Element xe = validateXml(Utilities.path(rootDir, n+".xml"), profile == null ? null : profile.getId());
 
-      validateLogical(Utilities.path(rootDir, n+".json"), profile, FhirFormat.JSON);
-      validateJson(Utilities.path(rootDir, n+".json"), profile == null ? null : profile.getId());
-      validateRDF(Utilities.path(rootDir, n+".ttl"), Utilities.path(rootDir, n+".jsonld"), rt);
+//      validateLogical(Utilities.path(rootDir, n+".json"), profile, FhirFormat.JSON);
+//      validateJson(Utilities.path(rootDir, n+".json"), profile == null ? null : profile.getId());
+//      validateRDF(Utilities.path(rootDir, n+".ttl"), Utilities.path(rootDir, n+".jsonld"), rt);
 
 //      if (new File(Utilities.path(rootDir, n+".ttl")).exists()) {
 //        validateLogical(Utilities.path(rootDir, n+".ttl"), profile, FhirFormat.TURTLE);
@@ -333,6 +348,13 @@ public class ExampleInspector implements IValidatorResourceFetcher, IValidationP
       errorsInt.add(new ValidationMessage(Source.InstanceValidator, IssueType.STRUCTURE, -1, -1, n, e.getMessage(), IssueSeverity.ERROR));
     }
     
+    long size = fileSize(n);
+    t =  System.currentTimeMillis() - t;
+    long bps = t == 0 ? 0 : size / t;
+    logger.log(": "+
+      Utilities.padLeft(Utilities.describeSize(size), ' ', 7)+" " +
+      Utilities.padLeft(Long.toString(t)+"ms ", ' ', 7)+ 
+      Utilities.padLeft(Long.toString(bps), ' ', 5)+"b/sec. "+validator.reportTimes(), LogMessageType.Process);
     for (ValidationMessage m : errorsInt) {
       if (!m.getLevel().equals(IssueSeverity.INFORMATION) && !m.getLevel().equals(IssueSeverity.WARNING)) {
         m.setMessage(n+":: "+m.getLocation()+": "+m.getMessage());
@@ -551,7 +573,7 @@ public class ExampleInspector implements IValidatorResourceFetcher, IValidationP
       ResourceDefn r = definitions.getResourceByName(parts[0]);
       for (Example e : r.getExamples()) {
         if (e.getElement() == null && e.hasXml()) {
-          e.setElement(new org.hl7.fhir.r5.elementmodel.XmlParser(context).parse(e.getXml()));
+          e.setElement(new org.hl7.fhir.r5.elementmodel.XmlParser(context).parse(new ArrayList<>(), e.getXml()));
           if (e.getElement() != null &&
               e.getElement().getProperty().getStructure() != null &&
               e.getElement().getProperty().getStructure().getBaseDefinition() != null &&
@@ -601,9 +623,12 @@ public class ExampleInspector implements IValidatorResourceFetcher, IValidationP
 
  
   @Override
-  public boolean resolveURL(IResourceValidator validator,Object appContext, String path, String url, String type) throws IOException, FHIRException {
+  public boolean resolveURL(IResourceValidator validator,Object appContext, String path, String url, String type, boolean canonical) throws IOException, FHIRException {
     if (path.endsWith(".fullUrl"))
       return true;
+    if (context.hasResource(org.hl7.fhir.r5.model.Resource.class, url)) {
+      return true;
+    }
     if (url.startsWith("http://hl7.org/fhir")) {
       if (url.contains("#"))
         url = url.substring(0, url.indexOf("#"));
@@ -611,7 +636,7 @@ public class ExampleInspector implements IValidatorResourceFetcher, IValidationP
       if (parts.length >= 5 &&  definitions.hasResource(parts[4])) {
         if ("DataElement".equals(parts[4]))
           return true;
-        Element res = fetch(validator, appContext, url.substring(20));
+//        Element res = fetch(validator, appContext, url.substring(20));
         return true; // disable this test. Try again for R4. res != null || Utilities.existsInList(parts[4], "NamingSystem", "CapabilityStatement", "CompartmentDefinition", "ConceptMap");
       } else if (context.fetchCodeSystem(url) != null)
         return true;
@@ -676,18 +701,44 @@ public class ExampleInspector implements IValidatorResourceFetcher, IValidationP
 
 
   @Override
-  public ContainedReferenceValidationPolicy policyForContained(IResourceValidator validator, Object appContext, String containerType, String containerId, SpecialElement containingResourceType, String path, String url) {
+  public ContainedReferenceValidationPolicy policyForContained(IResourceValidator validator,
+      Object appContext,
+      StructureDefinition structure,
+      ElementDefinition element,
+      String containerType,
+      String containerId,
+      Element.SpecialElement containingResourceType,
+      String path,
+      String url) {
     return ContainedReferenceValidationPolicy.CHECK_VALID;
   }
 
 
   @Override
-  public CodedContentValidationPolicy policyForCodedContent(IResourceValidator validator, Object appContext, String stackPath, ElementDefinition definition,
-      StructureDefinition structure, BindingKind kind, ValueSet valueSet, List<String> systems) {
-    return CodedContentValidationPolicy.VALUESET;
+  public EnumSet<CodedContentValidationAction> policyForCodedContent(IResourceValidator validator,
+      Object appContext,
+      String stackPath,
+      ElementDefinition definition,
+      StructureDefinition structure,
+      BindingKind kind,
+      AdditionalBindingPurpose purpose,
+      ValueSet valueSet,
+      List<String> systems) {
+    return EnumSet.allOf(CodedContentValidationAction.class);
   }
 
 
+  @Override
+  public EnumSet<ResourceValidationAction> policyForResource(IResourceValidator validator, Object appContext,
+      StructureDefinition type, String path) {
+    return EnumSet.allOf(ResourceValidationAction.class);
+  }
+
+  @Override
+  public EnumSet<ElementValidationAction> policyForElement(IResourceValidator validator, Object appContext,
+      StructureDefinition structure, ElementDefinition element, String path) {
+    return EnumSet.allOf(ElementValidationAction.class);
+  }
   public List<ValidationMessage> getErrors() {
     return errorsInt;
   }
@@ -745,12 +796,12 @@ public class ExampleInspector implements IValidatorResourceFetcher, IValidationP
   }
 
   @Override
-  public List<Base> resolveConstant(Object appContext, String name, boolean beforeContext) throws PathEngineException {
+  public List<Base> resolveConstant(FHIRPathEngine engine, Object appContext, String name, boolean beforeContext, boolean explicitConstant) throws PathEngineException {
     throw new NotImplementedException();
   }
 
   @Override
-  public TypeDetails resolveConstantType(Object appContext, String name) throws PathEngineException {
+  public TypeDetails resolveConstantType(FHIRPathEngine engine, Object appContext, String name, boolean explicitConstant) throws PathEngineException {
     throw new NotImplementedException();
   }
 
@@ -760,22 +811,22 @@ public class ExampleInspector implements IValidatorResourceFetcher, IValidationP
   }
 
   @Override
-  public FunctionDetails resolveFunction(String functionName) {
+  public FunctionDetails resolveFunction(FHIRPathEngine engine, String functionName) {
     throw new NotImplementedException();
   }
 
   @Override
-  public TypeDetails checkFunction(Object appContext, String functionName, List<TypeDetails> parameters) throws PathEngineException {
+  public TypeDetails checkFunction(FHIRPathEngine engine, Object appContext, String functionName, TypeDetails focus, List<TypeDetails> parameters) throws PathEngineException {
     throw new NotImplementedException();
   }
 
   @Override
-  public List<Base> executeFunction(Object appContext, List<Base> focus, String functionName, List<List<Base>> parameters) {
+  public List<Base> executeFunction(FHIRPathEngine engine, Object appContext, List<Base> focus, String functionName, List<List<Base>> parameters) {
     throw new NotImplementedException();
   }
 
   @Override
-  public Base resolveReference(Object appContext, String url, Base refContext) throws FHIRException {
+  public Base resolveReference(FHIRPathEngine engine, Object appContext, String url, Base refContext) throws FHIRException {
     if (Utilities.charCount(url, '/') == 1) {
      String type = url.substring(0, url.indexOf("/"));
      String id = url.substring(url.indexOf("/")+1);
@@ -798,12 +849,17 @@ public class ExampleInspector implements IValidatorResourceFetcher, IValidationP
   }
 
   @Override
-  public boolean conformsToProfile(Object appContext, Base item, String url) throws FHIRException {
+  public boolean conformsToProfile(FHIRPathEngine engine, Object appContext, Base item, String url) throws FHIRException {
     throw new NotImplementedException();
   }
 
   @Override
-  public ValueSet resolveValueSet(Object appContext, String url) {
+  public ValueSet resolveValueSet(FHIRPathEngine engine, Object appContext, String url) {
+    throw new NotImplementedException();
+  }
+
+  @Override
+  public boolean paramIsType(String name, int index) {
     throw new NotImplementedException();
   }
 

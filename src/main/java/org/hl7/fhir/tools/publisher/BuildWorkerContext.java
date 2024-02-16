@@ -26,31 +26,33 @@ import org.apache.http.impl.client.DefaultHttpClient;
 import org.fhir.ucum.UcumEssenceService;
 import org.fhir.ucum.UcumException;
 import org.fhir.ucum.UcumService;
-import org.hl7.fhir.convertors.txClient.TerminologyClientR5;
 import org.hl7.fhir.definitions.model.Definitions;
 import org.hl7.fhir.exceptions.DefinitionException;
 import org.hl7.fhir.exceptions.FHIRException;
 import org.hl7.fhir.exceptions.TerminologyServiceException;
-import org.hl7.fhir.r5.conformance.profile.ProfileUtilities;
 import org.hl7.fhir.r5.conformance.profile.BindingResolution;
 import org.hl7.fhir.r5.conformance.profile.ProfileKnowledgeProvider;
+import org.hl7.fhir.r5.conformance.profile.ProfileUtilities;
 import org.hl7.fhir.r5.context.BaseWorkerContext;
 import org.hl7.fhir.r5.context.CanonicalResourceManager;
+import org.hl7.fhir.r5.context.ContextUtilities;
 import org.hl7.fhir.r5.context.HTMLClientLogger;
+import org.hl7.fhir.r5.context.IContextResourceLoader;
 import org.hl7.fhir.r5.context.IWorkerContext;
 import org.hl7.fhir.r5.context.SimpleWorkerContext.PackageResourceLoader;
 import org.hl7.fhir.r5.model.CodeSystem;
-import org.hl7.fhir.r5.model.Enumerations.CodeSystemContentMode;
 import org.hl7.fhir.r5.model.CodeSystem.ConceptDefinitionComponent;
 import org.hl7.fhir.r5.model.CodeSystem.ConceptDefinitionDesignationComponent;
 import org.hl7.fhir.r5.model.ConceptMap;
 import org.hl7.fhir.r5.model.ElementDefinition.ElementDefinitionBindingComponent;
 import org.hl7.fhir.r5.model.ElementDefinition.TypeRefComponent;
+import org.hl7.fhir.r5.model.Enumerations.CodeSystemContentMode;
 import org.hl7.fhir.r5.model.ImplementationGuide;
 import org.hl7.fhir.r5.model.OperationOutcome;
 import org.hl7.fhir.r5.model.PackageInformation;
 import org.hl7.fhir.r5.model.Parameters;
 import org.hl7.fhir.r5.model.Parameters.ParametersParameterComponent;
+import org.hl7.fhir.r5.model.Resource;
 import org.hl7.fhir.r5.model.StringType;
 import org.hl7.fhir.r5.model.StructureDefinition;
 import org.hl7.fhir.r5.model.StructureDefinition.StructureDefinitionKind;
@@ -59,15 +61,17 @@ import org.hl7.fhir.r5.model.ValueSet;
 import org.hl7.fhir.r5.model.ValueSet.ConceptSetComponent;
 import org.hl7.fhir.r5.model.ValueSet.ValueSetExpansionContainsComponent;
 import org.hl7.fhir.r5.terminologies.client.ITerminologyClient;
-import org.hl7.fhir.r5.terminologies.validation.ValueSetValidator;
+import org.hl7.fhir.r5.terminologies.client.TerminologyClientR5;
+import org.hl7.fhir.r5.terminologies.utilities.ValidationResult;
 import org.hl7.fhir.r5.utils.client.EFhirClientException;
 import org.hl7.fhir.r5.utils.validation.IResourceValidator;
 import org.hl7.fhir.utilities.CSFileInputStream;
 import org.hl7.fhir.utilities.CommaSeparatedStringBuilder;
-
 import org.hl7.fhir.utilities.TextFile;
 import org.hl7.fhir.utilities.TranslatorXml;
 import org.hl7.fhir.utilities.Utilities;
+import org.hl7.fhir.utilities.VersionUtil;
+import org.hl7.fhir.utilities.VersionUtilities;
 import org.hl7.fhir.utilities.i18n.I18nConstants;
 import org.hl7.fhir.utilities.npm.BasePackageCacheManager;
 import org.hl7.fhir.utilities.npm.NpmPackage;
@@ -83,6 +87,7 @@ import org.hl7.fhir.utilities.xml.XMLWriter;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.xml.sax.SAXException;
+
 
 /*
  *  private static Map<String, StructureDefinition> loadProfiles() throws Exception {
@@ -124,11 +129,12 @@ public class BuildWorkerContext extends BaseWorkerContext implements IWorkerCont
 
   public BuildWorkerContext(Definitions definitions, String terminologyCachePath, ITerminologyClient client, CanonicalResourceManager<CodeSystem> codeSystems, CanonicalResourceManager<ValueSet> valueSets, CanonicalResourceManager<ConceptMap> maps, CanonicalResourceManager<StructureDefinition> profiles, CanonicalResourceManager<ImplementationGuide> guides, String folder) throws UcumException, ParserConfigurationException, SAXException, IOException, FHIRException {
     super(codeSystems, valueSets, maps, profiles, guides);
-    initTS(terminologyCachePath);
+    initTxCache(terminologyCachePath);
     this.definitions = definitions;
-    this.tcc.setClient(client);
+    this.terminologyClientManager.setMasterClient(client);
+    this.terminologyClientManager.setUsage("publication");
     this.txLog = new HTMLClientLogger(null);
-    setExpansionProfile(buildExpansionProfile());
+    setExpansionParameters(buildExpansionProfile());
     this.setTranslator(new TranslatorXml(Utilities.path(folder, "implementations", "translations.xml")));
     setWarnAboutMissingMessages(false);
   }
@@ -144,11 +150,11 @@ public class BuildWorkerContext extends BaseWorkerContext implements IWorkerCont
   }
 
   public boolean hasClient() {
-    return tcc.getClient() != null;
+    return terminologyClientManager.hasClient();
   }
 
   public ITerminologyClient getClient() {
-    return tcc.getClient();
+    return terminologyClientManager.getMasterClient();
   }
 
   public StructureDefinition getExtensionStructure(StructureDefinition context, String url) throws Exception {
@@ -554,14 +560,14 @@ public class BuildWorkerContext extends BaseWorkerContext implements IWorkerCont
       try {
         triedServer = true;
         // for this, we use the FHIR client
-        if (tcc.getClient() == null) {
-          tcc.setClient(new TerminologyClientR5("tx.fhir.org", tcc.getServer(), "fhir/main-build"));
+        if (terminologyClientManager.getMasterClient() == null) {
+          terminologyClientManager.setMasterClient(new TerminologyClientR5("tx-dev.fhir.org", "?", "fhir/main-build"));
           this.txLog = new HTMLClientLogger(null);
         }
         Map<String, String> params = new HashMap<String, String>();
         params.put("code", code);
         params.put("system", "http://loinc.org");
-        Parameters result = tcc.getClient().lookupCode(params);
+        Parameters result = terminologyClientManager.getMasterClient().lookupCode(params);
 
         for (ParametersParameterComponent p : result.getParameter()) {
           if (p.getName().equals("display"))
@@ -809,9 +815,10 @@ public class BuildWorkerContext extends BaseWorkerContext implements IWorkerCont
     if ((types == null || types.size() == 0) &&  loader != null) {
       types = loader.getTypes();
     }
+    PackageInformation pii = new PackageInformation(pi);
     for (PackageResourceInformation pri : pi.listIndexedResources(types)) {
       try {
-        registerResourceFromPackage(new PackageResourceLoader(pri, loader), new PackageInformation(pi.id(), pi.version(), pi.dateAsDate()));
+        registerResourceFromPackage(new PackageResourceLoader(pri, loader, pii), new PackageInformation(pi.id(), pi.version(), pi.dateAsDate()));
         t++;
       } catch (FHIRException e) {
         throw new FHIRException(formatMessage(I18nConstants.ERROR_READING__FROM_PACKAGE__, pri.getFilename(), pi.name(), pi.version(), e.getMessage()), e);
@@ -828,7 +835,8 @@ public class BuildWorkerContext extends BaseWorkerContext implements IWorkerCont
 
   @Override
   public boolean isPrimitiveType(String typeSimple) {
-    throw new NotImplementedException("Not implemented");
+    StructureDefinition sd = fetchTypeDefinition(typeSimple);
+    return (sd != null && sd.getKind() == StructureDefinitionKind.PRIMITIVETYPE);
   }
 
   @Override
@@ -848,5 +856,10 @@ public class BuildWorkerContext extends BaseWorkerContext implements IWorkerCont
   @Override
   public String getSpecUrl() {
     return "";
+  }
+
+  @Override
+  public <T extends Resource> T fetchResourceRaw(Class<T> class_, String uri) {
+    throw new NotImplementedException();
   }
 }

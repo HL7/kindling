@@ -7,8 +7,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.hl7.fhir.tools.converters.PageCrossLinker.EVersion;
-import org.hl7.fhir.tools.converters.PageCrossLinker.PageUsage;
 import org.hl7.fhir.utilities.TextFile;
 import org.hl7.fhir.utilities.Utilities;
 

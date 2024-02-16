@@ -3,10 +3,11 @@ plugins {
     `maven-publish`
     signing
     id("com.github.johnrengelman.shadow") version "7.0.0"
+    id("org.owasp.dependencycheck") version "8.4.0"
 }
 
 group = "org.hl7.fhir"
-version = "1.8.8-SNAPSHOT"
+version = "1.9.1-SNAPSHOT"
 
 java {
     withJavadocJar()
@@ -49,23 +50,19 @@ dependencies {
     implementation("ca.uhn.hapi.fhir", "org.hl7.fhir.r5", property("fhirCoreVersion").toString())
     implementation("ca.uhn.hapi.fhir", "org.hl7.fhir.convertors", property("fhirCoreVersion").toString())
     implementation("ca.uhn.hapi.fhir", "org.hl7.fhir.validation", property("fhirCoreVersion").toString())
-    implementation("org.eclipse.jgit", "org.eclipse.jgit", "5.13.0.202109080827-r")
-    implementation("ch.qos.logback", "logback-classic", "1.2.3")
+    implementation("org.eclipse.jgit", "org.eclipse.jgit", "6.7.0.202309050840-r")
+    implementation("ch.qos.logback", "logback-classic", property("logbackVersion").toString())
     implementation("com.google.code.gson", "gson", "2.8.9")
     implementation("commons-beanutils","commons-beanutils")
-    constraints {
-        implementation("commons-beanutils:commons-beanutils:1.9.4") {
-            because("previous versions have a bug impacting this application")
-        }
-    }
+
     implementation("commons-codec", "commons-codec", "1.9")
     implementation("commons-discovery", "commons-discovery", "0.2")
-    implementation("commons-httpclient", "commons-httpclient", "3.0.1")
+    implementation("org.apache.httpcomponents.client5", "httpclient5", "5.3")
     implementation("commons-io", "commons-io", "2.7")
     implementation("commons-logging", "commons-logging-api", "1.1")
     implementation("commons-logging", "commons-logging", "1.1.1")
     implementation("commons-net", "commons-net", "3.9")
-    implementation("org.apache.commons", "commons-compress", "1.21")
+    implementation("org.apache.commons", "commons-compress", "1.25.0")
     implementation("org.apache.commons", "commons-exec", "1.3")
     implementation("com.trilead", "trilead-ssh2", "1.0.0-build217")
     implementation("de.regnis.q.sequence", "sequence-library", "1.0.2")
@@ -81,9 +78,16 @@ dependencies {
     implementation("org.apache.httpcomponents.core5", "httpcore5", property("apacheHttpcomponents5Version").toString())
     implementation("org.apache.httpcomponents", "httpmime", property("apacheHttpcomponentsVersion").toString())
     implementation("org.apache.httpcomponents", "httpclient-cache", property("apacheHttpcomponentsVersion").toString())
-    implementation("org.eclipse.emf", "org.eclipse.emf.ecore", "2.9.2-v20131212-0545")
-    implementation("org.eclipse.emf", "org.eclipse.emf.ecore.xmi", "2.9.1-v20131212-0545")
-    implementation("org.eclipse.emf", "org.eclipse.emf.common", "2.9.2-v20131212-0545")
+
+    /*These dependencies are interrelated, and do not share the same version. To evaluate the appropriate versions,
+    https://mvnrepository.com/ was used, and the following dependencies pattern was observed.
+     org.eclipse.emf.ecore depends on org.eclipse.emf.common
+     org.eclipse.emf.ecore.xmi depends on org.eclipse.emf.ecore
+    */
+    implementation("org.eclipse.emf", "org.eclipse.emf.ecore", "2.35.0")
+    implementation("org.eclipse.emf", "org.eclipse.emf.ecore.xmi", "2.36.0")
+    implementation("org.eclipse.emf", "org.eclipse.emf.common", "2.29.0")
+
     implementation("org.apache.poi", "poi", property("apachePoiVersion").toString())
     implementation("org.apache.poi", "poi-ooxml", property("apachePoiVersion").toString())
     implementation("org.apache.xmlbeans", "xmlbeans", "3.1.0")
@@ -97,7 +101,7 @@ dependencies {
     implementation("org.apache.jena", "jena-arq", property("apacheJenaVersion").toString())
     implementation("org.apache.jena", "jena-iri", property("apacheJenaVersion").toString())
     implementation("org.apache.jena", "jena-base", property("apacheJenaVersion").toString())
-    implementation("org.apache.jena", "jena-shaded-guava", "3.1.0")
+    implementation("org.apache.jena", "jena-shaded-guava", "4.8.0")
     implementation("xerces", "xercesImpl", "2.12.2")
     implementation("com.fasterxml.jackson.core", "jackson-core", property("jacksonVersion").toString())
     implementation("com.fasterxml.jackson.core", "jackson-databind", property("jacksonVersion").toString())
@@ -106,20 +110,20 @@ dependencies {
     implementation("net.sf.saxon", "Saxon-HE", "9.5.1-5")
     implementation("org.slf4s", "slf4s-api_2.11", "1.7.13")
     implementation("com.typesafe.scala-logging", "scala-logging_2.12", "3.5.0")
-    implementation("com.github.everit-org.json-schema", "org.everit.json.schema", "1.9.1")
-    implementation("org.json", "json", "20230227")
+    implementation("com.github.everit-org.json-schema", "org.everit.json.schema", "1.14.3")
+    implementation("org.json", "json", "20231013")
     implementation("com.google.code.javaparser", "javaparser", "1.0.11")
-    implementation("com.google.guava", "guava", "30.0-jre")
+    implementation("com.google.guava", "guava", "32.1.3-jre")
     implementation("com.damnhandy", "handy-uri-templates", "2.1.6")
-    implementation("es.weso", "schema_2.12", "0.1.98-SNAPSHOT")
-    implementation("es.weso", "shacl_2.12", "0.1.75")
-    implementation("es.weso", "shex_2.12", "0.1.91")
-    implementation("es.weso", "srdfjena_2.12", "0.1.101")
-    implementation("es.weso", "srdf_2.12", "0.1.101")
-    implementation("es.weso", "utils_2.12", "0.1.94")
-    implementation("es.weso", "rbe_2.12", "0.1.91")
-    implementation("es.weso", "typing_2.12", "0.1.94")
-    implementation("es.weso", "validating_2.12", "0.1.94")
+    implementation("es.weso", "schema_2.12", "0.2.2")
+    implementation("es.weso", "shacl_2.12", "0.1.83")
+    implementation("es.weso", "shex_2.12", "0.2.32")
+    implementation("es.weso", "srdfjena_2.12", "0.1.124")
+    implementation("es.weso", "srdf_2.12", "0.1.124")
+    implementation("es.weso", "utils_2.12", "0.2.25")
+    implementation("es.weso", "rbe_2.12", "0.2.32")
+    implementation("es.weso", "typing_2.12", "0.2.25")
+    implementation("es.weso", "validating_2.12", "0.2.25")
     implementation("org.antlr", "antlr4-runtime", "4.6")
     implementation("io.circe", "circe-core_2.11", "0.7.0-M2")
     implementation("com.atlassian.commonmark", "commonmark", "0.12.1")
@@ -140,14 +144,53 @@ dependencies {
     implementation("org.slf4j", "slf4j-api", property("slf4jVersion").toString())
     implementation("org.apache.logging.log4j", "log4j", property("log4jVersion").toString())
     implementation("org.apache.logging.log4j", "log4j-core", property("log4jVersion").toString())
-    implementation("com.squareup.okhttp3", "okhttp", "4.9.0")
-    implementation("com.squareup.okio", "okio", "2.9.0")
+    implementation("com.squareup.okhttp3", "okhttp", "4.11.0")
+    implementation("com.squareup.okio", "okio")
     implementation("org.jetbrains.kotlin", "kotlin-stdlib", "1.6.10")
 
     testImplementation("org.junit.jupiter","junit-jupiter","5.8.2")
 
     configurations.implementation {
         exclude(group = "xml-apis")
+    }
+
+    constraints {
+        implementation("commons-beanutils:commons-beanutils:1.9.4") {
+            because("previous versions have a bug impacting this application")
+        }
+        implementation("org.apache.jena:jena-shex:4.9.0") {
+            because("previous versions have a bug impacting this application")
+        }
+        implementation("org.apache.solr:solr-solrj:9.4.0") {
+            because("previous versions have a bug impacting this application")
+        }
+        implementation("org.apache.jena:jena-shacl:4.9.0") {
+            because("previous versions have a bug impacting this application")
+        }
+        implementation("com.squareup.okio:okio:3.4.0") {
+            because("previous versions have a bug impacting this application")
+        }
+        implementation("com.squareup.okio:okio-jvm:3.4.0") {
+            because("previous versions have a bug impacting this application")
+        }
+        implementation("org.apache.zookeeper:zookeeper:3.9.1") {
+            because("previous versions have a bug impacting this application")
+        }
+        implementation("org.eclipse.jetty.http2:http2-client:11.0.17") {
+            because("previous versions have a bug impacting this application")
+        }
+        implementation("org.eclipse.jetty.http2:http2-http-client-transport:11.0.17") {
+            because("previous versions have a bug impacting this application")
+        }
+        implementation("io.netty:netty-handler:" + property("nettyConstrainedVersion").toString()) {
+            because("previous versions have a bug impacting this application")
+        }
+        implementation("io.netty:netty-transport-classes-epoll:" + property("nettyConstrainedVersion").toString()) {
+            because("previous versions have a bug impacting this application")
+        }
+        implementation("io.netty:netty-transport-native-epoll:" + property("nettyConstrainedVersion").toString()) {
+            because("previous versions have a bug impacting this application")
+        }
     }
 }
 
@@ -255,4 +298,8 @@ tasks.javadoc {
     if (JavaVersion.current().isJava9Compatible) {
         (options as StandardJavadocDocletOptions).addBooleanOption("html5", true)
     }
+}
+
+dependencyCheck {
+    formats = arrayListOf("SARIF", "HTML")
 }

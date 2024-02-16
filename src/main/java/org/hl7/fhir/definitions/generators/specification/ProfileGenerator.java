@@ -74,12 +74,11 @@ import org.hl7.fhir.definitions.uml.UMLPrimitive;
 import org.hl7.fhir.definitions.validation.FHIRPathUsage;
 import org.hl7.fhir.exceptions.FHIRException;
 import org.hl7.fhir.exceptions.FHIRFormatError;
-import org.hl7.fhir.r5.conformance.profile.ProfileUtilities;
 import org.hl7.fhir.r5.conformance.profile.ProfileKnowledgeProvider;
+import org.hl7.fhir.r5.conformance.profile.ProfileUtilities;
 import org.hl7.fhir.r5.formats.FormatUtilities;
 import org.hl7.fhir.r5.model.BooleanType;
 import org.hl7.fhir.r5.model.Bundle;
-import org.hl7.fhir.r5.model.CanonicalResource;
 import org.hl7.fhir.r5.model.Bundle.BundleEntryComponent;
 import org.hl7.fhir.r5.model.CanonicalType;
 import org.hl7.fhir.r5.model.CodeType;
@@ -140,6 +139,7 @@ import org.hl7.fhir.r5.model.UriType;
 import org.hl7.fhir.r5.renderers.OperationDefinitionRenderer;
 import org.hl7.fhir.r5.renderers.utils.RenderingContext;
 import org.hl7.fhir.r5.utils.BuildExtensions;
+import org.hl7.fhir.r5.utils.CanonicalResourceUtilities;
 import org.hl7.fhir.r5.utils.ToolingExtensions;
 import org.hl7.fhir.r5.utils.TypesUtilities;
 import org.hl7.fhir.tools.converters.MarkDownPreProcessor;
@@ -250,6 +250,8 @@ public class ProfileGenerator {
       if (dataElements != null)
         dataElements.addEntry().setResource(de).setFullUrl(de.getUrl());
     }
+
+    CanonicalResourceUtilities.setHl7WG(de, "fhir");
     KindlingUtilities.makeUniversal(de);
       
     if (!de.hasMeta())
@@ -317,6 +319,8 @@ public class ProfileGenerator {
     p.setDate(genDate.getTime());
     p.setStatus(PublicationStatus.fromCode("active")); // normative now
 
+    CanonicalResourceUtilities.setHl7WG(p, "fhir");
+    
     Set<String> containedSlices = new HashSet<String>();
 
     // first, the differential
@@ -404,7 +408,7 @@ public class ProfileGenerator {
 
     containedSlices.clear();
 
-    addElementConstraintToSnapshot(p);
+    addElementConstraintToSnapshot(p, true);
     XhtmlNode div = new XhtmlNode(NodeType.Element, "div");
     div.addText("to do");
     p.setText(new Narrative());
@@ -470,11 +474,12 @@ public class ProfileGenerator {
 
   }
 
-  private void addElementConstraintToSnapshot(StructureDefinition sd) {
+  private void addElementConstraintToSnapshot(StructureDefinition sd, boolean isPrimitive) {
     for (ElementDefinition ed : sd.getSnapshot().getElement())
       addElementConstraint(sd, ed);
     for (ElementDefinition ed : sd.getSnapshot().getElement())
-      addExtensionConstraint(sd, ed);
+      if (isPrimitive && !ed.getPath().contains(".") )
+        addExtensionConstraint(sd, ed);
     // to help with unit tests..
     ElementDefinitionConstraintSorter edcs = new ElementDefinitionConstraintSorter(); 
     for (ElementDefinition ed : sd.getSnapshot().getElement()) {
@@ -546,6 +551,7 @@ public class ProfileGenerator {
     KindlingUtilities.makeUniversal(p);
     populateCharacteristic(p, "has-size");
 
+    CanonicalResourceUtilities.setHl7WG(p, "fhir");
     
     ToolResourceUtilities.updateUsage(p, "core");
     p.setName("xhtml");
@@ -639,7 +645,7 @@ public class ProfileGenerator {
     generateElementDefinition(p, ec3, ec);
 
     containedSlices.clear();
-    addElementConstraintToSnapshot(p);
+    addElementConstraintToSnapshot(p, false);
 
     XhtmlNode div = new XhtmlNode(NodeType.Element, "div");
     div.addText("to do");
@@ -689,6 +695,7 @@ public class ProfileGenerator {
     p.setDate(genDate.getTime());
     p.setStatus(PublicationStatus.fromCode("active")); 
 
+    CanonicalResourceUtilities.setHl7WG(p, "fhir");
     Set<String> containedSlices = new HashSet<String>();
 
     // first, the differential
@@ -777,7 +784,7 @@ public class ProfileGenerator {
 //    generateElementDefinition(ecB, ecA);
 
     containedSlices.clear();
-    addElementConstraintToSnapshot(p);
+    addElementConstraintToSnapshot(p, true);
 
     XhtmlNode div = new XhtmlNode(NodeType.Element, "div");
     div.addText("to do");
@@ -822,6 +829,7 @@ public class ProfileGenerator {
     p.setDate(genDate.getTime());
     p.setStatus(t.getStandardsStatus() == StandardsStatus.NORMATIVE ?  PublicationStatus.fromCode("active") : PublicationStatus.fromCode("draft")); 
 
+    CanonicalResourceUtilities.setHl7WG(p, "fhir");
 
     Set<String> containedSlices = new HashSet<String>();
 
@@ -839,7 +847,7 @@ public class ProfileGenerator {
         generateElementDefinition(p, ed, getParent(ed, p.getSnapshot().getElement()));
 
     containedSlices.clear();
-    addElementConstraintToSnapshot(p);
+    addElementConstraintToSnapshot(p, false);
 
     p.getDifferential().getElement().get(0).getType().clear();
     p.getSnapshot().getElement().get(0).getType().clear();
@@ -851,6 +859,7 @@ public class ProfileGenerator {
     p.getText().setStatus(NarrativeStatus.GENERATED);
     p.getText().setDiv(div);
     checkHasTypes(p);
+    context.dropResource(p);
     context.cacheResource(p);
 
     return p;
@@ -944,6 +953,7 @@ public class ProfileGenerator {
     p.setDescription(pt.getDefinition());
     p.setDate(genDate.getTime());
 
+    CanonicalResourceUtilities.setHl7WG(p, "fhir");
     // first, the differential
     p.setName(pt.getName());
     ElementDefinition e = new ElementDefinition();
@@ -965,7 +975,7 @@ public class ProfileGenerator {
     inv.setSeverity(ConstraintSeverity.ERROR);
     inv.setHuman(pt.getInvariant().getEnglish());
     if (!"n/a".equals(pt.getInvariant().getExpression())) {
-      fpUsages.add(new FHIRPathUsage(pt.getName(), pt.getName(), pt.getName(), null, pt.getInvariant().getExpression()));
+      fpUsages.add(new FHIRPathUsage(pt.getName(), pt.getBaseType(), pt.getBaseType(), null, pt.getInvariant().getExpression()));
       inv.setExpression(pt.getInvariant().getExpression());
     }
     e.getConstraint().add(inv);
@@ -1020,7 +1030,7 @@ public class ProfileGenerator {
     p.setText(new Narrative());
     p.getText().setStatus(NarrativeStatus.GENERATED);
     p.getText().setDiv(div);    
-    addElementConstraintToSnapshot(p);
+    addElementConstraintToSnapshot(p, false);
 
     new ProfileUtilities(context, issues, pkp).setIds(p, false);
     checkHasTypes(p);
@@ -1098,6 +1108,7 @@ public class ProfileGenerator {
     ToolingExtensions.setStandardsStatus(p, r.getStatus(), r.getNormativeVersion());
     KindlingUtilities.makeUniversal(p);
 
+    CanonicalResourceUtilities.setHl7WG(p, "fhir");
     if (r.getFmmLevel() != null) {
       int fmm = Integer.parseInt(r.getFmmLevel());
       ToolingExtensions.addIntegerExtension(p, ToolingExtensions.EXT_FMM_LEVEL, fmm);
@@ -1109,11 +1120,11 @@ public class ProfileGenerator {
       ToolingExtensions.addCodeExtension(p, ToolingExtensions.EXT_SEC_CAT, r.getSecurityCategorization().toCode());
     ToolResourceUtilities.updateUsage(p, usage);
     p.setName(r.getRoot().getName());
-    p.setPublisher("Health Level Seven International"+(r.getWg() == null ? "" : " ("+r.getWg().getName()+")"));
-    p.addContact().getTelecom().add(Factory.newContactPoint(ContactPointSystem.URL, "http://hl7.org/fhir"));
-    if (r.getWg() != null)
-      p.addContact().getTelecom().add(Factory.newContactPoint(ContactPointSystem.URL, r.getWg().getUrl()));
-    ToolingExtensions.setCodeExtension(p, ToolingExtensions.EXT_WORKGROUP, r.getWg().getCode());
+    if (r.getWg() != null) {
+      CanonicalResourceUtilities.setHl7WG(p, r.getWg().getCode());
+    } else {
+      CanonicalResourceUtilities.setHl7WG(p, "fhir");
+    }
     p.setDescription(r.getDefinition());
     p.setPurpose(r.getRoot().getRequirements());
     if (!p.hasPurpose())
@@ -1152,7 +1163,7 @@ public class ProfileGenerator {
       }
     }
     containedSlices.clear();
-    addElementConstraintToSnapshot(p);
+    addElementConstraintToSnapshot(p, false);
 
     p.getDifferential().getElement().get(0).getType().clear();
     p.getSnapshot().getElement().get(0).getType().clear();
@@ -1245,7 +1256,11 @@ public class ProfileGenerator {
     else if (resource.getWg() != null) 
       ToolingExtensions.setCodeExtension(p, ToolingExtensions.EXT_WORKGROUP, resource.getWg().getCode());      
     else if (baseResource != null && baseResource.getWg() != null) 
-      ToolingExtensions.setCodeExtension(p, ToolingExtensions.EXT_WORKGROUP, baseResource.getWg().getCode());      
+      ToolingExtensions.setCodeExtension(p, ToolingExtensions.EXT_WORKGROUP, baseResource.getWg().getCode());  
+    else 
+      ToolingExtensions.setCodeExtension(p, ToolingExtensions.EXT_WORKGROUP, "fhir");  
+    CanonicalResourceUtilities.setHl7WG(p);
+
     if (pack.hasMetadata("Standards-Status")) 
       ToolingExtensions.setStandardsStatus(p, StandardsStatus.fromCode(pack.metadata("Standards-Status")), null);
     else
@@ -1284,7 +1299,7 @@ public class ProfileGenerator {
 
     p.getDifferential().getElement().get(0).getType().clear();
     p.getSnapshot().getElement().get(0).getType().clear();
-    addElementConstraintToSnapshot(p);
+    addElementConstraintToSnapshot(p, false);
 
     XhtmlNode div = new XhtmlNode(NodeType.Element, "div");
     div.addText("to do");
@@ -1383,6 +1398,7 @@ public class ProfileGenerator {
       sp.setCode(spd.getCode());
       sp.setDate(genDate.getTime());
       sp.setPublisher(p.getPublisher());
+        
       for (ContactDetail tc : p.getContact()) {
         ContactDetail t = sp.addContact();
         if (tc.hasNameElement())
@@ -1390,6 +1406,13 @@ public class ProfileGenerator {
         for (ContactPoint ts : tc.getTelecom())
           t.getTelecom().add(ts.copy());
       }
+
+      if (p.hasExtension(ToolingExtensions.EXT_WORKGROUP)) {
+        CanonicalResourceUtilities.setHl7WG(sp, ToolingExtensions.readStringExtension(p, ToolingExtensions.EXT_WORKGROUP));
+      } else {
+        CanonicalResourceUtilities.setHl7WG(p, "fhir");
+      }
+      
       if (!definitions.hasResource(p.getType()) && !p.getType().equals("Resource") && !p.getType().equals("DomainResource"))
         throw new Exception("unknown resource type "+p.getType());
       sp.setType(getSearchParamType(spd.getType()));
@@ -1422,7 +1445,13 @@ public class ProfileGenerator {
         }
         sp.setMultipleOr(false);
       } 
-      sp.addBase(VersionIndependentResourceTypesAll.fromCode(p.getType()));
+      if (VersionIndependentResourceTypesAll.isValidCode(p.getType())) {
+        sp.addBase(VersionIndependentResourceTypesAll.fromCode(p.getType()));
+      } else {
+        Enumeration<VersionIndependentResourceTypesAll> t = sp.addBaseElement();
+        t.setValueAsString("Resource");
+        t.addExtension(ToolingExtensions.EXT_SEARCH_PARAMETER_BASE, new CodeType(p.getType()));
+      }
     } else {
       if (sp.getType() != getSearchParamType(spd.getType()))
         throw new FHIRException("Type mismatch on common parameter: expected "+sp.getType().toCode()+" but found "+getSearchParamType(spd.getType()).toCode());
@@ -1480,7 +1509,7 @@ public class ProfileGenerator {
           boolean found = false;
           for (Enumeration<VersionIndependentResourceTypesAll> st : sp.getTarget())
             found = found || st.asStringValue().equals(resourceName);
-          if (!found)
+          if (!found && VersionIndependentResourceTypesAll.isValidCode(resourceName))
             sp.addTarget(VersionIndependentResourceTypesAll.fromCode(resourceName));
         }
       }
@@ -1488,8 +1517,8 @@ public class ProfileGenerator {
         boolean found = false;
         for (Enumeration<VersionIndependentResourceTypesAll> st : sp.getTarget())
           found = found || st.asStringValue().equals(target);
-        if (!found)
-          sp.addTarget(VersionIndependentResourceTypesAll.fromCode(target));
+          if (!found && VersionIndependentResourceTypesAll.isValidCode(target))
+            sp.addTarget(VersionIndependentResourceTypesAll.fromCode(target));
       }
     }
     context.cacheResource(sp);
@@ -2180,6 +2209,8 @@ public class ProfileGenerator {
       return ed;
     if (isResource(ed))
       return ed;
+    if (ed.getPath().equals("Base"))
+      return ed;
     if (hasConstraint(ed, "ele-1")) 
       return ed;
     
@@ -2207,6 +2238,12 @@ public class ProfileGenerator {
       return ed;
     if (hasConstraint(ed, "ext-1")) 
       return ed;
+    if (ed.getPath().equals("Element")) {
+      return ed;
+    }
+    if (ed.getPath().equals("DataType")) {
+      return ed;
+    }
     
     ElementDefinitionConstraintComponent inv = ed.addConstraint();
     inv.setKey("ext-1");
@@ -2538,6 +2575,7 @@ public class ProfileGenerator {
     opd.setDescription(preProcessMarkdown(op.getDoco(), "Operation Documentation"));
     opd.setStatus(op.getStandardsStatus() == StandardsStatus.NORMATIVE ?  PublicationStatus.ACTIVE : PublicationStatus.DRAFT);
     opd.setDate(genDate.getTime());
+    CanonicalResourceUtilities.setHl7WG(opd, rd.getWg().getCode());
     if (op.getKind().toLowerCase().equals("operation"))
       opd.setKind(OperationKind.OPERATION);
     else if (op.getKind().toLowerCase().equals("query"))
@@ -2679,12 +2717,15 @@ public class ProfileGenerator {
     
     ToolResourceUtilities.updateUsage(p, igd.getCode());
     p.setName(r.getRoot().getName());
-    p.setPublisher("Health Level Seven International"+(r.getWg() == null ? " "+igd.getCommittee() : " ("+r.getWg().getName()+")"));
+    p.setPublisher("HL7 International"+(r.getWg() == null ? " "+igd.getCommittee() : " / "+r.getWg().getName()));
     p.addContact().getTelecom().add(Factory.newContactPoint(ContactPointSystem.URL, "http://hl7.org/fhir"));
     if (r.getWg() != null) {
       p.addContact().getTelecom().add(Factory.newContactPoint(ContactPointSystem.URL, r.getWg().getUrl()));
       ToolingExtensions.setCodeExtension(p, ToolingExtensions.EXT_WORKGROUP, r.getWg().getCode());
+    } else {
+      CanonicalResourceUtilities.setHl7WG(p, "fhir");
     }
+
     p.setDescription("Logical Model: "+r.getDefinition());
     p.setPurpose(r.getRoot().getRequirements());
     if (!p.hasPurpose())
@@ -2697,7 +2738,7 @@ public class ProfileGenerator {
     // first, the differential
     p.setSnapshot(new StructureDefinitionSnapshotComponent());
     defineElement(null, p, p.getSnapshot().getElement(), r.getRoot(), r.getRoot().getName(), containedSlices, new ArrayList<ProfileGenerator.SliceHandle>(), SnapShotMode.None, true, "Element", "Element", true);
-    addElementConstraintToSnapshot(p);
+    addElementConstraintToSnapshot(p, false);
 
     XhtmlNode div = new XhtmlNode(NodeType.Element, "div");
     div.addText("to do");
