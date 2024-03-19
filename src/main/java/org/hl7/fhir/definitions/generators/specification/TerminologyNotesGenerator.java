@@ -225,9 +225,9 @@ public class TerminologyNotesGenerator extends OutputStreamWriter {
             }
           }
         } else if (cd.getBinding() == BindingSpecification.BindingMethod.ValueSet) {
-          if (Utilities.noString(cd.getReference())) 
-            write("??");
-          else if (cd.getReference().startsWith("valueset-"))
+          if (Utilities.noString(cd.getReference())) {
+            System.out.println("no value set for "+cd.getName());
+          } else if (cd.getReference().startsWith("valueset-"))
             write("<a href=\""+prefix+cd.getReference()+".html\">http://hl7.org/fhir/ValueSet/"+cd.getReference().substring(9)+"</a><!-- a -->");            
           else if (cd.getReference().startsWith("http://hl7.org/fhir")) {
             if (cd.getReference().startsWith("http://terminology.hl7.org/ValueSet/v3-")) {

@@ -75,6 +75,7 @@ import org.fhir.ucum.UcumException;
 import org.hl7.fhir.convertors.SpecDifferenceEvaluator;
 import org.hl7.fhir.convertors.TypeLinkProvider;
 import org.hl7.fhir.convertors.loaders.loaderR5.R4ToR5Loader;
+import org.hl7.fhir.convertors.loaders.loaderR5.R5ToR5Loader;
 import org.hl7.fhir.definitions.Config;
 import org.hl7.fhir.definitions.generators.specification.BaseGenerator;
 import org.hl7.fhir.definitions.generators.specification.DataTypeTableGenerator;
@@ -479,6 +480,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
   private String webLocation;
   private String searchLocation;
   private String extensionsLocation;
+  private long maxMemory = 0;
 
   private String getComputerName()
   {
@@ -10446,10 +10448,10 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     workerContext.setAllowLoadingDuplicates(true);
     log("Load UTG Terminology", LogMessageType.Process);
     utg = new FilesystemPackageCacheManager.Builder().build().loadPackage("hl7.terminology");
-    workerContext.loadFromPackage(utg, new R4ToR5Loader(BuildWorkerContext.defaultTypesToLoad(), new UTGLoader(utg.version()), workerContext.getVersion()));
+    workerContext.loadFromPackage(utg, new R5ToR5Loader(BuildWorkerContext.defaultTypesToLoad(), new UTGLoader(utg.version())));
     log("Load Extensions", LogMessageType.Process);
     ext = new FilesystemPackageCacheManager.Builder().build().loadPackage("hl7.fhir.uv.extensions", "current");
-    workerContext.loadFromPackage(ext, new R4ToR5Loader(BuildWorkerContext.extensionTypesToLoad(), new ExtensionsLoader(ext.version(), extensionsLocation), workerContext.getVersion()));
+    workerContext.loadFromPackage(ext, new R5ToR5Loader(BuildWorkerContext.extensionTypesToLoad(), new ExtensionsLoader(ext.version(), extensionsLocation)));
     log("Load DICOM Terminology", LogMessageType.Process);
     dicom = new FilesystemPackageCacheManager.Builder().build().loadPackage("fhir.dicom");
     workerContext.loadFromPackage(dicom, new R4ToR5Loader(BuildWorkerContext.defaultTypesToLoad(), new DICOMLoader(utg.version()), workerContext.getVersion()));
@@ -10530,6 +10532,16 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
       System.out.println(String.format("%1$-74s", content)+" "+String.format("%1$8s", Float.toString(gap))+" "+String.format("%1$3s", Long.toString(secs))+"sec "+String.format("%1$4s", Long.toString(used))+"MB");
     } else
       System.out.println(content);
+    
+
+    Runtime runtime = Runtime.getRuntime();
+    long totalMemory = runtime.totalMemory();
+    long freeMemory = runtime.freeMemory();
+    long usedMemory = totalMemory - freeMemory;
+    if (usedMemory > maxMemory) {
+      maxMemory = usedMemory;
+    }
+    
   }
 
 //  public void logNoEoln(String content) {
@@ -12442,4 +12454,10 @@ private int countContains(List<ValueSetExpansionContainsComponent> list) {
       throw new FHIRException(e);
     }
   }
+
+  public long getMaxMemory() {
+    return maxMemory;
+  }
+  
+  
 }
