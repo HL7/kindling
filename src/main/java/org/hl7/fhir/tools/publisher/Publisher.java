@@ -2116,8 +2116,7 @@ public class Publisher implements URIResolver, SectionNumberer {
         json.compose(new FileOutputStream(Utilities.path(page.getFolders().dstDir, baseFileName + ".canonical.json")), r);
       }
       if (showTtl) {
-        IParser rdf = new RdfParser().setOutputStyle(OutputStyle.PRETTY);
-        rdf.compose(new FileOutputStream(Utilities.path(page.getFolders().dstDir, baseFileName + ".ttl")), r);
+        resource2Ttl(r);
       }
     }
     if (description!=null) {
@@ -4501,9 +4500,11 @@ public class Publisher implements URIResolver, SectionNumberer {
 //      rdf.setSuppressXhtml("Snipped for Brevity");
       rdf.compose(bytes, VersionConvertorFactory_40_50.convertResource(r));
     } else {
-      IParser rdf = new RdfParser().setOutputStyle(OutputStyle.PRETTY);
-//      rdf.setSuppressXhtml("Snipped for Brevity");
-      rdf.compose(bytes, r);      
+        // R5+ serialization relies on r5.elementmodel.Element, so transform Resource directly into it (instead of getting Element by re-parsing another serialization)
+        org.hl7.fhir.r5.elementmodel.ResourceParser resourceParser = new org.hl7.fhir.r5.elementmodel.ResourceParser(page.getWorkerContext());
+        org.hl7.fhir.r5.elementmodel.Element exe = resourceParser.parse(r);
+        ParserBase tp = Manager.makeParser(page.getWorkerContext(), FhirFormat.TURTLE);
+        tp.compose(exe, bytes, OutputStyle.PRETTY, null);
     }
     bytes.close();
     return new String(bytes.toByteArray());
