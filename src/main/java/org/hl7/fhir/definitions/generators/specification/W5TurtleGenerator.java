@@ -12,6 +12,7 @@ import org.apache.jena.ontology.OntModelSpec;
 import org.apache.jena.ontology.OntProperty;
 import org.apache.jena.ontology.Ontology;
 import org.apache.jena.rdf.model.ModelFactory;
+import org.apache.jena.rdf.model.ResourceFactory;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.RDFFormat;
 import org.apache.jena.vocabulary.OWL2;
@@ -62,7 +63,7 @@ public class W5TurtleGenerator {
         w5.addProperty(RDFS.label, "W5 Categorization");
         w5.addProperty(RDFS.comment, "FHIR W5 categorization is a preliminary classification of the fhir property");
         w5.addVersionInfo("FHIR W5 categorization (Preliminary)");
-        w5.addProperty(OWL2.versionIRI, getOntologyVersionIRI()+"w5.ttl");
+        w5.addProperty(OWL2.versionIRI, ResourceFactory.createResource(getOntologyVersionIRI()+"w5.ttl"));
 
         // The only way to differentiate predicates from classes is the existence of subclasses -- if something
         // has subclasses or is a subclass then it is a class.  Otherwise it is a predicate...
