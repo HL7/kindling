@@ -10,6 +10,7 @@ import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -651,7 +652,6 @@ public class ExampleInspector implements IValidatorResourceFetcher, IValidationP
       return true;
   }
 
-
   @Override
   public IValidatorResourceFetcher setLocale(Locale locale) {
     // don't need to do anything here 
@@ -669,7 +669,7 @@ public class ExampleInspector implements IValidatorResourceFetcher, IValidationP
 
 
   @Override
-  public CanonicalResource fetchCanonicalResource(IResourceValidator validator, String url) throws URISyntaxException {
+  public CanonicalResource fetchCanonicalResource(IResourceValidator validator, Object appContext, String url) throws URISyntaxException {
     for (CanonicalResource t : context.fetchResourcesByType(CanonicalResource.class)) {
       if (t.getUrl().equals(url)) {
         return t;
@@ -861,6 +861,11 @@ public class ExampleInspector implements IValidatorResourceFetcher, IValidationP
   @Override
   public boolean paramIsType(String name, int index) {
     throw new NotImplementedException();
+  }
+
+  @Override
+  public Set<String> fetchCanonicalResourceVersions(IResourceValidator validator, Object appContext, String url) {
+    return new HashSet<>();
   }
 
 

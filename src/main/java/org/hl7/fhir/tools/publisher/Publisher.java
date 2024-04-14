@@ -824,6 +824,7 @@ public class Publisher implements URIResolver, SectionNumberer {
       if (isGenerate && buildFlags.get("all"))
         produceQA();
 
+      page.log("Max Memory Used = "+Utilities.describeSize(page.getMaxMemory()), LogMessageType.Process);
       if (!buildFlags.get("all")) {
         page.log("This was a Partial Build", LogMessageType.Process);
         CommaSeparatedStringBuilder b = new CommaSeparatedStringBuilder();
@@ -1871,13 +1872,13 @@ public class Publisher implements URIResolver, SectionNumberer {
     cd.setDisplay(sd.getType());
     cd.setDefinition(sd.getDescription());
     if (!sd.getType().equals("Base")) {
-      CodeSystemUtilities.setProperty(cs, cd, "kind", new CodeType(codeForKind(sd)));
+      CodeSystemUtilities.setProperty(cs, cd, "http://hl7.org/fhir/type-properties#kind", "kind", new CodeType(codeForKind(sd)));
     }
     if (sd.getAbstract()) {
-      CodeSystemUtilities.setProperty(cs, cd, "abstract-type", new BooleanType(true));
+      CodeSystemUtilities.setProperty(cs, cd, "http://hl7.org/fhir/type-properties#abstract-type", "abstract-type", new BooleanType(true));
     }
     if (sd.hasExtension(ToolingExtensions.EXT_RESOURCE_INTERFACE)) {
-      CodeSystemUtilities.setProperty(cs, cd, "interface", new BooleanType(true));
+      CodeSystemUtilities.setProperty(cs, cd, "http://hl7.org/fhir/type-properties#interface", "interface", new BooleanType(true));
     }
     list.add(cd);
     for (StructureDefinition t : types) {
@@ -5270,21 +5271,24 @@ public class Publisher implements URIResolver, SectionNumberer {
           }
         }
       }
+    } catch (Throwable ex) {
+      StringWriter errors = new StringWriter();
+      System.out.println("Error generating narrative for example "+e.getName()+": "+ex.getMessage());
+      ex.printStackTrace();
+      XhtmlNode xhtml = new XhtmlNode(NodeType.Element, "div");
+      xhtml.addTag("p").setAttribute("style", "color: maroon").addText("Error processing narrative: " + ex.getMessage());
+      xhtml.addTag("p").setAttribute("style", "color: maroon").addText(errors.toString());
+      narrative = new XhtmlComposer(XhtmlComposer.HTML).compose(xhtml);
+    }
+    try {
       if (e.getResource() == null && e.getElement() == null) {
         String xml = XMLUtil.elementToString(e.getXml().getDocumentElement()).replace("<?xml version=\"1.0\" encoding=\"UTF-16\"?>", "").trim();
         e.setElement(new Manager().parseSingle(page.getWorkerContext(), new StringInputStream(xml), FhirFormat.XML));
         e.setResource(new XmlParser().parse(xml));
       }
     } catch (Throwable ex) {
-      StringWriter errors = new StringWriter();
-      System.out.println("Error generating narrative for example "+e.getName()+": "+ex.getMessage());
-//      ex.printStackTrace();
-      XhtmlNode xhtml = new XhtmlNode(NodeType.Element, "div");
-      xhtml.addTag("p").setAttribute("style", "color: maroon").addText("Error processing narrative: " + ex.getMessage());
-      xhtml.addTag("p").setAttribute("style", "color: maroon").addText(errors.toString());
-      narrative = new XhtmlComposer(XhtmlComposer.HTML).compose(xhtml);
+      System.out.println("Error reparsing example "+e.getName()+": "+ex.getMessage());
     }
-
     if (rt.equals("ValueSet")) {
       try {
         ValueSet vs = (ValueSet) loadExample(file);
