@@ -81,12 +81,14 @@ dependencies {
 
     /*These dependencies are interrelated, and do not share the same version. To evaluate the appropriate versions,
     https://mvnrepository.com/ was used, and the following dependencies pattern was observed.
-     org.eclipse.emf.ecore depends on org.eclipse.emf.common
-     org.eclipse.emf.ecore.xmi depends on org.eclipse.emf.ecore
+     org.eclipse.emf.ecore (https://mvnrepository.com/artifact/org.eclipse.emf/org.eclipse.emf.ecore)
+        depends on org.eclipse.emf.common (https://mvnrepository.com/artifact/org.eclipse.emf/org.eclipse.emf.common)
+     org.eclipse.emf.ecore.xmi (https://mvnrepository.com/artifact/org.eclipse.emf/org.eclipse.emf.ecore.xmi)
+        depends on org.eclipse.emf.ecore (https://mvnrepository.com/artifact/org.eclipse.emf/org.eclipse.emf.ecore)
     */
-    implementation("org.eclipse.emf", "org.eclipse.emf.ecore", "2.35.0")
-    implementation("org.eclipse.emf", "org.eclipse.emf.ecore.xmi", "2.36.0")
-    implementation("org.eclipse.emf", "org.eclipse.emf.common", "2.29.0")
+    implementation("org.eclipse.emf", "org.eclipse.emf.ecore", "2.36.0")
+    implementation("org.eclipse.emf", "org.eclipse.emf.ecore.xmi", "2.37.0")
+    implementation("org.eclipse.emf", "org.eclipse.emf.common", "2.30.0")
 
     implementation("org.apache.poi", "poi", property("apachePoiVersion").toString())
     implementation("org.apache.poi", "poi-ooxml", property("apachePoiVersion").toString())
@@ -191,6 +193,10 @@ dependencies {
             because("previous versions have a bug impacting this application")
         }
         implementation("io.netty:netty-transport-native-epoll:" + property("nettyConstrainedVersion").toString()) {
+            because("previous versions have a bug impacting this application")
+        }
+
+        implementation("org.jgrapht:jgrapht-core:1.5.2") {
             because("previous versions have a bug impacting this application")
         }
     }
