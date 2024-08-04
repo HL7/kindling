@@ -62,7 +62,7 @@ dependencies {
     implementation("commons-logging", "commons-logging-api", "1.1")
     implementation("commons-logging", "commons-logging", "1.1.1")
     implementation("commons-net", "commons-net", "3.9")
-    implementation("org.apache.commons", "commons-compress", "1.25.0")
+    implementation("org.apache.commons", "commons-compress", "1.26.1")
     implementation("org.apache.commons", "commons-exec", "1.3")
     implementation("com.trilead", "trilead-ssh2", "1.0.0-build217")
     implementation("de.regnis.q.sequence", "sequence-library", "1.0.2")
@@ -81,12 +81,14 @@ dependencies {
 
     /*These dependencies are interrelated, and do not share the same version. To evaluate the appropriate versions,
     https://mvnrepository.com/ was used, and the following dependencies pattern was observed.
-     org.eclipse.emf.ecore depends on org.eclipse.emf.common
-     org.eclipse.emf.ecore.xmi depends on org.eclipse.emf.ecore
+     org.eclipse.emf.ecore (https://mvnrepository.com/artifact/org.eclipse.emf/org.eclipse.emf.ecore)
+        depends on org.eclipse.emf.common (https://mvnrepository.com/artifact/org.eclipse.emf/org.eclipse.emf.common)
+     org.eclipse.emf.ecore.xmi (https://mvnrepository.com/artifact/org.eclipse.emf/org.eclipse.emf.ecore.xmi)
+        depends on org.eclipse.emf.ecore (https://mvnrepository.com/artifact/org.eclipse.emf/org.eclipse.emf.ecore)
     */
-    implementation("org.eclipse.emf", "org.eclipse.emf.ecore", "2.35.0")
-    implementation("org.eclipse.emf", "org.eclipse.emf.ecore.xmi", "2.36.0")
-    implementation("org.eclipse.emf", "org.eclipse.emf.common", "2.29.0")
+    implementation("org.eclipse.emf", "org.eclipse.emf.ecore", "2.36.0")
+    implementation("org.eclipse.emf", "org.eclipse.emf.ecore.xmi", "2.37.0")
+    implementation("org.eclipse.emf", "org.eclipse.emf.common", "2.30.0")
 
     implementation("org.apache.poi", "poi", property("apachePoiVersion").toString())
     implementation("org.apache.poi", "poi-ooxml", property("apachePoiVersion").toString())
@@ -111,7 +113,7 @@ dependencies {
     implementation("org.slf4s", "slf4s-api_2.11", "1.7.13")
     implementation("com.typesafe.scala-logging", "scala-logging_2.12", "3.5.0")
     implementation("com.github.everit-org.json-schema", "org.everit.json.schema", "1.14.3")
-    implementation("org.json", "json", "20231013")
+    implementation("org.json", "json", "20240303")
     implementation("com.google.code.javaparser", "javaparser", "1.0.11")
     implementation("com.google.guava", "guava", "32.1.3-jre")
     implementation("com.damnhandy", "handy-uri-templates", "2.1.6")
@@ -161,7 +163,7 @@ dependencies {
         implementation("org.apache.jena:jena-shex:4.9.0") {
             because("previous versions have a bug impacting this application")
         }
-        implementation("org.apache.solr:solr-solrj:9.4.0") {
+        implementation("org.apache.solr:solr-solrj:9.5.0") {
             because("previous versions have a bug impacting this application")
         }
         implementation("org.apache.jena:jena-shacl:4.9.0") {
@@ -173,15 +175,17 @@ dependencies {
         implementation("com.squareup.okio:okio-jvm:3.4.0") {
             because("previous versions have a bug impacting this application")
         }
-        implementation("org.apache.zookeeper:zookeeper:3.9.1") {
+        implementation("org.apache.zookeeper:zookeeper:3.9.2") {
             because("previous versions have a bug impacting this application")
         }
-        implementation("org.eclipse.jetty.http2:http2-client:11.0.17") {
+
+        implementation("org.eclipse.jetty.http2:http2-client:11.0.20") {
             because("previous versions have a bug impacting this application")
         }
-        implementation("org.eclipse.jetty.http2:http2-http-client-transport:11.0.17") {
+        implementation("org.eclipse.jetty.http2:http2-http-client-transport:11.0.20") {
             because("previous versions have a bug impacting this application")
         }
+
         implementation("io.netty:netty-handler:" + property("nettyConstrainedVersion").toString()) {
             because("previous versions have a bug impacting this application")
         }
@@ -189,6 +193,10 @@ dependencies {
             because("previous versions have a bug impacting this application")
         }
         implementation("io.netty:netty-transport-native-epoll:" + property("nettyConstrainedVersion").toString()) {
+            because("previous versions have a bug impacting this application")
+        }
+
+        implementation("org.jgrapht:jgrapht-core:1.5.2") {
             because("previous versions have a bug impacting this application")
         }
     }
