@@ -30,7 +30,10 @@ POSSIBILITY OF SUCH DAMAGE.
 
  */
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -39,14 +42,17 @@ import java.util.Set;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 
+import org.hl7.fhir.r5.context.IWorkerContext;
 import org.hl7.fhir.r5.elementmodel.Element;
+import org.hl7.fhir.r5.elementmodel.Manager;
+import org.hl7.fhir.r5.elementmodel.Manager.FhirFormat;
 import org.hl7.fhir.r5.model.Resource;
 import org.hl7.fhir.tools.publisher.PageProcessor;
-import org.hl7.fhir.utilities.CSFile;
-import org.hl7.fhir.utilities.CSFileInputStream;
 import org.hl7.fhir.utilities.CSVProcessor;
 import org.hl7.fhir.utilities.TextFile;
 import org.hl7.fhir.utilities.Utilities;
+import org.hl7.fhir.utilities.filesystem.CSFile;
+import org.hl7.fhir.utilities.filesystem.CSFileInputStream;
 import org.hl7.fhir.utilities.validation.ValidationMessage;
 import org.hl7.fhir.utilities.xml.XMLUtil;
 import org.w3c.dom.Document;
@@ -62,7 +68,6 @@ public class Example {
   private String xhtm;
   private ExampleType type;
   private boolean registered;
-  private Document xml;
   private String resourceName;
   private Set<Example> inbounds = new HashSet<Example>();
   private String ig;
@@ -70,6 +75,9 @@ public class Example {
   private Element element;
   private List<ValidationMessage> errors = new ArrayList<>();
   private Resource resource;
+  private IWorkerContext context;
+  private File path;
+  private boolean noId;
 
 
   public enum ExampleType {
@@ -80,35 +88,42 @@ public class Example {
   }
 
 
-  public Example(String name, String id, String title, String description, boolean registered, ExampleType type, Document doc) throws Exception {
+  public Example(String name, String id, String title, String description, boolean registered, ExampleType type, Element element) throws Exception {
     this.name = name;
     this.id = id;
     this.description = description;
     this.type = type;
     this.registered = registered;
     this.title = title;
+    this.element = element;
 
-    xml = doc;
-    resourceName = xml.getDocumentElement().getNodeName();
-    if (XMLUtil.getNamedChild(xml.getDocumentElement(), "id") == null)
+    resourceName = element.fhirType();
+    String xid = element.getIdBase();
+    if (xid == null)
       throw new Exception("no id element (looking for '"+id+"' from example "+id);
-    String xid = XMLUtil.getNamedChild(xml.getDocumentElement(), "id").getAttribute("value");
     if (!id.equals(xid)) {
       throw new Exception("misidentified resource example "+id+" expected '"+id+"' found '"+xid+"'");
     }
   }
 
 
-  public Example(String name, String id, String description, File path, boolean registered, ExampleType type, boolean noId) throws Exception {
+  public Example(IWorkerContext context, String name, String id, String description, File path, boolean registered, ExampleType type, boolean noId) throws Exception {
     super();
     this.name = name;
     this.id = id;
     this.description = description;
-    //    this.path = path;
+    this.path = path;
     this.type = type;
     this.registered = registered;
     this.title = getFileTitle(path);
+    this.context = context;
+    this.noId = noId;
 
+  }
+
+
+  private void loadExample()
+      throws FileNotFoundException, IOException, UnsupportedEncodingException, Exception {
     if( type == ExampleType.CsvFile ) {
       CSVProcessor csv = new CSVProcessor();
       csv.setSource(new CSFileInputStream(path));
@@ -120,23 +135,20 @@ public class Example {
     }
 
     if (type == ExampleType.XmlFile || type == ExampleType.CsvFile || type == ExampleType.Container) {
-      DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-      factory.setNamespaceAware(true);
       try {
-        DocumentBuilder builder = factory.newDocumentBuilder();
         String xs = TextFile.fileToString(new CSFile(path.getAbsolutePath()));
         xs = xs.replace("[%test-server%]", PageProcessor.TEST_SERVER_URL);
-        xml = builder.parse(new ByteArrayInputStream(xs.getBytes(Charsets.UTF_8)));
-        resourceName = xml.getDocumentElement().getNodeName();
+        element = Manager.parseSingle(context, new ByteArrayInputStream(xs.getBytes(Charsets.UTF_8)), FhirFormat.XML);
+        resourceName = element.fhirType();
       } catch (Exception e) {
         throw new Exception("unable to read "+path.getAbsolutePath()+": "+e.getMessage(), e);
       }
     }
-    if (xml != null && !noId) {
+    if (element != null && !noId) {
       if (!Utilities.noString(id)) {
-        if (XMLUtil.getNamedChild(xml.getDocumentElement(), "id") == null)
+        String xid = element.getIdBase();
+        if (xid == null)
           throw new Exception("no id element (looking for '"+id+"' from "+path.getName());
-        String xid = XMLUtil.getNamedChild(xml.getDocumentElement(), "id").getAttribute("value");
         if (!id.equals(xid)) {
           throw new Exception("misidentified resource "+path+" expected '"+id+"' found '"+xid+"'");
         }
@@ -191,9 +203,6 @@ public class Example {
     return title;
   }
 
-  public Document getXml() {
-    return xml;
-  }
 
   public boolean isRegistered() {
     return registered;
@@ -237,7 +246,11 @@ public class Example {
   }
 
 
-  public Element getElement() {
+  public Element getElement() throws FileNotFoundException, UnsupportedEncodingException, IOException, Exception {   
+    if (element == null) {
+      loadExample();
+    }
+
     return element;
   }
 
@@ -247,40 +260,42 @@ public class Example {
   }
 
 
-  public boolean hasXml() {
-    return xml != null;
-  }
-
-
   public List<ValidationMessage> getErrors() {
     return errors;
   }
 
 
-  public boolean hasContained() {
-    if (xml == null) {
+  public boolean hasContained() throws FileNotFoundException, UnsupportedEncodingException, IOException, Exception {
+    if (element == null) {
+      loadExample();
+    }
+
+    if (element == null) {
       return false;
     }
-    Node n = xml.getDocumentElement().getFirstChild();
-    while (n != null && !"contained".equals(n.getNodeName())) {
-      n = n.getNextSibling();      
-    }
-    return n != null;
+    return element.hasChildren("contained");
   }
 
 
-  public String getURL() {
-    return xml != null ? XMLUtil.getNamedChildValue(xml.getDocumentElement(), "url") : null;
+  public String getURL() throws FileNotFoundException, UnsupportedEncodingException, IOException, Exception {
+    if (element == null) {
+      loadExample();
+    }
+
+    if (element == null) {
+      return null;
+    }
+    return element.getNamedChildValue("url");
   }
 
 
   public String getOID() {
-    if (xml == null) {
+    if (element == null) {
       return null;
     }
-    for (org.w3c.dom.Element id : XMLUtil.getNamedChildren(xml.getDocumentElement(), "identifier")) {
-      String system = XMLUtil.getNamedChildValue(id, "system");
-      String value = XMLUtil.getNamedChildValue(id, "value");
+    for (Element id : element.getChildren("identifier")) {
+      String system = id.getNamedChildValue("system");
+      String value = id.getNamedChildValue("value");
       if ("urn:ietf:rfc:3986".equals(system) && value != null && value.startsWith("urn:oid:")) {
         return value.substring(8);
       }
@@ -301,6 +316,11 @@ public class Example {
 
   public String present() {
     return description != null && !description.contains("\n") ? description : title;
+  }
+
+
+  public String fhirType() {
+    return resourceName;
   }
 
 

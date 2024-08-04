@@ -46,17 +46,15 @@ public class ValueSetGenerator {
   private Definitions definitions;
   private String version;
   private Calendar genDate;
-  private TranslationServices translator;
   private PackageInformation packageInfo; 
   private IWorkerContext context;
   
 
-  public ValueSetGenerator(Definitions definitions, String version, Calendar genDate, TranslationServices translator, PackageInformation packageInfo, IWorkerContext context) throws ParserConfigurationException, SAXException, IOException {
+  public ValueSetGenerator(Definitions definitions, String version, Calendar genDate, PackageInformation packageInfo, IWorkerContext context) throws ParserConfigurationException, SAXException, IOException {
     super();
     this.definitions = definitions;
     this.version = version;
     this.genDate = genDate;
-    this.translator = translator;
     this.packageInfo = packageInfo;
     this.context = context;
   }
@@ -223,15 +221,9 @@ public class ValueSetGenerator {
 
   private ConceptDefinitionComponent makeConceptForResource(String code, String definition, boolean isAbstract) {
     ConceptDefinitionComponent c = new ConceptDefinitionComponent();
-    Map<String, String> t = translator.translations(code);
     c.setCode(code);
     c.setDisplay(code);
     c.setDefinition((isAbstract ? "--- Abstract Type! ---" : "")+ definition);
-    if (t != null) {
-      for (String l : t.keySet()) {
-        c.addDesignation().setLanguage(l).setValue(t.get(l)).getUse().setSystem("http://terminology.hl7.org/CodeSystem/designation-usage").setCode("display");
-      }
-    }
     return c;
   }
 
@@ -444,22 +436,6 @@ public class ValueSetGenerator {
 
     CodeSystem cs = new CodeSystem();
     cs.setHierarchyMeaning(CodeSystemHierarchyMeaning.ISA);
-    Set<String> codes = translator.listTranslations("ecode");
-    for (String s : sorted(codes)) {
-      Map<String, String> langs = translator.translations(s);
-      ConceptDefinitionComponent cv = cs.addConcept();
-      cv.setCode(s);
-      cv.setDisplay(langs.get("en"));
-      for (String lang : langs.keySet()) {
-        if (!lang.equals("en")) {
-          String value = langs.get(lang);
-          ConceptDefinitionDesignationComponent dc = cv.addDesignation();
-          dc.setLanguage(lang);
-          dc.setValue(value);
-          dc.getUse().setSystem("http://terminology.hl7.org/CodeSystem/designation-usage").setCode("display");
-        }
-      }
-    }
     KindlingUtilities.makeUniversal(cs);
 
     CodeSystemConvertor.populate(cs, vs);

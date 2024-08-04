@@ -115,11 +115,11 @@ import org.hl7.fhir.r5.utils.ToolingExtensions;
 import org.hl7.fhir.tools.publisher.BuildWorkerContext;
 import org.hl7.fhir.tools.publisher.PageProcessor;
 import org.hl7.fhir.tools.publisher.PageProcessor.PageInfo;
-import org.hl7.fhir.utilities.CSFile;
-import org.hl7.fhir.utilities.CSFileInputStream;
 import org.hl7.fhir.utilities.IniFile;
 import org.hl7.fhir.utilities.Logger;
 import org.hl7.fhir.utilities.Logger.LogMessageType;
+import org.hl7.fhir.utilities.filesystem.CSFile;
+import org.hl7.fhir.utilities.filesystem.CSFileInputStream;
 import org.hl7.fhir.utilities.StandardsStatus;
 import org.hl7.fhir.utilities.TextFile;
 import org.hl7.fhir.utilities.Utilities;
@@ -190,7 +190,7 @@ public class SourceParser {
     dtDir = srcDir + "datatypes" + sl;
     imgDir = root + sl + "images" + sl;
     rootDir = root + sl;
-    vsGen = new ValueSetGenerator(definitions, version.toCode(), genDate, context.translator(), page.packageInfo(), context);
+    vsGen = new ValueSetGenerator(definitions, version.toCode(), genDate, page.packageInfo(), context);
     this.exceptionIfExcelNotNormalised = exceptionIfExcelNotNormalised;
   }
 
@@ -688,10 +688,11 @@ public class SourceParser {
     
 
   private void processContainerExample(Example ex) throws Exception {
-      Map<String, Document> parts = divideContainedResources(ex.getId(), ex.getXml());
-      for (String n : parts.keySet()) {
-        definitions.getResourceByName(parts.get(n).getDocumentElement().getNodeName()).getExamples().add(new Example("Part of "+ex.getName(), ex.getId()+"-"+n, ex.getTitle()+"-"+n, "Part of the example", false, ExampleType.XmlFile, parts.get(n)));
-      }
+    throw new Error("not done yet");
+//      Map<String, Document> parts = divideContainedResources(ex.getId(), ex.getXml());
+//      for (String n : parts.keySet()) {
+//        definitions.getResourceByName(parts.get(n).getDocumentElement().getNodeName()).getExamples().add(new Example(context, "Part of "+ex.getName(), ex.getId()+"-"+n, ex.getTitle()+"-"+n, "Part of the example", false, ExampleType.XmlFile, parts.get(n)));
+//      }
   }
 
   private Map<String, Document> divideContainedResources(String rootId, Document doc) throws Exception {
@@ -1101,7 +1102,7 @@ public class SourceParser {
     logger.log("Load Common Bindings", LogMessageType.Process);
 
     BindingsParser parser = new BindingsParser(new CSFileInputStream(new CSFile(termDir + "bindings.xml")), termDir + "bindings.xml", srcDir, registry, version.toCode(), 
-        definitions.getCodeSystems(), page.getConceptMaps(), genDate, exceptionIfExcelNotNormalised, page.packageInfo(), page.getDefinitions(), context.translator());
+        definitions.getCodeSystems(), page.getConceptMaps(), genDate, exceptionIfExcelNotNormalised, page.packageInfo(), page.getDefinitions());
     List<BindingSpecification> cds = parser.parse();
 
     for (BindingSpecification cd : cds) {
@@ -1179,7 +1180,7 @@ public class SourceParser {
       t.setProfile(profile);
       DataTypeTableGenerator dtg = new DataTypeTableGenerator(dstDir, page, t.getName(), true, version, "");
       t.getProfile().getText().setDiv(new XhtmlNode(NodeType.Element, "div"));
-      t.getProfile().getText().getDiv().getChildNodes().add(dtg.generate(t, null, false));
+      t.getProfile().getText().getDiv().addChildNode(dtg.generate(t, null, false));
       context.dropResource(t.getProfile());
       context.cacheResource(t.getProfile());
     } catch (Exception e) {

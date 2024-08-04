@@ -139,13 +139,13 @@ import org.hl7.fhir.r5.utils.ToolingExtensions;
 import org.hl7.fhir.tools.converters.MarkDownPreProcessor;
 import org.hl7.fhir.tools.publisher.BuildWorkerContext;
 import org.hl7.fhir.tools.publisher.KindlingUtilities;
-import org.hl7.fhir.utilities.CSFile;
-import org.hl7.fhir.utilities.CSFileInputStream;
 import org.hl7.fhir.utilities.IniFile;
 import org.hl7.fhir.utilities.Logger;
 import org.hl7.fhir.utilities.StandardsStatus;
 import org.hl7.fhir.utilities.TextFile;
 import org.hl7.fhir.utilities.Utilities;
+import org.hl7.fhir.utilities.filesystem.CSFile;
+import org.hl7.fhir.utilities.filesystem.CSFileInputStream;
 import org.hl7.fhir.utilities.validation.ValidationMessage;
 import org.hl7.fhir.utilities.xls.XLSXmlNormaliser;
 import org.hl7.fhir.utilities.xls.XLSXmlParser;
@@ -741,7 +741,7 @@ public class OldSpreadsheetParser {
             throw new Exception("Unknown source type: "+type+" at "+getLocation(row));
           String example = checkFile(sheet, row, "Example", true, null); // todo-profile
           if (example != null)
-            pack.getExamples().add(new Example(example, Utilities.fileTitle(example), "General Example for "+pack.getSource(), new File(example), true, ExampleType.XmlFile, isAbstract));
+            pack.getExamples().add(new Example(context, example, Utilities.fileTitle(example), "General Example for "+pack.getSource(), new File(example), true, ExampleType.XmlFile, isAbstract));
           defn.getConformancePackages().add(pack);
         }
       }
@@ -1135,7 +1135,7 @@ public class OldSpreadsheetParser {
       String bindingName = sheet.getColumn(row, "Binding Name");
     }
 
-		ValueSetGenerator vsGen = new ValueSetGenerator(definitions, version.toCode(), genDate, context.translator(), packageInfo, context);
+		ValueSetGenerator vsGen = new ValueSetGenerator(definitions, version.toCode(), genDate, packageInfo, context);
 
 		for (int row = 0; row < sheet.rows.size(); row++) {
 		  String bindingName = sheet.getColumn(row, "Binding Name");
@@ -1208,7 +1208,7 @@ public class OldSpreadsheetParser {
           cd.setValueSet(loadValueSet(ref));
       } else if (cd.getBinding() == BindingMethod.Special) {
         if ("#operation-outcome".equals(sheet.getColumn(row, "Reference")))
-          new ValueSetGenerator(definitions, version.toCode(), genDate, context.translator(), packageInfo, context).loadOperationOutcomeValueSet(cd);
+          new ValueSetGenerator(definitions, version.toCode(), genDate, packageInfo, context).loadOperationOutcomeValueSet(cd);
         else
           throw new Exception("Special bindings are only allowed in bindings.xml");
       } 
@@ -1645,7 +1645,7 @@ public class OldSpreadsheetParser {
           }
 
 					ExampleType etype = parseExampleType(type, row);
-  			  list.add(new Example(name, id, desc, file, parseBoolean(sheet.getColumn(row, "Registered"), row, true), etype, isAbstract));
+  			  list.add(new Example(context, name, id, desc, file, parseBoolean(sheet.getColumn(row, "Registered"), row, true), etype, isAbstract));
 				}
 			}
 		}
@@ -1655,7 +1655,7 @@ public class OldSpreadsheetParser {
 				throw new Exception("Example (file '" + file.getAbsolutePath() + "') not found parsing " + this.name);
 			if (file.exists())
 			  defn.getExamples().add(
-			      new Example("General", "example", "Example of " + title, file, true, ExampleType.XmlFile, isAbstract));
+			      new Example(context, "General", "example", "Example of " + title, file, true, ExampleType.XmlFile, isAbstract));
 		}
 	}
 

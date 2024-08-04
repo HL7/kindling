@@ -65,13 +65,13 @@ import org.hl7.fhir.r5.terminologies.client.TerminologyClientR5;
 import org.hl7.fhir.r5.terminologies.utilities.ValidationResult;
 import org.hl7.fhir.r5.utils.client.EFhirClientException;
 import org.hl7.fhir.r5.utils.validation.IResourceValidator;
-import org.hl7.fhir.utilities.CSFileInputStream;
 import org.hl7.fhir.utilities.CommaSeparatedStringBuilder;
 import org.hl7.fhir.utilities.TextFile;
 import org.hl7.fhir.utilities.TranslatorXml;
 import org.hl7.fhir.utilities.Utilities;
 import org.hl7.fhir.utilities.VersionUtil;
 import org.hl7.fhir.utilities.VersionUtilities;
+import org.hl7.fhir.utilities.filesystem.CSFileInputStream;
 import org.hl7.fhir.utilities.i18n.I18nConstants;
 import org.hl7.fhir.utilities.npm.BasePackageCacheManager;
 import org.hl7.fhir.utilities.npm.NpmPackage;
@@ -131,11 +131,10 @@ public class BuildWorkerContext extends BaseWorkerContext implements IWorkerCont
     super(codeSystems, valueSets, maps, profiles, guides);
     initTxCache(terminologyCachePath);
     this.definitions = definitions;
-    this.terminologyClientManager.setMasterClient(client);
+    this.terminologyClientManager.setMasterClient(client, true);
     this.terminologyClientManager.setUsage("publication");
     this.txLog = new HTMLClientLogger(null);
     setExpansionParameters(buildExpansionProfile());
-    this.setTranslator(new TranslatorXml(Utilities.path(folder, "implementations", "translations.xml")));
     setWarnAboutMissingMessages(false);
   }
 
@@ -273,10 +272,16 @@ public class BuildWorkerContext extends BaseWorkerContext implements IWorkerCont
     return cc;
   }
 
+  private void queryForTerm(String code) {
+    ValidationResult vr = super.validateCode(new ValidationOptions(), "http://snomed.info/sct", null, code, null);
+    if (vr.isOk()) {
+      snomedCodes.put(code, new Concept(vr.getDisplay()));
+    }
+  }
+
   private ValidationResult verifySnomed(String code, String display) throws Exception {
-    SnomedServerResponse response = null;
     if (!snomedCodes.containsKey(code))
-      response = queryForTerm(code);
+      queryForTerm(code);
     if (snomedCodes.containsKey(code))
       if (display == null)
         return new ValidationResult("http://snomed.info/sct", null, new ConceptDefinitionComponent().setCode(code).setDisplay(snomedCodes.get(code).display), null);
@@ -285,9 +290,7 @@ public class BuildWorkerContext extends BaseWorkerContext implements IWorkerCont
       else 
         return new ValidationResult(IssueSeverity.WARNING, "Snomed Display Name for "+code+" must be one of '"+snomedCodes.get(code).summary()+"'", null);
     
-    if (response != null) // this is a wrong expression 
-      return new ValidationResult(IssueSeverity.ERROR, "The Snomed Expression "+code+" must use the form "+response.correctExpression, null);
-    else  if (serverOk)
+    if (serverOk)
       return new ValidationResult(IssueSeverity.ERROR, "Unknown Snomed Code "+code, null);
     else
       return new ValidationResult(IssueSeverity.WARNING, "Unknown Snomed Code "+code, null);
@@ -296,57 +299,6 @@ public class BuildWorkerContext extends BaseWorkerContext implements IWorkerCont
   private static class SnomedServerResponse  {
     String correctExpression;
     String display;
-  }
-
-  private SnomedServerResponse queryForTerm(String code) throws Exception {
-    if (!triedServer || serverOk) {
-      triedServer = true;
-      HttpClient httpclient = new DefaultHttpClient();
-      HttpGet httpget = new HttpGet(FhirSettings.getTxFhirProduction()+"/snomed/tool/"+SNOMED_EDITION+"/"+URLEncoder.encode(code, "UTF-8").replace("+", "%20")); 
-//      HttpGet httpget = new HttpGet("http://local.fhir.org:960/r4/snomed/tool/"+SNOMED_EDITION+"/"+URLEncoder.encode(code, "UTF-8").replace("+", "%20")); // don't like the url encoded this way
-      HttpResponse response = httpclient.execute(httpget);
-      HttpEntity entity = response.getEntity();
-      InputStream instream = entity.getContent();
-      try {
-        DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-        DocumentBuilder builder = factory.newDocumentBuilder();
-        factory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
-        Document xdoc = builder.parse(instream);
-        // we always get back a version, and a type. What we do depends on the type 
-        String t = xdoc.getDocumentElement().getAttribute("type");
-        serverOk = true;
-        if (t.equals("error")) 
-          throw new Exception(xdoc.getDocumentElement().getAttribute("message"));
-        if (t.equals("description"))
-          throw new Exception("The Snomed code (\""+code+"\") is a description id not a concept id which is not valid");
-        if (t.equals("concept")) {
-          Concept c = new Concept();
-          c.display = xdoc.getDocumentElement().getAttribute("display");
-          Element child = XMLUtil.getFirstChild(xdoc.getDocumentElement());
-          while (child != null) {
-            c.displays.add(child.getAttribute("value"));
-            child = XMLUtil.getNextSibling(child);
-          }
-          snomedCodes.put(code, c);
-          return null;
-        }
-        if (t.equals("expression")) {
-          SnomedServerResponse resp = new SnomedServerResponse();
-          resp.correctExpression = xdoc.getDocumentElement().getAttribute("expressionMinimal");
-          resp.display = xdoc.getDocumentElement().getAttribute("display");
-          if (!snomedCodes.containsKey(resp.correctExpression)) {
-            Concept c = new Concept();
-            c.display = resp.display;
-            snomedCodes.put(resp.correctExpression, c);
-          }
-          return resp;
-        }
-        throw new Exception("Unrecognised response from server");
-      } finally {
-        instream.close();
-      }
-    } else
-      return null;
   }
 
   private ConceptDefinitionComponent locateLoinc(String code) throws Exception {
@@ -561,7 +513,7 @@ public class BuildWorkerContext extends BaseWorkerContext implements IWorkerCont
         triedServer = true;
         // for this, we use the FHIR client
         if (terminologyClientManager.getMasterClient() == null) {
-          terminologyClientManager.setMasterClient(new TerminologyClientR5("tx-dev.fhir.org", "?", "fhir/main-build"));
+          terminologyClientManager.setMasterClient(new TerminologyClientR5("tx-dev.fhir.org", "?", "fhir/main-build"), true);
           this.txLog = new HTMLClientLogger(null);
         }
         Map<String, String> params = new HashMap<String, String>();
@@ -861,5 +813,10 @@ public class BuildWorkerContext extends BaseWorkerContext implements IWorkerCont
   @Override
   public <T extends Resource> T fetchResourceRaw(Class<T> class_, String uri) {
     throw new NotImplementedException();
+  }
+
+  @Override
+  public String getCanonicalForDefaultContext() {
+    return "http://hl7.org/fhir";
   }
 }

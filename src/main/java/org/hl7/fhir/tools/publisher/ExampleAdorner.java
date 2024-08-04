@@ -193,21 +193,12 @@ public class ExampleAdorner implements XhtmlGeneratorAdorner {
           if (r == null) 
             throw new Exception("unable to find type "+type);
           for (Example e : r.getExamples()) {
-            if (id.equals(e.getId()))
+            if (id.equals(e.getId())) {
               if (Utilities.noString(e.getIg())) {
                 return new ExampleAdornerState(State.Reference, s.getPath()+".reference", s.getDefinition(), "<a href=\""+prefix+e.getTitle()+".xml.html\">", "</a>");
               } else {
                 ImplementationGuideDefn ig = definitions.getIgs().get(e.getIg());
                 return new ExampleAdornerState(State.Reference, s.getPath()+".reference", s.getDefinition(), "<a href=\""+prefix+ig.getPrefix()+e.getTitle()+".xml.html\">", "</a>");
-              }
-            if (e.getXml() != null && e.getXml().getDocumentElement().getLocalName().equals("feed")) {
-              List<Element> entries = new ArrayList<Element>();
-              XMLUtil.getNamedChildren(e.getXml().getDocumentElement(), "entry", entries);
-              String url = "http://hl7.org/fhir/"+type+"/"+id;
-              for (Element c : entries) {
-                String t = XMLUtil.getNamedChild(c, "id").getAttribute("value");
-                if (url.equals(t))
-                  return new ExampleAdornerState(State.Reference, s.getPath()+".reference", s.getDefinition(), "<a href=\""+prefix+e.getTitle()+".xml.html#"+id+"\">", "</a>");
               }
             }
           }

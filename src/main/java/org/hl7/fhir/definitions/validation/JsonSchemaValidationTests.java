@@ -5,9 +5,9 @@ import java.io.IOException;
 
 import org.everit.json.schema.ValidationException;
 import org.everit.json.schema.loader.SchemaLoader;
-import org.hl7.fhir.utilities.CSFileInputStream;
 import org.hl7.fhir.utilities.TextFile;
 import org.hl7.fhir.utilities.Utilities;
+import org.hl7.fhir.utilities.filesystem.CSFileInputStream;
 import org.json.JSONObject;
 import org.json.JSONTokener;
 import org.junit.Test;

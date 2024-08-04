@@ -1,4 +1,7 @@
 package org.hl7.fhir.definitions.model;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 /*
 Copyright (c) 2011+, HL7, Inc
 All rights reserved.
@@ -33,11 +36,11 @@ import java.util.List;
 import java.util.Map;
 
 import org.hl7.fhir.exceptions.FHIRException;
+import org.hl7.fhir.r5.elementmodel.Element;
 import org.hl7.fhir.r5.model.StructureDefinition;
 import org.hl7.fhir.utilities.StandardsStatus;
 import org.hl7.fhir.utilities.Utilities;
 import org.hl7.fhir.utilities.xml.XMLUtil;
-import org.w3c.dom.Element;
 
 public class ResourceDefn  {
 
@@ -356,16 +359,15 @@ public class ResourceDefn  {
     this.proposedOrder = proposedOrder;
   }
 
-  public Example getExampleById(String id) {
+  public Example getExampleById(String id) throws FileNotFoundException, UnsupportedEncodingException, IOException, Exception {
     for (Example e : examples) {
       if (e.getId().equals(id))
         return e;
       if ("Bundle".equals(e.getResourceName())) {
-        List<Element> children = new ArrayList<Element>();
-        XMLUtil.getNamedChildren(e.getXml().getDocumentElement(), "entry", children);
+        List<Element> children = e.getElement().getChildren("entry");
         for (Element c : children) {
-          Element res = XMLUtil.getFirstChild(XMLUtil.getNamedChild(c, "resource"));
-          if (id.equals(XMLUtil.getNamedChildValue(res, "id")))
+          Element res = c.getNamedChild("resource");
+          if (id.equals(res.getIdBase()))
             return e;
         }
       }

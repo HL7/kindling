@@ -52,6 +52,7 @@ import org.hl7.fhir.r5.model.OperationDefinition;
 import org.hl7.fhir.r5.model.SearchParameter;
 import org.hl7.fhir.r5.model.StructureDefinition;
 import org.hl7.fhir.r5.model.ValueSet;
+import org.hl7.fhir.r5.utils.validation.IMessagingServices;
 import org.hl7.fhir.r5.utils.validation.IResourceValidator;
 import org.hl7.fhir.r5.utils.validation.IValidationPolicyAdvisor;
 import org.hl7.fhir.r5.utils.validation.IValidatorResourceFetcher;
@@ -67,12 +68,11 @@ import org.hl7.fhir.r5.utils.validation.constants.IdStatus;
 import org.hl7.fhir.r5.utils.validation.constants.ReferenceValidationPolicy;
 import org.hl7.fhir.rdf.ModelComparer;
 import org.hl7.fhir.rdf.ShExValidator;
-import org.hl7.fhir.utilities.CSFileInputStream;
 import org.hl7.fhir.utilities.Logger;
 import org.hl7.fhir.utilities.Logger.LogMessageType;
 import org.hl7.fhir.utilities.SIDUtilities;
-import org.hl7.fhir.utilities.SimpleHTTPClient;
-import org.hl7.fhir.utilities.SimpleHTTPClient.HTTPResult;
+import org.hl7.fhir.utilities.filesystem.CSFileInputStream;
+import org.hl7.fhir.utilities.http.ManagedWebAccess;
 import org.hl7.fhir.utilities.TextFile;
 import org.hl7.fhir.utilities.Utilities;
 import org.hl7.fhir.utilities.ZipGenerator;
@@ -80,6 +80,7 @@ import org.hl7.fhir.utilities.validation.ValidationMessage;
 import org.hl7.fhir.utilities.validation.ValidationMessage.IssueSeverity;
 import org.hl7.fhir.utilities.validation.ValidationMessage.IssueType;
 import org.hl7.fhir.utilities.validation.ValidationMessage.Source;
+import org.hl7.fhir.validation.instance.BasePolicyAdvisorForFullValidation;
 import org.hl7.fhir.validation.instance.InstanceValidator;
 import org.json.JSONObject;
 import org.json.JSONTokener;
@@ -228,6 +229,7 @@ public class ExampleInspector implements IValidatorResourceFetcher, IValidationP
     validator.setAllowExamples(true);
     validator.setDebug(false);
     validator.setForPublication(true);
+    validator.setPolicyAdvisor(new BasePolicyAdvisorForFullValidation(ReferenceValidationPolicy.CHECK_TYPE_IF_EXISTS));
     
     fpe = new FHIRPathEngine(context);
     fpe.setHostServices(this);
@@ -569,38 +571,31 @@ public class ExampleInspector implements IValidatorResourceFetcher, IValidationP
 
   @Override
   public Element fetch(IResourceValidator validator,Object appContext, String url) throws IOException, FHIRException {
+    if (url.contains("/_history/")) {
+      url = url.substring(0, url.indexOf("/_history"));
+    }
     String[] parts = url.split("\\/");
     if (parts.length == 2 && definitions.hasResource(parts[0])) {
       ResourceDefn r = definitions.getResourceByName(parts[0]);
-      for (Example e : r.getExamples()) {
-        if (e.getElement() == null && e.hasXml()) {
-          e.setElement(new org.hl7.fhir.r5.elementmodel.XmlParser(context).parse(new ArrayList<>(), e.getXml()));
-          if (e.getElement() != null &&
-              e.getElement().getProperty().getStructure() != null &&
-              e.getElement().getProperty().getStructure().getBaseDefinition() != null &&
-              e.getElement().getProperty().getStructure().getBaseDefinition().contains("MetadataResource")) {
-            String urle = e.getElement().getChildValue("url");
-            String v = e.getElement().getChildValue("url");
-            if (urle != null && urle.startsWith("http://hl7.org/fhir") && !version.toCode().equals(v)) {
-              e.getElement().setChildValue("version", version.toCode());
-              
-            }
-          }
-        }
-        if (e.getElement() != null) {
-          if (e.getElement().fhirType().equals("Bundle")) {
-            for (Base b : e.getElement().listChildrenByName("entry")) {
-              if (b.getChildByName("resource").hasValues()) {
-                Element res = (Element) b.getChildByName("resource").getValues().get(0);
-                if (res.fhirType().equals(parts[0]) && parts[1].equals(res.getChildValue("id"))) {
-                  return res;
+      try {
+        for (Example e : r.getExamples()) {
+          if (e.getElement() != null) {
+            if (e.getElement().fhirType().equals("Bundle")) {
+              for (Base b : e.getElement().listChildrenByName("entry")) {
+                if (b.getChildByName("resource").hasValues()) {
+                  Element res = (Element) b.getChildByName("resource").getValues().get(0);
+                  if (res.fhirType().equals(parts[0]) && parts[1].equals(res.getChildValue("id"))) {
+                    return res;
+                  }
                 }
               }
+            } else  if (e.getElement().fhirType().equals(parts[0]) && e.getId().equals(parts[1])) {
+              return e.getElement();
             }
-          } else  if (e.getElement().fhirType().equals(parts[0]) && e.getId().equals(parts[1])) {
-            return e.getElement();
           }
         }
+      } catch (Exception e) {
+        throw new FHIRException(e);
       }
       try {
         if (parts[0].equals("StructureDefinition"))  
@@ -661,8 +656,7 @@ public class ExampleInspector implements IValidatorResourceFetcher, IValidationP
 
   @Override
   public byte[] fetchRaw(IResourceValidator validator, String source) throws MalformedURLException, IOException {
-    SimpleHTTPClient http = new SimpleHTTPClient();
-    HTTPResult res = http.get(source);
+    org.hl7.fhir.utilities.http.HTTPResult res = ManagedWebAccess.get(source);
     res.checkThrowException();
     return res.getContent();
   }
@@ -837,7 +831,11 @@ public class ExampleInspector implements IValidatorResourceFetcher, IValidationP
            if (ex.getResource() != null) {
              return ex.getResource();
            } else {
-             return ex.getElement(); // new XmlParser().parse(ex.getXml());
+             try {
+               return ex.getElement(); // new XmlParser().parse(ex.getXml());
+             } catch (Exception e) {
+               throw new FHIRException(e);
+             }
            }
          }
        }
@@ -866,6 +864,14 @@ public class ExampleInspector implements IValidatorResourceFetcher, IValidationP
   @Override
   public Set<String> fetchCanonicalResourceVersions(IResourceValidator validator, Object appContext, String url) {
     return new HashSet<>();
+  }
+
+  @Override
+  public List<StructureDefinition> getImpliedProfilesForResource(IResourceValidator validator, Object appContext,
+      String stackPath, ElementDefinition definition, StructureDefinition structure, Element resource, boolean valid,
+      IMessagingServices msgServices, List<ValidationMessage> messages) {
+    return new BasePolicyAdvisorForFullValidation(ReferenceValidationPolicy.CHECK_TYPE_IF_EXISTS).getImpliedProfilesForResource(validator, appContext, stackPath, 
+        definition, structure, resource, valid, msgServices, messages);
   }
 
 
