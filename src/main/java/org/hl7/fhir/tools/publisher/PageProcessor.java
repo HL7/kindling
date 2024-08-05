@@ -474,7 +474,6 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
   private SpecDifferenceEvaluator diffEngine;
   private Bundle typeBundle;
   private Bundle resourceBundle;
-  private JsonObject r4r5Outcomes;
   private Map<String, Map<String, PageInfo>> normativePackages = new HashMap<String, Map<String, PageInfo>>();
   private List<String> normativePages = new ArrayList<String>();
   private MarkDownProcessor processor = new MarkDownProcessor(Dialect.COMMON_MARK);
@@ -10490,7 +10489,6 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
 
   public void setFolders(FolderManager folders) throws Exception {
     this.folders = folders;
-    r4r5Outcomes = (JsonObject) new com.google.gson.JsonParser().parse(TextFile.fileToString(Utilities.path(folders.rootDir, "implementations", "r4maps", "outcomes.json")));
 
     for (File f : new File(Utilities.path(folders.rootDir, "tools", "macros")).listFiles()) {
       if (f.getAbsolutePath().endsWith(".html")) {
@@ -11606,7 +11604,6 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     diffEngine = null;
     typeBundle = null;
     resourceBundle = null;
-    r4r5Outcomes = null;
     normativePackages = null;
     processor = null;
 
@@ -11958,66 +11955,6 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     //     System.out.println(message);
   }
 
-
-  public class ResourceSummary {
-
-    boolean mapped;
-    int testCount;
-    int executeFailCount;
-    int roundTripFailCount;
-    int r5ValidationFailCount;
-    int r5ValidationErrors;
-    public boolean isMapped() {
-      return mapped;
-    }
-    public void setMapped(boolean mapped) {
-      this.mapped = mapped;
-    }
-    public int getTestCount() {
-      return testCount;
-    }
-    public void setTestCount(int testCount) {
-      this.testCount = testCount;
-    }
-    public int getExecuteFailCount() {
-      return executeFailCount;
-    }
-    public void setExecuteFailCount(int value) {
-      this.executeFailCount = value;
-    }
-    public int getRoundTripFailCount() {
-      return roundTripFailCount;
-    }
-    public void setRoundTripFailCount(int value) {
-      this.roundTripFailCount = value;
-    }
-    public int getR5ValidationFailCount() {
-      return r5ValidationFailCount;
-    }
-    public void setR5ValidationFailCount(int value) {
-      this.r5ValidationFailCount = value;
-    }
-    public int getR5ValidationErrors() {
-      return r5ValidationErrors;
-    }
-    public void setR5ValidationErrors(int value) {
-      this.r5ValidationErrors = value;
-    }
-    public int executePct() {
-      return (executeCount() * 100) / testCount;
-    }
-    private int executeCount() {
-      return testCount - executeFailCount;
-    }
-    public int roundTripPct() {
-      return executeCount() == 0 ? 0 : ((executeCount() - roundTripFailCount) * 100) / executeCount();
-    }
-    public int r4ValidPct() {
-      return executeCount() == 0 ? 0 : ((executeCount() - r5ValidationFailCount) * 100) / executeCount();
-    }
-
-  }
-
   private String genR3MapsSummary() throws IOException {
     StringBuilder b = new StringBuilder();
     //    for (String n : definitions.sortedResourceNames()) {
@@ -12040,32 +11977,6 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     //      b.append("</tr>");
     //    }
     return b.toString();
-  }
-
-  private ResourceSummary getResourceSummary(String n) throws IOException {
-    ResourceSummary rs = new ResourceSummary();
-    JsonObject r = r4r5Outcomes.getAsJsonObject(n);
-    if (r != null && (new File(Utilities.path(folders.rootDir, "implementations", "r4maps", "R5toR4", n+".map")).exists())) {
-      rs.setMapped(true);
-      for (Entry<String, JsonElement> e : r.entrySet()) {
-        JsonObject el = (JsonObject) e.getValue();
-        rs.testCount++;
-        JsonPrimitive p = el.getAsJsonPrimitive("execution");
-        if (p!= null && !p.isBoolean())
-          rs.executeFailCount++;
-        if (el.has("r5.errors")) {
-          rs.r5ValidationFailCount++;
-          if (el.getAsJsonArray("r4.errors") != null)
-            rs.r5ValidationErrors = rs.r5ValidationErrors+el.getAsJsonArray("r4.errors").size();
-          else
-            rs.r5ValidationErrors = rs.r5ValidationErrors;
-        }
-        if (el.has("round-trip"))
-          rs.roundTripFailCount++;
-      }
-    } else
-      rs.setMapped(false);
-    return rs;
   }
 
   private String mapsBckColor(int pct, String badColor, String goodColor) {
@@ -12105,45 +12016,6 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     if (definitions.hasResource(typeName))
       return typeName.toLowerCase()+".html#"+typeName;
     return null;
-  }
-
-  public String getR4R5ValidationErrors(String name) {
-    StringBuilder b = new StringBuilder();
-    JsonObject r = r4r5Outcomes.getAsJsonObject(name);
-    if (r != null) {
-      boolean first = true;
-      for (Entry<String, JsonElement> e : r.entrySet()) {
-        JsonObject el = (JsonObject) e.getValue();
-        if (el.has("r3.errors")) {
-          if (first) {
-            first = false;
-            b.append("<table class=\"grid\">\r\n");
-          }
-          b.append(" <tr>\r\n");
-          b.append("  <td>");
-          b.append(e.getKey());
-          b.append("</td>\r\n");
-          JsonArray arr = el.getAsJsonArray("r4.errors");
-          b.append("  <td>");
-          b.append("   <ul>");
-          for (JsonElement n : arr) {
-            b.append("    <li>");
-            b.append(n.getAsString());
-            b.append("</li>\r\n");
-          }
-          b.append("   </ul>\r\n");
-          b.append("  </td>\r\n");
-          b.append(" </tr>\r\n");
-        }
-      }
-      if (!first) {
-        b.append("</table>\r\n");        
-      }
-      if (first)
-        b.append("<p>No validation errors - all conversions are clean</p>\r\n");
-    } else
-      b.append("<p>n/a</p>\r\n");
-    return b.toString();
   }
 
   public Map<String, Map<String, PageInfo>> getNormativePackages() {

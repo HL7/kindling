@@ -3763,7 +3763,6 @@ public class Publisher implements URIResolver, SectionNumberer {
     values.put("bcks", Utilities.escapeXml(bcks));
     values.put("fwds-status", "");
     values.put("bcks-status", "");
-    values.put("r4errs", page.getR4R5ValidationErrors(name));
     try {
       new StructureMapUtilities(page.getWorkerContext()).parse(fwds, page.r4nameForResource(name)+".map");
     } catch (FHIRException e) {
