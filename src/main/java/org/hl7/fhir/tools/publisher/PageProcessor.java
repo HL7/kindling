@@ -6802,7 +6802,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
 
           java.io.Writer writer = new java.io.FileWriter(exceptionsFile);
           final LSSerializer xmlWriter = impl.createLSSerializer();
-          xmlWriter.setNewLine("\n");
+          xmlWriter.setNewLine(System.lineSeparator());
           xmlWriter.getDomConfig().setParameter("format-pretty-print", true);
           xmlWriter.getDomConfig().setParameter("xml-declaration", false);
           String xml = xmlWriter.writeToString(newExceptionsDoc);
