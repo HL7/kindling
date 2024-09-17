@@ -199,6 +199,9 @@ dependencies {
         implementation("org.jgrapht:jgrapht-core:1.5.2") {
             because("previous versions have a bug impacting this application")
         }
+        implementation("com.jayway.jsonpath:json-path:2.9.0") {
+            because("previous versions have a bug impacting this application")
+        }
     }
 }
 
