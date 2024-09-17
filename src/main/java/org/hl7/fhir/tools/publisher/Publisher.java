@@ -1902,7 +1902,7 @@ public class Publisher implements URIResolver, SectionNumberer {
     }
   }
 
-  private void loadValueSets2() throws Exception {
+  private void loadTerminology() throws Exception {
     page.log(" ...default Capability Statements", LogMessageType.Process);
 
     if (isGenerate) {
@@ -1925,6 +1925,7 @@ public class Publisher implements URIResolver, SectionNumberer {
     }
     page.log(" ...value sets", LogMessageType.Process);
     generateValueSetsPart2();
+    page.log(" ...concept maps", LogMessageType.Process);
     generateConceptMaps();
     page.saveSnomed();
     if (isGenerate) {
@@ -3123,9 +3124,9 @@ public class Publisher implements URIResolver, SectionNumberer {
   }
 
   private void produceSpec() throws Exception {
+    page.log(" ...logical models", LogMessageType.Process);
     for (ImplementationGuideDefn ig : page.getDefinitions().getSortedIgs()) {
       for (LogicalModel lm : ig.getLogicalModels()) {
-        page.log(" ...logical model " + lm.getId(), LogMessageType.Process);
         produceLogicalModel(lm, ig);
       }
     }
@@ -3143,8 +3144,8 @@ public class Publisher implements URIResolver, SectionNumberer {
     page.log(" ...diffEngine", LogMessageType.Process);
     page.updateDiffEngineDefinitions();
 
-    page.log(" ...valuesets (2)", LogMessageType.Process);
-    loadValueSets2();
+    page.log(" ...terminology", LogMessageType.Process);
+    loadTerminology();
     page.log(" ...extensions", LogMessageType.Process);
 
     for (StructureDefinition ae : page.getWorkerContext().getExtensionDefinitions())
