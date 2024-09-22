@@ -330,9 +330,10 @@ public class ExampleInspector implements IValidatorResourceFetcher, IValidationP
   
   public void doValidate(String n, String rt, StructureDefinition profile) {
     errorsInt.clear();
-    System.out.print(" validate: " + Utilities.padRight(n, ' ', 40));
-    long t = System.currentTimeMillis();
+    System.out.print(" validate: " + Utilities.padRight(n, ' ', 50));
 
+    long t = System.currentTimeMillis();
+    validator.resetTimes();
     try {
       Element e = validateLogical(Utilities.path(rootDir, n+".xml"), profile, FhirFormat.XML);
 //      org.w3c.dom.Element xe = validateXml(Utilities.path(rootDir, n+".xml"), profile == null ? null : profile.getId());
@@ -353,11 +354,12 @@ public class ExampleInspector implements IValidatorResourceFetcher, IValidationP
     
     long size = fileSize(n);
     t =  System.currentTimeMillis() - t;
-    long bps = t == 0 ? 0 : size / t;
+    long tt = validator.timeNoTX() / 1000;
+    long bps = tt == 0 ? 0 : size / tt;
     logger.log(": "+
+        Utilities.padLeft(Long.toString(t)+"ms ", ' ', 8)+ 
       Utilities.padLeft(Utilities.describeSize(size), ' ', 7)+" " +
-      Utilities.padLeft(Long.toString(t)+"ms ", ' ', 7)+ 
-      Utilities.padLeft(Long.toString(bps), ' ', 5)+"b/sec. "+validator.reportTimes(), LogMessageType.Process);
+      Utilities.padLeft(Long.toString(bps), ' ', 5)+"b/sec", LogMessageType.Process);
     for (ValidationMessage m : errorsInt) {
       if (!m.getLevel().equals(IssueSeverity.INFORMATION) && !m.getLevel().equals(IssueSeverity.WARNING)) {
         m.setMessage(n+":: "+m.getLocation()+": "+m.getMessage());
