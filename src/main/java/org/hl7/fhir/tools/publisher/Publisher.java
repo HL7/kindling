@@ -240,6 +240,7 @@ import org.hl7.fhir.r5.renderers.utils.RenderingContext.GenerationRules;
 import org.hl7.fhir.r5.renderers.utils.ResourceWrapper;
 import org.hl7.fhir.r5.terminologies.CodeSystemUtilities;
 import org.hl7.fhir.r5.terminologies.ValueSetUtilities;
+import org.hl7.fhir.r5.terminologies.client.TerminologyClientContext;
 import org.hl7.fhir.r5.terminologies.expansion.ValueSetExpansionOutcome;
 import org.hl7.fhir.r5.utils.BuildExtensions;
 import org.hl7.fhir.r5.utils.CanonicalResourceUtilities;
@@ -675,6 +676,7 @@ public class Publisher implements URIResolver, SectionNumberer {
    * @throws IOException 
    */
   public void execute(String folder, String[] args) throws IOException {
+    TerminologyClientContext.setCanUseCacheId(false);
     tester = new PublisherTestSuites();
     sdm = new SDUsageMapper();
 

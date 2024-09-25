@@ -136,6 +136,7 @@ import org.hl7.fhir.r5.conformance.profile.ProfileKnowledgeProvider;
 import org.hl7.fhir.r5.conformance.profile.ProfileUtilities;
 import org.hl7.fhir.r5.context.CanonicalResourceManager;
 import org.hl7.fhir.r5.context.ILoggingService;
+import org.hl7.fhir.r5.context.TextClientLogger;
 import org.hl7.fhir.r5.elementmodel.Element;
 import org.hl7.fhir.r5.elementmodel.Manager;
 import org.hl7.fhir.r5.elementmodel.Manager.FhirFormat;
@@ -10434,6 +10435,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     ITerminologyClient client;
     try {
       client = new TerminologyClientR5("tx.fhir.org", tsServer, "fhir/main-build");
+//      client.setLogger(new TextClientLogger(Utilities.path("[tmp]", "tx-main-build.log")));
       client.setTimeoutFactor(2);
     } catch(Exception e) {
       System.out.println("Warning @ PageProcessor client initialize: " + e.getLocalizedMessage());
