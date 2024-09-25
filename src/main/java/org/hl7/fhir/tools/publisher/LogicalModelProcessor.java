@@ -13,11 +13,14 @@ import org.hl7.fhir.exceptions.FHIRException;
 import org.hl7.fhir.r5.conformance.profile.BindingResolution;
 import org.hl7.fhir.r5.conformance.profile.ProfileKnowledgeProvider;
 import org.hl7.fhir.r5.conformance.profile.ProfileUtilities;
+import org.hl7.fhir.r5.context.ContextUtilities;
 import org.hl7.fhir.r5.model.ElementDefinition.ElementDefinitionBindingComponent;
 import org.hl7.fhir.r5.model.Enumerations.FHIRVersion;
 import org.hl7.fhir.r5.model.StructureDefinition;
+import org.hl7.fhir.r5.renderers.Renderer.RenderingStatus;
 import org.hl7.fhir.r5.renderers.StructureDefinitionRenderer;
 import org.hl7.fhir.r5.renderers.utils.RenderingContext;
+import org.hl7.fhir.r5.renderers.utils.ResourceWrapper;
 import org.hl7.fhir.r5.utils.ToolingExtensions;
 import org.hl7.fhir.utilities.StandardsStatus;
 import org.hl7.fhir.utilities.Utilities;
@@ -146,7 +149,8 @@ public class LogicalModelProcessor extends BuildToolScriptedPageProcessor implem
   private String genLogicalModelTable(StructureDefinition sd, String prefix) throws Exception {
     ProfileUtilities pu = new ProfileUtilities(page.getWorkerContext(), null, this);
     StructureDefinitionRenderer sdr = new StructureDefinitionRenderer(rc);
-    XhtmlNode x = sdr.generateTable(sd.getId()+"-definitions.html", sd, sd.hasSnapshot() ? false : true, page.getFolders().dstDir, false, sd.getId(), true, prefix, prefix, true, false, null, false, rc, "");
+    XhtmlNode x = sdr.generateTable(new RenderingStatus(), sd.getId()+"-definitions.html", sd, sd.hasSnapshot() ? false : true, page.getFolders().dstDir, false, sd.getId(), true, prefix, prefix, true, false, null, false, rc, "",
+        ResourceWrapper.forResource(rc.getContextUtilities(), sd));
     return new XhtmlComposer(XhtmlComposer.HTML).compose(x);
   }
 
@@ -222,6 +226,11 @@ public class LogicalModelProcessor extends BuildToolScriptedPageProcessor implem
   @Override
   public boolean isPrimitiveType(String typeSimple) {
     throw new NotImplementedException("Not implemented");
+  }
+
+  @Override
+  public String getCanonicalForDefaultContext() {
+    return "http://hl7.org/fhir";
   }
 
 }

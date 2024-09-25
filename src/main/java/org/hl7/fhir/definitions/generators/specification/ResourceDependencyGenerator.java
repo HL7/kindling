@@ -18,6 +18,7 @@ import org.hl7.fhir.r5.utils.ToolingExtensions;
 import org.hl7.fhir.tools.publisher.PageProcessor;
 import org.hl7.fhir.utilities.StandardsStatus;
 import org.hl7.fhir.utilities.Utilities;
+import org.hl7.fhir.utilities.i18n.RenderingI18nContext;
 import org.hl7.fhir.utilities.xhtml.HierarchicalTableGenerator;
 import org.hl7.fhir.utilities.xhtml.HierarchicalTableGenerator.Cell;
 import org.hl7.fhir.utilities.xhtml.HierarchicalTableGenerator.Row;
@@ -49,7 +50,7 @@ public class ResourceDependencyGenerator  extends BaseGenerator {
   }
 
   public XhtmlNode generate(ElementDefn e, String prefix) throws Exception {
-    HierarchicalTableGenerator gen = new HierarchicalTableGenerator(dest, inlineGraphics, true);
+    HierarchicalTableGenerator gen = new HierarchicalTableGenerator(new RenderingI18nContext(), dest, inlineGraphics, true);
     RenderMode mode = RenderMode.RESOURCE;
     TableModel model = initTable(gen, prefix, mode == RenderMode.LOGICAL, e.getName());
 

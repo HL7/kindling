@@ -236,11 +236,9 @@ import org.hl7.fhir.r5.renderers.RendererFactory;
 import org.hl7.fhir.r5.renderers.ResourceRenderer;
 import org.hl7.fhir.r5.renderers.ResourceRenderer.RendererType;
 import org.hl7.fhir.r5.renderers.spreadsheets.StructureDefinitionSpreadsheetGenerator;
-import org.hl7.fhir.r5.renderers.utils.BaseWrappers.ResourceWrapper;
-import org.hl7.fhir.r5.renderers.utils.DOMWrappers;
-import org.hl7.fhir.r5.renderers.utils.ElementWrappers;
 import org.hl7.fhir.r5.renderers.utils.RenderingContext;
 import org.hl7.fhir.r5.renderers.utils.RenderingContext.GenerationRules;
+import org.hl7.fhir.r5.renderers.utils.ResourceWrapper;
 import org.hl7.fhir.r5.terminologies.CodeSystemUtilities;
 import org.hl7.fhir.r5.terminologies.ValueSetUtilities;
 import org.hl7.fhir.r5.terminologies.expansion.ValueSetExpansionOutcome;
@@ -260,12 +258,12 @@ import org.hl7.fhir.tools.converters.CDAGenerator;
 import org.hl7.fhir.tools.converters.DSTU3ValidationConvertor;
 import org.hl7.fhir.tools.converters.SpecNPMPackageGenerator;
 import org.hl7.fhir.tools.publisher.ExampleInspector.EValidationFailed;
-import org.hl7.fhir.utilities.CSFile;
-import org.hl7.fhir.utilities.CSFileInputStream;
 import org.hl7.fhir.utilities.CloseProtectedZipInputStream;
 import org.hl7.fhir.utilities.CommaSeparatedStringBuilder;
 import org.hl7.fhir.utilities.IniFile;
 import org.hl7.fhir.utilities.Logger.LogMessageType;
+import org.hl7.fhir.utilities.filesystem.CSFile;
+import org.hl7.fhir.utilities.filesystem.CSFileInputStream;
 import org.hl7.fhir.utilities.NDJsonWriter;
 import org.hl7.fhir.utilities.PathBuilder;
 import org.hl7.fhir.utilities.SIDUtilities;
@@ -319,7 +317,7 @@ public class Publisher implements URIResolver, SectionNumberer {
 
     static ValidationMode fromCode(String v) {
       if (v == null) {
-        return NORMAL;
+        return NORMAL; 
       }
       switch (v.toLowerCase()) {
       case "extended": return EXTENDED;
@@ -801,8 +799,8 @@ public class Publisher implements URIResolver, SectionNumberer {
       loadValueSets1();
 
       generateSCMaps();
-      validate();
       processProfiles();
+      validate();
       checkAllOk();
       startValidation();
 
@@ -925,7 +923,7 @@ public class Publisher implements URIResolver, SectionNumberer {
     }
   }
 
-  private void checkOids() {
+  private void checkOids() throws FileNotFoundException, UnsupportedEncodingException, IOException, Exception {
     boolean allGood = true;
     for (CanonicalResource cr : page.getWorkerContext().fetchResourcesByType(CanonicalResource.class)) {
       if (page.isLocalResource(cr)) {
@@ -1403,7 +1401,7 @@ public class Publisher implements URIResolver, SectionNumberer {
         page.getProfiles().see(r.getProfile(), page.packageInfo());
         ResourceTableGenerator rtg = new ResourceTableGenerator(page.getFolders().dstDir, page, null, true, page.getVersion(), "");
         r.getProfile().getText().setDiv(new XhtmlNode(NodeType.Element, "div"));
-        r.getProfile().getText().getDiv().getChildNodes().add(rtg.generate(r, "", false));
+        r.getProfile().getText().getDiv().addChildNode(rtg.generate(r, "", false));
     }
 
     for (String rn : page.getDefinitions().sortedResourceNames()) {
@@ -1413,7 +1411,7 @@ public class Publisher implements URIResolver, SectionNumberer {
       page.getProfiles().see(r.getProfile(), page.packageInfo());
       ResourceTableGenerator rtg = new ResourceTableGenerator(page.getFolders().dstDir, page, null, true, page.getVersion(), "");
       r.getProfile().getText().setDiv(new XhtmlNode(NodeType.Element, "div"));
-      r.getProfile().getText().getDiv().getChildNodes().add(rtg.generate(r, "", false));
+      r.getProfile().getText().getDiv().addChildNode(rtg.generate(r, "", false));
     }
 
     for (ResourceDefn r : page.getDefinitions().getResourceTemplates().values()) {
@@ -1421,7 +1419,7 @@ public class Publisher implements URIResolver, SectionNumberer {
       r.setProfile(new ProfileGenerator(page.getDefinitions(), page.getWorkerContext(), page, page.getGenDate(), page.getVersion(), dataElements, fpUsages, page.getFolders().rootDir, page.getUml(), page.getRc()).generate(r.getConformancePack(), r, "core", true));
       ResourceTableGenerator rtg = new ResourceTableGenerator(page.getFolders().dstDir, page, null, true, page.getVersion(), "");
       r.getProfile().getText().setDiv(new XhtmlNode(NodeType.Element, "div"));
-      r.getProfile().getText().getDiv().getChildNodes().add(rtg.generate(r, "", true));
+      r.getProfile().getText().getDiv().addChildNode(rtg.generate(r, "", true));
       page.getProfiles().see(r.getProfile(), page.packageInfo());
     }
     
@@ -1483,6 +1481,10 @@ public class Publisher implements URIResolver, SectionNumberer {
     }
     TextFile.stringToFile(b.toString(), Utilities.path(page.getFolders().dstDir, "fhirpaths.txt"));
 
+    for (StructureDefinition sd : page.getProfiles().getList()) {
+      page.getWorkerContext().cacheResource(sd);
+    }
+        
     checkAllOk();
   }
 
@@ -1547,7 +1549,7 @@ public class Publisher implements URIResolver, SectionNumberer {
     //    DataTypeTableGenerator dtg = new DataTypeTableGenerator(page.getFolders().dstDir, page, t.getCode(), true);
     //    t.setProfile(profile);
     //    t.getProfile().getText().setDiv(new XhtmlNode(NodeType.Element, "div"));
-    //    t.getProfile().getText().getDiv().getChildNodes().add(dtg.generate(t));
+    //    t.getProfile().getText().getDiv().addChildNode(dtg.generate(t));
   }
 
   private void genPrimitiveTypeProfile(PrimitiveType t) throws Exception {
@@ -1558,7 +1560,7 @@ public class Publisher implements URIResolver, SectionNumberer {
     //    DataTypeTableGenerator dtg = new DataTypeTableGenerator(page.getFolders().dstDir, page, t.getCode(), true);
     //    t.setProfile(profile);
     //    t.getProfile().getText().setDiv(new XhtmlNode(NodeType.Element, "div"));
-    //    t.getProfile().getText().getDiv().getChildNodes().add(dtg.generate(t));
+    //    t.getProfile().getText().getDiv().addChildNode(dtg.generate(t));
   }
 
 
@@ -1569,7 +1571,7 @@ public class Publisher implements URIResolver, SectionNumberer {
     //    DataTypeTableGenerator dtg = new DataTypeTableGenerator(page.getFolders().dstDir, page, t.getCode(), true);
     //    t.setProfile(profile);
     //    t.getProfile().getText().setDiv(new XhtmlNode(NodeType.Element, "div"));
-    //    t.getProfile().getText().getDiv().getChildNodes().add(dtg.generate(t));
+    //    t.getProfile().getText().getDiv().addChildNode(dtg.generate(t));
   }
 
 
@@ -1581,7 +1583,7 @@ public class Publisher implements URIResolver, SectionNumberer {
       t.setProfile(profile);
       DataTypeTableGenerator dtg = new DataTypeTableGenerator(page.getFolders().dstDir, page, t.getName(), true, page.getVersion(), "");
       t.getProfile().getText().setDiv(new XhtmlNode(NodeType.Element, "div"));
-      t.getProfile().getText().getDiv().getChildNodes().add(dtg.generate(t, null, false));
+      t.getProfile().getText().getDiv().addChildNode(dtg.generate(t, null, false));
     } catch (Exception e) {
       throw new Exception("Error generating profile for '"+t.getName()+"': "+e.getMessage(), e);
     }
@@ -1901,7 +1903,7 @@ public class Publisher implements URIResolver, SectionNumberer {
     }
   }
 
-  private void loadValueSets2() throws Exception {
+  private void loadTerminology() throws Exception {
     page.log(" ...default Capability Statements", LogMessageType.Process);
 
     if (isGenerate) {
@@ -1924,6 +1926,7 @@ public class Publisher implements URIResolver, SectionNumberer {
     }
     page.log(" ...value sets", LogMessageType.Process);
     generateValueSetsPart2();
+    page.log(" ...concept maps", LogMessageType.Process);
     generateConceptMaps();
     page.saveSnomed();
     if (isGenerate) {
@@ -2200,8 +2203,8 @@ public class Publisher implements URIResolver, SectionNumberer {
       }
     }
     cpd.setWebPath("compartmentdefinition-"+c.getName()+".html");
-    RenderingContext lrc = page.getRc().copy().setLocalPrefix("");
-    RendererFactory.factory(cpd, lrc).render(cpd);
+    RenderingContext lrc = page.getRc().copy(false).setLocalPrefix("");
+    RendererFactory.factory(cpd, lrc).renderResource(ResourceWrapper.forResource(lrc.getContextUtilities(), cpd));
     serializeResource(cpd, "compartmentdefinition-" + c.getName().toLowerCase(), "Compartment Definition for "+c.getName(), "resource-instance:CompartmentDefinition", wg("fhir"));
 
     Utilities.copyFile(new CSFile(page.getFolders().dstDir + "compartmentdefinition-" + c.getName().toLowerCase() + ".xml"), new CSFile(page.getFolders().dstDir + "examples" + File.separator
@@ -2348,9 +2351,9 @@ public class Publisher implements URIResolver, SectionNumberer {
     }
 
     if (register) {
-      RenderingContext lrc = page.getRc().copy().setLocalPrefix("");
+      RenderingContext lrc = page.getRc().copy(false).setLocalPrefix("");
       lrc.setRules(GenerationRules.VALID_RESOURCE);
-      RendererFactory.factory(cpbs, lrc).render(cpbs);
+      RendererFactory.factory(cpbs, lrc).renderResource(ResourceWrapper.forResource(lrc.getContextUtilities(), cpbs));
       String fName = "capabilitystatement-" + name;
       fixCanonicalResource(cpbs, fName);
       serializeResource(cpbs, fName, "Base Capability Statement", "resource-instance:CapabilityStatement", wg("fhir"));
@@ -2359,9 +2362,9 @@ public class Publisher implements URIResolver, SectionNumberer {
           + "capabilitystatement-" + name + ".xml"));
     }
     if (buildFlags.get("all")) {
-      RenderingContext lrc = page.getRc().copy().setLocalPrefix("");
+      RenderingContext lrc = page.getRc().copy(false).setLocalPrefix("");
       lrc.setRules(GenerationRules.VALID_RESOURCE);
-      RendererFactory.factory(cpbs, lrc).render(cpbs);
+      RendererFactory.factory(cpbs, lrc).renderResource(ResourceWrapper.forResource(lrc.getContextUtilities(), cpbs));
       deletefromFeed(ResourceType.CapabilityStatement, name, page.getResourceBundle());
       addToResourceFeed(cpbs, page.getResourceBundle());
     }
@@ -2663,34 +2666,34 @@ public class Publisher implements URIResolver, SectionNumberer {
   private void checkExampleLinks(List<ValidationMessage> errors, ResourceDefn r) throws Exception {
     for (Example e : r.getExamples()) {
       try {
-        if (e.getXml() != null) {
+        if (e.getElement() != null) {
           List<ExampleReference> refs = new ArrayList<ExampleReference>();
-          listLinks(e.getXml().getDocumentElement(), refs);
-          for (ExampleReference ref : refs) {
-            if (!ref.isExempt() && !resolveLink(ref, e)) {
-              String path = ref.getPath().replace("/f:", ".").substring(1)+" (example "+e.getTitle()+")";
-              if (ref.hasType() && page.getDefinitions().hasResource(ref.getType())) {
-                errors.add(new ValidationMessage(Source.ExampleValidator, IssueType.BUSINESSRULE, -1, -1, path,
-                    "Unable to resolve example reference to " + ref.getRef() + " in " + e.getTitle() + " (Possible Ids: " + listTargetIds(ref.getType())+")",
-                    "Unable to resolve example reference to " + ref.getRef() + " in <a href=\""+e.getTitle() + ".html"+"\">" + e.getTitle() + "</a> (Possible Ids: " + listTargetIds(ref.getType())+")",
-                    IssueSeverity.INFORMATION/*WARNING*/));
-              } else {
-                String regex = "((http|https)://([A-Za-z0-9\\\\\\/\\.\\:\\%\\$])*)?("+page.pipeResources()+")\\/"+FormatUtilities.ID_REGEX+"(\\/_history\\/"+FormatUtilities.ID_REGEX+")?";
-                if (ref.getRef().matches(regex)) {
-                  errors.add(new ValidationMessage(Source.ExampleValidator, IssueType.BUSINESSRULE, -1, -1, path,
-                      "Unable to resolve example reference " + ref.getRef() + " in " + e.getTitle(),
-                      "Unable to resolve example reference " + ref.getRef() + " in <a href=\""+e.getTitle() + ".html"+"\">" + e.getTitle() + "</a>",
-                      IssueSeverity.INFORMATION/*WARNING*/));
-                } else {
-                  errors.add(new ValidationMessage(Source.ExampleValidator, IssueType.BUSINESSRULE, -1, -1, path,
-                      "Unable to resolve invalid example reference " + ref.getRef() + " in " + e.getTitle(),
-                      "Unable to resolve invalid example reference " + ref.getRef() + " in <a href=\""+e.getTitle() + ".html"+"\">" + e.getTitle() + "</a>",
-                      IssueSeverity.WARNING));
-                }
-              }
-//            System.out.println("unresolved reference "+ref.getRef()+" at "+path);
-            }
-          }
+          listLinks(e.getElement(), refs);
+//          for (ExampleReference ref : refs) {
+//            if (!ref.isExempt() && !resolveLink(ref, e)) {
+//              String path = ref.getPath().replace("/f:", ".").substring(1)+" (example "+e.getTitle()+")";
+//              if (ref.hasType() && page.getDefinitions().hasResource(ref.getType())) {
+//                errors.add(new ValidationMessage(Source.ExampleValidator, IssueType.BUSINESSRULE, -1, -1, path,
+//                    "Unable to resolve example reference to " + ref.getRef() + " in " + e.getTitle() + " (Possible Ids: " + listTargetIds(ref.getType())+")",
+//                    "Unable to resolve example reference to " + ref.getRef() + " in <a href=\""+e.getTitle() + ".html"+"\">" + e.getTitle() + "</a> (Possible Ids: " + listTargetIds(ref.getType())+")",
+//                    IssueSeverity.INFORMATION/*WARNING*/));
+//              } else {
+//                String regex = "((http|https)://([A-Za-z0-9\\\\\\/\\.\\:\\%\\$])*)?("+page.pipeResources()+")\\/"+FormatUtilities.ID_REGEX+"(\\/_history\\/"+FormatUtilities.ID_REGEX+")?";
+//                if (ref.getRef().matches(regex)) {
+//                  errors.add(new ValidationMessage(Source.ExampleValidator, IssueType.BUSINESSRULE, -1, -1, path,
+//                      "Unable to resolve example reference " + ref.getRef() + " in " + e.getTitle(),
+//                      "Unable to resolve example reference " + ref.getRef() + " in <a href=\""+e.getTitle() + ".html"+"\">" + e.getTitle() + "</a>",
+//                      IssueSeverity.INFORMATION/*WARNING*/));
+//                } else {
+//                  errors.add(new ValidationMessage(Source.ExampleValidator, IssueType.BUSINESSRULE, -1, -1, path,
+//                      "Unable to resolve invalid example reference " + ref.getRef() + " in " + e.getTitle(),
+//                      "Unable to resolve invalid example reference " + ref.getRef() + " in <a href=\""+e.getTitle() + ".html"+"\">" + e.getTitle() + "</a>",
+//                      IssueSeverity.WARNING));
+//                }
+//              }
+////            System.out.println("unresolved reference "+ref.getRef()+" at "+path);
+//            }
+//          }
         }
       } catch (Exception ex) {
         throw new Exception("Error checking example " + e.getTitle() + ":" + ex.getMessage(), ex);
@@ -2698,159 +2701,159 @@ public class Publisher implements URIResolver, SectionNumberer {
     }
   }
 
-  private String listTargetIds(String type) throws Exception {
-    StringBuilder b = new StringBuilder();
-    ResourceDefn r = page.getDefinitions().getResourceByName(type);
-    if (r != null) {
-      for (Example e : r.getExamples()) {
-        if (!Utilities.noString(e.getId()))
-          b.append(e.getId()).append(", ");
-        if (e.getXml() != null) {
-          if (e.getXml().getDocumentElement().getLocalName().equals("feed")) {
-            List<Element> entries = new ArrayList<Element>();
-            XMLUtil.getNamedChildren(e.getXml().getDocumentElement(), "entry", entries);
-            for (Element c : entries) {
-              String id = XMLUtil.getNamedChild(c, "id").getTextContent();
-              if (id.startsWith("http://hl7.org/fhir/") && id.contains("@"))
-                b.append(id.substring(id.indexOf("@") + 1)).append(", ");
-              else
-                b.append(id).append(", ");
-            }
-          }
-        }
-      }
-    } else
-      b.append("(unknown resource type)");
-    return b.toString();
+//  private String listTargetIds(String type) throws Exception {
+//    StringBuilder b = new StringBuilder();
+//    ResourceDefn r = page.getDefinitions().getResourceByName(type);
+//    if (r != null) {
+//      for (Example e : r.getExamples()) {
+//        if (!Utilities.noString(e.getId()))
+//          b.append(e.getId()).append(", ");
+//        if (e.getXml() != null) {
+//          if (e.getXml().getDocumentElement().getLocalName().equals("feed")) {
+//            List<Element> entries = new ArrayList<Element>();
+//            XMLUtil.getNamedChildren(e.getXml().getDocumentElement(), "entry", entries);
+//            for (Element c : entries) {
+//              String id = XMLUtil.getNamedChild(c, "id").getTextContent();
+//              if (id.startsWith("http://hl7.org/fhir/") && id.contains("@"))
+//                b.append(id.substring(id.indexOf("@") + 1)).append(", ");
+//              else
+//                b.append(id).append(", ");
+//            }
+//          }
+//        }
+//      }
+//    } else
+//      b.append("(unknown resource type)");
+//    return b.toString();
+//  }
+
+//  private boolean resolveLink(ExampleReference ref, Example src) throws Exception {
+//    if (!ref.hasType() && ref.getId() == null)
+//      return false;
+//    if (!ref.hasType() && ref.getId().startsWith("#"))
+//      return true;
+//    if (!ref.hasType() || !page.getDefinitions().hasResource(ref.getType()))
+//      return false;
+//    if (ref.getId().startsWith("#"))
+//      return false;
+//    String id = ref.getId(); 
+//    ResourceDefn r = page.getDefinitions().getResourceByName(ref.getType());
+//    for (Example e : r.getExamples()) {
+//      if (id.equals(e.getId())) {
+//        e.getInbounds().add(src);
+//        return true;
+//      }
+//      if (e.getXml() != null) {
+//        if (resolveLinkInBundle(ref, src, e, id))
+//          return true;
+//      }
+//    }
+//    // didn't find it? well, we'll look through all the other examples looking for bundles that contain it
+//    for (ResourceDefn rt : page.getDefinitions().getResources().values()) {
+//      for (Example e : rt.getExamples()) {
+//        if (e.getXml() != null) {
+//          if (resolveLinkInBundle(ref, src, e, id))
+//            return true;
+//        }
+//      }
+//    }
+//    // still not found?
+//    if (ref.type.equals("ConceptMap"))
+//      return page.getConceptMaps().has("http://hl7.org/fhir/"+ref.type+"/"+ref.getId());
+//    if (ref.type.equals("StructureDefinition")) {
+//      if (page.getDefinitions().hasResource(ref.getId()))
+//        return true;
+//      if (page.getProfiles().has("http://hl7.org/fhir/"+ref.type+"/"+ref.getId()) || page.getWorkerContext().hasResource(StructureDefinition.class, "http://hl7.org/fhir/"+ref.type+"/"+ref.getId()))
+//        return true;
+//      for (Profile cp : page.getDefinitions().getPackList())
+//        for (ConstraintStructure p : cp.getProfiles())
+//          if (p.getId().equals(id))
+//            return true;
+//      for (ResourceDefn rd : page.getDefinitions().getResources().values())
+//        for (Profile cp : rd.getConformancePackages())
+//          for (ConstraintStructure p : cp.getProfiles())
+//            if (p.getId().equals(id))
+//              return true;
+//    }
+//    if (page.getWorkerContext().hasResource(Resource.class, ref.ref)) {
+//      return true;
+//    }
+//    return false;
+//  }
+
+//  private boolean resolveLinkInBundle(ExampleReference ref, Example src, Example e, String id) {
+//    if (e.getXml().getDocumentElement().getLocalName().equals("Bundle")) {
+//      List<Element> entries = new ArrayList<Element>();
+//      XMLUtil.getNamedChildren(e.getXml().getDocumentElement(), "entry", entries);
+//      for (Element c : entries) {
+//        Element resh = XMLUtil.getNamedChild(c, "resource");
+//        if (resh != null) {
+//          Element res = XMLUtil.getFirstChild(resh);
+//          String _id = XMLUtil.getNamedChildValue(res, "id");
+//          if (id.equals(_id) && ref.getType().equals(res.getLocalName())) {
+//            e.getInbounds().add(src);
+//            return true;
+//          }
+//        }
+//      }
+//    }
+//    return false;
+//  }
+
+  private void listLinks(org.hl7.fhir.r5.elementmodel.Element element, List<ExampleReference> refs) throws Exception {
+//    if (element.getLocalName().equals("feed")) {
+//      Element n = XMLUtil.getFirstChild(element);
+//      while (n != null) {
+//        if (n.getLocalName().equals("entry")) {
+//          Element c = XMLUtil.getNamedChild(n, "content");
+//          listLinks(XMLUtil.getFirstChild(c), refs);
+//        }
+//        n = XMLUtil.getNextSibling(n);
+//      }
+//    } else {
+//      String n = element.getLocalName();
+//      if (!n.equals("Binary")) {
+//        ResourceDefn r = page.getDefinitions().getResourceByName(n);
+//        if (r == null)
+//          throw new Exception("Unable to find resource definition for " + n);
+//        List<Element> nodes = new ArrayList<Element>();
+//        nodes.add(element);
+//        listLinks("/f:" + n, r.getRoot(), nodes, refs);
+//
+//        Element e = XMLUtil.getFirstChild(element);
+//        while (e != null) {
+//          if (e.getNodeName().equals("contained")) {
+//            listLinks(XMLUtil.getFirstChild(e), refs);
+//          }
+//          e = XMLUtil.getNextSibling(e);
+//        }
+//
+//      }
+//    }
   }
-
-  private boolean resolveLink(ExampleReference ref, Example src) throws Exception {
-    if (!ref.hasType() && ref.getId() == null)
-      return false;
-    if (!ref.hasType() && ref.getId().startsWith("#"))
-      return true;
-    if (!ref.hasType() || !page.getDefinitions().hasResource(ref.getType()))
-      return false;
-    if (ref.getId().startsWith("#"))
-      return false;
-    String id = ref.getId(); 
-    ResourceDefn r = page.getDefinitions().getResourceByName(ref.getType());
-    for (Example e : r.getExamples()) {
-      if (id.equals(e.getId())) {
-        e.getInbounds().add(src);
-        return true;
-      }
-      if (e.getXml() != null) {
-        if (resolveLinkInBundle(ref, src, e, id))
-          return true;
-      }
-    }
-    // didn't find it? well, we'll look through all the other examples looking for bundles that contain it
-    for (ResourceDefn rt : page.getDefinitions().getResources().values()) {
-      for (Example e : rt.getExamples()) {
-        if (e.getXml() != null) {
-          if (resolveLinkInBundle(ref, src, e, id))
-            return true;
-        }
-      }
-    }
-    // still not found?
-    if (ref.type.equals("ConceptMap"))
-      return page.getConceptMaps().has("http://hl7.org/fhir/"+ref.type+"/"+ref.getId());
-    if (ref.type.equals("StructureDefinition")) {
-      if (page.getDefinitions().hasResource(ref.getId()))
-        return true;
-      if (page.getProfiles().has("http://hl7.org/fhir/"+ref.type+"/"+ref.getId()) || page.getWorkerContext().hasResource(StructureDefinition.class, "http://hl7.org/fhir/"+ref.type+"/"+ref.getId()))
-        return true;
-      for (Profile cp : page.getDefinitions().getPackList())
-        for (ConstraintStructure p : cp.getProfiles())
-          if (p.getId().equals(id))
-            return true;
-      for (ResourceDefn rd : page.getDefinitions().getResources().values())
-        for (Profile cp : rd.getConformancePackages())
-          for (ConstraintStructure p : cp.getProfiles())
-            if (p.getId().equals(id))
-              return true;
-    }
-    if (page.getWorkerContext().hasResource(Resource.class, ref.ref)) {
-      return true;
-    }
-    return false;
-  }
-
-  private boolean resolveLinkInBundle(ExampleReference ref, Example src, Example e, String id) {
-    if (e.getXml().getDocumentElement().getLocalName().equals("Bundle")) {
-      List<Element> entries = new ArrayList<Element>();
-      XMLUtil.getNamedChildren(e.getXml().getDocumentElement(), "entry", entries);
-      for (Element c : entries) {
-        Element resh = XMLUtil.getNamedChild(c, "resource");
-        if (resh != null) {
-          Element res = XMLUtil.getFirstChild(resh);
-          String _id = XMLUtil.getNamedChildValue(res, "id");
-          if (id.equals(_id) && ref.getType().equals(res.getLocalName())) {
-            e.getInbounds().add(src);
-            return true;
-          }
-        }
-      }
-    }
-    return false;
-  }
-
-  private void listLinks(Element xml, List<ExampleReference> refs) throws Exception {
-    if (xml.getLocalName().equals("feed")) {
-      Element n = XMLUtil.getFirstChild(xml);
-      while (n != null) {
-        if (n.getLocalName().equals("entry")) {
-          Element c = XMLUtil.getNamedChild(n, "content");
-          listLinks(XMLUtil.getFirstChild(c), refs);
-        }
-        n = XMLUtil.getNextSibling(n);
-      }
-    } else {
-      String n = xml.getLocalName();
-      if (!n.equals("Binary")) {
-        ResourceDefn r = page.getDefinitions().getResourceByName(n);
-        if (r == null)
-          throw new Exception("Unable to find resource definition for " + n);
-        List<Element> nodes = new ArrayList<Element>();
-        nodes.add(xml);
-        listLinks("/f:" + n, r.getRoot(), nodes, refs);
-
-        Element e = XMLUtil.getFirstChild(xml);
-        while (e != null) {
-          if (e.getNodeName().equals("contained")) {
-            listLinks(XMLUtil.getFirstChild(e), refs);
-          }
-          e = XMLUtil.getNextSibling(e);
-        }
-
-      }
-    }
-  }
-
-  private void listLinks(String path, org.hl7.fhir.definitions.model.ElementDefn d, List<Element> set, List<ExampleReference> refs) throws Exception {
-    if (d.typeCode().startsWith("Reference")) {
-      for (Element m : set) {
-        if (XMLUtil.getNamedChild(m, "reference") != null) {
-          refs.add(new ExampleReference(XMLUtil.getNamedChildValue(m, "reference"), path));
-        }
-      }
-    }
-    if (d.typeCode().startsWith("canonical")) {
-      for (Element m : set) {
-        if (!Utilities.noString(m.getAttribute("value"))) {
-          refs.add(new ExampleReference(m.getAttribute("value"), path));
-        }
-      }
-    }
-    for (org.hl7.fhir.definitions.model.ElementDefn c : d.getElements()) {
-      List<Element> cset = new ArrayList<Element>();
-      for (Element p : set)
-        XMLUtil.getNamedChildren(p, c.getName(), cset);
-      listLinks(path + "/f:" + c.getName(), c, cset, refs);
-    }
-  }
+//
+//  private void listLinks(String path, org.hl7.fhir.definitions.model.ElementDefn d, List<Element> set, List<ExampleReference> refs) throws Exception {
+//    if (d.typeCode().startsWith("Reference")) {
+//      for (Element m : set) {
+//        if (XMLUtil.getNamedChild(m, "reference") != null) {
+//          refs.add(new ExampleReference(XMLUtil.getNamedChildValue(m, "reference"), path));
+//        }
+//      }
+//    }
+//    if (d.typeCode().startsWith("canonical")) {
+//      for (Element m : set) {
+//        if (!Utilities.noString(m.getAttribute("value"))) {
+//          refs.add(new ExampleReference(m.getAttribute("value"), path));
+//        }
+//      }
+//    }
+//    for (org.hl7.fhir.definitions.model.ElementDefn c : d.getElements()) {
+//      List<Element> cset = new ArrayList<Element>();
+//      for (Element p : set)
+//        XMLUtil.getNamedChildren(p, c.getName(), cset);
+//      listLinks(path + "/f:" + c.getName(), c, cset, refs);
+//    }
+//  }
 
   // private List<Element> xPathQuery(String path, Element e) throws Exception {
   // NamespaceContext context = new NamespaceContextMap("f",
@@ -3123,9 +3126,9 @@ public class Publisher implements URIResolver, SectionNumberer {
   }
 
   private void produceSpec() throws Exception {
+    page.log(" ...logical models", LogMessageType.Process);
     for (ImplementationGuideDefn ig : page.getDefinitions().getSortedIgs()) {
       for (LogicalModel lm : ig.getLogicalModels()) {
-        page.log(" ...logical model " + lm.getId(), LogMessageType.Process);
         produceLogicalModel(lm, ig);
       }
     }
@@ -3143,8 +3146,8 @@ public class Publisher implements URIResolver, SectionNumberer {
     page.log(" ...diffEngine", LogMessageType.Process);
     page.updateDiffEngineDefinitions();
 
-    page.log(" ...valuesets (2)", LogMessageType.Process);
-    loadValueSets2();
+    page.log(" ...terminology", LogMessageType.Process);
+    loadTerminology();
     page.log(" ...extensions", LogMessageType.Process);
 
     for (StructureDefinition ae : page.getWorkerContext().getExtensionDefinitions())
@@ -3701,8 +3704,8 @@ public class Publisher implements URIResolver, SectionNumberer {
   }
 
   private void produceConceptMap(ConceptMap cm, ResourceDefn rd, SectionTracker st) throws Exception {
-    RenderingContext lrc = page.getRc().copy().setLocalPrefix("");
-    RendererFactory.factory(cm, lrc).render(cm);
+    RenderingContext lrc = page.getRc().copy(false).setLocalPrefix("");
+    RendererFactory.factory(cm, lrc).renderResource(ResourceWrapper.forResource(lrc.getContextUtilities(), cm));
     String n = cm.getWebPath();
     String fName = Utilities.changeFileExt(n,"");
     fixCanonicalResource(cm, fName);
@@ -3763,7 +3766,6 @@ public class Publisher implements URIResolver, SectionNumberer {
     values.put("bcks", Utilities.escapeXml(bcks));
     values.put("fwds-status", "");
     values.put("bcks-status", "");
-    values.put("r4errs", page.getR4R5ValidationErrors(name));
     try {
       new StructureMapUtilities(page.getWorkerContext()).parse(fwds, page.r4nameForResource(name)+".map");
     } catch (FHIRException e) {
@@ -4350,7 +4352,7 @@ public class Publisher implements URIResolver, SectionNumberer {
     }
   }
 
-  private String getExtensionExamples(StructureDefinition ed) {
+  private String getExtensionExamples(StructureDefinition ed) throws FileNotFoundException, UnsupportedEncodingException, IOException, Exception {
     List<StringPair> refs = new ArrayList<>();
     for (CanonicalResource cr : page.getWorkerContext().fetchResourcesByType(CanonicalResource.class)) {
       if (ToolingExtensions.usesExtension(ed.getUrl(), cr) && page.isLocalResource(cr)) {
@@ -4361,7 +4363,7 @@ public class Publisher implements URIResolver, SectionNumberer {
     for (String rn : page.getDefinitions().sortedResourceNames()) {
       ResourceDefn rd = page.getDefinitions().getResourceByName(rn);
       for (Example e : rd.getExamples()) {
-        if (usesExtension(ed.getUrl(), e.getXml())) {
+        if (usesExtension(ed.getUrl(), e.getElement())) {
           refs.add(new StringPair(e.getName()+": "+rd.getName()+"/"+e.getId(), e.getTitle()+".html"));
         }        
       }
@@ -4380,26 +4382,16 @@ public class Publisher implements URIResolver, SectionNumberer {
     }
   }
 
-
-  
-  private boolean usesExtension(String url, Document xml) {
-    if (xml == null) {
-      return false;
-    }
-    Element e = xml.getDocumentElement();
-    return usesExtension(url, e);
-  }
-
-  private boolean usesExtension(String url, Element e) {
-    if (url.equals(e.getAttribute("url"))) {
+  private boolean usesExtension(String url, org.hl7.fhir.r5.elementmodel.Element element) {
+    if ("Extension".equals(element.fhirType()) && url.equals(element.getNamedChildValue("url"))) {
       return true;
     }
-    Element c = XMLUtil.getFirstChild(e);
-    while (c != null) {
-      if (usesExtension(url, c)) {
-        return true;
+    if (element.hasChildren()) {
+      for (org.hl7.fhir.r5.elementmodel.Element c : element.getChildren()) {
+        if (usesExtension(url, c)) {
+          return true;
+        }        
       }
-      c = XMLUtil.getNextSibling(c);
     }
     return false;
   }
@@ -4832,6 +4824,7 @@ public class Publisher implements URIResolver, SectionNumberer {
           }
         }
       }
+
       src = TextFile.fileToString(page.getFolders().templateDir + template+"-definitions.html");
       TextFile.stringToFile(
           insertSectionNumbers(page.processResourceIncludes(n, resource, xml, json, ttl, tx, dict, src, mappings, mappingsList, "res-Detailed Descriptions", n + "-definitions.html", null, values, resource.getWg(), null), st, n
@@ -4931,7 +4924,7 @@ public class Publisher implements URIResolver, SectionNumberer {
     doc.appendChild(element);
     page.getDiffEngine().getDiffAsXml(doc, element, p, false);
     prettyPrint(doc, Utilities.path(page.getFolders().dstDir, resource.getName().toLowerCase() + ".r4b.diff.xml"));
-}
+  }
 
   public void prettyPrint(Document xml, String filename) throws Exception {
     Transformer tf = TransformerFactory.newInstance().newTransformer();
@@ -5131,40 +5124,33 @@ public class Publisher implements URIResolver, SectionNumberer {
   private void processExample(Example e, ResourceDefn resn, StructureDefinition profile, Profile pack, ImplementationGuideDefn ig) throws Exception {
     if (e.getType() == ExampleType.Tool)
       return;
-    long time = System.currentTimeMillis(); 
+//    long time = System.currentTimeMillis(); 
     int level = (ig == null || ig.isCore()) ? 0 : 1;
     String prefix = (ig == null || ig.isCore()) ? "" : ig.getCode() + File.separator;
-
-    DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-    factory.setNamespaceAware(true);
-    DocumentBuilder builder = factory.newDocumentBuilder();
-    Document xdoc;
     String narrative = null;
     String n = e.getTitle();
 
-    if (examplesProcessed.contains(prefix+n))
+    if (examplesProcessed.contains(prefix+n)) {
       return;
+    }
     examplesProcessed.add(prefix+n);
     
     // strip the xsi: stuff. seems to need double processing in order to
     // delete namespace crap
-    xdoc = e.getXml();
-
-    CanonicalResourceUtilities.setHl7WG(xdoc.getDocumentElement(), resn.getWg().getCode());
+    
+    CanonicalResourceUtilities.setHl7WG(e.getElement(), resn.getWg().getCode());
     XmlGenerator xmlgen = new XmlGenerator();
     CSFile file = new CSFile(page.getFolders().dstDir + prefix +n + ".xml");
-    xmlgen.generate(xdoc.getDocumentElement(), file, "http://hl7.org/fhir", xdoc.getDocumentElement()
-          .getLocalName());
+    Manager.compose(page.getWorkerContext(), e.getElement(), new FileOutputStream(file),  FhirFormat.XML, OutputStyle.PRETTY, "http://hl7.org/fhir");
     
     // check the narrative. We generate auto-narrative. If the resource didn't
     // have it's own original narrative, then we save it anyway
     // n
     String rt = null;
     try {
-      RenderingContext lrc = page.getRc().copy().setLocalPrefix("");
-      xdoc = loadDom(new FileInputStream(file), true);
-      rt = xdoc.getDocumentElement().getNodeName();
-      String id = XMLUtil.getNamedChildValue(xdoc.getDocumentElement(), "id");
+      RenderingContext lrc = page.getRc().copy(false).setLocalPrefix("");
+      rt = e.getElement().fhirType();
+      String id = e.getElement().getIdBase();
       if (!page.getDefinitions().getBaseResources().containsKey(rt) && !id.equals(e.getId()))
         throw new Error("Resource in "+prefix +n + ".xml needs an id of value=\""+e.getId()+"\"");
       page.getDefinitions().addNs("http://hl7.org/fhir/"+rt+"/"+id, "Example", prefix +n + ".html");
@@ -5190,7 +5176,7 @@ public class Publisher implements URIResolver, SectionNumberer {
             wantSave = updateVersion(((CapabilityStatement) res).getText().getDiv());
         }
         if (!res.hasText() || !res.getText().hasDiv()) {
-          RendererFactory.factory(res, lrc.copy().setRules(GenerationRules.VALID_RESOURCE)).render(res);
+          RendererFactory.factory(res, lrc.copy(false).setRules(GenerationRules.VALID_RESOURCE)).renderResource(ResourceWrapper.forResource(lrc.getContextUtilities(), res));
         }
         if (wantSave) {
           if (VersionUtilities.isR4BVer(page.getVersion().toCode())) {
@@ -5203,27 +5189,26 @@ public class Publisher implements URIResolver, SectionNumberer {
         narrative = new XhtmlComposer(XhtmlComposer.HTML).compose(res.getText().getDiv());
       } else {
         if (rt.equals("Bundle")) {
-          List<Element> entries = new ArrayList<Element>();
-          XMLUtil.getNamedChildren(xdoc.getDocumentElement(), "entry", entries);
+          List<org.hl7.fhir.r5.elementmodel.Element> entries = e.getElement().getChildren("entry");
           boolean wantSave = false;
-          for (Element entry : entries) {
-            Element ers = XMLUtil.getFirstChild(XMLUtil.getNamedChild(entry, "resource"));
+          for (org.hl7.fhir.r5.elementmodel.Element entry : entries) {
+            org.hl7.fhir.r5.elementmodel.Element ers = entry.getNamedChild("resource");
             if (ers != null) {
               CanonicalResourceUtilities.setHl7WG(ers, resn.getWg().getCode());
             }
-            id = XMLUtil.getNamedChildValue(ers, "id");
+            id = ers == null ? null : ers.getIdBase();
             if (id != null)
-              page.getDefinitions().addNs("http://hl7.org/fhir/"+ers.getLocalName()+"/"+id, "Example", prefix +n + ".html", true);
+              page.getDefinitions().addNs("http://hl7.org/fhir/"+ers.fhirType()+"/"+id, "Example", prefix +n + ".html", true);
             if (ers != null) {
-              String ert = ers.getLocalName();
+              String ert = ers.fhirType();
               String s = null;
               if (!page.getDefinitions().getBaseResources().containsKey(ert) && !ert.equals("Binary") && !ert.equals("Parameters") && !ert.equals("Bundle")) {
-                ResourceRenderer r = RendererFactory.factory(ers.getLocalName(), lrc);
-                ResourceWrapper rw = new DOMWrappers.ResourceWrapperElement(lrc, ers, page.getDefinitions().getResourceByName(ers.getLocalName()).getProfile());
+                ResourceRenderer r = RendererFactory.factory(ers.fhirType(), lrc);
+                ResourceWrapper rw =ResourceWrapper.forResource(lrc.getContextUtilities(), ers);
                 XhtmlNode div = rw.getNarrative();
                 if (div == null || div.isEmpty()) {
                   wantSave = true;
-                  r.render(rw);
+                  r.renderResource(rw);
                 } else
                   s = new XhtmlComposer(true).compose(div);
                 if (s != null)
@@ -5231,7 +5216,7 @@ public class Publisher implements URIResolver, SectionNumberer {
               }
               if (ert.equals("NamingSystem")) {
                 ByteArrayOutputStream bs = new ByteArrayOutputStream();
-                new XmlGenerator().generate(ers, bs);
+                Manager.compose(page.getWorkerContext(), ers, bs, FhirFormat.XML, OutputStyle.PRETTY, "http://hl7.org/fhir");
                 bs.close();
                 NamingSystem ns = (NamingSystem) new XmlParser().parse(new ByteArrayInputStream(bs.toByteArray()));
                 if (!ns.hasUrl() || ns.getUrl().startsWith("http://hl7.org/fhir"))
@@ -5242,38 +5227,23 @@ public class Publisher implements URIResolver, SectionNumberer {
               }
             }
           }
-          if (wantSave)
-            new XmlGenerator().generate(xdoc.getDocumentElement(), file, "http://hl7.org/fhir", xdoc.getDocumentElement().getLocalName());
+          if (wantSave) {
+            Manager.compose(page.getWorkerContext(), e.getElement(), new FileOutputStream(file), FhirFormat.XML, OutputStyle.PRETTY, "http://hl7.org/fhir");
+          }
         } else {
           if (!page.getDefinitions().getBaseResources().containsKey(rt) && !rt.equals("Binary") && !rt.equals("Parameters")) {
-            
-            ResourceRenderer r = RendererFactory.factory(xdoc.getDocumentElement().getLocalName(), lrc);
 
-            if (r.getRendererType() == RendererType.LIQUID) { 
-              // really, we could do everything this way, but this change was introduced close to ballot, so we only do it when we're doing liquid. To be reviewed 
-              org.hl7.fhir.r5.elementmodel.Element ex = e.getElement();
-              if (ex == null) {
-                e.setElement(new org.hl7.fhir.r5.elementmodel.XmlParser(page.getWorkerContext()).parse(null, e.getXml()));
-                ex = e.getElement();
-              }
-              CanonicalResourceUtilities.setHl7WG(ex, resn.getWg().getCode());
-              ResourceWrapper rw = new ElementWrappers.ResourceWrapperMetaElement(lrc, ex);
-              XhtmlNode div = rw.getNarrative();
-              if (div == null || div.isEmpty()) {
-                narrative = new XhtmlComposer(true).compose(r.render(rw));
-                new org.hl7.fhir.r5.elementmodel.XmlParser(page.getWorkerContext()).compose(ex, new FileOutputStream(file), OutputStyle.PRETTY, null);
-              } else {
-                narrative = new XhtmlComposer(true).compose(div);
-              }
-            } else { 
-              ResourceWrapper rw = new DOMWrappers.ResourceWrapperElement(lrc, xdoc.getDocumentElement(), page.getDefinitions().getResourceByName(xdoc.getDocumentElement().getLocalName()).getProfile());
-              XhtmlNode div = rw.getNarrative();
-              if (div == null || div.isEmpty()) {
-                narrative = new XhtmlComposer(true).compose(r.render(rw));
-                new XmlGenerator().generate(xdoc.getDocumentElement(), file, "http://hl7.org/fhir", xdoc.getDocumentElement().getLocalName());
-              } else {
-                narrative = new XhtmlComposer(true).compose(div);
-              }
+            ResourceRenderer r = RendererFactory.factory(ResourceWrapper.forResource(lrc.getContextUtilities(), e.getElement()), lrc);
+
+            CanonicalResourceUtilities.setHl7WG(e.getElement(), resn.getWg().getCode());
+            ResourceWrapper rw = ResourceWrapper.forResource(lrc.getContextUtilities(), e.getElement());
+            XhtmlNode div = rw.getNarrative();
+            if (div == null || div.isEmpty()) {
+              narrative = new XhtmlComposer(true).compose(r.buildNarrative(rw));
+              new org.hl7.fhir.r5.elementmodel.XmlParser(page.getWorkerContext()).compose(e.getElement(), new FileOutputStream(file), OutputStyle.PRETTY, null);
+            } else {
+              narrative = new XhtmlComposer(true).compose(div);
+
             }
           }
         }
@@ -5286,15 +5256,6 @@ public class Publisher implements URIResolver, SectionNumberer {
       xhtml.addTag("p").setAttribute("style", "color: maroon").addText("Error processing narrative: " + ex.getMessage());
       xhtml.addTag("p").setAttribute("style", "color: maroon").addText(errors.toString());
       narrative = new XhtmlComposer(XhtmlComposer.HTML).compose(xhtml);
-    }
-    try {
-      if (e.getResource() == null && e.getElement() == null) {
-        String xml = XMLUtil.elementToString(e.getXml().getDocumentElement()).replace("<?xml version=\"1.0\" encoding=\"UTF-16\"?>", "").trim();
-        e.setElement(new Manager().parseSingle(page.getWorkerContext(), new StringInputStream(xml), FhirFormat.XML));
-        e.setResource(new XmlParser().parse(xml));
-      }
-    } catch (Throwable ex) {
-      System.out.println("Error reparsing example "+e.getName()+": "+ex.getMessage());
     }
     if (rt.equals("ValueSet")) {
       try {
@@ -5405,8 +5366,11 @@ public class Publisher implements URIResolver, SectionNumberer {
     page.getHTMLChecker().registerExternal(prefix+n + ".ttl.html");
 
     // reload it now, xml to xhtml of xml
-    builder = factory.newDocumentBuilder();
-    xdoc = builder.parse(new CSFileInputStream(file));
+
+    DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+    factory.setNamespaceAware(true);
+    DocumentBuilder builder = factory.newDocumentBuilder();
+    Document xdoc = builder.parse(new CSFileInputStream(file));
     XhtmlGenerator xhtml = new XhtmlGenerator(new ExampleAdorner(page.getDefinitions(), page.genlevel(level)));
     ByteArrayOutputStream b = new ByteArrayOutputStream();
     xhtml.generate(xdoc, b, n.toUpperCase().substring(0, 1) + n.substring(1), Utilities.noString(e.getId()) ? e.getDescription() : e.getDescription()
@@ -5427,7 +5391,7 @@ public class Publisher implements URIResolver, SectionNumberer {
       else {
         Element pid = XMLUtil.getNextSibling(id);
         if (pid == null)
-          throw new Exception("not handled - id is last child in "+n);
+          meta = XMLUtil.addChild(xdoc, root, "meta", FormatUtilities.FHIR_NS, 2);
         else
           meta = XMLUtil.insertChild(xdoc, root, "meta", FormatUtilities.FHIR_NS, pid, 2);
       }
@@ -5628,7 +5592,7 @@ public class Publisher implements URIResolver, SectionNumberer {
     work = doc.addTag("body");
     if ((resource.hasText()) && (resource.getText().hasDiv())) {
       work.getAttributes().putAll(resource.getText().getDiv().getAttributes());
-      work.getChildNodes().addAll(resource.getText().getDiv().getChildNodes());
+      work.addChildNodes(resource.getText().getDiv().getChildNodes());
     }
     XhtmlComposer xml = new XhtmlComposer(XhtmlComposer.HTML, isPretty);
     xml.compose(stream, html);
@@ -5646,7 +5610,7 @@ public class Publisher implements URIResolver, SectionNumberer {
 
     ResourceUtilities.meta(resource).setLastUpdated(page.getGenDate().getTime());
     if (!resource.hasText() || !resource.getText().hasDiv()) {
-      RendererFactory.factory(resource, page.getRc().copy()).render(resource);
+      RendererFactory.factory(resource, page.getRc().copy(false)).renderResource(ResourceWrapper.forResource(page.getRc().getContextUtilities(), resource));
     }
     if (resource.getText() == null || resource.getText().getDiv() == null)
       throw new Exception("Example Resource " + resource.getId() + " does not have any narrative");
@@ -5669,7 +5633,7 @@ public class Publisher implements URIResolver, SectionNumberer {
       throw new Exception("Attempt to add duplicate value set " + vs.getId()+" ("+vs.getName()+")");
     }
     if (!vs.hasText() || !vs.getText().hasDiv()) {
-      RendererFactory.factory(vs, page.getRc().copy()).render(vs);
+      RendererFactory.factory(vs, page.getRc().copy(false)).renderResource(ResourceWrapper.forResource(page.getRc().getContextUtilities(), vs));
     }
     if (!vs.hasText() || vs.getText().getDiv() == null)
       throw new Exception("Example Value Set " + vs.getId() + " does not have any narrative");
@@ -5686,7 +5650,7 @@ public class Publisher implements URIResolver, SectionNumberer {
     if (ResourceUtilities.getById(dest, ResourceType.ValueSet, cm.getId()) != null)
       throw new Exception("Attempt to add duplicate Concept Map " + cm.getId());
     if (!cm.hasText() || !cm.getText().hasDiv()) {
-      RendererFactory.factory(cm, page.getRc().copy()).render(cm);
+      RendererFactory.factory(cm, page.getRc().copy(false)).renderResource(ResourceWrapper.forResource(page.getRc().getContextUtilities(), cm));
     }
     if (cm.getText() == null || cm.getText().getDiv() == null)
       throw new Exception("Example Concept Map " + cm.getId() + " does not have any narrative");
@@ -5703,7 +5667,7 @@ public class Publisher implements URIResolver, SectionNumberer {
     if (ResourceUtilities.getById(dest, ResourceType.CompartmentDefinition, cd.getId()) != null)
       throw new Exception("Attempt to add duplicate Compartment Definition " + cd.getId());
     if (!cd.hasText() || !cd.getText().hasDiv()) {
-      RendererFactory.factory(cd, page.getRc().copy()).render(cd);
+      RendererFactory.factory(cd, page.getRc().copy(false)).renderResource(ResourceWrapper.forResource(page.getRc().getContextUtilities(), cd));
     }
     if (cd.getText() == null || cd.getText().getDiv() == null)
       throw new Exception("Example Compartment Definition " + cd.getId() + " does not have any narrative");
@@ -5720,7 +5684,7 @@ public class Publisher implements URIResolver, SectionNumberer {
     if (ResourceUtilities.getById(dest, ResourceType.ValueSet, cs.getId()) != null)
       throw new Exception("Attempt to add duplicate Conformance " + cs.getId());
     if (!cs.hasText() || !cs.getText().hasDiv()) {
-      RendererFactory.factory(cs, page.getRc().copy()).render(cs);
+      RendererFactory.factory(cs, page.getRc().copy(false)).renderResource(ResourceWrapper.forResource(page.getRc().getContextUtilities(),cs));
     }
     if (!cs.hasText() || cs.getText().getDiv() == null)
       System.out.println("WARNING: Example CapabilityStatement " + cs.getId() + " does not have any narrative");
@@ -6803,8 +6767,8 @@ public class Publisher implements URIResolver, SectionNumberer {
 
         if (vs.getText() == null || vs.getText().getDiv() == null || vs.getText().getDiv().allChildrenAreText()
             && (Utilities.noString(vs.getText().getDiv().allText()) || !vs.getText().getDiv().allText().matches(".*\\w.*"))) {
-          RenderingContext lrc = page.getRc().copy().setLocalPrefix("");
-          RendererFactory.factory(vs, lrc).render(vs);
+          RenderingContext lrc = page.getRc().copy(false).setLocalPrefix("");
+          RendererFactory.factory(vs, lrc).renderResource(ResourceWrapper.forResource(lrc.getContextUtilities(), vs));
         }
         page.getVsValidator().validate(page.getValidationErrors(), name, vs, true, false);
 
@@ -6921,8 +6885,8 @@ public class Publisher implements URIResolver, SectionNumberer {
 
     if (!vs.hasText() || (vs.getText().getDiv().allChildrenAreText()
         && (Utilities.noString(vs.getText().getDiv().allText()) || !vs.getText().getDiv().allText().matches(".*\\w.*")))) {
-      RenderingContext lrc = page.getRc().copy().setLocalPrefix(ig != null ? "../" : "");
-      RendererFactory.factory(vs, lrc).render(vs);
+      RenderingContext lrc = page.getRc().copy(false).setLocalPrefix(ig != null ? "../" : "");
+      RendererFactory.factory(vs, lrc).renderResource(ResourceWrapper.forResource(lrc.getContextUtilities(), vs));
     }
     page.getVsValidator().validate(page.getValidationErrors(), n, vs, true, false);
 
@@ -6983,8 +6947,8 @@ public class Publisher implements URIResolver, SectionNumberer {
 
     if (cs.getText().getDiv().allChildrenAreText()
         && (Utilities.noString(cs.getText().getDiv().allText()) || !cs.getText().getDiv().allText().matches(".*\\w.*"))) {
-      RenderingContext lrc = page.getRc().copy().setLocalPrefix(ig != null ? "../" : "");
-      RendererFactory.factory(cs, lrc).render(cs);
+      RenderingContext lrc = page.getRc().copy(false).setLocalPrefix(ig != null ? "../" : "");
+      RendererFactory.factory(cs, lrc).renderResource(ResourceWrapper.forResource(lrc.getContextUtilities(), cs));
     }
     page.getVsValidator().validate(page.getValidationErrors(), n, cs, true, false);
 
@@ -7093,8 +7057,8 @@ private String csCounter() {
   
   private void generateConceptMap(ConceptMap cm) throws Exception {
     String filename = cm.getWebPath();
-    RenderingContext lrc = page.getRc().copy().setLocalPrefix("");
-    RendererFactory.factory(cm, lrc).render(cm);
+    RenderingContext lrc = page.getRc().copy(false).setLocalPrefix("");
+    RendererFactory.factory(cm, lrc).renderResource(ResourceWrapper.forResource(lrc.getContextUtilities(), cm));
 
     String n = Utilities.changeFileExt(filename, "");
     fixCanonicalResource(cm, n);

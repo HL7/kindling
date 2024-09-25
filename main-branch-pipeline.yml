@@ -63,7 +63,7 @@ steps:
   # the kindling jar to oss sonatype.
 
   # 5. Deploy SNAPSHOT build to sonatype
-  - task: Gradle@2
+  - task: Gradle@3
     inputs:
       workingDirectory: ''
       gradleWrapperFile: 'gradlew'

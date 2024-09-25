@@ -86,12 +86,12 @@ import org.hl7.fhir.r5.utils.BuildExtensions;
 import org.hl7.fhir.r5.utils.CanonicalResourceUtilities;
 import org.hl7.fhir.r5.utils.ToolingExtensions;
 import org.hl7.fhir.tools.publisher.BuildWorkerContext;
-import org.hl7.fhir.utilities.CSFile;
-import org.hl7.fhir.utilities.CSFileInputStream;
 import org.hl7.fhir.utilities.PathBuilder;
 import org.hl7.fhir.utilities.StandardsStatus;
 import org.hl7.fhir.utilities.TextFile;
 import org.hl7.fhir.utilities.Utilities;
+import org.hl7.fhir.utilities.filesystem.CSFile;
+import org.hl7.fhir.utilities.filesystem.CSFileInputStream;
 
 public class ResourceParser {
 
@@ -267,7 +267,7 @@ public class ResourceParser {
   }
 
   private Example makeExample(ImplementationGuideDefinitionResourceComponent res, String ref, String type, String rid) throws IOException, Exception {
-    Example ex = new Example(res.getName(), rid, res.getDescription(), new File(Utilities.path(folder, type.toLowerCase()+"-"+rid+".xml")), true, ExampleType.XmlFile, false);     
+    Example ex = new Example(context, res.getName(), rid, res.getDescription(), new File(Utilities.path(folder, type.toLowerCase()+"-"+rid+".xml")), true, ExampleType.XmlFile, false);     
     return ex;
   }
 
@@ -1035,7 +1035,7 @@ public class ResourceParser {
       String id = le.getItem().getReference().substring(le.getItem().getReference().lastIndexOf("/")+1);
       String ig = le.getExtensionString(BuildExtensions.EXT_IG);
       CSFile path = Utilities.noString(ig) ?  new CSFile(Utilities.path(folder, le.getExtensionString(BuildExtensions.EXT_TITLE)+".xml")) :  new CSFile(Utilities.path(rootFolder(), "guides", ig, le.getExtensionString(BuildExtensions.EXT_TITLE)+"."+ext(type)));
-      Example ex = new Example(le.getItem().getDisplay(), id, le.getExtensionString(BuildExtensions.EXT_DESCRIPTION), path, reg, type, false);
+      Example ex = new Example(context, le.getItem().getDisplay(), id, le.getExtensionString(BuildExtensions.EXT_DESCRIPTION), path, reg, type, false);
       r.getExamples().add(ex);
     }
   }
@@ -1049,7 +1049,7 @@ public class ResourceParser {
     }
   }
 
-  private String rootFolder() {
+  private String rootFolder() throws IOException {
     return Utilities.getDirectoryForFile(srcDir);
   }
 }

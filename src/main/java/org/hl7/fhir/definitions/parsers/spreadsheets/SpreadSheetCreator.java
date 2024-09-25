@@ -196,13 +196,13 @@ public class SpreadSheetCreator extends SpreadSheetBase {
   private void addElements(XSSFSheet resources, XSSFSheet bindings, XSSFSheet invariants, ElementDefinition ed, int rowCount) throws IOException {
     Row row = resources.createRow(rowCount);    
     int columnCount = 0;
-    ed.removeExtension(ToolingExtensions.EXT_ED_HEIRARCHY);
+    ed.removeExtension(ToolingExtensions.EXT_ED_HIERARCHY);
     addCell(ed.getPath(), row, columnCount++); // Path
     addCell(aliases(ed), row, columnCount++); // Aliases
     addCell(ed.getMin()+".."+ed.getMax(), row, columnCount++); // Card.
     addCell(inv(ed), row, columnCount++); // Inv.
     addCell(type(ed), row, columnCount++); // Type
-    addCell(typeHeirarchy(ed, BuildExtensions.EXT_HIERARCHY), row, columnCount++); 
+    addCell(typeHierarchy(ed, BuildExtensions.EXT_HIERARCHY), row, columnCount++); 
     addCell(bool(ed.getIsModifierElement()), row, columnCount++); // Is Modifier
     addCell(ed.getIsModifierReason(), row, columnCount++); // Modifier Reason
     addCell(bool(ed.getIsSummaryElement()), row, columnCount++); // Summary
@@ -232,7 +232,7 @@ public class SpreadSheetCreator extends SpreadSheetBase {
     }
   }
   
-  private String typeHeirarchy(ElementDefinition ed, String extHeirarchy) {
+  private String typeHierarchy(ElementDefinition ed, String extHierarchy) {
     for (TypeRefComponent tr : ed.getType()) {
       if (BuildExtensions.readBoolExtension(tr, BuildExtensions.EXT_HIERARCHY)) {
         return "true";

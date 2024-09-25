@@ -89,9 +89,8 @@ public class BindingsParser {
   private boolean exceptionIfExcelNotNormalised;
   private PackageInformation packageInfo;  
   private Definitions definitions;
-  private TranslationServices translator;
 
-  public BindingsParser(InputStream file, String filename, String root, OIDRegistry registry, String version, CanonicalResourceManager<CodeSystem> codeSystems, CanonicalResourceManager<ConceptMap> maps, Calendar genDate, boolean exceptionIfExcelNotNormalised, PackageInformation packageInfo, Definitions definitions, TranslationServices translator) {
+  public BindingsParser(InputStream file, String filename, String root, OIDRegistry registry, String version, CanonicalResourceManager<CodeSystem> codeSystems, CanonicalResourceManager<ConceptMap> maps, Calendar genDate, boolean exceptionIfExcelNotNormalised, PackageInformation packageInfo, Definitions definitions) {
     this.file = file;
     this.filename = filename;
     this.root = root;
@@ -103,7 +102,6 @@ public class BindingsParser {
     this.exceptionIfExcelNotNormalised = exceptionIfExcelNotNormalised;
     this.packageInfo = packageInfo;
     this.definitions = definitions;
-    this.translator = translator;
   }
 
   public List<BindingSpecification> parse() throws Exception {
@@ -270,22 +268,6 @@ public class BindingsParser {
 
     CodeSystem cs = new CodeSystem();
     cs.setHierarchyMeaning(CodeSystemHierarchyMeaning.ISA);
-    Set<String> codes = translator.listTranslations("ecode");
-    for (String s : Utilities.sorted(codes)) {
-      Map<String, String> langs = translator.translations(s);
-      ConceptDefinitionComponent cv = cs.addConcept();
-      cv.setCode(s);
-      cv.setDisplay(langs.get("en"));
-      for (String lang : langs.keySet()) {
-        if (!lang.equals("en")) {
-          String value = langs.get(lang);
-          ConceptDefinitionDesignationComponent dc = cv.addDesignation();
-          dc.setLanguage(lang);
-          dc.setValue(value);
-          dc.getUse().setSystem("http://terminology.hl7.org/CodeSystem/designation-usage").setCode("display");
-        }
-      }
-    }
     KindlingUtilities.makeUniversal(cs);
     CodeSystemConvertor.populate(cs, vs);
     cs.setUrl("http://hl7.org/fhir/operation-outcome");

@@ -231,7 +231,7 @@ public class Regenerator {
   private void generateExample(String root, ResourceDefn r, Profile p, Example ex, ImplementationGuideDefinitionResourceComponent igr) {
     igr.setName(ex.getName());
     igr.setDescription(ex.getDescription());
-    igr.getReference().setReference(ex.getXml().getDocumentElement().getNodeName()+"/"+ex.getId());
+    igr.getReference().setReference(ex.fhirType()+"/"+ex.getId());
     switch (ex.getType()) {
     case Container:
       igr.addExtension(BuildExtensions.EXT_TYPE, new CodeableConcept(new Coding(BuildExtensions.EXT_EXAMPLE_TYPE, "container", null)));

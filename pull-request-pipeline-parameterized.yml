@@ -13,7 +13,7 @@ jobs:
 
         steps:
           # Runs 'mvn clean install'
-          - task: Gradle@2
+          - task: Gradle@3
             inputs:
               workingDirectory: ''
               gradleWrapperFile: 'gradlew'

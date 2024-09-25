@@ -112,17 +112,19 @@ public class SDUsageMapper {
   }
 
   private void walkChildren(String name, String path, Element element) {
-    for (Element ex : element.getChildren("extension")) {
-      see(name, path, ex.getNamedChildValue("url"));
-    }
-    for (Element ex : element.getChildren("modifierExtension")) {
-      see(name, path, ex.getNamedChildValue("url"));
-    }
-    for (Element c : element.getChildren()) {
-      if (c.isResource()) {
-        process(name, path, c); 
-      } else if (!c.isPrimitive()) {
-        walkChildren(name, path, c);
+    if (element.hasChildren()) {
+      for (Element ex : element.getChildren("extension")) {
+        see(name, path, ex.getNamedChildValue("url"));
+      }
+      for (Element ex : element.getChildren("modifierExtension")) {
+        see(name, path, ex.getNamedChildValue("url"));
+      }
+      for (Element c : element.getChildren()) {
+        if (c.isResource()) {
+          process(name, path, c); 
+        } else if (!c.isPrimitive()) {
+          walkChildren(name, path, c);
+        }
       }
     }
   }

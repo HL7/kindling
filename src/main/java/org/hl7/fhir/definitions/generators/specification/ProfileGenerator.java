@@ -76,6 +76,7 @@ import org.hl7.fhir.exceptions.FHIRException;
 import org.hl7.fhir.exceptions.FHIRFormatError;
 import org.hl7.fhir.r5.conformance.profile.ProfileKnowledgeProvider;
 import org.hl7.fhir.r5.conformance.profile.ProfileUtilities;
+import org.hl7.fhir.r5.context.ContextUtilities;
 import org.hl7.fhir.r5.formats.FormatUtilities;
 import org.hl7.fhir.r5.model.BooleanType;
 import org.hl7.fhir.r5.model.Bundle;
@@ -138,6 +139,7 @@ import org.hl7.fhir.r5.model.UnsignedIntType;
 import org.hl7.fhir.r5.model.UriType;
 import org.hl7.fhir.r5.renderers.OperationDefinitionRenderer;
 import org.hl7.fhir.r5.renderers.utils.RenderingContext;
+import org.hl7.fhir.r5.renderers.utils.ResourceWrapper;
 import org.hl7.fhir.r5.utils.BuildExtensions;
 import org.hl7.fhir.r5.utils.CanonicalResourceUtilities;
 import org.hl7.fhir.r5.utils.ToolingExtensions;
@@ -2601,7 +2603,7 @@ public class ProfileGenerator {
       produceOpParam(op.getName(), opd.getParameter(), p, null);
     }
     OperationDefinitionRenderer opr = new OperationDefinitionRenderer(rc);
-    opr.render(opd);
+    opr.renderResource(ResourceWrapper.forResource(new ContextUtilities(context), opd));
     return opd;
   }
 

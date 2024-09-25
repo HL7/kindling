@@ -47,10 +47,10 @@ import org.hl7.fhir.r5.model.UriType;
 import org.hl7.fhir.r5.model.ValueSet;
 import org.hl7.fhir.r5.utils.ToolingExtensions;
 import org.hl7.fhir.tools.publisher.BuildWorkerContext;
-import org.hl7.fhir.utilities.CSFile;
-import org.hl7.fhir.utilities.CSFileInputStream;
 import org.hl7.fhir.utilities.Logger;
 import org.hl7.fhir.utilities.Logger.LogMessageType;
+import org.hl7.fhir.utilities.filesystem.CSFile;
+import org.hl7.fhir.utilities.filesystem.CSFileInputStream;
 import org.hl7.fhir.utilities.Utilities;
 import org.hl7.fhir.utilities.validation.ValidationMessage;
 
@@ -167,7 +167,7 @@ return null;
         if (isExample) {
           if (!r.hasName()) // which means that non conformance resources must be named
             throw new Exception("no name on resource in IG "+ig.getName());
-          Example example = new Example(r.getName(), id, r.getDescription(), fn, false, ExampleType.XmlFile, false);
+          Example example = new Example(context, r.getName(), id, r.getDescription(), fn, false, ExampleType.XmlFile, false);
           example.setIg(igd.getCode());
           if (r.hasProfile()) {
             example.setExampleFor(r.getProfile().get(0).asStringValue());
