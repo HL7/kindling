@@ -80,8 +80,8 @@ import org.hl7.fhir.utilities.validation.ValidationMessage;
 import org.hl7.fhir.utilities.validation.ValidationMessage.IssueSeverity;
 import org.hl7.fhir.utilities.validation.ValidationMessage.IssueType;
 import org.hl7.fhir.utilities.validation.ValidationMessage.Source;
-import org.hl7.fhir.validation.instance.BasePolicyAdvisorForFullValidation;
 import org.hl7.fhir.validation.instance.InstanceValidator;
+import org.hl7.fhir.validation.instance.advisor.BasePolicyAdvisorForFullValidation;
 import org.json.JSONObject;
 import org.json.JSONTokener;
 import org.xml.sax.SAXException;
@@ -874,6 +874,16 @@ public class ExampleInspector implements IValidatorResourceFetcher, IValidationP
       IMessagingServices msgServices, List<ValidationMessage> messages) {
     return new BasePolicyAdvisorForFullValidation(ReferenceValidationPolicy.CHECK_TYPE_IF_EXISTS).getImpliedProfilesForResource(validator, appContext, stackPath, 
         definition, structure, resource, valid, msgServices, messages);
+  }
+
+  @Override
+  public boolean isSuppressMessageId(String path, String messageId) {
+    return false;
+  }
+
+  @Override
+  public ReferenceValidationPolicy getReferencePolicy() {
+    return ReferenceValidationPolicy.IGNORE;
   }
 
 
