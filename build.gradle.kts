@@ -3,7 +3,7 @@ plugins {
     `maven-publish`
     signing
     id("com.github.johnrengelman.shadow") version "7.0.0"
-    id("org.owasp.dependencycheck") version "8.4.0"
+    id("org.owasp.dependencycheck") version "11.1.1"
 }
 
 group = "org.hl7.fhir"
@@ -313,4 +313,7 @@ tasks.javadoc {
 
 dependencyCheck {
     formats = arrayListOf("SARIF", "HTML")
+    nvd {
+        apiKey=System.getenv("NVD_API_KEY")
+    }
 }
