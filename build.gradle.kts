@@ -130,7 +130,7 @@ dependencies {
     implementation("io.circe", "circe-core_2.11", "0.7.0-M2")
     implementation("com.atlassian.commonmark", "commonmark", "0.12.1")
     implementation("com.atlassian.commonmark", "commonmark-ext-gfm-tables", "0.12.1")
-    implementation("org.fhir", "ucum", "1.0.3")
+    implementation("org.fhir", "ucum", "1.0.9")
     implementation("commons-cli", "commons-cli", "1.4")
     implementation("javax.servlet", "javax.servlet-api", "3.1.0")
     implementation("org.eclipse.jetty", "jetty-http", property("jettyVersion").toString())
