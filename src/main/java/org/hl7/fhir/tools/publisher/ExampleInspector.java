@@ -221,7 +221,7 @@ public class ExampleInspector implements IValidatorResourceFetcher, IValidationP
   private FHIRVersion version;
   
   public void prepare() throws Exception {
-    validator = new InstanceValidator(context, hostServices, null);
+    validator = new InstanceValidator(context, hostServices, null, null);
     validator.setSuppressLoincSnomedMessages(true);
     validator.setResourceIdRule(IdStatus.REQUIRED);
     validator.setBestPracticeWarningLevel(BestPracticeWarningLevel.Warning);
@@ -880,6 +880,16 @@ public class ExampleInspector implements IValidatorResourceFetcher, IValidationP
   @Override
   public boolean isSuppressMessageId(String path, String messageId) {
     return false;
+  }
+
+  @Override
+  public IValidationPolicyAdvisor getPolicyAdvisor() {
+    return this;
+  }
+
+  @Override
+  public IValidationPolicyAdvisor setPolicyAdvisor(IValidationPolicyAdvisor iValidationPolicyAdvisor) {
+    return this;
   }
 
   @Override

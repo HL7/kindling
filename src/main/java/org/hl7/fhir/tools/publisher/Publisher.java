@@ -1015,9 +1015,9 @@ public class Publisher implements URIResolver, SectionNumberer {
         String exp = sp.getExpression().replace("{{name}}", rd.getType()); // for templates  
         TypeDetails td = null;
         if (sp.getBase().size() > 1) {
-          td = fpe.check(null, rd.getType(), page.getWorkerContext().getResourceNames(), fpe.parse(exp), set);
+          td = fpe.check(null, rd.getType(), rd.getType(), page.getWorkerContext().getResourceNames(), fpe.parse(exp), set);
         } else {
-          td = fpe.check(null, rd.getType(), rd.getType(), fpe.parse(exp), set);
+          td = fpe.check(null, rd.getType(), rd.getType(), rd.getType(), fpe.parse(exp), set);
         }
         if (!Utilities.existsInList(sp.getCode(), "_id", "_in") && sp.getType() != SearchParamType.COMPOSITE) {
           String types = page.getDefinitions().getAllowedSearchTypes().get(sp.getType().toCode());
@@ -1189,9 +1189,9 @@ public class Publisher implements URIResolver, SectionNumberer {
     try {
       Set<ElementDefinition> set = new HashSet<>();
       if (sd.getKind() == StructureDefinitionKind.RESOURCE) {
-        fpe.check(null, sd.getType(), ed.getPath(), fpe.parse(inv.getExpression()), set);
+        fpe.check(null, sd.getType(), sd.getType(), ed.getPath(), fpe.parse(inv.getExpression()), set);
       } else {
-        fpe.check(null, "Resource", ed.getPath(), fpe.parse(inv.getExpression()), set);
+        fpe.check(null, "Resource", "DomainResource", ed.getPath(), fpe.parse(inv.getExpression()), set);
       }
       for (ElementDefinition edt : set) {
         if (!edt.getPath().equals(ed.getPath()) && map.containsKey(edt.getPath())) {
@@ -1494,7 +1494,7 @@ public class Publisher implements URIResolver, SectionNumberer {
     b.append(p.getResource() + " (" + p.getContext() + "): " + p.getExpression()+"\r\n");
     try {
       if (!"n/a".equals(p.getExpression())) {
-        fp.check(null, p.getResource(), p.getContext(), p.getExpression()); 
+        fp.check(null, p.getResource(), p.getResource(), p.getContext(), p.getExpression());
       }
     } catch (Exception e) {
       ValidationMessage validationMessage = new ValidationMessage(Source.Publisher, IssueType.STRUCTURE, -1, -1, p.getLocation(), 
@@ -1532,7 +1532,7 @@ public class Publisher implements URIResolver, SectionNumberer {
 
   private void validateProfile(ConstraintStructure p) throws Exception {
     if (pv == null) {
-      pv = new ProfileValidator(page.getWorkerContext(), null);
+      pv = new ProfileValidator(page.getWorkerContext(), null, null);
     }
     page.getValidationErrors().addAll(pv.validate(p.getResource(), true));
   }
@@ -2534,7 +2534,7 @@ public class Publisher implements URIResolver, SectionNumberer {
     page.log("Validating", LogMessageType.Process);
     ResourceValidator val = new ResourceValidator(page.getDefinitions(), page.getTranslations(), page.getCodeSystems(), page.getFolders().srcDir, fpUsages, page.getSuppressedMessages(), page.getWorkerContext());
     val.resolvePatterns();
-    ProfileValidator valp = new ProfileValidator(page.getWorkerContext(), null);
+    ProfileValidator valp = new ProfileValidator(page.getWorkerContext(), null, null);
 
     for (String n : page.getDefinitions().getTypes().keySet())
       page.getValidationErrors().addAll(val.checkStucture(n, page.getDefinitions().getTypes().get(n)));

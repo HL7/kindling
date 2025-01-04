@@ -591,7 +591,7 @@ public class Definitions {
       throw new Error("The element context '"+ec.getExpression()+"' is not valid @ "+context);      
     } else if (ec.getType() == ExtensionContextType.FHIRPATH) {
       FHIRPathEngine fpe = new FHIRPathEngine(worker);
-      TypeDetails td = fpe.check(null, null, null, ec.getExpression());
+      TypeDetails td = fpe.check(null, null, null,null, ec.getExpression());
       if (td.hasNoTypes())
         throw new Error("The resource context '"+ec.getExpression()+"' is not valid @ "+context);
       else
