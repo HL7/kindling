@@ -574,8 +574,9 @@ public class SpecNPMPackageGenerator {
 
   private FHIRVersion determineVersion(Map<String, byte[]> files) throws FHIRException {
     byte[] b = files.get("version.info");
-    if (b == null)
-      return FHIRVersion.NULL;
+    if (b == null) {
+      throw new FHIRException("No version information available");
+    }
     String s = new String(b);
     s = Utilities.stripBOM(s).trim();
     while (s.charAt(0) != '[')

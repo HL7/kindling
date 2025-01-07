@@ -221,7 +221,7 @@ public class ExampleInspector implements IValidatorResourceFetcher, IValidationP
   private FHIRVersion version;
   
   public void prepare() throws Exception {
-    validator = new InstanceValidator(context, hostServices, null);
+    validator = new InstanceValidator(context, hostServices, null, null);
     validator.setSuppressLoincSnomedMessages(true);
     validator.setResourceIdRule(IdStatus.REQUIRED);
     validator.setBestPracticeWarningLevel(BestPracticeWarningLevel.Warning);
@@ -885,6 +885,16 @@ public class ExampleInspector implements IValidatorResourceFetcher, IValidationP
   @Override
   public ReferenceValidationPolicy getReferencePolicy() {
     return ReferenceValidationPolicy.IGNORE;
+  }
+
+  @Override
+  public IValidationPolicyAdvisor getPolicyAdvisor() {
+    return null;
+  }
+
+  @Override
+  public IValidationPolicyAdvisor setPolicyAdvisor(IValidationPolicyAdvisor policyAdvisor) {
+    return null;
   }
 
 

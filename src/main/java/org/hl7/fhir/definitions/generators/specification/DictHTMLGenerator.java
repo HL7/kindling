@@ -64,6 +64,7 @@ import org.hl7.fhir.r5.model.StructureDefinition;
 import org.hl7.fhir.r5.model.StructureDefinition.StructureDefinitionKind;
 import org.hl7.fhir.r5.model.StructureDefinition.StructureDefinitionMappingComponent;
 import org.hl7.fhir.r5.utils.ToolingExtensions;
+import org.hl7.fhir.r5.utils.UserDataNames;
 import org.hl7.fhir.tools.publisher.PageProcessor;
 import org.hl7.fhir.utilities.CommaSeparatedStringBuilder;
 import org.hl7.fhir.utilities.StandardsStatus;
@@ -428,8 +429,8 @@ public class DictHTMLGenerator  extends OutputStreamWriter {
   }
 
   private boolean isInherited(ElementDefinitionConstraintComponent id, StructureDefinition sd) {
-    if (id.hasUserData(ProfileUtilities.UD_IS_DERIVED)) {
-      Boolean b = (Boolean) id.getUserData(ProfileUtilities.UD_IS_DERIVED);
+    if (id.hasUserData(UserDataNames.SNAPSHOT_IS_DERIVED)) {
+      Boolean b = (Boolean) id.getUserData(UserDataNames.SNAPSHOT_IS_DERIVED);
       return b.booleanValue();
     } else {
       //  if it was snapshotted in process? can't happen? - only happens on extensions... no id too, and then definitely inherited. see https://xkcd.com/2200/
