@@ -34,6 +34,7 @@ import org.hl7.fhir.r5.conformance.profile.BindingResolution;
 import org.hl7.fhir.r5.conformance.profile.ProfileKnowledgeProvider;
 import org.hl7.fhir.r5.conformance.profile.ProfileUtilities;
 import org.hl7.fhir.r5.context.BaseWorkerContext;
+import org.hl7.fhir.r5.context.BaseWorkerContext.IByteProvider;
 import org.hl7.fhir.r5.context.CanonicalResourceManager;
 import org.hl7.fhir.r5.context.ContextUtilities;
 import org.hl7.fhir.r5.context.HTMLClientLogger;
@@ -110,6 +111,7 @@ import org.xml.sax.SAXException;
 
  */
 public class BuildWorkerContext extends BaseWorkerContext implements IWorkerContext, ProfileKnowledgeProvider {
+
 
   private static final String SNOMED_EDITION = "900000000000207008"; // international
 //  private static final String SNOMED_EDITION = "731000124108"; // us edition
@@ -777,7 +779,7 @@ public class BuildWorkerContext extends BaseWorkerContext implements IWorkerCont
       }
     }
     for (String s : pi.list("other")) {
-      binaries.put(s, TextFile.streamToBytes(pi.load("other", s)));
+      binaries.put(s, new BytesFromPackageProvider(pi, s));
     }
     if (version == null) {
       version = pi.version();

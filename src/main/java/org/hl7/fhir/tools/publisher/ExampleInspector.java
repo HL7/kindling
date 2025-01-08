@@ -897,6 +897,16 @@ public class ExampleInspector implements IValidatorResourceFetcher, IValidationP
     return ReferenceValidationPolicy.IGNORE;
   }
 
+  @Override
+  public IValidationPolicyAdvisor getPolicyAdvisor() {
+    return null;
+  }
+
+  @Override
+  public IValidationPolicyAdvisor setPolicyAdvisor(IValidationPolicyAdvisor policyAdvisor) {
+    return null;
+  }
+
 
 }
 
