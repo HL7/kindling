@@ -44,7 +44,6 @@ import org.hl7.fhir.definitions.model.ElementDefn;
 import org.hl7.fhir.definitions.model.Invariant;
 import org.hl7.fhir.definitions.model.TypeRef;
 import org.hl7.fhir.exceptions.FHIRException;
-import org.hl7.fhir.r5.conformance.profile.ProfileUtilities;
 import org.hl7.fhir.r5.formats.IParser.OutputStyle;
 import org.hl7.fhir.r5.formats.XmlParser;
 import org.hl7.fhir.r5.model.DataType;
@@ -85,7 +84,6 @@ public class DictHTMLGenerator  extends OutputStreamWriter {
 	}
 
 	public void generate(StructureDefinition profile) throws Exception {
-	  int i = 1;
 	  write("<table class=\"dict\">\r\n");
 
 	  for (ElementDefinition ec : profile.getSnapshot().getElement()) {
@@ -113,7 +111,7 @@ public class DictHTMLGenerator  extends OutputStreamWriter {
 	    }
 	  }
 	  write("</table>\r\n");
-	  i++;      
+
     flush();
     close();
   }
@@ -153,7 +151,7 @@ public class DictHTMLGenerator  extends OutputStreamWriter {
       }
     }
     write("</table>\r\n");
-    i++;      
+    i++;
     flush();
     close();
   }
@@ -392,7 +390,7 @@ public class DictHTMLGenerator  extends OutputStreamWriter {
       return s0.compareTo(s1);
     int comp = parts0[0].compareTo(parts1[0]);
     if (comp == 0 && Utilities.isInteger(parts0[1]) && Utilities.isInteger(parts1[1]))
-      return new Integer(parts0[1]).compareTo(new Integer(parts1[1]));
+      return Integer.valueOf(parts0[1]).compareTo(Integer.valueOf(parts1[1]));
     else
       return parts0[1].compareTo(parts1[1]);
     }

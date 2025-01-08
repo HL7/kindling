@@ -369,10 +369,10 @@ public class WinRegistry {
         new Integer(hkey), toCstr(key), new Integer(KEY_ALL_ACCESS) });
 
     regSetValueEx.invoke(root,  
-        new Object[] { 
-          new Integer(handles[0]), toCstr(valueName), toCstr(value) 
+        new Object[] {
+                handles[0], toCstr(valueName), toCstr(value)
           }); 
-    regCloseKey.invoke(root, new Object[] { new Integer(handles[0]) });
+    regCloseKey.invoke(root, new Object[] {handles[0]});
   }
 
   // utility
