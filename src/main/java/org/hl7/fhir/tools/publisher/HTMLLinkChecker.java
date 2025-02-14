@@ -14,7 +14,7 @@ import org.hl7.fhir.r5.model.Enumerations.FHIRVersion;
 import org.hl7.fhir.r5.model.StructureDefinition;
 import org.hl7.fhir.r5.model.StructureDefinition.TypeDerivationRule;
 import org.hl7.fhir.utilities.FileNotifier;
-import org.hl7.fhir.utilities.TextFile;
+import org.hl7.fhir.utilities.FileUtilities;
 import org.hl7.fhir.utilities.Utilities;
 import org.hl7.fhir.utilities.validation.ValidationMessage;
 import org.hl7.fhir.utilities.validation.ValidationMessage.IssueSeverity;
@@ -190,7 +190,7 @@ public class HTMLLinkChecker implements FileNotifier {
     
     String src;
     try {
-      src = TextFile.fileToString(Utilities.path(page.getFolders().dstDir, filename));
+      src = FileUtilities.fileToString(Utilities.path(page.getFolders().dstDir, filename));
       if (!src.contains("<!--!ns!-->") && !src.contains("<!-- !ns! -->"))
         reportError(filename, "File "+filename+" has no normative marker");
       if ((src.contains("may not") || src.contains("May not")) && !(src.contains("Apache") || src.contains("TemplateStatusCode"))) // those words appear in the Apache license

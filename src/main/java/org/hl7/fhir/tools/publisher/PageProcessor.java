@@ -242,18 +242,11 @@ import org.hl7.fhir.r5.utils.structuremap.StructureMapUtilities;
 import org.hl7.fhir.r5.utils.validation.IResourceValidator;
 import org.hl7.fhir.tools.converters.MarkDownPreProcessor;
 import org.hl7.fhir.tools.publisher.ReferenceTracker.RefType;
-import org.hl7.fhir.utilities.CommaSeparatedStringBuilder;
-import org.hl7.fhir.utilities.IniFile;
-import org.hl7.fhir.utilities.Logger;
-import org.hl7.fhir.utilities.MarkDownProcessor;
+import org.hl7.fhir.utilities.*;
 import org.hl7.fhir.utilities.MarkDownProcessor.Dialect;
 import org.hl7.fhir.utilities.filesystem.CSFile;
 import org.hl7.fhir.utilities.filesystem.CSFileInputStream;
 import org.hl7.fhir.utilities.i18n.RenderingI18nContext;
-import org.hl7.fhir.utilities.StandardsStatus;
-import org.hl7.fhir.utilities.TextFile;
-import org.hl7.fhir.utilities.Utilities;
-import org.hl7.fhir.utilities.VersionUtilities;
 import org.hl7.fhir.utilities.Logger.LogMessageType;
 import org.hl7.fhir.utilities.npm.FilesystemPackageCacheManager;
 import org.hl7.fhir.utilities.npm.NpmPackage;
@@ -550,7 +543,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
   //  private boolean notime;
 
   private String dictForDt(String dt) throws Exception {
-    File tmp = Utilities.createTempFile("tmp", ".tmp");
+    File tmp = FileUtilities.createTempFile("tmp", ".tmp");
     DictHTMLGenerator gen = new DictHTMLGenerator(new FileOutputStream(tmp), this, "");
     TypeParser tp = new TypeParser(version.toCode());
     TypeRef t = tp.parse(dt, false, null, workerContext, true).get(0);
@@ -568,13 +561,13 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
       gen.generate(e);
       gen.close();
     }
-    String val = TextFile.fileToString(tmp.getAbsolutePath())+"\r\n";
+    String val = FileUtilities.fileToString(tmp.getAbsolutePath())+"\r\n";
     tmp.delete();
     return val;
   }
 
   private String tsForDt(String dt) throws Exception {
-    File tmp = Utilities.createTempFile("tmp", ".tmp");
+    File tmp = FileUtilities.createTempFile("tmp", ".tmp");
     tmp.deleteOnExit();
     TerminologyNotesGenerator gen = new TerminologyNotesGenerator(new FileOutputStream(tmp), this);
     TypeParser tp = new TypeParser(version.toCode());
@@ -588,7 +581,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
       gen.generate("", e);
       gen.close();
     }
-    String val = TextFile.fileToString(tmp.getAbsolutePath())+"\r\n";
+    String val = FileUtilities.fileToString(tmp.getAbsolutePath())+"\r\n";
     tmp.delete();
     return val;
   }
@@ -599,7 +592,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
   }
 
   private String xmlForDt(String dt, String pn) throws Exception {
-    File tmp = Utilities.createTempFile("tmp", ".tmp");
+    File tmp = FileUtilities.createTempFile("tmp", ".tmp");
     XmlSpecGenerator gen = new XmlSpecGenerator(new FileOutputStream(tmp), pn == null ? null : pn.substring(0, pn.indexOf("."))+"-definitions.html", null, this, "");
     TypeParser tp = new TypeParser(version.toCode());
     TypeRef t = tp.parse(dt, false, null, workerContext, true).get(0);
@@ -612,7 +605,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
       gen.generate(e, e.getName().equals("Element") || e.getName().equals("BackboneElement"), false);
       gen.close();
     }
-    String val = TextFile.fileToString(tmp.getAbsolutePath())+"\r\n";
+    String val = FileUtilities.fileToString(tmp.getAbsolutePath())+"\r\n";
     tmp.delete();
     return val;
   }
@@ -826,9 +819,9 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
         src = s1+new SvgGenerator(this, genlevel(level), null, false, fileSuffix(file), version).generate(folders.srcDir+ com[1], com[2])+s3;
       else if (com[0].equals("file")) {
         if (new File(folders.templateDir + com[1]+".html").exists()) {
-          src = s1+TextFile.fileToString(folders.templateDir + com[1]+".html")+s3;          
+          src = s1+FileUtilities.fileToString(folders.templateDir + com[1]+".html")+s3;          
         } else {
-          src = s1+TextFile.fileToString(folders.srcDir + com[1]+".html")+s3;
+          src = s1+FileUtilities.fileToString(folders.srcDir + com[1]+".html")+s3;
         }
       } else if (com[0].equals("v2xref"))
         src = s1 + xreferencesForV2(name, com[1]) + s3;
@@ -844,7 +837,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
         ValueSet vs = (ValueSet) resource;
         String ref;
         if (vs == null) {
-          ref = "http://hl7.org/fhir/ValueSet/"+Utilities.fileTitle(file);
+          ref = "http://hl7.org/fhir/ValueSet/"+FileUtilities.fileTitle(file);
         } else {
           ref = vs.getUrl();
         }
@@ -1038,19 +1031,19 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
       else if (com[0].equals("pageheader"))
         src = s1+pageHeader(name.toUpperCase().substring(0, 1)+name.substring(1))+s3;
       else if (com[0].equals("newheader"))
-        src = s1+TextFile.fileToString(folders.srcDir + "newheader.html")+s3;
+        src = s1+FileUtilities.fileToString(folders.srcDir + "newheader.html")+s3;
       else if (com[0].equals("newheader1"))
-        src = s1+TextFile.fileToString(folders.srcDir + "newheader1.html")+s3;
+        src = s1+FileUtilities.fileToString(folders.srcDir + "newheader1.html")+s3;
       else if (com[0].equals("footer"))
-        src = s1+TextFile.fileToString(folders.srcDir + "footer.html")+s3;
+        src = s1+FileUtilities.fileToString(folders.srcDir + "footer.html")+s3;
       else if (com[0].equals("newfooter"))
-        src = s1+TextFile.fileToString(folders.srcDir + "newfooter.html")+s3;
+        src = s1+FileUtilities.fileToString(folders.srcDir + "newfooter.html")+s3;
       else if (com[0].equals("footer1"))
-        src = s1+TextFile.fileToString(folders.srcDir + "footer1.html")+s3;
+        src = s1+FileUtilities.fileToString(folders.srcDir + "footer1.html")+s3;
       else if (com[0].equals("footer2"))
-        src = s1+TextFile.fileToString(folders.srcDir + "footer2.html")+s3;
+        src = s1+FileUtilities.fileToString(folders.srcDir + "footer2.html")+s3;
       else if (com[0].equals("footer3"))
-        src = s1+TextFile.fileToString(folders.srcDir + "footer3.html")+s3;
+        src = s1+FileUtilities.fileToString(folders.srcDir + "footer3.html")+s3;
       else if (com[0].equals("title"))
         src = s1+(workingTitle == null ? Utilities.escapeXml(name.toUpperCase().substring(0, 1)+name.substring(1)) : workingTitle)+s3;
       else if (com[0].equals("xtitle"))
@@ -1130,9 +1123,9 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
       else if (com[0].equals("resimplall"))
         src = s1 + genResImplList() + s3;
       else if (com[0].equals("txurl"))
-        src = s1 + "http://hl7.org/fhir/"+Utilities.fileTitle(file) + s3;
+        src = s1 + "http://hl7.org/fhir/"+FileUtilities.fileTitle(file) + s3;
       else if (com[0].equals("vstxurl"))
-        src = s1 + "http://hl7.org/fhir/ValueSet/"+Utilities.fileTitle(file) + s3;
+        src = s1 + "http://hl7.org/fhir/ValueSet/"+FileUtilities.fileTitle(file) + s3;
       else if (com[0].equals("csurl")) {
         if (resource instanceof CodeSystem)
           src = s1 + ((CodeSystem) resource).getUrl() + s3;
@@ -1148,7 +1141,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
         else 
           src = s1 + ((ValueSet) resource).getUrl() + s3;
       } else if (com[0].equals("txdef")) {
-        src = s1 + generateCodeDefinition(Utilities.fileTitle(file)) + s3;
+        src = s1 + generateCodeDefinition(FileUtilities.fileTitle(file)) + s3;
       } else if (com[0].equals("vsdef")) {
         src = s1 + processMarkdown("vsdef", ((ValueSet) resource).getDescription(), genlevel(level)) + s3;
       } else if (com[0].equals("csdef")) {
@@ -1158,7 +1151,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
       else if (com[0].equals("vsoid"))
         src = s1 + generateOID((ValueSet) resource) + s3;
       else if (com[0].equals("txname"))
-        src = s1 + Utilities.fileTitle(file) + s3;
+        src = s1 + FileUtilities.fileTitle(file) + s3;
       else if (com[0].equals("vsname"))
         if (resource instanceof CodeSystem)
           src = s1 + ((CodeSystem) resource).present() + s3;
@@ -1183,9 +1176,9 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
         CanonicalResource cr = (CanonicalResource) resource;
         src = s1 + cr.getVersion() + s3;
       } else if (com[0].equals("vsref")) {
-        src = s1 + Utilities.fileTitle((String) resource.getUserData("filename")) + s3;
+        src = s1 + FileUtilities.fileTitle((String) resource.getUserData("filename")) + s3;
       } else if (com[0].equals("vsdesc"))
-        src = s1 + (resource != null ? new XhtmlComposer(XhtmlComposer.HTML).compose(((ValueSet) resource).getText().getDiv()) :  generateVSDesc(Utilities.fileTitle(file))) + s3;
+        src = s1 + (resource != null ? new XhtmlComposer(XhtmlComposer.HTML).compose(((ValueSet) resource).getText().getDiv()) :  generateVSDesc(FileUtilities.fileTitle(file))) + s3;
       else if (com[0].equals("txusage"))
         src = s1 + generateValueSetUsage((ValueSet) resource, genlevel(level), true) + s3;
       else if (com[0].equals("vsusage"))
@@ -1237,11 +1230,11 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
       else if (com[0].equals("vsxref"))
         src = s1 + xreferencesForFhir(name) + s3;
       else if (com[0].equals("vsexpansion"))
-        src = s1 + expandValueSet(Utilities.fileTitle(file), resource == null ? null : ((ValueSet) resource), genlevel(level)) + s3;
+        src = s1 + expandValueSet(FileUtilities.fileTitle(file), resource == null ? null : ((ValueSet) resource), genlevel(level)) + s3;
       else if (com[0].equals("vscld"))
-        src = s1 + vsCLD(Utilities.fileTitle(file), resource == null ? null : ((ValueSet) resource), genlevel(level)) + s3;
+        src = s1 + vsCLD(FileUtilities.fileTitle(file), resource == null ? null : ((ValueSet) resource), genlevel(level)) + s3;
       else if (com[0].equals("cs-content"))
-        src = s1 + csContent(Utilities.fileTitle(file), ((CodeSystem) resource), genlevel(level)) + s3;
+        src = s1 + csContent(FileUtilities.fileTitle(file), ((CodeSystem) resource), genlevel(level)) + s3;
       else if (com[0].equals("vsexpansionig"))
         src = s1 + expandValueSetIG((ValueSet) resource, true) + s3;
       else if (com[0].equals("level"))
@@ -1940,7 +1933,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
           s = s.substring(0, i)+s.substring(i+type.toCode().length()+1);
 
         String pn = p.getPage();
-        String pnd = Utilities.changeFileExt(pn, "-definitions.html");
+        String pnd = FileUtilities.changeFileExt(pn, "-definitions.html");
 
         if (pageExists(pnd))
           b.append("  <li><a href=\""+pn+"\">"+Utilities.escapeXml(s)+"</a></li>\r\n");
@@ -2233,8 +2226,8 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     }
     String n = name.toLowerCase();
     String status = r4r5StatusForResource(name);
-    String fwds = TextFile.fileToString(Utilities.path(folders.rootDir, "implementations", "r4maps", "R4toR5",  r4nameForResource(name)+".map"));
-    String bcks = TextFile.fileToString(Utilities.path(folders.rootDir, "implementations", "r4maps", "R5toR4", name+".map"));
+    String fwds = FileUtilities.fileToString(Utilities.path(folders.rootDir, "implementations", "r4maps", "R4toR5",  r4nameForResource(name)+".map"));
+    String bcks = FileUtilities.fileToString(Utilities.path(folders.rootDir, "implementations", "r4maps", "R5toR4", name+".map"));
     String fwdsStatus =  "";
     String bcksStatus =  "";
     try {
@@ -2504,7 +2497,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
           b.append("<tr><td colspan=\"3\" style=\"background: #EFEFEF\">"+getTypePluralDesc(type)+"</td></tr>\r\n");
           for (String id : ids) {
             ImplementationGuideDefinitionResourceComponent r = map.get(id);
-            b.append("<tr><td><a href=\""+Utilities.changeFileExt(r.getReference().getReference(), ".html")+"\">"+id+"</a></td><td>"+Utilities.escapeXml(r.getName())+"</td><td>"+Utilities.escapeXml(r.getDescription())+"</td></tr>\r\n");
+            b.append("<tr><td><a href=\""+FileUtilities.changeFileExt(r.getReference().getReference(), ".html")+"\">"+id+"</a></td><td>"+Utilities.escapeXml(r.getName())+"</td><td>"+Utilities.escapeXml(r.getDescription())+"</td></tr>\r\n");
           }
         }
       }
@@ -2731,13 +2724,13 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
       dt = dt+","+definitions.getElementDefn(dt).typeCode();
     }
 
-    File tmp = Utilities.createTempFile("tmp", ".tmp");
+    File tmp = FileUtilities.createTempFile("tmp", ".tmp");
     tmp.deleteOnExit();
     try {
       String s = "\r\n[diagram]\r\n"+
           "classes="+dt+"\r\n"+
           "element-attributes=true\r\n";
-      TextFile.stringToFile(s, tmp.getAbsolutePath());
+      FileUtilities.stringToFile(s, tmp.getAbsolutePath());
       return new SvgGenerator(this, "", null, false, "", version).generate(tmp.getAbsolutePath(), id);
     } finally {
       tmp.delete();
@@ -2808,11 +2801,11 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
       }
       l = l + ec.getExpression().length();
       if (ec.getType() == ExtensionContextType.ELEMENT) {
-        String ref = Utilities.oidRoot(ec.getExpression());
+        String ref = OIDUtilities.oidRoot(ec.getExpression());
         if (ref.startsWith("@"))
           ref = ref.substring(1);
         if (definitions.hasElementDefn(ref)) 
-          s.append("<a href=\""+definitions.getSrcFile(ref)+".html#"+Utilities.oidRoot(ec.getExpression())+"\">"+ec.getExpression()+"</a>");
+          s.append("<a href=\""+definitions.getSrcFile(ref)+".html#"+OIDUtilities.oidRoot(ec.getExpression())+"\">"+ec.getExpression()+"</a>");
         else if (definitions.hasResource(ref))
           s.append("<a href=\""+ref.toLowerCase()+".html\">"+ec.getExpression()+"</a>");
         else
@@ -3103,7 +3096,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     int i = name.lastIndexOf(".");
     if (i == -1)
       throw new Error("unable to get pretty name for "+name);
-    return Utilities.changeFileExt(name.substring(0, i)+name.substring(i), ".jsonld");
+    return FileUtilities.changeFileExt(name.substring(0, i)+name.substring(i), ".jsonld");
   }
 
   private String makePretty(String name) {
@@ -3290,8 +3283,8 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
           .append(describeValueSetByRef(cm.getSourceScope()));
         }
         b.append("</a></td><td><a href=\"").append(prefix).append(cm.getWebPath()).append("\">").append(cm.getName())
-        .append("</a></td><td><a href=\"").append(prefix).append(Utilities.changeFileExt((String) cm.getWebPath(), ".xml.html"))
-        .append("\">XML</a></td><td><a href=\"").append(prefix).append(Utilities.changeFileExt((String) cm.getWebPath(), ".json.html")).append("\">JSON</a></td></tr>");
+        .append("</a></td><td><a href=\"").append(prefix).append(FileUtilities.changeFileExt((String) cm.getWebPath(), ".xml.html"))
+        .append("\">XML</a></td><td><a href=\"").append(prefix).append(FileUtilities.changeFileExt((String) cm.getWebPath(), ".json.html")).append("\">JSON</a></td></tr>");
       }
       b.append("</table>\r\n");
       return b.toString();
@@ -3571,9 +3564,9 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     XhtmlGenerator xhtml = new XhtmlGenerator(new ExampleAdorner(definitions, genlevel(level)));
     ByteArrayOutputStream b = new ByteArrayOutputStream();
     xhtml.generate(xdoc, b, name, description, level, adorn, n+".xml.html");
-    String html = ("<%setlevel "+Integer.toString(level)+"%>"+TextFile.fileToString(folders.srcDir + "template-example-xml.html")).replace("<%example%>", b.toString());
+    String html = ("<%setlevel "+Integer.toString(level)+"%>"+FileUtilities.fileToString(folders.srcDir + "template-example-xml.html")).replace("<%example%>", b.toString());
     html = processPageIncludes(n+".xml.html", html, pageType, null, n+".xml.html", null, null, crumbTitle,  (adorn && hasNarrative(xdoc)) ? Boolean.TRUE : null, ig, rd, wg, exTitle);
-    TextFile.stringToFile(html, dst);
+    FileUtilities.stringToFile(html, dst);
     htmlchecker.registerExternal(dst);
   }
 
@@ -3586,9 +3579,9 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     String n = new File(dst).getName();
     n = n.substring(0, n.length()-10);
     json = "<div class=\"example\">\r\n<p>" + Utilities.escapeXml(description) + "</p>\r\n<pre class=\"json\" style=\"white-space: pre; overflow: hidden\">\r\n" + Utilities.escapeXml(json)+ "\r\n</pre>\r\n</div>\r\n";
-    String html = ("<%setlevel "+Integer.toString(level)+"%>"+TextFile.fileToString(folders.srcDir + "template-example-json.html")).replace("<%example%>", json);
+    String html = ("<%setlevel "+Integer.toString(level)+"%>"+FileUtilities.fileToString(folders.srcDir + "template-example-json.html")).replace("<%example%>", json);
     html = processPageIncludes(n+".json.html", html, pageType, null, null, null, crumbTitle, ig, rd, wg, exTitle);
-    TextFile.stringToFile(html, dst);
+    FileUtilities.stringToFile(html, dst);
     htmlchecker.registerExternal(dst);
   }
 
@@ -4957,7 +4950,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
         String n = getTail(sn);
         ValueSet vs = ae;
         if (wantPublish(vs)) {
-          String path = ae.hasUserData("external.url") ? ae.getUserString("external.url") : pathTail(Utilities.changeFileExt(ae.getWebPath(), ".html"));
+          String path = ae.hasUserData("external.url") ? ae.getUserString("external.url") : pathTail(FileUtilities.changeFileExt(ae.getWebPath(), ".html"));
           s.append(" <tr><td><a href=\""+path+"\">"+n+"</a>");
           if (StandardsStatus.NORMATIVE == ToolingExtensions.getStandardsStatus(vs))
             s.append(" <a href=\"versions.html#std-process\" title=\"Normative Content\" class=\"normative-flag\">N</a>");
@@ -5220,16 +5213,16 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
         src = s1 + vsSpecialStatus((DomainResource) resource) + s3;
       else if (com[0].equals("file")) {
         if (new File(folders.templateDir + com[1]+".html").exists()) {
-          src = s1+TextFile.fileToString(folders.templateDir + com[1]+".html")+s3;          
+          src = s1+FileUtilities.fileToString(folders.templateDir + com[1]+".html")+s3;          
         } else {
-          src = s1+TextFile.fileToString(folders.srcDir + com[1]+".html")+s3;
+          src = s1+FileUtilities.fileToString(folders.srcDir + com[1]+".html")+s3;
         }
       } else  if (com[0].equals("conceptmaplistvs")) {
         throw new Error("Fix this");
-        //        BindingSpecification bs = definitions.getBindingByName(Utilities.fileTitle(file));
+        //        BindingSpecification bs = definitions.getBindingByName(FileUtilities.fileTitle(file));
         //        String ref;
         //        if (bs == null) {
-        //          ref = "http://hl7.org/fhir/ValueSet/"+Utilities.fileTitle(file);
+        //          ref = "http://hl7.org/fhir/ValueSet/"+FileUtilities.fileTitle(file);
         //        } else {
         //          ref = bs.getReference();
         //          if (ref.startsWith("valueset-"))
@@ -5248,19 +5241,19 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
       else if (com.length != 1)
         throw new Exception("Instruction <%"+s2+"%> not understood parsing page "+file);
       else if (com[0].equals("newheader"))
-        src = s1+TextFile.fileToString(folders.srcDir + "newheader.html")+s3;
+        src = s1+FileUtilities.fileToString(folders.srcDir + "newheader.html")+s3;
       else if (com[0].equals("newheader1"))
-        src = s1+TextFile.fileToString(folders.srcDir + "newheader1.html")+s3;
+        src = s1+FileUtilities.fileToString(folders.srcDir + "newheader1.html")+s3;
       else if (com[0].equals("footer"))
-        src = s1+TextFile.fileToString(folders.srcDir + "footer.html")+s3;
+        src = s1+FileUtilities.fileToString(folders.srcDir + "footer.html")+s3;
       else if (com[0].equals("newfooter"))
-        src = s1+TextFile.fileToString(folders.srcDir + "newfooter.html")+s3;
+        src = s1+FileUtilities.fileToString(folders.srcDir + "newfooter.html")+s3;
       else if (com[0].equals("footer1"))
-        src = s1+TextFile.fileToString(folders.srcDir + "footer1.html")+s3;
+        src = s1+FileUtilities.fileToString(folders.srcDir + "footer1.html")+s3;
       else if (com[0].equals("footer2"))
-        src = s1+TextFile.fileToString(folders.srcDir + "footer2.html")+s3;
+        src = s1+FileUtilities.fileToString(folders.srcDir + "footer2.html")+s3;
       else if (com[0].equals("footer3"))
-        src = s1+TextFile.fileToString(folders.srcDir + "footer3.html")+s3;
+        src = s1+FileUtilities.fileToString(folders.srcDir + "footer3.html")+s3;
       else if (com[0].equals("title"))
         src = s1+Utilities.escapeXml(name.toUpperCase().substring(0, 1)+name.substring(1))+s3;
       else if (com[0].equals("xtitle"))
@@ -5302,9 +5295,9 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
       else if (com[0].equals("resimplall"))
         src = s1 + genResImplList() + s3;
       else if (com[0].equals("txurl"))
-        src = s1 + "http://hl7.org/fhir/"+Utilities.fileTitle(file) + s3;
+        src = s1 + "http://hl7.org/fhir/"+FileUtilities.fileTitle(file) + s3;
       else if (com[0].equals("vstxurl"))
-        src = s1 + "http://hl7.org/fhir/ValueSet/"+Utilities.fileTitle(file) + s3;
+        src = s1 + "http://hl7.org/fhir/ValueSet/"+FileUtilities.fileTitle(file) + s3;
       else if (com[0].equals("csurl")) {
         if (resource instanceof CodeSystem)
           src = s1 + ((CodeSystem) resource).getUrl() + s3;
@@ -5316,7 +5309,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
         else
           src = s1 + ((ValueSet) resource).getUrl() + s3;
       } else if (com[0].equals("txdef"))
-        src = s1 + generateCodeDefinition(Utilities.fileTitle(file)) + s3;
+        src = s1 + generateCodeDefinition(FileUtilities.fileTitle(file)) + s3;
       else if (com[0].equals("vsxref")) {
         src = s1 + xreferencesForFhir(name) + s3;
       } else if (com[0].equals("vsdef")) {
@@ -5336,7 +5329,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
       else if (com[0].equals("pub-name"))
         src = s1 + publicationType + s3;
       //      else if (com[0].equals("vsexpansion"))
-      //        src = s1 + expandValueSet(Utilities.fileTitle(file), resource == null ? null : (ValueSet) resource) + s3;
+      //        src = s1 + expandValueSet(FileUtilities.fileTitle(file), resource == null ? null : (ValueSet) resource) + s3;
       else if (com[0].equals("vsexpansionig"))
         src = s1 + expandValueSetIG((ValueSet) resource, true) + s3;
       else if (com[0].equals("pub-notice"))
@@ -5637,7 +5630,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
         ValueSet vs = (ValueSet) resource;
         String ref;
         if (vs == null) {
-          ref = "http://hl7.org/fhir/ValueSet/"+Utilities.fileTitle(file);
+          ref = "http://hl7.org/fhir/ValueSet/"+FileUtilities.fileTitle(file);
         } else {
           ref = vs.getUrl();
         }
@@ -5665,7 +5658,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
       else if (com[0].equals("diagram"))
         src = s1+new SvgGenerator(this, genlevel(level), null, false, fileSuffix(file), version).generate(folders.srcDir+ com[1], com[2])+s3;
       else if (com[0].equals("file"))
-        src = s1+/*TextFile.fileToString(folders.srcDir + com[1]+".html")+*/s3;
+        src = s1+/*FileUtilities.fileToString(folders.srcDir + com[1]+".html")+*/s3;
       else if (com[0].equals("settitle")) {
         workingTitle = s2.substring(9).replace("{", "<%").replace("}", "%>");
         src = s1+s3;
@@ -5825,9 +5818,9 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
       else if (com[0].equals("resimplall"))
         src = s1 + genResImplList() + s3;
       else if (com[0].equals("txurl"))
-        src = s1 + "http://hl7.org/fhir/"+Utilities.fileTitle(file) + s3;
+        src = s1 + "http://hl7.org/fhir/"+FileUtilities.fileTitle(file) + s3;
       else if (com[0].equals("vstxurl"))
-        src = s1 + "http://hl7.org/fhir/ValueSet/"+Utilities.fileTitle(file) + s3;
+        src = s1 + "http://hl7.org/fhir/ValueSet/"+FileUtilities.fileTitle(file) + s3;
       else if (com[0].equals("csurl")) {
         if (resource instanceof CodeSystem)
           src = s1 + ((CodeSystem) resource).getUrl() + s3;
@@ -5841,9 +5834,9 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
         else
           src = s1 + ((ValueSet) resource).getUrl() + s3;
       } else if (com[0].equals("txdef"))
-        src = s1 + generateCodeDefinition(Utilities.fileTitle(file)) + s3;
+        src = s1 + generateCodeDefinition(FileUtilities.fileTitle(file)) + s3;
       else if (com[0].equals("vsexpansion"))
-        src = s1 + expandValueSet(Utilities.fileTitle(file), resource == null ? null : (ValueSet) resource, genlevel(level)) + s3;
+        src = s1 + expandValueSet(FileUtilities.fileTitle(file), resource == null ? null : (ValueSet) resource, genlevel(level)) + s3;
       else if (com[0].equals("vsexpansionig"))
         src = s1 + expandValueSetIG((ValueSet) resource, true) + s3;
       else if (com[0].equals("vsdef"))
@@ -5856,7 +5849,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
       else if (com[0].equals("vsoid"))
         src = s1 + generateOID((ValueSet) resource) + s3;
       else if (com[0].equals("txname"))
-        src = s1 + Utilities.fileTitle(file) + s3;
+        src = s1 + FileUtilities.fileTitle(file) + s3;
       else if (com[0].equals("vsname"))
         if (resource instanceof CodeSystem)
           src = s1 + ((CodeSystem) resource).present() + s3;
@@ -5881,9 +5874,9 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
         CanonicalResource cr = (CanonicalResource) resource;
         src = s1 + cr.getVersion() + s3;
       } else if (com[0].equals("vsref")) {
-        src = s1 + Utilities.fileTitle((String) resource.getUserData("filename")) + s3;
+        src = s1 + FileUtilities.fileTitle((String) resource.getUserData("filename")) + s3;
       } else if (com[0].equals("vsdesc"))
-        src = s1 + (resource != null ? Utilities.escapeXml(((ValueSet) resource).getDescription()) :  generateVSDesc(Utilities.fileTitle(file))) + s3;
+        src = s1 + (resource != null ? Utilities.escapeXml(((ValueSet) resource).getDescription()) :  generateVSDesc(FileUtilities.fileTitle(file))) + s3;
       else if (com[0].equals("txusage"))
         src = s1 + generateValueSetUsage((ValueSet) resource, genlevel(level), true) + s3;
       else if (com[0].equals("vsusage"))
@@ -6133,7 +6126,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
         else
           b.append("<br/>");
         String path = (String) vs.getWebPath();
-        b.append(" <a href=\""+pathTail(Utilities.changeFileExt(path, ".html"))+"\">"+Utilities.escapeXml(vs.present())+"</a>");
+        b.append(" <a href=\""+pathTail(FileUtilities.changeFileExt(path, ".html"))+"\">"+Utilities.escapeXml(vs.present())+"</a>");
       }
       b.append("</td>\r\n  </tr>\r\n");
     }
@@ -6170,7 +6163,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     for (String sn : sorts) {
       ValueSet vs = definitions.getValuesets().get(sn);
       String path = (String) vs.getWebPath();
-      s.append(" <tr>\r\n  <td><a href=\""+pathTail(Utilities.changeFileExt(path, ".html"))+"\">"+Utilities.escapeXml(vs.present())+"</a></td>\r\n  <td>"+Utilities.escapeXml(vs.getDescription())+"</td>\r\n");
+      s.append(" <tr>\r\n  <td><a href=\""+pathTail(FileUtilities.changeFileExt(path, ".html"))+"\">"+Utilities.escapeXml(vs.present())+"</a></td>\r\n  <td>"+Utilities.escapeXml(vs.getDescription())+"</td>\r\n");
       s.append("  <td>"+summariseSCTCLD(vs)+"</td>\r\n");
       s.append("  <td>"+generateValueSetUsage(vs, "", false)+"</td>\r\n");
       s.append(" </tr>\r\n");
@@ -6392,9 +6385,9 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
         src = s1+lmHeader(name, resource.getName(), com.length > 1 ? com[1] : null, false)+s3;
       else if (com[0].equals("file")) {
         if (new File(folders.templateDir + com[1]+".html").exists()) {
-          src = s1+TextFile.fileToString(folders.templateDir + com[1]+".html")+s3;          
+          src = s1+FileUtilities.fileToString(folders.templateDir + com[1]+".html")+s3;          
         } else {
-          src = s1+TextFile.fileToString(folders.srcDir + com[1]+".html")+s3;
+          src = s1+FileUtilities.fileToString(folders.srcDir + com[1]+".html")+s3;
         }
       } else if (com[0].equals("settitle")) {
         workingTitle = s2.substring(9).replace("{", "<%").replace("}", "%>");
@@ -6448,19 +6441,19 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
       else if (com[0].equals("maponthispage"))
         src = s1+mapOnThisPage(mappingsList)+s3;
       else if (com[0].equals("newheader"))
-        src = s1+TextFile.fileToString(folders.srcDir + "newheader.html")+s3;
+        src = s1+FileUtilities.fileToString(folders.srcDir + "newheader.html")+s3;
       else if (com[0].equals("newheader1"))
-        src = s1+TextFile.fileToString(folders.srcDir + "newheader1.html")+s3;
+        src = s1+FileUtilities.fileToString(folders.srcDir + "newheader1.html")+s3;
       else if (com[0].equals("footer"))
-        src = s1+TextFile.fileToString(folders.srcDir + "footer.html")+s3;
+        src = s1+FileUtilities.fileToString(folders.srcDir + "footer.html")+s3;
       else if (com[0].equals("newfooter"))
-        src = s1+TextFile.fileToString(folders.srcDir + "newfooter.html")+s3;
+        src = s1+FileUtilities.fileToString(folders.srcDir + "newfooter.html")+s3;
       else if (com[0].equals("footer1"))
-        src = s1+TextFile.fileToString(folders.srcDir + "footer1.html")+s3;
+        src = s1+FileUtilities.fileToString(folders.srcDir + "footer1.html")+s3;
       else if (com[0].equals("footer2"))
-        src = s1+TextFile.fileToString(folders.srcDir + "footer2.html")+s3;
+        src = s1+FileUtilities.fileToString(folders.srcDir + "footer2.html")+s3;
       else if (com[0].equals("footer3"))
-        src = s1+TextFile.fileToString(folders.srcDir + "footer3.html")+s3;
+        src = s1+FileUtilities.fileToString(folders.srcDir + "footer3.html")+s3;
       else if (com[0].equals("title"))
         src = s1+workingTitle+s3;
       else if (com[0].equals("xtitle"))
@@ -7628,7 +7621,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
   }
 
   private String jsonSchema(String name) throws FileNotFoundException, IOException {
-    return Utilities.escapeXml(TextFile.fileToString(folders.tmpResDir+name+".schema.json"));
+    return Utilities.escapeXml(FileUtilities.fileToString(folders.tmpResDir+name+".schema.json"));
   }
 
   private String genDependencyGraph(ResourceDefn resource, String prefix) throws Exception {    
@@ -8225,7 +8218,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
 
   /*
   private String prepWikiName(String name) {
-    return Utilities.noString(name) ? "Index" : Utilities.capitalize(Utilities.fileTitle(name));
+    return Utilities.noString(name) ? "Index" : Utilities.capitalize(FileUtilities.fileTitle(name));
   }
    */
 
@@ -8894,11 +8887,11 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
   private void produceExampleListEntry(StringBuilder s, ImplementationGuideDefinitionResourceComponent res, ImplementationGuideDefn ig) throws Exception {
     String prefix = (ig == null || ig.isCore()) ? "" : ig.getCode()+File.separator;
     String n = res.getReference().getReference();
-    s.append("<tr><td><a href=\""+prefix+Utilities.changeFileExt(n, ".html")+"\">"+Utilities.escapeXml(res.getDescription())+"</a></td>");
+    s.append("<tr><td><a href=\""+prefix+FileUtilities.changeFileExt(n, ".html")+"\">"+Utilities.escapeXml(res.getDescription())+"</a></td>");
     s.append("<td>"+res.getId()+"</td>");
-    s.append("<td><a href=\""+prefix+Utilities.changeFileExt(n, ".xml.html")+"\">XML</a></td>");
-    s.append("<td><a href=\""+prefix+Utilities.changeFileExt(n, ".json.html")+"\">JSON</a></td>");
-    s.append("<td><a href=\""+prefix+Utilities.changeFileExt(n, ".ttl.html")+"\">Turtle</a></td>");
+    s.append("<td><a href=\""+prefix+FileUtilities.changeFileExt(n, ".xml.html")+"\">XML</a></td>");
+    s.append("<td><a href=\""+prefix+FileUtilities.changeFileExt(n, ".json.html")+"\">JSON</a></td>");
+    s.append("<td><a href=\""+prefix+FileUtilities.changeFileExt(n, ".ttl.html")+"\">Turtle</a></td>");
     s.append("<td>from <a href=\""+ig.getHomePage()+"\">"+Utilities.escapeXml(ig.getName())+"</a> IG</td>");
     s.append("</tr>");
   }
@@ -9123,12 +9116,12 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
 
   public String loadXmlNotesFromFile(String filename, boolean checkHeaders, String definition, ResourceDefn r, List<String> tabs, ImplementationGuideDefn ig, WorkGroup wg) throws Exception {
     if (!new CSFile(filename).exists()) {
-      TextFile.stringToFile(HTML_PREFIX1+"\r\n<!-- content goes here -->\r\n\r\n"+HTML_SUFFIX, filename);
+      FileUtilities.stringToFile(HTML_PREFIX1+"\r\n<!-- content goes here -->\r\n\r\n"+HTML_SUFFIX, filename);
       return "";
     }
 
     String res;
-    String cnt = TextFile.fileToString(filename);
+    String cnt = FileUtilities.fileToString(filename);
     Map<String, String> others = new HashMap<String, String>();
     others.put("definition", definition);
     cnt = processPageIncludes(filename, cnt, "notes", others, null, tabs, "--", ig, r, wg,"?xn?").trim()+"\r\n";
@@ -9143,7 +9136,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
         res = cnt.substring(HTML_PREFIX1.length(), cnt.length()-(HTML_SUFFIX.length())).trim();
     } else {
       res = HTML_PREFIX1+cnt+HTML_SUFFIX;
-      TextFile.stringToFile(res, filename);
+      FileUtilities.stringToFile(res, filename);
     }
     if (checkHeaders) {
       checkFormat(filename, res, r);
@@ -9258,7 +9251,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     String filename;
     if (definitions.hasLogicalModel(name)) {
       LogicalModel lm = definitions.getLogicalModel(name);
-      filename = Utilities.changeFileExt(lm.getSource(), "-"+suffix+".xml");
+      filename = FileUtilities.changeFileExt(lm.getSource(), "-"+suffix+".xml");
     } else
       filename = folders.srcDir + name+File.separatorChar+name+"-"+suffix+".xml";
     return loadXmlNotesFromFile(filename, checkHeaders, definition, resource, tabs, ig, wg);
@@ -9268,7 +9261,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     String filename;
     if (definitions.hasLogicalModel(name)) {
       LogicalModel lm = definitions.getLogicalModel(name);
-      filename = Utilities.changeFileExt(lm.getSource(), "-"+suffix+".xml");
+      filename = FileUtilities.changeFileExt(lm.getSource(), "-"+suffix+".xml");
     } else
       filename = folders.srcDir + name+File.separatorChar+name+"-"+suffix+".xml";
     return loadXmlNotesFromFile(filename, checkHeaders, definition, null, tabs, ig, wg);
@@ -9299,9 +9292,9 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
         src = s1+profileHeader(fileid, com.length > 1 ? com[1] : "", hasExamples(pack))+s3;
       else if (com[0].equals("file")) {
         if (new File(folders.templateDir + com[1]+".html").exists()) {
-          src = s1+TextFile.fileToString(folders.templateDir + com[1]+".html")+s3;          
+          src = s1+FileUtilities.fileToString(folders.templateDir + com[1]+".html")+s3;          
         } else {
-          src = s1+TextFile.fileToString(folders.srcDir + com[1]+".html")+s3;
+          src = s1+FileUtilities.fileToString(folders.srcDir + com[1]+".html")+s3;
         }
       } else if (com[0].equals("settitle")) {
         workingTitle = s2.substring(9).replace("{", "<%").replace("}", "%>");
@@ -9319,19 +9312,19 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
       else if (com[0].equals("level"))
         src = s1 + genlevel(level) + s3;
       else if (com[0].equals("newheader"))
-        src = s1+TextFile.fileToString(folders.srcDir + "newheader.html")+s3;
+        src = s1+FileUtilities.fileToString(folders.srcDir + "newheader.html")+s3;
       else if (com[0].equals("newheader1"))
-        src = s1+TextFile.fileToString(folders.srcDir + "newheader1.html")+s3;
+        src = s1+FileUtilities.fileToString(folders.srcDir + "newheader1.html")+s3;
       else if (com[0].equals("footer"))
-        src = s1+TextFile.fileToString(folders.srcDir + "footer.html")+s3;
+        src = s1+FileUtilities.fileToString(folders.srcDir + "footer.html")+s3;
       else if (com[0].equals("newfooter"))
-        src = s1+TextFile.fileToString(folders.srcDir + "newfooter.html")+s3;
+        src = s1+FileUtilities.fileToString(folders.srcDir + "newfooter.html")+s3;
       else if (com[0].equals("footer1"))
-        src = s1+TextFile.fileToString(folders.srcDir + "footer1.html")+s3;
+        src = s1+FileUtilities.fileToString(folders.srcDir + "footer1.html")+s3;
       else if (com[0].equals("footer2"))
-        src = s1+TextFile.fileToString(folders.srcDir + "footer2.html")+s3;
+        src = s1+FileUtilities.fileToString(folders.srcDir + "footer2.html")+s3;
       else if (com[0].equals("footer3"))
-        src = s1+TextFile.fileToString(folders.srcDir + "footer3.html")+s3;
+        src = s1+FileUtilities.fileToString(folders.srcDir + "footer3.html")+s3;
       else if (com[0].equals("title"))
         src = s1+(workingTitle == null ? Utilities.escapeXml("StructureDefinition: "+profile.getTitle()) : workingTitle)+s3;
       else if (com[0].equals("xtitle"))
@@ -9511,7 +9504,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     String rt = profile.getResource().getType();
     String src = Utilities.path(folders.srcDir, rt.toLowerCase(), "profile-"+profile.getId()+"-"+ftype+".xml");
     if (new File(src).exists()) {
-      return TextFile.fileToString(src);
+      return FileUtilities.fileToString(src);
     } else {
       return "";
     }
@@ -9521,7 +9514,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     String rt = op.getResource().get(0).asStringValue();
     String src = Utilities.path(folders.srcDir, rt.toLowerCase(), "operation-"+op.getId()+"-"+ftype+".xml");
     if (new File(src).exists()) {
-      return TextFile.fileToString(src);
+      return FileUtilities.fileToString(src);
     } else {
       return "";
     }
@@ -9851,9 +9844,9 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
       String[] com = s2.split(" ");
       if (com[0].equals("file")) {
         if (new File(folders.templateDir + com[1]+".html").exists()) {
-          src = s1+TextFile.fileToString(folders.templateDir + com[1]+".html")+s3;          
+          src = s1+FileUtilities.fileToString(folders.templateDir + com[1]+".html")+s3;          
         } else {
-          src = s1+TextFile.fileToString(folders.srcDir + com[1]+".html")+s3;
+          src = s1+FileUtilities.fileToString(folders.srcDir + com[1]+".html")+s3;
         }
       } else if (com[0].equals("extDefnHeader"))
         src = s1+extDefnHeader(filename, com.length > 1 ? com[1] : null)+s3;
@@ -9867,19 +9860,19 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
       else if (com[0].equals("pageheader"))
         src = s1+pageHeader(ed.getName())+s3;
       else if (com[0].equals("newheader"))
-        src = s1+TextFile.fileToString(folders.srcDir + "newheader.html")+s3;
+        src = s1+FileUtilities.fileToString(folders.srcDir + "newheader.html")+s3;
       else if (com[0].equals("newheader1"))
-        src = s1+TextFile.fileToString(folders.srcDir + "newheader1.html")+s3;
+        src = s1+FileUtilities.fileToString(folders.srcDir + "newheader1.html")+s3;
       else if (com[0].equals("footer"))
-        src = s1+TextFile.fileToString(folders.srcDir + "footer.html")+s3;
+        src = s1+FileUtilities.fileToString(folders.srcDir + "footer.html")+s3;
       else if (com[0].equals("newfooter"))
-        src = s1+TextFile.fileToString(folders.srcDir + "newfooter.html")+s3;
+        src = s1+FileUtilities.fileToString(folders.srcDir + "newfooter.html")+s3;
       else if (com[0].equals("footer1"))
-        src = s1+TextFile.fileToString(folders.srcDir + "footer1.html")+s3;
+        src = s1+FileUtilities.fileToString(folders.srcDir + "footer1.html")+s3;
       else if (com[0].equals("footer2"))
-        src = s1+TextFile.fileToString(folders.srcDir + "footer2.html")+s3;
+        src = s1+FileUtilities.fileToString(folders.srcDir + "footer2.html")+s3;
       else if (com[0].equals("footer3"))
-        src = s1+TextFile.fileToString(folders.srcDir + "footer3.html")+s3;
+        src = s1+FileUtilities.fileToString(folders.srcDir + "footer3.html")+s3;
       else if (com[0].equals("title"))
         src = s1+(workingTitle == null ? Utilities.escapeXml(ed.getName()) : workingTitle)+s3;
       else if (com[0].equals("xtitle"))
@@ -10262,7 +10255,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
   private String profileReviewLink(ConstraintStructure profile) {
     if (!profile.getUsage().isReview())
       return "";
-    String s = Utilities.changeFileExt((String) profile.getResource().getUserData("filename"), "-review.xls");
+    String s = FileUtilities.changeFileExt((String) profile.getResource().getUserData("filename"), "-review.xls");
     return "Use the <a href=\""+s+"\">Review Spreadsheet</a> to comment on this profile.";
   }
 
@@ -10486,7 +10479,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
   }
 
   private org.hl7.fhir.tools.publisher.SpecMapManager loadSpecMap(NpmPackage npm) throws IOException {
-    byte[] src = npm.hasFile("other", "spec.internals") ?  TextFile.streamToBytes(npm.load("other", "spec.internals")) : null;
+    byte[] src = npm.hasFile("other", "spec.internals") ?  FileUtilities.streamToBytes(npm.load("other", "spec.internals")) : null;
     return src == null ? null : new SpecMapManager(src, npm.fhirVersion());
   }
 
@@ -10495,7 +10488,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
 
     for (File f : new File(Utilities.path(folders.rootDir, "tools", "macros")).listFiles()) {
       if (f.getAbsolutePath().endsWith(".html")) {
-        macros.put(Utilities.fileTitle(f.getName()), TextFile.fileToString(f));
+        macros.put(FileUtilities.fileTitle(f.getName()), FileUtilities.fileToString(f));
       }
     }
     webLocation = webLocation.replace("{dest}", folders.dstDir);
@@ -10886,7 +10879,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
       if (fn == null) {
         fn = profile.getUserString("filename");
         if (fn != null) {
-          fn = Utilities.changeFileExt(fn, ".html");
+          fn = FileUtilities.changeFileExt(fn, ".html");
         }
       }
       if (fn == null)
@@ -10919,9 +10912,9 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
       String[] com = s2.split(" ");
       if (com[0].equals("file")) {
         if (new File(folders.templateDir + com[1]+".html").exists()) {
-          src = s1+TextFile.fileToString(folders.templateDir + com[1]+".html")+s3;          
+          src = s1+FileUtilities.fileToString(folders.templateDir + com[1]+".html")+s3;          
         } else {
-          src = s1+TextFile.fileToString(folders.srcDir + com[1]+".html")+s3;
+          src = s1+FileUtilities.fileToString(folders.srcDir + com[1]+".html")+s3;
         }
       } else if (com[0].equals("settitle")) {
         workingTitle = s2.substring(9).replace("{", "<%").replace("}", "%>");
@@ -10934,19 +10927,19 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
       else if (com[0].equals("pageheader"))
         src = s1+pageHeader(pack.getId().toUpperCase().substring(0, 1)+pack.getId().substring(1))+s3;
       else if (com[0].equals("newheader"))
-        src = s1+TextFile.fileToString(folders.srcDir + "newheader.html")+s3;
+        src = s1+FileUtilities.fileToString(folders.srcDir + "newheader.html")+s3;
       else if (com[0].equals("newheader1"))
-        src = s1+TextFile.fileToString(folders.srcDir + "newheader1.html")+s3;
+        src = s1+FileUtilities.fileToString(folders.srcDir + "newheader1.html")+s3;
       else if (com[0].equals("footer"))
-        src = s1+TextFile.fileToString(folders.srcDir + "footer.html")+s3;
+        src = s1+FileUtilities.fileToString(folders.srcDir + "footer.html")+s3;
       else if (com[0].equals("newfooter"))
-        src = s1+TextFile.fileToString(folders.srcDir + "newfooter.html")+s3;
+        src = s1+FileUtilities.fileToString(folders.srcDir + "newfooter.html")+s3;
       else if (com[0].equals("footer1"))
-        src = s1+TextFile.fileToString(folders.srcDir + "footer1.html")+s3;
+        src = s1+FileUtilities.fileToString(folders.srcDir + "footer1.html")+s3;
       else if (com[0].equals("footer2"))
-        src = s1+TextFile.fileToString(folders.srcDir + "footer2.html")+s3;
+        src = s1+FileUtilities.fileToString(folders.srcDir + "footer2.html")+s3;
       else if (com[0].equals("footer3"))
-        src = s1+TextFile.fileToString(folders.srcDir + "footer3.html")+s3;
+        src = s1+FileUtilities.fileToString(folders.srcDir + "footer3.html")+s3;
       else if (com[0].equals("title"))
         src = s1+(workingTitle == null ? Utilities.escapeXml(pack.getTitle()) : workingTitle)+s3;
       else if (com[0].equals("xtitle"))
@@ -11081,7 +11074,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     if (pack.getExamples().size() > 0) {
       s.append("<tr><td colspan=\"2\"><b>Examples</b>: </td></tr>");
       for (Example ex : pack.getExamples())
-        s.append("<tr><td><a href=\"").append(ex.getTitle()).append(".html\">").append(Utilities.escapeXml(Utilities.changeFileExt(ex.getName(), "")))
+        s.append("<tr><td><a href=\"").append(ex.getTitle()).append(".html\">").append(Utilities.escapeXml(FileUtilities.changeFileExt(ex.getName(), "")))
         .append("</a></td><td>").append(processMarkdown(pack.getId(), ex.getDescription(), prefix)).append("</td></tr>");
     }
     s.append("</table>");

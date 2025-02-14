@@ -46,7 +46,7 @@ public class RDFValidator {
         Model m = RDFDataMgr.loadModel(filename);
 //    System.out.println(Integer.toString(m.getGraph().size())+" triples in RDF file "+filename);
         model = model == null ? m : model.union(m);
-//    FileOutputStream strm = new FileOutputStream(Utilities.changeFileExt(filename, ".rdf.xml"));
+//    FileOutputStream strm = new FileOutputStream(FileUtilities.changeFileExt(filename, ".rdf.xml"));
 //    try {
 //      RDFDataMgr.write(strm, m, RDFFormat.RDFXML_PLAIN);
 //    } finally {

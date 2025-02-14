@@ -37,7 +37,7 @@ import java.util.zip.ZipFile;
 
 import org.hl7.fhir.definitions.model.Definitions;
 import org.hl7.fhir.utilities.IniFile;
-import org.hl7.fhir.utilities.TextFile;
+import org.hl7.fhir.utilities.FileUtilities;
 import org.hl7.fhir.utilities.Utilities;
 import org.hl7.fhir.utilities.ZipGenerator;
 import org.hl7.fhir.utilities.xhtml.NodeType;
@@ -69,13 +69,13 @@ public class WebMaker {
   }
 
   private void buildRedirect(String n, String d, String dn) throws Exception {
-    Utilities.createDirectory(dn);
+    FileUtilities.createDirectory(dn);
     String p = "<html>\r\n<head>\r\n<title>Redirect Page</title>\r\n<meta http-equiv=\"REFRESH\" content=\"0;url=http://hl7.org/implement/standards/fhir/"+
        d+
        "\"></HEAD>\r\n</head>\r\n<body>\r\nThis page is a redirect to http://hl7.org/implement/standards/fhir/"+
        d+
        "\r\n</body>\r\n</html>\r\n";
-    TextFile.stringToFile(p, dn+File.separator+"index.html");
+    FileUtilities.stringToFile(p, dn+File.separator+"index.html");
   }
 
   private void insertTargetImages(XhtmlNode node, XhtmlNode parent, String pagename) {
@@ -141,7 +141,7 @@ public class WebMaker {
   static final int BUFFER = 2048;
 
   private void extractZip(String src, String dest) throws Exception {
-	  Utilities.createDirectory(dest);
+	  FileUtilities.createDirectory(dest);
 	  ZipFile zf = new ZipFile(src);
 	  try {
 		  for (Enumeration<? extends ZipEntry> e = zf.entries(); e.hasMoreElements();) {

@@ -5,7 +5,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 
 import org.apache.commons.io.FileUtils;
-import org.hl7.fhir.utilities.TextFile;
+import org.hl7.fhir.utilities.FileUtilities;
 import org.hl7.fhir.utilities.Utilities;
 
 public class XmlJsonCloneMaker {
@@ -41,23 +41,23 @@ public class XmlJsonCloneMaker {
         checkXmlJsonClones(f);
       } else if (f.getName().endsWith(".json")) {
         System.out.print(".");
-        String src = TextFile.fileToString(f);
+        String src = FileUtilities.fileToString(f);
         if (src.contains("\"resourceType\"")) {
-          checkUpdate(f, src, Utilities.changeFileExt(f.getAbsolutePath(), ".json1"));
-          checkUpdate(f, src, Utilities.changeFileExt(f.getAbsolutePath(), ".json2"));
+          checkUpdate(f, src, FileUtilities.changeFileExt(f.getAbsolutePath(), ".json1"));
+          checkUpdate(f, src, FileUtilities.changeFileExt(f.getAbsolutePath(), ".json2"));
         } else {
-          checkDeleteFile(Utilities.changeFileExt(f.getAbsolutePath(), ".json1"));
-          checkDeleteFile(Utilities.changeFileExt(f.getAbsolutePath(), ".json2"));
+          checkDeleteFile(FileUtilities.changeFileExt(f.getAbsolutePath(), ".json1"));
+          checkDeleteFile(FileUtilities.changeFileExt(f.getAbsolutePath(), ".json2"));
         }
       } else if (f.getName().endsWith(".xml")) {
         clonedTotal++;
-        String src = TextFile.fileToString(f);
+        String src = FileUtilities.fileToString(f);
         if (src.contains("xmlns=\"http://hl7.org/fhir\"")) {
-          checkUpdate(f, src, Utilities.changeFileExt(f.getAbsolutePath(), ".xml1"));
-          checkUpdate(f, src, Utilities.changeFileExt(f.getAbsolutePath(), ".xml2"));
+          checkUpdate(f, src, FileUtilities.changeFileExt(f.getAbsolutePath(), ".xml1"));
+          checkUpdate(f, src, FileUtilities.changeFileExt(f.getAbsolutePath(), ".xml2"));
         } else {
-          checkDeleteFile(Utilities.changeFileExt(f.getAbsolutePath(), ".xml1"));
-          checkDeleteFile(Utilities.changeFileExt(f.getAbsolutePath(), ".xml2"));          
+          checkDeleteFile(FileUtilities.changeFileExt(f.getAbsolutePath(), ".xml1"));
+          checkDeleteFile(FileUtilities.changeFileExt(f.getAbsolutePath(), ".xml2"));          
         }
       }
     }

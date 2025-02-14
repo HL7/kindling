@@ -142,7 +142,7 @@ import org.hl7.fhir.tools.publisher.KindlingUtilities;
 import org.hl7.fhir.utilities.IniFile;
 import org.hl7.fhir.utilities.Logger;
 import org.hl7.fhir.utilities.StandardsStatus;
-import org.hl7.fhir.utilities.TextFile;
+import org.hl7.fhir.utilities.FileUtilities;
 import org.hl7.fhir.utilities.Utilities;
 import org.hl7.fhir.utilities.filesystem.CSFile;
 import org.hl7.fhir.utilities.filesystem.CSFileInputStream;
@@ -634,10 +634,10 @@ public class OldSpreadsheetParser {
   private List<OperationExample> loadOperationExamples(String req, String resp) throws Exception {
     List<OperationExample> results = new ArrayList<Operation.OperationExample>();
     if (!Utilities.noString(req))
-      for (String s : TextFile.fileToString(Utilities.path(folder, req)).split("\r\n--------------------------------------\r\n"))
+      for (String s : FileUtilities.fileToString(Utilities.path(folder, req)).split("\r\n--------------------------------------\r\n"))
         results.add(convertToExample(s, false));
     if (!Utilities.noString(resp))
-      for (String s : TextFile.fileToString(Utilities.path(folder, resp)).split("\r\n--------------------------------------\r\n"))
+      for (String s : FileUtilities.fileToString(Utilities.path(folder, resp)).split("\r\n--------------------------------------\r\n"))
         results.add(convertToExample(s, true));
 
     return results;
@@ -675,7 +675,7 @@ public class OldSpreadsheetParser {
           indent = Integer.parseInt(filename.substring(0, filename.indexOf(" ")));
           filename = filename.substring(filename.indexOf(" ")).trim();
         }
-        process(content, indent, TextFile.fileToString(Utilities.path(folder, filename)));
+        process(content, indent, FileUtilities.fileToString(Utilities.path(folder, filename)));
       } else {
         content.append(Utilities.escapeXml(l));
         content.append("\r\n");
@@ -741,7 +741,7 @@ public class OldSpreadsheetParser {
             throw new Exception("Unknown source type: "+type+" at "+getLocation(row));
           String example = checkFile(sheet, row, "Example", true, null); // todo-profile
           if (example != null)
-            pack.getExamples().add(new Example(context, example, Utilities.fileTitle(example), "General Example for "+pack.getSource(), new File(example), true, ExampleType.XmlFile, isAbstract));
+            pack.getExamples().add(new Example(context, example, FileUtilities.fileTitle(example), "General Example for "+pack.getSource(), new File(example), true, ExampleType.XmlFile, isAbstract));
           defn.getConformancePackages().add(pack);
         }
       }

@@ -6,7 +6,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.hl7.fhir.utilities.TextFile;
+import org.hl7.fhir.utilities.FileUtilities;
 import org.hl7.fhir.utilities.Utilities;
 
 public class RedirectPatcher {
@@ -66,8 +66,8 @@ public class RedirectPatcher {
     sname = sname.substring(0, sname.indexOf("."));
     String rd = "<%@ language=\"javascript\"%>\r\n\r\n<%\r\n  Response.Redirect(\"http://hl7.org/fhir/json-schema/$s.schema.json\");\r\n\r\n%>\r\n\r\n<!DOCTYPE html>\r\n<html>\r\n<body>\r\nYou should not be seeing this page. If you do, ASP has failed badly.\r\n</body>\r\n</html>";
     rd = rd.replace("$s", sname);
-    Utilities.createDirectory(path("F:\\fhir\\web\\json-schema", sname));
-    TextFile.stringToFile(rd, path("F:\\fhir\\web\\json-schema", sname, "index.asp"));
+    FileUtilities.createDirectory(path("F:\\fhir\\web\\json-schema", sname));
+    FileUtilities.stringToFile(rd, path("F:\\fhir\\web\\json-schema", sname, "index.asp"));
   }
 
   private void processDirectory(String dir) throws FileNotFoundException, IOException {
@@ -91,7 +91,7 @@ public class RedirectPatcher {
     else {
       if (target.contains("#"))
         target = target.substring(0, target.indexOf("#"));
-      String targetXml = Utilities.changeFileExt(target, ".xml");      
+      String targetXml = FileUtilities.changeFileExt(target, ".xml");      
       if (target.startsWith("v2/")) {
         String t = targetXml.replace("/index.xml", "");
         targetXml = targetXml.replace("index.xml", t.replaceAll("/", "-")+".vs.xml");
@@ -109,11 +109,11 @@ public class RedirectPatcher {
 
       if (!targetFileExists(targetXml)) {
         if (!target.contains("-extensions"))
-          targetXml = Utilities.changeFileExt(target, ".profile.xml");
+          targetXml = FileUtilities.changeFileExt(target, ".profile.xml");
         else if (f.contains("\\SearchParameter\\"))
           targetXml = "search-parameters.xml";
         else
-          targetXml = Utilities.changeFileExt(target, ".profile.xml");
+          targetXml = FileUtilities.changeFileExt(target, ".profile.xml");
         
         if (!targetFileExists(targetXml) && parts.length > 1) 
           targetXml = parts[parts.length-2]+".xml";
@@ -125,10 +125,10 @@ public class RedirectPatcher {
           targetXml = null;
         }
       }
-      String targetJson = targetXml == null ? null : Utilities.changeFileExt(targetXml, ".json");
+      String targetJson = targetXml == null ? null : FileUtilities.changeFileExt(targetXml, ".json");
       if (!targetFileExists(targetJson)) 
         targetJson = null;
-      String targetTtl = targetXml == null ? null : Utilities.changeFileExt(targetXml, ".ttl");
+      String targetTtl = targetXml == null ? null : FileUtilities.changeFileExt(targetXml, ".ttl");
       if (!targetFileExists(targetTtl)) 
         targetTtl = null;
       produceAsp(f, targetHtml, targetXml, targetJson, targetTtl);
@@ -197,7 +197,7 @@ You should not be seeing this page. If you do, ASP has failed badly.
       b.append("    Response.Redirect(\"http://hl7.org/fhir/"+targetXml+"\");\r\n");
     }
     b.append(FOOTER.replace("$$$$", targetHtml));
-    TextFile.stringToFile(b.toString(), filename);
+    FileUtilities.stringToFile(b.toString(), filename);
     
   }
 
@@ -210,7 +210,7 @@ You should not be seeing this page. If you do, ASP has failed badly.
   }
 
   private String readExistingAsp(String f) throws FileNotFoundException, IOException {
-    String asp = TextFile.fileToString(f);
+    String asp = FileUtilities.fileToString(f);
     String[] fragments = asp.split("\\\"");
     return fragments[11].substring(20);
   }

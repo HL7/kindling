@@ -11,7 +11,7 @@ import org.hl7.fhir.definitions.model.TypeRef;
 import org.hl7.fhir.r5.model.Enumerations.FHIRVersion;
 import org.hl7.fhir.tools.publisher.BuildWorkerContext;
 import org.hl7.fhir.utilities.IniFile;
-import org.hl7.fhir.utilities.TextFile;
+import org.hl7.fhir.utilities.FileUtilities;
 import org.hl7.fhir.utilities.VersionUtilities;
 
 import com.google.gson.Gson;
@@ -85,7 +85,7 @@ public class JsonLDDefinitionsGenerator {
   private void save(JsonObject s, String filename) throws IOException {
     Gson gson = new GsonBuilder().setPrettyPrinting().create();
     String json = gson.toJson(s);
-    TextFile.stringToFile(json, filename);
+    FileUtilities.stringToFile(json, filename);
   }
 
 

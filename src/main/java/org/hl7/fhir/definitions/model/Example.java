@@ -49,7 +49,7 @@ import org.hl7.fhir.r5.elementmodel.Manager.FhirFormat;
 import org.hl7.fhir.r5.model.Resource;
 import org.hl7.fhir.tools.publisher.PageProcessor;
 import org.hl7.fhir.utilities.CSVProcessor;
-import org.hl7.fhir.utilities.TextFile;
+import org.hl7.fhir.utilities.FileUtilities;
 import org.hl7.fhir.utilities.Utilities;
 import org.hl7.fhir.utilities.filesystem.CSFile;
 import org.hl7.fhir.utilities.filesystem.CSFileInputStream;
@@ -127,8 +127,8 @@ public class Example {
     if( type == ExampleType.CsvFile ) {
       CSVProcessor csv = new CSVProcessor();
       csv.setSource(new CSFileInputStream(path));
-      csv.setData(new CSFileInputStream(Utilities.changeFileExt(path.getAbsolutePath(), ".csv")));
-      File tmp = Utilities.createTempFile("fhir", "xml");
+      csv.setData(new CSFileInputStream(FileUtilities.changeFileExt(path.getAbsolutePath(), ".csv")));
+      File tmp = FileUtilities.createTempFile("fhir", "xml");
       csv.setOutput(new FileOutputStream(tmp));
       csv.process();
       path = tmp;
@@ -136,7 +136,7 @@ public class Example {
 
     if (type == ExampleType.XmlFile || type == ExampleType.CsvFile || type == ExampleType.Container) {
       try {
-        String xs = TextFile.fileToString(new CSFile(path.getAbsolutePath()));
+        String xs = FileUtilities.fileToString(new CSFile(path.getAbsolutePath()));
         xs = xs.replace("[%test-server%]", PageProcessor.TEST_SERVER_URL);
         element = Manager.parseSingle(context, new ByteArrayInputStream(xs.getBytes(Charsets.UTF_8)), FhirFormat.XML);
         resourceName = element.fhirType();

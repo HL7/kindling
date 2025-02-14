@@ -88,7 +88,7 @@ import org.hl7.fhir.r5.utils.ToolingExtensions;
 import org.hl7.fhir.tools.publisher.BuildWorkerContext;
 import org.hl7.fhir.utilities.PathBuilder;
 import org.hl7.fhir.utilities.StandardsStatus;
-import org.hl7.fhir.utilities.TextFile;
+import org.hl7.fhir.utilities.FileUtilities;
 import org.hl7.fhir.utilities.Utilities;
 import org.hl7.fhir.utilities.filesystem.CSFile;
 import org.hl7.fhir.utilities.filesystem.CSFileInputStream;
@@ -150,11 +150,11 @@ public class ResourceParser {
   private void parseLiquid(ResourceDefn r) throws IOException, FileNotFoundException {
     File lt = new CSFile(Utilities.path(this.folder, r.getName()+".liquid"));
     if (lt.exists()) {
-      r.setLiquid(TextFile.fileToString(lt));
+      r.setLiquid(FileUtilities.fileToString(lt));
     }
     lt = new CSFile(Utilities.path(this.folder, r.getName()+".liquid.md"));
     if (lt.exists()) {
-      r.setLiquidNotes(TextFile.fileToString(lt));
+      r.setLiquidNotes(FileUtilities.fileToString(lt));
     }
   }
 
@@ -333,7 +333,7 @@ public class ResourceParser {
   }
 
   private void processExample(List<OperationExample> examples, String file, boolean response) throws FileNotFoundException, IOException, Exception {
-    for (String s : TextFile.fileToString(Utilities.path(folder, file)).split("\r?\n--------------------------------------\r?\n"))
+    for (String s : FileUtilities.fileToString(Utilities.path(folder, file)).split("\r?\n--------------------------------------\r?\n"))
       examples.add(convertToExample(s, response));
   }
 
@@ -368,7 +368,7 @@ public class ResourceParser {
           indent = Integer.parseInt(filename.substring(0, filename.indexOf(" ")));
           filename = filename.substring(filename.indexOf(" ")).trim();
         }
-        process(content, indent, TextFile.fileToString(PathBuilder.getPathBuilder().withRequiredTarget(srcDir).buildPath(folder, filename)));
+        process(content, indent, FileUtilities.fileToString(PathBuilder.getPathBuilder().withRequiredTarget(srcDir).buildPath(folder, filename)));
       } else {
         content.append(Utilities.escapeXml(l));
         content.append("\r\n");
@@ -1050,6 +1050,6 @@ public class ResourceParser {
   }
 
   private String rootFolder() throws IOException {
-    return Utilities.getDirectoryForFile(srcDir);
+    return FileUtilities.getDirectoryForFile(srcDir);
   }
 }

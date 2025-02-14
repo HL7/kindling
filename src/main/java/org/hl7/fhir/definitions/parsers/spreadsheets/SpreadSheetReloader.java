@@ -56,6 +56,7 @@ import org.hl7.fhir.r5.model.UrlType;
 import org.hl7.fhir.r5.utils.BuildExtensions;
 import org.hl7.fhir.r5.utils.ToolingExtensions;
 import org.hl7.fhir.tools.publisher.KindlingUtilities;
+import org.hl7.fhir.utilities.FileUtilities;
 import org.hl7.fhir.utilities.IniFile;
 import org.hl7.fhir.utilities.Utilities;
 import org.hl7.fhir.utilities.json.JsonTrackingParser;
@@ -83,9 +84,9 @@ public class SpreadSheetReloader extends SpreadSheetBase {
 
   public void process() throws Exception {
     xlsx = fnSpreadsheet();
-    IniFile ini = new IniFile(Utilities.changeFileExt(xlsx, ".datestamp"));
+    IniFile ini = new IniFile(FileUtilities.changeFileExt(xlsx, ".datestamp"));
     File t = new File(xlsx);
-    File cfg = new File(Utilities.changeFileExt(xlsx, ".datestamp"));
+    File cfg = new File(FileUtilities.changeFileExt(xlsx, ".datestamp"));
     if (t.exists() && cfg.exists() && ini.hasProperty("spreadsheet", "date") && t.lastModified() > ini.getLongProperty("spreadsheet", "date")) {
       date = t.lastModified();
       // ok, we read the spreadsheet

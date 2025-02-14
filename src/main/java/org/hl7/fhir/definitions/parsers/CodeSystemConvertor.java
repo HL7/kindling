@@ -35,6 +35,7 @@ import org.hl7.fhir.r5.model.ValueSet;
 import org.hl7.fhir.r5.terminologies.CodeSystemUtilities;
 import org.hl7.fhir.r5.utils.CanonicalResourceUtilities;
 import org.hl7.fhir.r5.utils.ToolingExtensions;
+import org.hl7.fhir.utilities.FileUtilities;
 import org.hl7.fhir.utilities.Utilities;
 
 public class CodeSystemConvertor {
@@ -51,7 +52,7 @@ public class CodeSystemConvertor {
   public CodeSystem convert(IParser p, ValueSet vs, String name, PackageInformation packageInfo) throws Exception {
     String nname = name.replace("valueset-", "codesystem-");
     if (nname.equals(name))
-      nname = Utilities.changeFileExt(name, "-cs.xml");
+      nname = FileUtilities.changeFileExt(name, "-cs.xml");
     if (new File(nname).exists()) {
       FileInputStream input = new FileInputStream(nname);
       CodeSystem cs = CodeSystemUtilities.makeShareable((CodeSystem) p.parse(input));

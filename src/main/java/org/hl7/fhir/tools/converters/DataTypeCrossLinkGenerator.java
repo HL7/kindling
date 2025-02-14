@@ -7,7 +7,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.hl7.fhir.utilities.CommaSeparatedStringBuilder;
-import org.hl7.fhir.utilities.TextFile;
+import org.hl7.fhir.utilities.FileUtilities;
 import org.hl7.fhir.utilities.Utilities;
 
 public class DataTypeCrossLinkGenerator {
@@ -20,15 +20,15 @@ public class DataTypeCrossLinkGenerator {
     System.out.println("Process "+core.getAbsolutePath());
     for (File f : core.listFiles()) {
       if (f.getName().endsWith(".html")) {
-        String source = TextFile.fileToString(f);
+        String source = FileUtilities.fileToString(f);
         List<String> lines = new ArrayList<>();
-        for (String s : TextFile.fileToString(f).split("\\r?\\n|\\r")) {
+        for (String s : FileUtilities.fileToString(f).split("\\r?\\n|\\r")) {
           lines.add(s);
         };        
         if (scanLinesCore(f.getName().replace(".html", ""), lines)) {
           System.out.println("- saved "+f.getName());
           source = String.join("\r\n", lines);
-          TextFile.stringToFile(source, f);
+          FileUtilities.stringToFile(source, f);
         }
       }
     }
@@ -36,29 +36,29 @@ public class DataTypeCrossLinkGenerator {
     System.out.println("Process "+res.getAbsolutePath());
     for (File f : res.listFiles()) {
       if (f.getName().endsWith(".xml")) {
-        String source = TextFile.fileToString(f);
+        String source = FileUtilities.fileToString(f);
         List<String> lines = new ArrayList<>();
-        for (String s : TextFile.fileToString(f).split("\\r?\\n|\\r")) {
+        for (String s : FileUtilities.fileToString(f).split("\\r?\\n|\\r")) {
           lines.add(s);
         };        
         if (scanLinesCore(f.getName().replace(".html", ""), lines)) {
           System.out.println("- saved "+f.getName());
           source = String.join("\r\n", lines);
-          TextFile.stringToFile(source, f);
+          FileUtilities.stringToFile(source, f);
         }
       }
     }
     System.out.println("Process "+ig.getAbsolutePath());
     for (File f : ig.listFiles()) {
       if (f.getName().endsWith(".xml")) {
-        String source = TextFile.fileToString(f);
+        String source = FileUtilities.fileToString(f);
         List<String> lines = new ArrayList<>();
-        for (String s : TextFile.fileToString(f).split("\\r?\\n|\\r")) {
+        for (String s : FileUtilities.fileToString(f).split("\\r?\\n|\\r")) {
           lines.add(s);
         };        
         if (scanLinesIG(f.getName().replace(".xml", ""), lines)) {
           source = String.join("\r\n", lines);
-          TextFile.stringToFile(source, f);
+          FileUtilities.stringToFile(source, f);
           System.out.println(" - saved "+f.getName());
         } 
       }

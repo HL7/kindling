@@ -11,7 +11,7 @@ import org.hl7.fhir.definitions.model.Definitions;
 import org.hl7.fhir.definitions.model.ElementDefn;
 import org.hl7.fhir.definitions.model.ResourceDefn;
 import org.hl7.fhir.definitions.model.TypeDefn;
-import org.hl7.fhir.utilities.TextFile;
+import org.hl7.fhir.utilities.FileUtilities;
 import org.hl7.fhir.utilities.Utilities;
 
 public class SpellChecker {
@@ -81,7 +81,7 @@ public class SpellChecker {
     StringBuilder b = new StringBuilder();
     for (String s : additional)
       b.append(s+"\r\n");
-    TextFile.stringToFile(b.toString(), addFile);
+    FileUtilities.stringToFile(b.toString(), addFile);
     
   }
 

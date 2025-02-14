@@ -45,6 +45,7 @@ import org.hl7.fhir.r5.model.StringType;
 import org.hl7.fhir.r5.model.StructureDefinition;
 import org.hl7.fhir.r5.utils.BuildExtensions;
 import org.hl7.fhir.r5.utils.ToolingExtensions;
+import org.hl7.fhir.utilities.FileUtilities;
 import org.hl7.fhir.utilities.IniFile;
 import org.hl7.fhir.utilities.Utilities;
 
@@ -83,7 +84,7 @@ public class SpreadSheetCreator extends SpreadSheetBase {
         System.out.println("Error writing to "+tgt+" "+e.getMessage());
       }
       new File(tgt).setLastModified(date);
-      IniFile ini = new IniFile(Utilities.changeFileExt(tgt, ".datestamp"));
+      IniFile ini = new IniFile(FileUtilities.changeFileExt(tgt, ".datestamp"));
       ini.setLongProperty("spreadsheet", "date", date, "Never change this date manually");
       ini.save();
     }

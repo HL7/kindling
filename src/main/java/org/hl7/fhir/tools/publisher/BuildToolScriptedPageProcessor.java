@@ -11,7 +11,7 @@ import org.hl7.fhir.r5.model.ElementDefinition;
 import org.hl7.fhir.r5.model.ElementDefinition.ElementDefinitionConstraintComponent;
 import org.hl7.fhir.r5.model.StructureDefinition;
 import org.hl7.fhir.utilities.ScriptedPageProcessor;
-import org.hl7.fhir.utilities.TextFile;
+import org.hl7.fhir.utilities.FileUtilities;
 import org.hl7.fhir.utilities.Utilities;
 
 public abstract class BuildToolScriptedPageProcessor extends ScriptedPageProcessor {
@@ -36,7 +36,7 @@ public abstract class BuildToolScriptedPageProcessor extends ScriptedPageProcess
   protected String processCommand(String command, String[] com) throws Exception {
 
     if (com[0].equals("file"))
-      return TextFile.fileToString(page.getFolders().srcDir + com[1]+".html");
+      return FileUtilities.fileToString(page.getFolders().srcDir + com[1]+".html");
     else if (com[0].equals("gendate"))
       return Config.DATE_FORMAT().format(page.getGenDate().getTime());
     else if (com[0].equals("name"))

@@ -11,7 +11,7 @@ import java.io.OutputStream;
 import org.hl7.fhir.r5.formats.IParser.OutputStyle;
 import org.hl7.fhir.r5.formats.XmlParser;
 import org.hl7.fhir.r5.model.Resource;
-import org.hl7.fhir.utilities.TextFile;
+import org.hl7.fhir.utilities.FileUtilities;
 import org.hl7.fhir.utilities.Utilities;
 
 /**
@@ -61,7 +61,7 @@ public class ResourceOrderUpdater {
       else {
         if (filename.endsWith(".xml")) {
           try {
-            if (TextFile.fileToString(file.getAbsolutePath()).contains("<"+resource)) {
+            if (FileUtilities.fileToString(file.getAbsolutePath()).contains("<"+resource)) {
               process(file.getAbsolutePath());
             }
           } catch (Exception e) {

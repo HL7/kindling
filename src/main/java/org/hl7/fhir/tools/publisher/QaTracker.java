@@ -13,7 +13,7 @@ import org.hl7.fhir.definitions.model.Definitions;
 import org.hl7.fhir.definitions.model.ElementDefn;
 import org.hl7.fhir.definitions.model.Example;
 import org.hl7.fhir.definitions.model.ResourceDefn;
-import org.hl7.fhir.utilities.TextFile;
+import org.hl7.fhir.utilities.FileUtilities;
 import org.hl7.fhir.utilities.Utilities;
 import org.hl7.fhir.utilities.XsltUtilities;
 import org.hl7.fhir.utilities.validation.ValidationMessage;
@@ -136,7 +136,7 @@ public class QaTracker {
   }
 
   public void commit(String rootDir) throws IOException {
-    String src = TextFile.fileToString(rootDir+"records.csv");
+    String src = FileUtilities.fileToString(rootDir+"records.csv");
     
     Calendar c = new GregorianCalendar();
     c.set(Calendar.HOUR_OF_DAY, 0); //anything 0 - 23
@@ -170,7 +170,7 @@ public class QaTracker {
     // uncovered
     b.append(",");
     // broken links
-    TextFile.stringToFile(src+"\r\n"+b.toString(), rootDir+"records.csv");
+    FileUtilities.stringToFile(src+"\r\n"+b.toString(), rootDir+"records.csv");
   }
 
   public void setCounts(int e, int w, int i) {

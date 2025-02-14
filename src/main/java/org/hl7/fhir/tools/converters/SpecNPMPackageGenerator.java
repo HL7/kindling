@@ -39,7 +39,7 @@ import org.hl7.fhir.r5.utils.NPMPackageGenerator;
 import org.hl7.fhir.r5.utils.NPMPackageGenerator.Category;
 import org.hl7.fhir.tools.publisher.SpecMapManager;
 import org.hl7.fhir.utilities.IniFile;
-import org.hl7.fhir.utilities.TextFile;
+import org.hl7.fhir.utilities.FileUtilities;
 import org.hl7.fhir.utilities.Utilities;
 import org.hl7.fhir.utilities.VersionUtilities;
 import org.hl7.fhir.utilities.npm.PackageGenerator.PackageType;
@@ -160,11 +160,11 @@ public class SpecNPMPackageGenerator {
     
     for (String fn : new File(folder).list()) {
       if (fn.endsWith(".schema.json") || fn.endsWith(".openapi.json") ) {
-        byte[] b = TextFile.fileToBytes(Utilities.path(folder, fn));
+        byte[] b = FileUtilities.fileToBytes(Utilities.path(folder, fn));
         npm.addFile(Category.OPENAPI, fn, b);
       }
       if (fn.endsWith(".xsd") || fn.endsWith(".sch") ) {
-        byte[] b = TextFile.fileToBytes(Utilities.path(folder, fn));
+        byte[] b = FileUtilities.fileToBytes(Utilities.path(folder, fn));
         npm.addFile(Category.SCHEMATRON, fn, b);
       }
     }
@@ -286,7 +286,7 @@ public class SpecNPMPackageGenerator {
       if (f.getName().endsWith(".json") && !f.getName().endsWith(".diff.json") && !f.getName().endsWith(".schema.json") && !f.getName().equals("package.json") 
           && !f.getName().equals("backbone-elements.json")&& !f.getName().equals("choice-elements.json")) {
         try {
-          byte[] b = TextFile.fileToBytes(f.getAbsolutePath());
+          byte[] b = FileUtilities.fileToBytes(f.getAbsolutePath());
           loadFile(reslist, b, f.getAbsolutePath());
         } catch (Exception e) {
           // nothing - we'll just ignore the file
@@ -320,7 +320,7 @@ public class SpecNPMPackageGenerator {
   }
 
   private JsonObject parseJson(byte[] b) throws JsonSyntaxException, IOException {
-    return (JsonObject) new com.google.gson.JsonParser().parse(TextFile.bytesToString(b, true));
+    return (JsonObject) new com.google.gson.JsonParser().parse(FileUtilities.bytesToString(b, true));
   }
 
   private boolean hasEntry(List<ResourceEntry> reslist, String fhirType, String id) {

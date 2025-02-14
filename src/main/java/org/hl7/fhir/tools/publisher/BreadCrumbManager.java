@@ -15,6 +15,7 @@ import org.hl7.fhir.r5.context.IWorkerContext;
 import org.hl7.fhir.r5.model.StructureDefinition;
 import org.hl7.fhir.r5.model.StructureDefinition.ExtensionContextType;
 import org.hl7.fhir.r5.utils.Translations;
+import org.hl7.fhir.utilities.FileUtilities;
 import org.hl7.fhir.utilities.Utilities;
 import org.hl7.fhir.utilities.filesystem.CSFile;
 import org.hl7.fhir.utilities.filesystem.CSFileInputStream;
@@ -248,7 +249,7 @@ public class BreadCrumbManager {
       //b.append("        <li><a href=\""+prefix+"index.html\">"+translations.getMessage("HOME", "Home")+"</a></li>\r\n");
       if (!name.endsWith(".html"))
         name = name + ".html";
-      String nt = Utilities.changeFileExt(name, "");
+      String nt = FileUtilities.changeFileExt(name, "");
       if (map.containsKey(nt) && Utilities.noString(type)) {
         String[] path = map.get(nt).split("\\.");
         Page focus = home;
@@ -342,8 +343,8 @@ public class BreadCrumbManager {
               b.append("        <li><a href=\""+prefix+focus.getFilename()+"\">"+imgLink(prefix, focus)+Utilities.escapeXml(focus.getTitle())+"</a></li>");
           }
           b.append("        <li><b>Example</b></li>");
-        } else if (type.startsWith("res") && map.containsKey(Utilities.fileTitle(name))) {
-          String[] path = map.get(Utilities.fileTitle(name)).split("\\.");
+        } else if (type.startsWith("res") && map.containsKey(FileUtilities.fileTitle(name))) {
+          String[] path = map.get(FileUtilities.fileTitle(name)).split("\\.");
           Page focus = home;
           for (int i = 0; i < path.length - 1; i++) {
             focus = getChild(focus, path[i]);
@@ -432,7 +433,7 @@ public class BreadCrumbManager {
               else
                 b.append("        <li><a href=\""+prefix+focus.getFilename()+"\">"+imgLink(prefix, focus)+Utilities.escapeXml(focus.getTitle())+"</a></li>");
             }
-            b.append("        <li><a href=\""+prefix+Utilities.fileTitle(name)+".html\">"+Utilities.escapeXml(title)+"</a></li>");
+            b.append("        <li><a href=\""+prefix+FileUtilities.fileTitle(name)+".html\">"+Utilities.escapeXml(title)+"</a></li>");
             b.append("        <li><b>Profile Instance</b></li>");
           }
         } else if (type.startsWith("profile-instance") || type.startsWith("profile-questionnaire") ) {
@@ -462,7 +463,7 @@ public class BreadCrumbManager {
             focus = getChild(focus, path[i]);
             b.append("        <li><a href=\""+prefix+focus.getFilename()+"\">"+imgLink(prefix, focus)+Utilities.escapeXml(focus.getTitle())+"</a></li>");
           }
-          b.append("        <li><a href=\"index.html\">"+Utilities.escapeXml(Utilities.fileTitle(name.substring(3)))+"</a></li>");
+          b.append("        <li><a href=\"index.html\">"+Utilities.escapeXml(FileUtilities.fileTitle(name.substring(3)))+"</a></li>");
           b.append("        <li><b>Instance</b></li>");
         } else if (type.startsWith("sid:")) {        
           String[] path = map.get("terminologies.html").split("\\.");

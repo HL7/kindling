@@ -5,7 +5,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.hl7.fhir.utilities.TextFile;
+import org.hl7.fhir.utilities.FileUtilities;
 import org.hl7.fhir.utilities.Utilities;
 import org.hl7.fhir.utilities.filesystem.CSFile;
 
@@ -59,7 +59,7 @@ public class OldVersionRedirector {
      listAllFiles(filenames, new File(existing));
      for (String filename : filenames) {
        System.out.println(filename);
-       String content = TextFile.fileToString(filename);
+       String content = FileUtilities.fileToString(filename);
        if (content.contains("<div class=\"col-9\">")) {
          String message = fileIsInCurrent(filename, existing, current) ? upd_exists.replace("[x]", newUrl(filename, existing)) : upd_no_exists.replace("[x]", "index.html");
          message = message.replace("[ov]", "("+oldVersion+")").replace("[nv]", "("+newVersion+")").replace("[p]", prefix(filename, existing));
@@ -70,7 +70,7 @@ public class OldVersionRedirector {
          }
          i = content.indexOf("<div class=\"col-9\">");
          content = content.substring(0, i+22) + message + content.substring(i+22);
-         TextFile.stringToFile(content, filename);
+         FileUtilities.stringToFile(content, filename);
        } else if (content.contains("<div class=\"content\"")){
          String message = fileIsInCurrent(filename, existing, current) ? upd_exists.replace("[x]", newUrl(filename, existing)) : upd_no_exists.replace("[x]", "index.html");
          message = message.replace("[ov]", "("+oldVersion+")").replace("[nv]", "("+newVersion+")").replace("[p]", prefix(filename, existing));
@@ -81,7 +81,7 @@ public class OldVersionRedirector {
          }
          i = content.indexOf("<div class=\"content\">");
          content = content.substring(0, i+22) + message + content.substring(i+22);
-         TextFile.stringToFile(content, filename);
+         FileUtilities.stringToFile(content, filename);
        }
      }
   }

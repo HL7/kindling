@@ -13,7 +13,7 @@ import java.util.Set;
 
 import org.hl7.fhir.exceptions.FHIRException;
 import org.hl7.fhir.utilities.CSVReader;
-import org.hl7.fhir.utilities.TextFile;
+import org.hl7.fhir.utilities.FileUtilities;
 import org.hl7.fhir.utilities.Utilities;
 
 public class R4B1Fixer {
@@ -49,11 +49,11 @@ public class R4B1Fixer {
       }
       if (!f.isDirectory() && Utilities.endsWithInList(f.getName(), ".xml", ".json", ".json1", ".json2", ".xml1", ".xml2", ".html", ".ttl", 
           ".graphql", ".sch", ".svg", ".shex", ".xsd", ".jsonld")) {
-        String src = TextFile.fileToString(f);
+        String src = FileUtilities.fileToString(f);
         String src2 = fixSource(src, f, mappings);
         if (!src2.equals(src)) {
           c++;
-          TextFile.stringToFile(src2, f);
+          FileUtilities.stringToFile(src2, f);
         }
       }
     }
