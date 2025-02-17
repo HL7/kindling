@@ -2661,7 +2661,7 @@ public class ProfileGenerator {
         produceOpParam(path+"."+p.getName(), pp.getPart(), part, pp.getUse());
       }
     } else {
-      List<TypeRef> trs = new TypeParser(version.toCode()).parse(p.getFhirType(), false, null, null, false);
+      List<TypeRef> trs = new TypeParser(version.toCode()).parse(p.getFhirType(), false, null, null, true);
       if (trs.size() > 1) {
         if (p.getSearchType() != null)
           pp.setSearchType(SearchParamType.fromCode(p.getSearchType()));
