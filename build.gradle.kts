@@ -3,7 +3,7 @@ plugins {
     `maven-publish`
     signing
     id("com.github.johnrengelman.shadow") version "7.0.0"
-    id("org.owasp.dependencycheck") version "11.1.1"
+    id("org.owasp.dependencycheck") version "12.1.0"
 }
 
 group = "org.hl7.fhir"
