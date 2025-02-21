@@ -3,11 +3,11 @@ plugins {
     `maven-publish`
     signing
     id("com.github.johnrengelman.shadow") version "7.0.0"
-    id("org.owasp.dependencycheck") version "11.1.1"
+    id("org.owasp.dependencycheck") version "12.1.0"
 }
 
 group = "org.hl7.fhir"
-version = "1.9.7-SNAPSHOT"
+version = "1.9.8-SNAPSHOT"
 
 java {
     withJavadocJar()
@@ -117,13 +117,13 @@ dependencies {
     implementation("com.google.code.javaparser", "javaparser", "1.0.11")
     implementation("com.google.guava", "guava", "32.1.3-jre")
     implementation("com.damnhandy", "handy-uri-templates", "2.1.6")
-    implementation("es.weso", "schema_2.12", "0.2.2")
+    implementation("es.weso", "schema_2.12", "0.2.4")
     implementation("es.weso", "shacl_2.12", "0.1.83")
-    implementation("es.weso", "shex_2.12", "0.2.32")
-    implementation("es.weso", "srdfjena_2.12", "0.1.124")
-    implementation("es.weso", "srdf_2.12", "0.1.124")
+    implementation("es.weso", "shex_2.12", "0.2.33")
+    implementation("es.weso", "srdfjena_2.12", "0.1.125")
+    implementation("es.weso", "srdf_2.12", "0.1.125")
     implementation("es.weso", "utils_2.12", "0.2.25")
-    implementation("es.weso", "rbe_2.12", "0.2.32")
+    implementation("es.weso", "rbe_2.12", "0.2.33")
     implementation("es.weso", "typing_2.12", "0.2.25")
     implementation("es.weso", "validating_2.12", "0.2.25")
     implementation("org.antlr", "antlr4-runtime", "4.6")
@@ -175,7 +175,7 @@ dependencies {
         implementation("com.squareup.okio:okio-jvm:3.4.0") {
             because("previous versions have a bug impacting this application")
         }
-        implementation("org.apache.zookeeper:zookeeper:3.9.2") {
+        implementation("org.apache.zookeeper:zookeeper:3.9.3") {
             because("previous versions have a bug impacting this application")
         }
 

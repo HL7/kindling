@@ -7,7 +7,7 @@ import java.util.List;
 
 import org.apache.commons.io.FileUtils;
 import org.hl7.fhir.utilities.IniFile;
-import org.hl7.fhir.utilities.TextFile;
+import org.hl7.fhir.utilities.FileUtilities;
 import org.hl7.fhir.utilities.Utilities;
 import org.hl7.fhir.utilities.json.JsonUtilities;
 
@@ -26,7 +26,7 @@ public class WebSiteReleaseUpdater {
 
   public WebSiteReleaseUpdater(String root, String dir, JsonObject ver, JsonObject currentVer) throws IOException {
     this.root = root;
-    this.ini = new IniFile(Utilities.path(Utilities.getDirectoryForFile(root), "status.ini"));
+    this.ini = new IniFile(Utilities.path(FileUtilities.getDirectoryForFile(root), "status.ini"));
     this.dir = dir;
     this.ver = ver;
     this.currentVer = currentVer;
@@ -80,7 +80,7 @@ public class WebSiteReleaseUpdater {
             return s;
         }
       } else if (f.getName().endsWith(".html") || f.getName().endsWith(".htm")) {
-        String src = TextFile.fileToString(f);
+        String src = FileUtilities.fileToString(f);
         String o = src;
         if (src.contains("<body") && !(src.contains("http-equiv=\"Refresh\"") || src.contains("http-equiv=\"refresh\""))) {
           int b = src.indexOf(START_HTML_MARKER);
@@ -106,7 +106,7 @@ public class WebSiteReleaseUpdater {
           b = src.substring(0, b).lastIndexOf("\"");
           src = src.substring(0, b+1)+gen(depth)+src.substring(e);
           if (!src.equals(o)) {
-            TextFile.stringToFile(src, f);
+            FileUtilities.stringToFile(src, f);
             total++;
           }
           

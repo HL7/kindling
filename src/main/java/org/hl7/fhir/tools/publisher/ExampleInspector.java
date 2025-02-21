@@ -74,7 +74,7 @@ import org.hl7.fhir.utilities.Logger.LogMessageType;
 import org.hl7.fhir.utilities.SIDUtilities;
 import org.hl7.fhir.utilities.filesystem.CSFileInputStream;
 import org.hl7.fhir.utilities.http.ManagedWebAccess;
-import org.hl7.fhir.utilities.TextFile;
+import org.hl7.fhir.utilities.FileUtilities;
 import org.hl7.fhir.utilities.Utilities;
 import org.hl7.fhir.utilities.ZipGenerator;
 import org.hl7.fhir.utilities.validation.ValidationMessage;
@@ -237,11 +237,11 @@ public class ExampleInspector implements IValidatorResourceFetcher, IValidationP
   }
 
   public void prepare2() throws Exception {
-    jsonLdDefns = (JsonObject) new com.google.gson.JsonParser().parse(TextFile.fileToString(Utilities.path(rootDir, "fhir.jsonld")));
+    jsonLdDefns = (JsonObject) new com.google.gson.JsonParser().parse(FileUtilities.fileToString(Utilities.path(rootDir, "fhir.jsonld")));
     xml = new XmlValidator(errorsInt, loadSchemas(), loadTransforms());
 
     if (VALIDATE_BY_JSON_SCHEMA) {
-      String source = TextFile.fileToString(Utilities.path(rootDir, "fhir.schema.json"));
+      String source = FileUtilities.fileToString(Utilities.path(rootDir, "fhir.schema.json"));
       JSONObject rawSchema = new JSONObject(new JSONTokener(source));
       jschema = SchemaLoader.load(rawSchema);
     }
@@ -299,19 +299,19 @@ public class ExampleInspector implements IValidatorResourceFetcher, IValidationP
     Map<String, byte[]> res = new HashMap<String, byte[]>();
     for (String s : new File(xsltDir).list()) {
       if (s.endsWith(".xslt"))
-        res.put(s, TextFile.fileToBytes(Utilities.path(xsltDir, s)));
+        res.put(s, FileUtilities.fileToBytes(Utilities.path(xsltDir, s)));
     }
     return res;
   }
 
   private Map<String, byte[]> loadSchemas() throws FileNotFoundException, IOException {
     Map<String, byte[]> res = new HashMap<String, byte[]>();
-    res.put("fhir-single.xsd", TextFile.fileToBytes(Utilities.path(rootDir, "fhir-single.xsd")));
-    res.put("fhir-xhtml.xsd", TextFile.fileToBytes(Utilities.path(rootDir, "fhir-xhtml.xsd")));
-    res.put("xml.xsd", TextFile.fileToBytes(Utilities.path(rootDir, "xml.xsd")));
+    res.put("fhir-single.xsd", FileUtilities.fileToBytes(Utilities.path(rootDir, "fhir-single.xsd")));
+    res.put("fhir-xhtml.xsd", FileUtilities.fileToBytes(Utilities.path(rootDir, "fhir-xhtml.xsd")));
+    res.put("xml.xsd", FileUtilities.fileToBytes(Utilities.path(rootDir, "xml.xsd")));
     for (String s : new File(rootDir).list()) {
       if (s.endsWith(".sch"))
-        res.put(s, TextFile.fileToBytes(Utilities.path(rootDir, s)));
+        res.put(s, FileUtilities.fileToBytes(Utilities.path(rootDir, s)));
     }
     return res;
   }
@@ -432,12 +432,12 @@ public class ExampleInspector implements IValidatorResourceFetcher, IValidationP
       if (size > 1000000)
         return;
       // replace @context with the contents of the right context file
-      JsonObject json = (JsonObject) new com.google.gson.JsonParser().parse(TextFile.fileToString(fjld));
+      JsonObject json = (JsonObject) new com.google.gson.JsonParser().parse(FileUtilities.fileToString(fjld));
       json.remove("@context");
       json.add("@context", jsonLdDefns.get("@context"));
       Gson gson = new GsonBuilder().setPrettyPrinting().create();
       String jcnt = gson.toJson(json);
-//      TextFile.stringToFile(jcnt, Utilities.path("[tmp]", "jsonld\\"+rt+".jsonld");
+//      FileUtilities.stringToFile(jcnt, Utilities.path("[tmp]", "jsonld\\"+rt+".jsonld");
       // parse to a model
       Model mj = ModelFactory.createDefaultModel();
       mj.read(new StringReader(jcnt), null, "JSON-LD");
@@ -722,6 +722,11 @@ public class ExampleInspector implements IValidatorResourceFetcher, IValidationP
       ValueSet valueSet,
       List<String> systems) {
     return EnumSet.allOf(CodedContentValidationAction.class);
+  }
+
+  @Override
+  public SpecialValidationAction policyForSpecialValidation(IResourceValidator iResourceValidator, Object o, SpecialValidationRule specialValidationRule, String s, Element element, Element element1) {
+    throw new NotImplementedException();
   }
 
 

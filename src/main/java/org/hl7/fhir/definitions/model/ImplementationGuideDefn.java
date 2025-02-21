@@ -16,6 +16,7 @@ import org.hl7.fhir.r5.model.ImplementationGuide.ImplementationGuideDefinitionPa
 import org.hl7.fhir.r5.model.ImplementationGuide.ImplementationGuideDefinitionResourceComponent;
 import org.hl7.fhir.r5.model.StructureDefinition;
 import org.hl7.fhir.r5.model.ValueSet;
+import org.hl7.fhir.utilities.FileUtilities;
 import org.hl7.fhir.utilities.Utilities;
 import org.hl7.fhir.utilities.validation.ValidationMessage;
 import org.hl7.fhir.utilities.validation.ValidationMessage.IssueSeverity;
@@ -261,7 +262,7 @@ public class ImplementationGuideDefn {
 
   private boolean findLogicalPage(String n, String type, List<LinkTriple> res, List<ImplementationGuideDefinitionPageComponent> page) throws Exception {
     // see if we can find it as an example of an existing profile
-    String src = Utilities.fileTitle(n)+ ".html";
+    String src = FileUtilities.fileTitle(n)+ ".html";
     for (ImplementationGuideDefinitionResourceComponent r : ig.getDefinition().getResource()) {
       if (src.equals(r.getReference().getReference())) {
         if (r.hasProfile()) {
@@ -275,7 +276,7 @@ public class ImplementationGuideDefn {
       }
     }
     // now, see if we can find a registry to make it a child of 
-    String id = Utilities.fileTitle(n);
+    String id = FileUtilities.fileTitle(n);
     for (Example e : examples) {
       if (e.getId().equals(id))
         if (findRegistryPage(e.getResourceName(), res, page)) {

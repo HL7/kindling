@@ -7,7 +7,7 @@ import java.io.IOException;
 
 import org.apache.commons.io.FileUtils;
 import org.hl7.fhir.utilities.IniFile;
-import org.hl7.fhir.utilities.TextFile;
+import org.hl7.fhir.utilities.FileUtilities;
 import org.hl7.fhir.utilities.Utilities;
 
 import com.google.gson.JsonObject;
@@ -30,7 +30,7 @@ public class OldVersionRedirector {
   }
 
   private void processVersion(File f, String dst, String url) throws Exception {
-    String s = TextFile.fileToString(Utilities.path(f.getAbsolutePath(), "version.info"));
+    String s = FileUtilities.fileToString(Utilities.path(f.getAbsolutePath(), "version.info"));
     IniFile ini = new IniFile(new ByteArrayInputStream(s.getBytes()));
     String ver = ini.getStringProperty("FHIR", "version");
     ver = ver.substring(0, 3);
@@ -51,7 +51,7 @@ public class OldVersionRedirector {
   }
 
   private void processProfile(String profile, String dst, String ver, String url) throws JsonSyntaxException, FileNotFoundException, IOException {
-    JsonObject json = (JsonObject) new com.google.gson.JsonParser().parse(TextFile.fileToString(profile));
+    JsonObject json = (JsonObject) new com.google.gson.JsonParser().parse(FileUtilities.fileToString(profile));
     if (json.has("kind")) {
       if (!"resource".equals(json.get("kind").getAsString()))
         return;
@@ -69,8 +69,8 @@ public class OldVersionRedirector {
     String techPath = Utilities.pathURL(url, name.toLowerCase()+".profile"); 
     String asp = produceAsp(htmlPath, techPath);
     String path = Utilities.path(dst, "StructureDefinition", name, "index.asp");
-    Utilities.createDirectory(Utilities.getDirectoryForFile(path));
-    TextFile.stringToFile(asp, path);
+    FileUtilities.createDirectory(FileUtilities.getDirectoryForFile(path));
+    FileUtilities.stringToFile(asp, path);
   }
 
   private String produceAsp(String htmlPath, String techPath) {
@@ -98,7 +98,7 @@ public class OldVersionRedirector {
   }
 
   private void copyFile(String src, String dst) throws IOException {
-    Utilities.createDirectory(Utilities.getDirectoryForFile(dst));
+    FileUtilities.createDirectory(FileUtilities.getDirectoryForFile(dst));
     FileUtils.copyFile(new File(src), new File(dst), true);
   }
 }

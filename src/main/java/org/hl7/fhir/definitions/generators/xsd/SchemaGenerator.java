@@ -43,7 +43,7 @@ import org.hl7.fhir.definitions.model.Definitions;
 import org.hl7.fhir.definitions.model.ResourceDefn;
 import org.hl7.fhir.tools.publisher.BuildWorkerContext;
 import org.hl7.fhir.utilities.IniFile;
-import org.hl7.fhir.utilities.TextFile;
+import org.hl7.fhir.utilities.FileUtilities;
 import org.hl7.fhir.utilities.Utilities;
 import org.hl7.fhir.utilities.filesystem.CSFile;
 
@@ -134,9 +134,9 @@ public class SchemaGenerator {
     single.flush();
     single.close();
 	  for (String n : ini.getPropertyNames("schema")) {
-		  String xsd = TextFile.fileToString(srcDir + n);
+		  String xsd = FileUtilities.fileToString(srcDir + n);
 		  xsd = processSchemaIncludes(definitions, n, xsd, false);
-		  TextFile.stringToFile(xsd, xsdDir + n);
+		  FileUtilities.stringToFile(xsd, xsdDir + n);
 	  }
 
       produceCombinedSchema(definitions, xsdDir, dstDir, srcDir);
@@ -145,15 +145,15 @@ public class SchemaGenerator {
       File[] list = dir.listFiles();
       for (File f : list) {
         if (!f.isDirectory())
-          Utilities.copyFile(f, new CSFile(dstDir+f.getName()));
+          FileUtilities.copyFile(f, new CSFile(dstDir+f.getName()));
       }
     }
   }
 
   private void produceCombinedSchema(Definitions definitions, String xsdDir, String dstDir, String srcDir) throws Exception {
-    String src = TextFile.fileToString(srcDir + "fhir-all.xsd");
+    String src = FileUtilities.fileToString(srcDir + "fhir-all.xsd");
     src = processSchemaIncludes(definitions, "fhir-all.xsd", src, false);
-    TextFile.stringToFile(src, xsdDir + "fhir-all.xsd");
+    FileUtilities.stringToFile(src, xsdDir + "fhir-all.xsd");
   }
 
   private String processSchemaIncludes(Definitions definitions, String filename, String src, boolean singleMode) throws Exception {

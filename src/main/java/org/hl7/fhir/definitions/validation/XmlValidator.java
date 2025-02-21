@@ -44,7 +44,7 @@ import org.hl7.fhir.utilities.Logger.LogMessageType;
 import org.hl7.fhir.utilities.filesystem.CSFile;
 import org.hl7.fhir.utilities.filesystem.CSFileInputStream;
 import org.hl7.fhir.utilities.SchemaInputSource;
-import org.hl7.fhir.utilities.TextFile;
+import org.hl7.fhir.utilities.FileUtilities;
 import org.hl7.fhir.utilities.Utilities;
 import org.hl7.fhir.utilities.XsltUtilities;
 import org.hl7.fhir.utilities.validation.ValidationMessage;
@@ -104,7 +104,7 @@ public class XmlValidator {
     Map<String, byte[]> res = new HashMap<String, byte[]>();
     for (String s : new File(xsltDir).list()) {
       if (s.endsWith(".xslt"))
-        res.put(s, TextFile.fileToBytes(Utilities.path(xsltDir, s)));
+        res.put(s, FileUtilities.fileToBytes(Utilities.path(xsltDir, s)));
     }
     this.transforms = res;
   }
@@ -113,12 +113,12 @@ public class XmlValidator {
     Map<String, byte[]> res = new HashMap<String, byte[]>();
     for (String s : new File(dir).list()) {
       if (s.endsWith(".sch"))
-        res.put(s, TextFile.fileToBytes(Utilities.path(dir, s)));
+        res.put(s, FileUtilities.fileToBytes(Utilities.path(dir, s)));
       boolean ok = false;
       for (String b : names)
         ok = ok || b.equals(s);
       if (ok)
-        res.put(s, TextFile.fileToBytes(Utilities.path(dir, s)));
+        res.put(s, FileUtilities.fileToBytes(Utilities.path(dir, s)));
     }
     this.schemas = res;
   }
@@ -145,7 +145,7 @@ public class XmlValidator {
     byte[] out = null;
     try {
       out = XsltUtilities.saxonTransform(transforms, schemas.get(sch), transforms.get("iso_svrl_for_xslt2.xsl"));
-      out = XsltUtilities.saxonTransform(transforms, TextFile.fileToBytes(filename), out);
+      out = XsltUtilities.saxonTransform(transforms, FileUtilities.fileToBytes(filename), out);
     } catch (Throwable e) {
       errors.add(new ValidationMessage(Source.InstanceValidator, IssueType.STRUCTURE, -1, -1, filename + ":" + sch, e.getMessage(), IssueSeverity.ERROR));
       if (wantThrow)

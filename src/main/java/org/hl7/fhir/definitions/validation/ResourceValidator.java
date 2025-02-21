@@ -43,7 +43,7 @@ import org.hl7.fhir.r5.renderers.RendererFactory;
 import org.hl7.fhir.r5.terminologies.ValueSetUtilities;
 import org.hl7.fhir.r5.utils.Translations;
 import org.hl7.fhir.utilities.StandardsStatus;
-import org.hl7.fhir.utilities.TextFile;
+import org.hl7.fhir.utilities.FileUtilities;
 import org.hl7.fhir.utilities.Utilities;
 import org.hl7.fhir.utilities.validation.ValidationMessage;
 import org.hl7.fhir.utilities.validation.ValidationMessage.IssueSeverity;
@@ -110,7 +110,7 @@ public class ResourceValidator extends BaseValidator {
   private void loadAllowedPluralNames(String srcFolder) throws IOException {
     File pnSource = new File(Utilities.path(srcFolder, "plural-names.txt"));
     if (pnSource.exists()) {
-      String txt = TextFile.fileToString(pnSource);
+      String txt = FileUtilities.fileToString(pnSource);
       for (String s : Utilities.splitLines(txt)) {
         if (!s.startsWith("#")) {
           allowedPluralNames.add(s);

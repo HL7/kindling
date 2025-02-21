@@ -7,7 +7,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.hl7.fhir.utilities.TextFile;
+import org.hl7.fhir.utilities.FileUtilities;
 import org.hl7.fhir.utilities.Utilities;
 
 public class PageCrossLinker {
@@ -102,7 +102,7 @@ public class PageCrossLinker {
         }
         if (fn.exists()) {
           fcount++;
-          String src = TextFile.fileToString(fn);
+          String src = FileUtilities.fileToString(fn);
           int i = src.indexOf("<!--EndReleaseHeader");
           if (i < 1) {
             i = src.indexOf("<!-- EndReleaseHeader");
@@ -122,7 +122,7 @@ public class PageCrossLinker {
                 sp = sp.substring(0, si-2);
               }
               src = sp+buildInsert(s, ver, u)+src.substring(i);
-              TextFile.stringToFile(src, fn);
+              FileUtilities.stringToFile(src, fn);
             }
           }
         }

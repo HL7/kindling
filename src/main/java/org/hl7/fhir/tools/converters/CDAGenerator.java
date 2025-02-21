@@ -39,7 +39,7 @@ import org.hl7.fhir.r5.model.StructureDefinition.TypeDerivationRule;
 import org.hl7.fhir.r5.model.UriType;
 import org.hl7.fhir.r5.utils.ToolingExtensions;
 import org.hl7.fhir.utilities.CommaSeparatedStringBuilder;
-import org.hl7.fhir.utilities.TextFile;
+import org.hl7.fhir.utilities.FileUtilities;
 import org.hl7.fhir.utilities.Utilities;
 import org.hl7.fhir.utilities.xml.XMLUtil;
 import org.w3c.dom.Document;
@@ -164,7 +164,7 @@ public class CDAGenerator {
           "     <sourceUri value=\"cda\\cda-logical-"+sd.getId()+".xml\"/>\r\n"+
           "   </resource>\r\n");
     }
-    TextFile.stringToFile(b.toString(), Utilities.path(target, "ig-template.xml"));
+    FileUtilities.stringToFile(b.toString(), Utilities.path(target, "ig-template.xml"));
 //    dumpPaths();
   }
 

@@ -9,7 +9,7 @@ import java.util.List;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
-import org.hl7.fhir.utilities.TextFile;
+import org.hl7.fhir.utilities.FileUtilities;
 import org.hl7.fhir.utilities.Utilities;
 import org.hl7.fhir.utilities.http.HTTPResult;
 import org.hl7.fhir.utilities.http.ManagedWebAccess;
@@ -77,7 +77,7 @@ public class CKMImporter {
   		Document sxml = loadXml(ckm+"/services/ArchetypeFinderBean/getArchetypeInXML?archetypeId="+id);
   		Element e = XMLUtil.getFirstChild(sxml.getDocumentElement());
   		String src = Utilities.path("[tmp]", id+".xml");
-  		TextFile.stringToFile(e.getTextContent(), src);
+  		FileUtilities.stringToFile(e.getTextContent(), src);
 	  }
 	}
 

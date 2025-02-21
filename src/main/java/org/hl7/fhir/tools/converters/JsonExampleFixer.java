@@ -6,7 +6,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.hl7.fhir.utilities.TextFile;
+import org.hl7.fhir.utilities.FileUtilities;
 
 public class JsonExampleFixer {
 
@@ -16,7 +16,7 @@ public class JsonExampleFixer {
 
   private void process(File file) throws FileNotFoundException, IOException {
     List<String> lines = new ArrayList<>();
-    for (String s : TextFile.fileToString(file).split("\\r?\\n|\\r")) {
+    for (String s : FileUtilities.fileToString(file).split("\\r?\\n|\\r")) {
       lines.add(s);
     }
     for (int i = 0; i < lines.size(); i++) {
@@ -75,7 +75,7 @@ public class JsonExampleFixer {
       }
     }
     String s = String.join("\r\n", lines);
-    TextFile.stringToFile(s, file.getAbsolutePath());
+    FileUtilities.stringToFile(s, file.getAbsolutePath());
   }
 
 }

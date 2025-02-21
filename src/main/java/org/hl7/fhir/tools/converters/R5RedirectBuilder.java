@@ -14,7 +14,7 @@ import java.util.Map;
 
 import org.hl7.fhir.exceptions.FHIRException;
 import org.hl7.fhir.tools.publisher.SpecMapManager;
-import org.hl7.fhir.utilities.TextFile;
+import org.hl7.fhir.utilities.FileUtilities;
 import org.hl7.fhir.utilities.Utilities;
 import org.hl7.fhir.utilities.json.model.JsonObject;
 import org.hl7.fhir.utilities.json.parser.JsonParser;
@@ -45,9 +45,9 @@ public class R5RedirectBuilder {
 
   private void buildRedirects(String templates) throws IOException {
     Map<String, String> map = loadUrlMap();
-    String wct = TextFile.fileToString(Utilities.path(templates, "redirects", "web.config"));
+    String wct = FileUtilities.fileToString(Utilities.path(templates, "redirects", "web.config"));
     wct = wct.replace("<%names%>", nameRedirects(map, templates));
-    TextFile.stringToFile(wct, Utilities.path(web, "web.config"));
+    FileUtilities.stringToFile(wct, Utilities.path(web, "web.config"));
   }
 
   private Map<String, String> loadUrlMap() throws IOException {
@@ -100,15 +100,15 @@ public class R5RedirectBuilder {
   private void makeRedirect(String n, String tgt, String templates) throws FileNotFoundException, IOException {
     String asp;
     if (Utilities.isAbsoluteUrl(tgt)) {
-      asp = TextFile.fileToString(Utilities.path(templates, "redirects", "redirect-external.asp"));
+      asp = FileUtilities.fileToString(Utilities.path(templates, "redirects", "redirect-external.asp"));
       asp = asp.replace("<%tgt%>", tgt);
     } else {
-      asp = TextFile.fileToString(Utilities.path(templates, "redirects", "redirect.asp"));
+      asp = FileUtilities.fileToString(Utilities.path(templates, "redirects", "redirect.asp"));
       asp = asp.replace("<%tgt%>", tgt.replace(".html", ""));
     }
     String dir = Utilities.path(web, n);
-    Utilities.createDirectory(dir);
-    TextFile.stringToFile(asp, Utilities.path(dir, "index.asp"));    
+    FileUtilities.createDirectory(dir);
+    FileUtilities.stringToFile(asp, Utilities.path(dir, "index.asp"));    
   }
 
   private void generateRedirect(String rt, List<String> urls, Map<String, String> map) throws IOException {
@@ -154,16 +154,16 @@ public class R5RedirectBuilder {
     String asp = b.toString();
     File f = new File(Utilities.path(web, "cr"+rt+".asp"));
     if (f.exists()) {
-      String aspc = TextFile.fileToString(f);
+      String aspc = FileUtilities.fileToString(f);
       if (aspc.equals(asp))
         return;
     }
-    TextFile.stringToFile(b.toString(), f);       
+    FileUtilities.stringToFile(b.toString(), f);       
   }
 
   
   private void processSP(String web) throws FHIRException, FileNotFoundException, IOException {
-    XhtmlNode x = new XhtmlParser().parseFragment(TextFile.fileToString(Utilities.path(web, "searchparameter-registry.html")));
+    XhtmlNode x = new XhtmlParser().parseFragment(FileUtilities.fileToString(Utilities.path(web, "searchparameter-registry.html")));
     XhtmlNode tbl = x.getElementById("sp");
     for (XhtmlNode tr : tbl.getChildren("tr")) {
       List<XhtmlNode> tdl = tr.getChildren("td");
@@ -184,7 +184,7 @@ public class R5RedirectBuilder {
       if (f.getName().endsWith("json")) {
         String src = readJsonFile(f);
         if (src != null) {
-          String fn = Utilities.changeFileExt(f.getName(), ".html");
+          String fn = FileUtilities.changeFileExt(f.getName(), ".html");
           File f2 = new File(Utilities.path(web, fn));
           if (f2.exists()) {
             files.put(src, f2.getName());
@@ -222,7 +222,7 @@ public class R5RedirectBuilder {
       b.append(urlMap.get(s));
       b.append("\r\n");
     }
-    TextFile.stringToFile(b.toString(), Utilities.path(web, "url-map.csv"));
+    FileUtilities.stringToFile(b.toString(), Utilities.path(web, "url-map.csv"));
     System.out.println("Broken Links: "+i);
   }
 
@@ -241,7 +241,7 @@ public class R5RedirectBuilder {
   private void loadFromPackage(Map<String, String> files, Map<String, String> urlMap, String prefix, NpmPackage npm) throws JsonSyntaxException, IOException {
     System.out.println("Load from "+npm.id());
     if (npm.hasFile("other", "spec.internals")) {
-      SpecMapManager smm = new SpecMapManager(TextFile.streamToBytes(npm.load("other", "spec.internals")), npm.fhirVersion());
+      SpecMapManager smm = new SpecMapManager(FileUtilities.streamToBytes(npm.load("other", "spec.internals")), npm.fhirVersion());
       for (String s : smm.getPathUrls()) {
         if (isRelevantURL(s)) {
           if (s.contains("|")) {

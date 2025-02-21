@@ -14,7 +14,7 @@ import org.hl7.fhir.definitions.model.Definitions;
 import org.hl7.fhir.definitions.model.ElementDefn;
 import org.hl7.fhir.definitions.model.ResourceDefn;
 import org.hl7.fhir.definitions.model.TypeRef;
-import org.hl7.fhir.utilities.TextFile;
+import org.hl7.fhir.utilities.FileUtilities;
 import org.hl7.fhir.utilities.json.JsonTrackingParser;
 
 import com.google.gson.JsonElement;
@@ -96,7 +96,7 @@ public class XVerPathsGenerator {
       }
     }
     r5.append("}\r\n");
-    TextFile.stringToFile(r5.toString(), dest);
+    FileUtilities.stringToFile(r5.toString(), dest);
   }
 
 

@@ -39,7 +39,7 @@ import org.hl7.fhir.r5.utils.NPMPackageGenerator;
 import org.hl7.fhir.r5.utils.NPMPackageGenerator.Category;
 import org.hl7.fhir.tools.publisher.SpecMapManager;
 import org.hl7.fhir.utilities.IniFile;
-import org.hl7.fhir.utilities.TextFile;
+import org.hl7.fhir.utilities.FileUtilities;
 import org.hl7.fhir.utilities.Utilities;
 import org.hl7.fhir.utilities.VersionUtilities;
 import org.hl7.fhir.utilities.npm.PackageGenerator.PackageType;
@@ -139,7 +139,7 @@ public class SpecNPMPackageGenerator {
     
     System.out.println(" .. Building NPM Package");
 
-    NPMPackageGenerator npm = new NPMPackageGenerator(Utilities.path(folder, pidRoot+".core.tgz"), "http://hl7.org/fhir", url, PackageType.CORE, ig, genDate, true);
+    NPMPackageGenerator npm = new NPMPackageGenerator(ig.getPackageId(), Utilities.path(folder, pidRoot+".core.tgz"), "http://hl7.org/fhir", url, PackageType.CORE, ig, genDate, true);
     
     ByteArrayOutputStream bs = new ByteArrayOutputStream();
     new org.hl7.fhir.r5.formats.JsonParser().setOutputStyle(OutputStyle.NORMAL).compose(bs, ig);
@@ -160,11 +160,11 @@ public class SpecNPMPackageGenerator {
     
     for (String fn : new File(folder).list()) {
       if (fn.endsWith(".schema.json") || fn.endsWith(".openapi.json") ) {
-        byte[] b = TextFile.fileToBytes(Utilities.path(folder, fn));
+        byte[] b = FileUtilities.fileToBytes(Utilities.path(folder, fn));
         npm.addFile(Category.OPENAPI, fn, b);
       }
       if (fn.endsWith(".xsd") || fn.endsWith(".sch") ) {
-        byte[] b = TextFile.fileToBytes(Utilities.path(folder, fn));
+        byte[] b = FileUtilities.fileToBytes(Utilities.path(folder, fn));
         npm.addFile(Category.SCHEMATRON, fn, b);
       }
     }
@@ -178,7 +178,7 @@ public class SpecNPMPackageGenerator {
     ig.setDescription("FHIR Core package - the NPM package that contains all the definitions for the base FHIR specification (XML)");
     ig.setPackageId(pidRoot+".corexml");
     
-    npm = new NPMPackageGenerator(Utilities.path(folder, pidRoot+".corexml.tgz"), "http://hl7.org/fhir", url, PackageType.CORE, ig, genDate, true);
+    npm = new NPMPackageGenerator(ig.getPackageId(), Utilities.path(folder, pidRoot+".corexml.tgz"), "http://hl7.org/fhir", url, PackageType.CORE, ig, genDate, true);
     bs = new ByteArrayOutputStream();
     new org.hl7.fhir.r5.formats.XmlParser().setOutputStyle(OutputStyle.NORMAL).compose(bs, ig);
     npm.addFile(Category.OTHER, "ig-r4.xml", bs.toByteArray());
@@ -286,7 +286,7 @@ public class SpecNPMPackageGenerator {
       if (f.getName().endsWith(".json") && !f.getName().endsWith(".diff.json") && !f.getName().endsWith(".schema.json") && !f.getName().equals("package.json") 
           && !f.getName().equals("backbone-elements.json")&& !f.getName().equals("choice-elements.json")) {
         try {
-          byte[] b = TextFile.fileToBytes(f.getAbsolutePath());
+          byte[] b = FileUtilities.fileToBytes(f.getAbsolutePath());
           loadFile(reslist, b, f.getAbsolutePath());
         } catch (Exception e) {
           // nothing - we'll just ignore the file
@@ -320,7 +320,7 @@ public class SpecNPMPackageGenerator {
   }
 
   private JsonObject parseJson(byte[] b) throws JsonSyntaxException, IOException {
-    return (JsonObject) new com.google.gson.JsonParser().parse(TextFile.bytesToString(b, true));
+    return (JsonObject) new com.google.gson.JsonParser().parse(FileUtilities.bytesToString(b, true));
   }
 
   private boolean hasEntry(List<ResourceEntry> reslist, String fhirType, String id) {

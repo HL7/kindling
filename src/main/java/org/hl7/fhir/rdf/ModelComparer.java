@@ -47,7 +47,7 @@ public class ModelComparer {
             b.append(t.getObject().toString());
             b.append("\r\n");
         }
-//    TextFile.stringToFile(b.toString(), filename);
+//    FileUtilities.stringToFile(b.toString(), filename);
 //    System.out.println(b.toString());
     }
 

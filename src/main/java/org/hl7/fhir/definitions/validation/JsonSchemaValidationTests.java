@@ -5,7 +5,7 @@ import java.io.IOException;
 
 import org.everit.json.schema.ValidationException;
 import org.everit.json.schema.loader.SchemaLoader;
-import org.hl7.fhir.utilities.TextFile;
+import org.hl7.fhir.utilities.FileUtilities;
 import org.hl7.fhir.utilities.Utilities;
 import org.hl7.fhir.utilities.filesystem.CSFileInputStream;
 import org.json.JSONObject;
@@ -219,7 +219,7 @@ public class JsonSchemaValidationTests {
 
   public void testFile(String name) throws FileNotFoundException, IOException {
     if (jschema == null) {
-      String source = TextFile.fileToString(Utilities.path("C:\\work\\org.hl7.fhir\\build\\publish", "fhir.schema.json"));
+      String source = FileUtilities.fileToString(Utilities.path("C:\\work\\org.hl7.fhir\\build\\publish", "fhir.schema.json"));
       JSONObject rawSchema = new JSONObject(new JSONTokener(source));
       jschema = SchemaLoader.load(rawSchema);
     }

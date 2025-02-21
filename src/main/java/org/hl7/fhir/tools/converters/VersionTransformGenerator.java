@@ -24,7 +24,7 @@ import org.hl7.fhir.r5.model.StructureDefinition.TypeDerivationRule;
 import org.hl7.fhir.r5.model.ValueSet;
 import org.hl7.fhir.r5.model.ValueSet.ConceptSetComponent;
 import org.hl7.fhir.r5.utils.ToolingExtensions;
-import org.hl7.fhir.utilities.TextFile;
+import org.hl7.fhir.utilities.FileUtilities;
 import org.hl7.fhir.utilities.Utilities;
 import org.hl7.fhir.utilities.npm.FilesystemPackageCacheManager;
 import org.hl7.fhir.utilities.npm.NpmPackage;
@@ -111,7 +111,7 @@ public class VersionTransformGenerator {
       b.append("  src.value as v -> tgt.value = v \""+n+"Value\";\r\n");
       b.append("}\r\n");
     }
-    TextFile.stringToFile(b.toString(), path);
+    FileUtilities.stringToFile(b.toString(), path);
   }
   
   private void generate(String path, StructureDefinition sd, String suffix, String sourceV, String targetV, String srcVP, String tgtVP) throws IOException {
@@ -134,7 +134,7 @@ public class VersionTransformGenerator {
     for (StringBuilder gb : list) {
       b.append(gb.toString());
     }
-    TextFile.stringToFile(b.toString(), path);
+    FileUtilities.stringToFile(b.toString(), path);
   }
 
   private void generateGroup(List<StringBuilder> list, Map<String, StringBuilder> conceptMaps, StructureDefinition sd, ElementDefinition ed, String name, String st, String tt, String sv, String tv) {

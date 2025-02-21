@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.hl7.fhir.utilities.FileUtilities;
 import org.hl7.fhir.utilities.Utilities;
 import org.hl7.fhir.utilities.json.JsonTrackingParser;
 import org.hl7.fhir.utilities.json.JsonUtilities;
@@ -13,7 +14,7 @@ import com.google.gson.JsonObject;
 public class WebSiteMaintainer {
 
     public static void main(String[] args) throws IOException {
-        String root = Utilities.getDirectoryForFile(args[0]);
+        String root = FileUtilities.getDirectoryForFile(args[0]);
         List<JsonObject> pubs = new ArrayList<>();
         List<String> dirs = new ArrayList<>();
         JsonObject cv = null;

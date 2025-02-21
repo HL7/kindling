@@ -10,6 +10,7 @@ import org.hl7.fhir.r5.formats.IParser.OutputStyle;
 import org.hl7.fhir.r5.formats.XmlParser;
 import org.hl7.fhir.r5.model.ImplementationGuide;
 import org.hl7.fhir.r5.model.SearchParameter;
+import org.hl7.fhir.utilities.FileUtilities;
 import org.hl7.fhir.utilities.Utilities;
 
 public class ValueSetFinder {
@@ -29,7 +30,7 @@ public class ValueSetFinder {
   }
 
   private static void checkSearchParams(File f) throws Exception {
-    String folder = Utilities.getDirectoryForFile(f.getAbsolutePath());
+    String folder = FileUtilities.getDirectoryForFile(f.getAbsolutePath());
     System.out.println(f.getName());
     try {
       Set<String> s = new HashSet<>();

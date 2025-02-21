@@ -19,6 +19,7 @@ import org.hl7.fhir.r5.terminologies.CodeSystemUtilities;
 import org.hl7.fhir.r5.terminologies.ValueSetUtilities;
 import org.hl7.fhir.r5.utils.ToolingExtensions;
 import org.hl7.fhir.tools.publisher.KindlingUtilities;
+import org.hl7.fhir.utilities.FileUtilities;
 import org.hl7.fhir.utilities.Utilities;
 import org.hl7.fhir.utilities.xls.XLSXmlParser;
 import org.hl7.fhir.utilities.xls.XLSXmlParser.Sheet;
@@ -46,7 +47,7 @@ public class BindingsFixer {
     Sheet sheet = xls.getSheets().get("Bindings");
     if (sheet != null) {
       String sfx = "";
-      processSheet(xls, sheet, Utilities.getDirectoryForFile(f.getAbsolutePath()), sfx);
+      processSheet(xls, sheet, FileUtilities.getDirectoryForFile(f.getAbsolutePath()), sfx);
     }    
   }
 

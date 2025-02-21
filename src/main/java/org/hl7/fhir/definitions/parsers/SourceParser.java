@@ -121,7 +121,7 @@ import org.hl7.fhir.utilities.Logger.LogMessageType;
 import org.hl7.fhir.utilities.filesystem.CSFile;
 import org.hl7.fhir.utilities.filesystem.CSFileInputStream;
 import org.hl7.fhir.utilities.StandardsStatus;
-import org.hl7.fhir.utilities.TextFile;
+import org.hl7.fhir.utilities.FileUtilities;
 import org.hl7.fhir.utilities.Utilities;
 import org.hl7.fhir.utilities.validation.ValidationMessage;
 import org.hl7.fhir.utilities.xhtml.NodeType;
@@ -433,7 +433,7 @@ public class SourceParser {
       logger.log("Fetch "+n, LogMessageType.Process);
       if (n.startsWith("ftp:")) {
         byte[] source = ftpFetch(n);
-        TextFile.bytesToFile(source, file.getAbsolutePath());
+        FileUtilities.bytesToFile(source, file.getAbsolutePath());
       } else if (n.startsWith("http:") || n.startsWith("https:"))
         throw new Exception("HTTP externals are not yet supported: "+n);
       else 
@@ -554,7 +554,7 @@ public class SourceParser {
     File spreadsheet = new CSFile(Utilities.path(srcDir, n, n+"-spreadsheet.xml"));    
     OldSpreadsheetParser sparser = new OldSpreadsheetParser(n, new CSFileInputStream(spreadsheet), spreadsheet.getName(), spreadsheet.getAbsolutePath(), definitions, srcDir, logger, registry, version, context, genDate, false, page, 
         false, ini, wg("fhir"), definitions.getProfileIds(), fpUsages, page.getConceptMaps(), exceptionIfExcelNotNormalised, page.packageInfo(), page.getRc());
-    sparser.setFolder(Utilities.getDirectoryForFile(spreadsheet.getAbsolutePath()));
+    sparser.setFolder(FileUtilities.getDirectoryForFile(spreadsheet.getAbsolutePath()));
     LogicalModel lm = sparser.parseLogicalModel();
     lm.setId(n);
     lm.setSource(spreadsheet.getAbsolutePath());
@@ -977,7 +977,7 @@ public class SourceParser {
     String usage = "core";
     String[] v = ini.getStringProperty("profiles", n).split("\\:");
     File spreadsheet = new CSFile(Utilities.path(rootDir, v[1]));
-    if (TextFile.fileToString(spreadsheet.getAbsolutePath()).contains("urn:schemas-microsoft-com:office:spreadsheet")) {
+    if (FileUtilities.fileToString(spreadsheet.getAbsolutePath()).contains("urn:schemas-microsoft-com:office:spreadsheet")) {
       OldSpreadsheetParser sparser = new OldSpreadsheetParser(n, new CSFileInputStream(spreadsheet), spreadsheet.getName(), spreadsheet.getAbsolutePath(), definitions, srcDir, logger, registry, version, context, genDate, false, page, false, ini, wg(v[0]), definitions.getProfileIds(), fpUsages, page.getConceptMaps(), exceptionIfExcelNotNormalised, page.packageInfo(), page.getRc());
       try {
         Profile pack = new Profile(usage);
@@ -988,7 +988,7 @@ public class SourceParser {
           throw new Exception("Duplicate Pack id "+n);
         definitions.getPackList().add(pack);
         definitions.getPackMap().put(n, pack);
-        sparser.parseConformancePackage(pack, definitions, Utilities.getDirectoryForFile(spreadsheet.getAbsolutePath()), pack.getCategory(), issues, null);
+        sparser.parseConformancePackage(pack, definitions, FileUtilities.getDirectoryForFile(spreadsheet.getAbsolutePath()), pack.getCategory(), issues, null);
         errors.addAll(sparser.getErrors());
       } catch (Exception e) {
         throw new Exception("Error Parsing StructureDefinition: '"+n+"': "+e.getMessage(), e);
@@ -1066,8 +1066,8 @@ public class SourceParser {
   private void loadConformancePackage(Profile ap, List<ValidationMessage> issues, WorkGroup wg) throws FileNotFoundException, IOException, Exception {
     if (ap.getSourceType() == ConformancePackageSourceType.Spreadsheet) {
       OldSpreadsheetParser sparser = new OldSpreadsheetParser(ap.getCategory(), new CSFileInputStream(ap.getSource()), Utilities.noString(ap.getId()) ? ap.getSource() : ap.getId(), ap.getSource(), definitions, srcDir, logger, registry, version, context, genDate, false, page, false, ini, wg, definitions.getProfileIds(), fpUsages, page.getConceptMaps(), exceptionIfExcelNotNormalised, page.packageInfo(), page.getRc());
-      sparser.setFolder(Utilities.getDirectoryForFile(ap.getSource()));
-      sparser.parseConformancePackage(ap, definitions, Utilities.getDirectoryForFile(ap.getSource()), ap.getCategory(), issues, wg);
+      sparser.setFolder(FileUtilities.getDirectoryForFile(ap.getSource()));
+      sparser.parseConformancePackage(ap, definitions, FileUtilities.getDirectoryForFile(ap.getSource()), ap.getCategory(), issues, wg);
       errors.addAll(sparser.getErrors());
     } else if (ap.getSourceType() == ConformancePackageSourceType.StructureDefinition) {
       Resource rf;
@@ -1473,9 +1473,9 @@ public class SourceParser {
   private ValueSetGenerator vsGen;
 
   public void checkConditions(List<String> errors, Map<String, Long> dates) throws Exception {
-    Utilities.checkFolder(srcDir, errors);
-    Utilities.checkFolder(termDir, errors);
-    Utilities.checkFolder(imgDir, errors);
+    FileUtilities.checkFolderExists(srcDir, errors);
+    FileUtilities.checkFolderExists(termDir, errors);
+    FileUtilities.checkFolderExists(imgDir, errors);
     this.dates = dates;
     checkFile("required", termDir, "bindings.xml", errors, "all");
     checkFile("required", dtDir, "primitives.xml", errors, "all");

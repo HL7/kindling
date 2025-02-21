@@ -42,7 +42,7 @@ import org.hl7.fhir.definitions.model.TypeRef;
 import org.hl7.fhir.exceptions.FHIRException;
 import org.hl7.fhir.tools.publisher.BuildWorkerContext;
 import org.hl7.fhir.utilities.IniFile;
-import org.hl7.fhir.utilities.TextFile;
+import org.hl7.fhir.utilities.FileUtilities;
 import org.hl7.fhir.utilities.Utilities;
 import org.hl7.fhir.utilities.filesystem.CSFile;
 
@@ -122,7 +122,7 @@ public class SchemaGenerator {
 	  list = dir.listFiles();
 	  for (File f : list) {
 	    if (!f.isDirectory() && f.getName().endsWith(".schema.json"))
-	      Utilities.copyFile(f, new CSFile(dstDir+f.getName()));
+	      FileUtilities.copyFile(f, new CSFile(dstDir+f.getName()));
     }
   }
 
@@ -187,13 +187,13 @@ public class SchemaGenerator {
   private void save(JsonObject s, String filename) throws IOException {
     Gson gson = new GsonBuilder().setPrettyPrinting().create();
     String json = gson.toJson(s);
-    TextFile.stringToFile(json, filename); // remove BOM, see https://chat.fhir.org/#narrow/stream/implementers/subject/Removal.20of.20byte.20order.20mark.20in.20json.20schemas
+    FileUtilities.stringToFile(json, filename); // remove BOM, see https://chat.fhir.org/#narrow/stream/implementers/subject/Removal.20of.20byte.20order.20mark.20in.20json.20schemas
   }
 
   private void produceCombinedSchema(Definitions definitions, String xsdDir, String dstDir, String srcDir) throws Exception {
-    String src = TextFile.fileToString(srcDir + "fhir-all.schema.json");
+    String src = FileUtilities.fileToString(srcDir + "fhir-all.schema.json");
     src = processSchemaIncludes(definitions, "fhir-all.schema.json", src, false);
-    TextFile.stringToFile(src, xsdDir + "fhir-all.schema.json");
+    FileUtilities.stringToFile(src, xsdDir + "fhir-all.schema.json");
   }
 
   private String processSchemaIncludes(Definitions definitions, String filename, String src, boolean singleMode) throws Exception {

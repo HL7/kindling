@@ -30,6 +30,7 @@ POSSIBILITY OF SUCH DAMAGE.
 import java.io.File;
 import java.io.IOException;
 
+import org.hl7.fhir.utilities.FileUtilities;
 import org.hl7.fhir.utilities.Utilities;
 
 /**
@@ -63,7 +64,7 @@ public class FolderManager {
     tmpDir = root+sl+"temp"+sl;
     templateDir = root+sl+"tools"+sl+"templates"+sl;
     if (!new File(root+sl+"temp").exists()) {
-      Utilities.createDirectory(root+sl+"temp");
+      FileUtilities.createDirectory(root+sl+"temp");
     }
     if (outputdir == null)
       dstDir = root+sl+"publish"+sl;
