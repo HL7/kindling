@@ -683,7 +683,7 @@ public class ExampleInspector implements IValidatorResourceFetcher, IValidationP
 
 
   @Override
-  public ReferenceValidationPolicy policyForReference(IResourceValidator validator, Object appContext, String path, String url) {
+  public ReferenceValidationPolicy policyForReference(IResourceValidator validator, Object appContext, String path, String url, ReferenceDestinationType refType) {
     String[] parts = url.split("\\/");
     if (VALIDATE_CONFORMANCE_REFERENCES) {
       if (Utilities.existsInList(url, "ValueSet/LOINCDepressionAnswersList", "ValueSet/LOINCDifficultyAnswersList", "CodeSystem/npi-taxonomy", "ValueSet/1.2.3.4.5", "StructureDefinition/daf-patient", "ValueSet/zika-affected-area"))
