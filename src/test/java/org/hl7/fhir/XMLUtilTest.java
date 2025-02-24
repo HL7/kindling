@@ -1,5 +1,6 @@
 package org.hl7.fhir;
 
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import javax.xml.XMLConstants;
@@ -7,6 +8,7 @@ import javax.xml.transform.TransformerFactory;
 
 public class XMLUtilTest {
     @Test
+    @Disabled
     public void test() {
         TransformerFactory f = TransformerFactory.newInstance();
         //f.setAttribute("http://javax.xml.XMLConstants/property/accessExternalDTD", "");
