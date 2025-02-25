@@ -1448,7 +1448,16 @@ public class ProfileGenerator {
         sp.setMultipleOr(false);
       } 
       if (VersionIndependentResourceTypesAll.isValidCode(p.getType())) {
-        sp.addBase(VersionIndependentResourceTypesAll.fromCode(p.getType()));
+        StandardsStatus ss = spd.getStandardsStatus();
+        StandardsStatus ts = p.getStandardsStatus();
+        if (ss == StandardsStatus.NORMATIVE && ts != StandardsStatus.NORMATIVE) {
+          Enumeration<Enumerations.VersionIndependentResourceTypesAll> t = new Enumeration(new Enumerations.VersionIndependentResourceTypesAllEnumFactory());
+          t.setValue(VersionIndependentResourceTypesAll.fromCode(p.getType()));
+          t.setStandardsStatus(ts);
+          sp.getBase().add(t);
+        } else {
+          sp.addBase(VersionIndependentResourceTypesAll.fromCode(p.getType()));
+        }
       } else {
         Enumeration<VersionIndependentResourceTypesAll> t = sp.addBaseElement();
         t.setValueAsString("Resource");
