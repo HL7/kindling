@@ -370,11 +370,13 @@
             <artifactId>validating_2.12</artifactId>
             <version>0.2.25</version>
         </dependency>
+        <!--
         <dependency>
             <groupId>io.circe</groupId>
             <artifactId>circe-core_2.11</artifactId>
             <version>0.7.0-M2</version>
         </dependency>
+        -->
         <dependency>
             <groupId>javax.servlet</groupId>
             <artifactId>javax.servlet-api</artifactId>
