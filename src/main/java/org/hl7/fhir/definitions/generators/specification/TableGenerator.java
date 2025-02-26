@@ -158,11 +158,20 @@ public class TableGenerator extends BaseGenerator {
           row.setIcon("icon_primitive.png", HierarchicalTableGenerator.TEXT_ICON_PRIMITIVE);
           c = gen.new Cell(null, prefix+"datatypes.html#"+t, t, null, null);
         } else {
-          if (t.equals("Extension"))
+          if (t.equals("Extension")) {
             row.setIcon("icon_extension_simple.png", HierarchicalTableGenerator.TEXT_ICON_EXTENSION);
-          else
+          } else if ("Resource".equals(t)) {
+            row.setIcon("icon_resource.png", HierarchicalTableGenerator.TEXT_ICON_RESOURCE);              
+          } else {
             row.setIcon("icon_datatype.gif", HierarchicalTableGenerator.TEXT_ICON_DATATYPE);
+          }
           c = gen.new Cell(null, prefix+definitions.getSrcFile(t)+".html#"+t.replace("*", "open"), t, null, null);
+          if (e.getTypes().get(0).getProfile() != null) {
+            String tp = e.getTypes().get(0).getProfile();
+            c.getPieces().add(gen.new Piece(null, " (", null));
+            c.getPieces().add(gen.new Piece(tp.toLowerCase()+".html", tp, null));
+            c.getPieces().add(gen.new Piece(null, ")", null));
+          }
         }
         row.getCells().add(c);
       } else {
