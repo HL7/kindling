@@ -778,6 +778,7 @@ public class ExampleInspector implements IValidatorResourceFetcher, IValidationP
 
     if (con != null) {
       List<ValidationMessage> errs = new ArrayList<>();
+      validator.setAllowXsiLocation(true);
       validator.validate(null, errs, new FileInputStream(f), fmt);
 
       boolean fail = false;
