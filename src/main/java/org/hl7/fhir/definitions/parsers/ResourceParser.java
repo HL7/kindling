@@ -280,8 +280,12 @@ public class ResourceParser {
     sd.setVersion(version);
     sd.setFhirVersion(FHIRVersion.fromCode(version));
 
-    ConstraintStructure cs = new ConstraintStructure(sd, ig, wg == null ? wg(sd) : wg, null, false);
+    ConstraintStructure cs = new ConstraintStructure(sd, ig, wg == null ? wg(sd) : wg, fmm(sd), false);
     return cs;
+  }
+
+  private String fmm(StructureDefinition sd) {
+    return ToolingExtensions.readStringExtension(sd, ToolingExtensions.EXT_FMM_LEVEL);
   }
 
   private WorkGroup wg(StructureDefinition ed) {

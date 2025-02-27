@@ -4887,7 +4887,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     List<String> namespaces = new ArrayList<String>();
     Map<String, ValueSet> vslist = new HashMap<String, ValueSet>();
     for (String sn : igResources.keySet()) {
-      if (igResources.get(sn) instanceof ValueSet) {
+      if (igResources.get(sn) instanceof ValueSet && !isImplictValueSet((ValueSet) igResources.get(sn))) {
         vslist.put(sn, (ValueSet) igResources.get(sn));
         String n = getNamespace(sn);
         if (!namespaces.contains(n))
@@ -6154,7 +6154,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
 
     List<String> sorts = new ArrayList<String>();
     for (ValueSet vs : definitions.getValuesets().getList()) {
-      if (referencesSnomed(vs) && isLocalResource(vs)) {
+      if (referencesSnomed(vs) && isLocalResource(vs) && !isImplictValueSet(vs)) {
         sorts.add(vs.getUrl());
       }
     }
@@ -6170,6 +6170,10 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     }
     s.append("</table>\r\n");
     return s.toString();
+  }
+
+  private boolean isImplictValueSet(ValueSet vs) {
+    return vs.getUrl().contains("?");
   }
 
   private String summariseSCTCLD(ValueSet vs) {
