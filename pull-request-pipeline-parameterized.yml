@@ -22,4 +22,4 @@ jobs:
               jdkArchitectureOption: 'x64'
               publishJUnitResults: true
               testResultsFiles: '**/TEST-*.xml'
-              goals: 'clean build'
+              goals: 'clean install'
