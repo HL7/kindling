@@ -83,7 +83,7 @@ steps:
     inputs:
       mavenPomFile: 'pom.xml'
       mavenOptions: '-Xmx3072m'
-      options: '--settings $(System.DefaultWorkingDirectory)/settings.xml'
+      options: '--settings $(Agent.TempDirectory)/settings.xml'
       javaHomeOption: 'JDKVersion'
       jdkVersionOption: '1.11'
       jdkArchitectureOption: 'x64'
@@ -94,7 +94,7 @@ steps:
   - task: Maven@4
     displayName: 'Deploy to Sonatype staging'
     inputs:
-      mavenPomFile: '$(System.DefaultWorkingDirectory)/pom.xml'
+      mavenPomFile: 'pom.xml'
       goals: deploy
-      options: '--settings $(System.DefaultWorkingDirectory)/settings.xml -Dmaven.test.skip -DdeployToSonatype -e'
+      options: '--settings $(Agent.TempDirectory)/settings.xml -Dmaven.test.skip -DdeployToSonatype -e'
       publishJUnitResults: false
