@@ -1245,7 +1245,9 @@ public class ProfileGenerator {
     else
       p.setDate(genDate.getTime());
 
-    if (pack.hasMetadata("fmm-level"))
+    if (profile.getFmm() != null) {
+      ToolingExtensions.addIntegerExtension(p, ToolingExtensions.EXT_FMM_LEVEL, Integer.parseInt(profile.getFmm()));      
+    } else if (pack.hasMetadata("fmm-level"))
       ToolingExtensions.addIntegerExtension(p, ToolingExtensions.EXT_FMM_LEVEL, Integer.parseInt(pack.getFmmLevel()));
     else if (pack.hasMetadata("fmm"))
       ToolingExtensions.addIntegerExtension(p, ToolingExtensions.EXT_FMM_LEVEL, Integer.parseInt(pack.metadata("fmm")));
