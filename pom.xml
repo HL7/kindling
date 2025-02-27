@@ -139,6 +139,11 @@
                 <artifactId>jgrapht-core</artifactId>
                 <version>1.5.2</version>
             </dependency>
+            <dependency>
+                <groupId>com.google.protobuf</groupId>
+                <artifactId>protobuf-java</artifactId>
+                <version>3.25.5</version>
+            </dependency>
         </dependencies>
     </dependencyManagement>
     <dependencies>
@@ -568,7 +573,7 @@
         <dependency>
             <groupId>org.fhir</groupId>
             <artifactId>ucum</artifactId>
-            <version>1.0.3</version>
+            <version>1.0.9</version>
         </dependency>
         <dependency>
             <groupId>org.hamcrest</groupId>
