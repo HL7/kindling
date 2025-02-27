@@ -13,14 +13,13 @@ jobs:
 
         steps:
           # Runs 'mvn clean install'
-          - task: Gradle@3
+          - task: Maven@4
             inputs:
-              workingDirectory: ''
-              gradleWrapperFile: 'gradlew'
-              gradleOptions: '-Xmx3072m'
+              mavenPomFile: 'pom.xml'
+              mavenOptions: '-Xmx3072m -Dmaven.resolver.transport=wagon'
               javaHomeOption: 'JDKVersion'
               jdkVersionOption: '${{image.jdkVersion}}'
               jdkArchitectureOption: 'x64'
               publishJUnitResults: true
               testResultsFiles: '**/TEST-*.xml'
-              tasks: 'clean build'
+              goals: 'clean build'
