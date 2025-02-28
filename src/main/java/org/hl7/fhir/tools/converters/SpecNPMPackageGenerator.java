@@ -178,7 +178,7 @@ public class SpecNPMPackageGenerator {
     ig.setDescription("FHIR Core package - the NPM package that contains all the definitions for the base FHIR specification (XML)");
     ig.setPackageId(pidRoot+".corexml");
     
-    npm = new NPMPackageGenerator(pidRoot+".corexml", Utilities.path(folder, pidRoot+".corexml.tgz"), "http://hl7.org/fhir", url, PackageType.CORE, ig, genDate, null, true, null);
+    npm = new NPMPackageGenerator(pidRoot+".corexml", Utilities.path(folder, pidRoot+".corexml.tgz"), "http://hl7.org/fhir", url, PackageType.CORE, ig, genDate, null, true);
     bs = new ByteArrayOutputStream();
     new org.hl7.fhir.r5.formats.XmlParser().setOutputStyle(OutputStyle.NORMAL).compose(bs, ig);
     npm.addFile(Category.OTHER, "ig-r4.xml", bs.toByteArray());

@@ -30,6 +30,7 @@ import org.hl7.fhir.definitions.model.Example;
 import org.hl7.fhir.definitions.model.Invariant;
 import org.hl7.fhir.definitions.model.ResourceDefn;
 import org.hl7.fhir.definitions.model.SearchParameterDefn;
+import org.hl7.fhir.definitions.model.TypeDefn;
 import org.hl7.fhir.definitions.validation.XmlValidator;
 import org.hl7.fhir.exceptions.FHIRException;
 import org.hl7.fhir.exceptions.PathEngineException;
@@ -775,6 +776,9 @@ public class ExampleInspector implements IValidatorResourceFetcher, IValidationP
     String inv = f.getName();
     inv = inv.substring(0, inv.indexOf("."));
     Invariant con = rd.findInvariant(inv);
+    if (con == null) {
+      con = findInvInAnyDefinition(inv);
+    }
 
     if (con != null) {
       List<ValidationMessage> errs = new ArrayList<>();
@@ -796,6 +800,22 @@ public class ExampleInspector implements IValidatorResourceFetcher, IValidationP
       System.out.println("Didn't find invariant for "+f.getName());
       return false;
     }
+  }
+
+  private Invariant findInvInAnyDefinition(String inv) {
+    for (ResourceDefn r : definitions.getResources().values()) {
+      Invariant con = r.findInvariant(inv);
+      if (con != null) {
+        return con;
+      }
+    }
+    for (TypeDefn r : definitions.getTypes().values()) {
+      Invariant con = r.findInvariant(inv);
+      if (con != null) {
+        return con;
+      }
+    }
+    return null;
   }
 
   @Override

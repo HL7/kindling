@@ -6645,7 +6645,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
       else if (com[0].equals("search-location"))
         src = s1+searchLocation+s3;
       else if (com[0].equals("release-notes"))
-        src = s1+FileUtilities.fileToString(Utilities.path(folders.srcDir, resource.getName(), resource.getName()+"-release-notes.xml"))+s3;
+        src = s1+FileUtilities.fileToString(Utilities.path(folders.srcDir, resource.getName().toLowerCase(), resource.getName()+"-release-notes.xml"))+s3;
       else if (com[0].equals("extensions-location")) 
         src = s1+extensionsLocation+s3;
       else if (com[0].equals("resurl")) {
