@@ -163,6 +163,9 @@ public class XSDBaseGenerator  extends XSDRootGenerator {
     if (cd.getBinding() == BindingMethod.Special) {
       return Utilities.existsInList(cd.getValueSet().getUrl(), "http://hl7.org/fhir/ValueSet/resource-types");
     }
+    if (Utilities.existsInList(cd.getName(), "MimeType", "SupplementedMimeType")) {
+      return false;
+    }
     boolean ok = cd.getBinding() == (BindingSpecification.BindingMethod.CodeList) || (cd.getStrength() == BindingStrength.REQUIRED && cd.getBinding() == BindingMethod.ValueSet);
     if (ok) {
       if (cd.getValueSet() != null && cd.getValueSet().hasCompose() && cd.getValueSet().getCompose().getInclude().size() == 1) {

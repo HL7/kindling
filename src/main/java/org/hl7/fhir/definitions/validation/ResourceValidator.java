@@ -1206,7 +1206,7 @@ public class ResourceValidator extends BaseValidator {
         if (b.length() < 3)
           throw new Error("surprise");
         String esd = b.substring(3);
-        rule(errors, ValidationMessage.NO_RULE_DATE, IssueType.STRUCTURE, path, sd.startsWith(esd) || (sd.endsWith("+") && b.substring(3).startsWith(sd.substring(0, sd.length() - 1))), "The short description \"" + sd + "\" does not match the expected (\"" + b.substring(3) + "\")");
+        rule(errors, ValidationMessage.NO_RULE_DATE, IssueType.STRUCTURE, path, sd.startsWith(esd) || (sd.endsWith("+") && b.substring(3).startsWith(sd.substring(0, sd.length() - 1))) || isExemptFromProperBindingRules(path), "The short description \"" + sd + "\" does not match the expected (\"" + b.substring(3) + "\")");
       } else {
         rule(errors, ValidationMessage.NO_RULE_DATE, IssueType.STRUCTURE, path, cd.getStrength() != BindingStrength.REQUIRED || ac.size() > 12 || ac.size() <= 1 || !hasGoodCode(ac) || isExemptFromCodeList(path),
             "The short description of an element with a code list should have the format code | code | etc (is " + sd.toString() + ") (" + ac.size() + " codes = \"" + b.toString() + "\")");
@@ -1310,7 +1310,7 @@ public class ResourceValidator extends BaseValidator {
   private boolean isExemptFromProperBindingRules(String path) {
     return Utilities.existsInList(path, "ModuleMetadata.type",
         "ActionDefinition.type", "ElementDefinition.type.code", "Account.status", "MedicationOrder.category", "MedicationStatement.category", "Sequence.type",
-        "StructureDefinition.type", "ImplementationGuide.definition.parameter.code", "TriggerDefinition.condition.language");
+        "StructureDefinition.type", "ImplementationGuide.definition.parameter.code", "TriggerDefinition.condition.language", "CapabilityStatement.format");
   }
 
   private boolean hasInternalReference(ValueSet vs) {
