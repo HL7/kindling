@@ -139,7 +139,7 @@ public class SpecNPMPackageGenerator {
     
     System.out.println(" .. Building NPM Package");
 
-    NPMPackageGenerator npm = new NPMPackageGenerator(pidRoot+".core", Utilities.path(folder, pidRoot+".core.tgz"), "http://hl7.org/fhir", url, PackageType.CORE, ig, genDate, null, true, null);
+    NPMPackageGenerator npm = new NPMPackageGenerator(pidRoot+".core", Utilities.path(folder, pidRoot+".core.tgz"), "http://hl7.org/fhir", url, PackageType.CORE, ig, genDate, null, true);
     
     ByteArrayOutputStream bs = new ByteArrayOutputStream();
     new org.hl7.fhir.r5.formats.JsonParser().setOutputStyle(OutputStyle.NORMAL).compose(bs, ig);
