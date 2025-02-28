@@ -1014,7 +1014,7 @@ public class ResourceValidator extends BaseValidator {
   }
 
   private boolean isExemptFromCodeList(String path) {
-    return path.equals("Timing.repeat.when");
+    return Utilities.existsInList(path, "Timing.repeat.when", "CapabilityStatement.patchFormat");
   }
 
   private boolean hasGoodCode(List<DefinedCode> codes) {

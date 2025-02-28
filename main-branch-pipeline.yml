@@ -45,32 +45,56 @@ steps:
       gpg --list-secret-keys --keyid-format LONG
     displayName: 'Import signing keys into gpg.'
 
-  # For creating a snapshot release with maven, we need to add content to the local gradle.properties that
-  # sets our credentials for both sonatype and gpg. Then gradle can read the necessary fields from it.
-
-  # 4. Create local gradle.properties file
+  # For creating the snapshot release with maven, we need to build a fake settings.xml
+  # for it to read from. This is done for the master branch merges only.
   - bash: |
-      cat >>$(System.DefaultWorkingDirectory)/gradle.properties <<EOL
-      signing.gnupg.keyName=$(GPG_KEYNAME)
-      signing.gnupg.passphrase=$(GPG_PASSPHRASE)
-      signatory.keyId=$(GPG_KEYNAME)
-      nexusUsername=$(SONATYPE_USERNAME)
-      nexusPassword=$(SONATYPE_PASSWORD)
+      cat >$(Agent.TempDirectory)/settings.xml <<EOL
+      <settings xmlns="http://maven.apache.org/SETTINGS/1.0.0"
+                xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.0.0
+                                    https://maven.apache.org/xsd/settings-1.0.0.xsd">
+        <servers>
+          <server>
+            <id>ossrh</id>
+            <username>$(SONATYPE_USERNAME)</username>
+            <password>$(SONATYPE_PASSWORD)</password>
+          </server>
+          <server>
+            <id>$(GPG_KEYNAME)</id>
+            <passphrase>$(GPG_PASSPHRASE)</passphrase>
+          </server>
+        </servers>
+        <profiles>
+          <profile>
+            <id>release</id>
+            <activation>
+              <activeByDefault>true</activeByDefault>
+            </activation>
+            <properties>
+              <gpg.keyname>$(GPG_KEYNAME)</gpg.keyname>
+            </properties>
+          </profile>
+        </profiles>
+      </settings>
       EOL
-    displayName: 'Create gradle.properties'
+    displayName: 'Create settings.xml'
 
-  # With our gradle.properties created locally, we can now run grtadle (using to our created gradle.properties file) to deploy
-  # the kindling jar to oss sonatype.
-
-  # 5. Deploy SNAPSHOT build to sonatype
-  - task: Gradle@3
+  - task: Maven@4
     inputs:
-      workingDirectory: ''
-      gradleWrapperFile: 'gradlew'
-      gradleOptions: '-Xmx3072m'
+      mavenPomFile: 'pom.xml'
+      mavenOptions: '-Xmx3072m'
+      options: '--settings $(Agent.TempDirectory)/settings.xml'
       javaHomeOption: 'JDKVersion'
       jdkVersionOption: '1.11'
       jdkArchitectureOption: 'x64'
       publishJUnitResults: true
-      testResultsFiles: '**/TEST-*.xml'
-      tasks: 'clean publish'
+      testResultsFiles: '**/surefire-reports/TEST-*.xml'
+      goals: 'package'
+
+  - task: Maven@4
+    displayName: 'Deploy to Sonatype staging'
+    inputs:
+      mavenPomFile: 'pom.xml'
+      goals: deploy
+      options: '--settings $(Agent.TempDirectory)/settings.xml -Dmaven.test.skip -DdeployToSonatype -e'
+      publishJUnitResults: false
