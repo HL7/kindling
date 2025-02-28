@@ -4881,6 +4881,14 @@ public class Publisher implements URIResolver, SectionNumberer {
         page.getHTMLChecker().registerFile(n + "-liquid.html", "Liquid Template for " + resource.getName(), HTMLLinkChecker.XHTML_TYPE, true);
                 
       }
+      if (resource.hasNotes()) {
+        src = FileUtilities.fileToString(page.getFolders().templateDir + "template-history.html");
+        FileUtilities.stringToFile(
+            insertSectionNumbers(page.processResourceIncludes(n, resource, xml, json, ttl, tx, dict, src, mappings, mappingsList, "res-Liquid", n + "-history.html", null, values, resource.getWg(), null), st, n
+                + "-history.html", 0, null), page.getFolders().dstDir + n + "-history.html");
+        page.getHTMLChecker().registerFile(n + "-history.html", "Release Notes for " + resource.getName(), HTMLLinkChecker.XHTML_TYPE, true);                
+      }
+      
       for (ConceptMap cm : statusCodeConceptMaps)
         if (cm.getUserData("resource-definition") == resource) 
           produceConceptMap(cm, resource, st);
