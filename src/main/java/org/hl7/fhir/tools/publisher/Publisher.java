@@ -3392,7 +3392,7 @@ public class Publisher implements URIResolver, SectionNumberer {
       expIg.setLicense(ImplementationGuide.SPDXLicense.CC0_1_0);
       expIg.setTitle("FHIR "+page.getVersion().getDisplay()+" package : Expansions");
       expIg.setDescription("Expansions for the "+page.getVersion().getDisplay()+" version of the FHIR standard");
-      NPMPackageGenerator npm = new NPMPackageGenerator(pidRoot() + ".expansions", Utilities.path(page.getFolders().dstDir, pidRoot() + ".expansions.tgz"), "http://hl7.org/fhir", page.getWebLocation(), PackageType.CORE, expIg, page.getGenDate().getTime(), null, true);
+      NPMPackageGenerator npm = new NPMPackageGenerator(pidRoot() + ".expansions", Utilities.path(page.getFolders().dstDir, pidRoot() + ".expansions.tgz"), "http://hl7.org/fhir", page.getWebLocation(), PackageType.CORE, expIg, page.getGenDate().getTime(), new HashMap<>(), true);
       Bundle expansionFeed = new Bundle();
       Set<String> urlset = new HashSet<>();
       expansionFeed.setId("valueset-expansions");
@@ -3602,7 +3602,7 @@ public class Publisher implements URIResolver, SectionNumberer {
       exIg.setLicense(ImplementationGuide.SPDXLicense.CC0_1_0);
       exIg.setTitle("FHIR "+page.getVersion().getDisplay()+" package : Examples");
       exIg.setDescription("Examples for the "+page.getVersion().getDisplay()+" version of the FHIR standard");
-      npm = new NPMPackageGenerator(pidRoot() + ".examples", Utilities.path(page.getFolders().dstDir, pidRoot() + ".examples.tgz"), "http://hl7.org/fhir", page.getWebLocation(), PackageType.EXAMPLES, exIg, page.getGenDate().getTime(), true, null);
+      npm = new NPMPackageGenerator(pidRoot() + ".examples", Utilities.path(page.getFolders().dstDir, pidRoot() + ".examples.tgz"), "http://hl7.org/fhir", page.getWebLocation(), PackageType.EXAMPLES, exIg, page.getGenDate().getTime(), new HashMap<>(), true);
 
       zip = new ZipGenerator(page.getFolders().dstDir + "examples-json.zip");
       File f = new CSFile(page.getFolders().dstDir);
@@ -3652,7 +3652,7 @@ public class Publisher implements URIResolver, SectionNumberer {
       spIg.setLicense(ImplementationGuide.SPDXLicense.CC0_1_0);
       spIg.setTitle("FHIR "+page.getVersion().getDisplay()+" package : ungrouped search parameters");
       spIg.setDescription("FHIR "+page.getVersion().getDisplay()+" package : Search Parameters (break out combined parameters for server execution convenience)");
-      npm = new NPMPackageGenerator(pidRoot() + ".search", Utilities.path(page.getFolders().dstDir, pidRoot() + ".search.tgz"), "http://hl7.org/fhir", page.getWebLocation(), PackageType.EXAMPLES, spIg, page.getGenDate().getTime(), true, null);
+      npm = new NPMPackageGenerator(pidRoot() + ".search", Utilities.path(page.getFolders().dstDir, pidRoot() + ".search.tgz"), "http://hl7.org/fhir", page.getWebLocation(), PackageType.EXAMPLES, spIg, page.getGenDate().getTime(),new HashMap<>(), true);
       for (ResourceDefn r : page.getDefinitions().getBaseResources().values()) {
         addToSearchPackage(r, npm);
       }
@@ -4884,7 +4884,7 @@ public class Publisher implements URIResolver, SectionNumberer {
       if (resource.hasNotes()) {
         src = FileUtilities.fileToString(page.getFolders().templateDir + "template-history.html");
         FileUtilities.stringToFile(
-            insertSectionNumbers(page.processResourceIncludes(n, resource, xml, json, ttl, tx, dict, src, mappings, mappingsList, "res-Liquid", n + "-history.html", null, values, resource.getWg(), null), st, n
+            insertSectionNumbers(page.processResourceIncludes(n, resource, xml, json, ttl, tx, dict, src, mappings, mappingsList, "res-History", n + "-history.html", null, values, resource.getWg(), null), st, n
                 + "-history.html", 0, null), page.getFolders().dstDir + n + "-history.html");
         page.getHTMLChecker().registerFile(n + "-history.html", "Release Notes for " + resource.getName(), HTMLLinkChecker.XHTML_TYPE, true);                
       }
