@@ -190,6 +190,7 @@ public class ResourceDefn  {
   private SecurityCategorization securityCategorization;
   private String liquid;
   private String liquidNotes;
+  private boolean notes;
 
   private long timestamp;
   
@@ -541,6 +542,14 @@ public class ResourceDefn  {
   public Invariant findInvariant(String key) {
     return root.findInvariant(key);
 
+  }
+
+  public boolean hasNotes() {
+    return notes;
+  }
+
+  public void setNotes(boolean notes) {
+    this.notes = notes;
   }
   
   

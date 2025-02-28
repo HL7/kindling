@@ -93,9 +93,6 @@ public class DataTypeCrossLinkGenerator {
         if (!name.contains("-extensions") && !Utilities.existsInList(base, "narrative")) {
           b.append("<a no-external=\"true\" href=\"[%extensions-location%]extensions-"+base+".html#"+type+"\">Extensions</a>");          
         }
-        if (!name.contains("-version-maps")) {
-          b.append("<a no-external=\"true\" href=\"[%extensions-location%]conversions-"+base+".html#"+type+"\">R4 Conversions</a>");          
-        }
         lines.set(i, "<!--xlp:"+type+"-->See also "+b.toString());
       }
     }
@@ -129,9 +126,6 @@ public class DataTypeCrossLinkGenerator {
         }
         if (!name.contains("-extensions") && !Utilities.existsInList(base, "narrative")) {
           b.append("<a no-external=\"true\" href=\"extensions-"+base+".html#"+type+"\">Extensions</a>");          
-        }
-        if (!name.contains("-version-maps")) {
-          b.append("<a no-external=\"true\" href=\"conversions-"+base+".html#"+type+"\">R4 Conversions</a>");          
         }
         lines.set(i, "<!--xlp:"+type+"-->See also "+b.toString());
       }

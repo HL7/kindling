@@ -64,7 +64,6 @@ public class ResourceValidator extends BaseValidator {
     private String name;
     private String type;
     private List<String> resources = new ArrayList<String>();
-
   }
 
   public static class Usage {
@@ -89,7 +88,6 @@ public class ResourceValidator extends BaseValidator {
   private IWorkerContext context;
   private Set<String> txurls = new HashSet<String>();
   private Set<String> allowedPluralNames = new HashSet<>();
-
 
 
   public ResourceValidator(Definitions definitions, Translations translations, CanonicalResourceManager<CodeSystem> map, String srcFolder, List<FHIRPathUsage> fpUsages, List<String> suppressedMessages, IWorkerContext context) throws IOException {

@@ -694,6 +694,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     Map<String, Integer> resDesc = new HashMap<>();
     ExampleStatusTracker est = new ExampleStatusTracker();
 
+    boolean genConformanceSummary = false;
     src = processTypeLinks(src);
     while (src.contains("<%") || src.contains("[%"))
     {      
@@ -1435,6 +1436,9 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
         src = s1+est.init()+s3;        
       } else if (com[0].equals("example-change")) { 
         src = s1+est.change()+s3;        
+      } else if (com[0].equals("conformance-statement-summary")) { 
+        src = s1+"<ul id=\"conf-summary\"></ul>"+s3;
+        genConformanceSummary = true;
       } else if (com[0].equals("operation.intro.include")) { 
         src = s1+includeOperationFile((OperationDefinition) resource, "introduction")+s3;        
       } else if (com[0].equals("operation.intro.notes")) { 
@@ -1446,7 +1450,23 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
       } else
         throw new Exception("Instruction <%"+s2+"%> not understood parsing page "+file);
     }
+    if (genConformanceSummary) {
+      src = genConformanceSummary(src);
+    }
     return src;
+  }
+
+  private String genConformanceSummary(String src) {
+    try {
+      XhtmlNode doc = new XhtmlParser().parse(src, null);
+      new ConformanceSummaryScanner().scan(doc);
+   
+      return new XhtmlComposer(false, false).compose(doc);
+    } catch (Exception e) {
+      System.out.println("Error processing conformance Statements: "+e.getMessage());
+      e.printStackTrace();
+      return src;
+    }
   }
 
   private String igLink(String code) {
@@ -4312,7 +4332,6 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     b.append(makeHeaderTab("Mappings", "datatypes-mappings.html", mode==null || "mappings".equals(mode)));
     b.append(makeHeaderTab("Profiles", "datatypes-profiles.html", mode==null || "profiles".equals(mode)));
     b.append(makeHeaderTab("Extensions", extensionsLocation+"extensions-datatypes.html", mode==null || "extensions".equals(mode)));
-    b.append(makeHeaderTab("R4 Conversions", extensionsLocation+"conversions-datatypes.html", mode==null || "conversions".equals(mode)));
     b.append("</ul>\r\n");
     return b.toString();
   }
@@ -4325,7 +4344,6 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     b.append(makeHeaderTab("Mappings", "types-mappings.html", mode==null || "mappings".equals(mode)));
     b.append(makeHeaderTab("Profiles", "types-profiles.html", mode==null || "profiles".equals(mode)));
     b.append(makeHeaderTab("Extensions", extensionsLocation+"extensions-types.html", mode==null || "extensions".equals(mode)));
-    b.append(makeHeaderTab("R4 Conversions", extensionsLocation+"conversions-types.html", mode==null || "conversions".equals(mode)));
     b.append("</ul>\r\n");
     return b.toString();
   }
@@ -4339,7 +4357,6 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     b.append(makeHeaderTab("Mappings", "metadatatypes-mappings.html", mode==null || "mappings".equals(mode)));
     b.append(makeHeaderTab("Profiles", "metadatatypes-profiles.html", mode==null || "profiles".equals(mode)));
     b.append(makeHeaderTab("Extensions", extensionsLocation+"extensions-metadatatypes.html", mode==null || "extensions".equals(mode)));
-    b.append(makeHeaderTab("R4 Conversions", extensionsLocation+"conversions-metadatatypes.html", mode==null || "conversions".equals(mode)));
     b.append("</ul>\r\n");
     return b.toString();
   }
@@ -4390,7 +4407,6 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     b.append(makeHeaderTab("Mappings", t+"-mappings.html", mode==null || "mappings".equals(mode)));
     b.append(makeHeaderTab("Profiles", t+"-profiles.html", mode==null || "profiles".equals(mode)));
     b.append(makeHeaderTab("Extensions", extensionsLocation+"extensions-"+type+".html", mode==null || "extensions".equals(mode)));
-    b.append(makeHeaderTab("R4 Conversions", extensionsLocation+"conversions-"+type+".html", mode==null || "conversions".equals(mode)));
     b.append("</ul>\r\n");
     return b.toString();
   }
@@ -4404,7 +4420,6 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     b.append(makeHeaderTab("Examples", "extensibility-examples.html", mode==null || "examples".equals(mode)));
     b.append(makeHeaderTab("Detailed Descriptions", "extensibility-definitions.html", mode==null || "definitions".equals(mode)));
     b.append(makeHeaderTab("Registry", extensionsLocation+"extension-registry.html", mode==null || "registry".equals(mode)));
-    b.append(makeHeaderTab("R4 Conversions", extensionsLocation+"conversions-Extension.html", mode==null || "conversions".equals(mode)));
     b.append("</ul>\r\n");
     return b.toString();
   }
@@ -4415,7 +4430,6 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     b.append(makeHeaderTab("Narrative", "narrative.html", mode==null || "base".equals(mode)));
     b.append(makeHeaderTab("Examples", "narrative-examples.html", mode==null || "examples".equals(mode)));
     b.append(makeHeaderTab("Detailed Descriptions", "narrative-definitions.html", mode==null || "definitions".equals(mode)));
-    b.append(makeHeaderTab("R4 Conversions", extensionsLocation+"conversions-Narrative.html", mode==null || "conversions".equals(mode)));
     b.append("</ul>\r\n");
     return b.toString();
   }
@@ -4446,7 +4460,6 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     b.append(makeHeaderTab("Detailed Descriptions", "references-definitions.html", mode==null || "definitions".equals(mode)));
     b.append(makeHeaderTab("Profiles", "references-profiles.html", mode==null || "profiles".equals(mode)));
     b.append(makeHeaderTab("Extensions", extensionsLocation+"extensions-references.html", mode==null || "extensions".equals(mode)));
-    b.append(makeHeaderTab("R4 Conversions", extensionsLocation+"conversions-references.html", mode==null || "conversions".equals(mode)));
     b.append("</ul>\r\n");
     return b.toString();
   }
@@ -4732,9 +4745,9 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     b.append(makeHeaderTab("Search Params", n+"-search.html", "search".equals(mode)));
     b.append(makeHeaderTab("Profiles", n+"-profiles.html", "profiles".equals(mode)));
     b.append(makeHeaderTab("Extensions", extensionsLocation+"extensions-"+ ("Resource".equals(res.getName()) ? "resource" : res.getName())+".html", "extensions".equals(mode)));
-    //    if (!isAbstract)
-    //      b.append(makeHeaderTab("HTML Form", n+"-questionnaire.html", "questionnaire".equals(mode)));
-    b.append(makeHeaderTab("R4 Conversions", extensionsLocation+"conversions-"+  ("Resource".equals(res.getName()) ? "resource" : res.getName())+".html", "conversion".equals(mode)));
+    if (res.hasNotes()) {
+      b.append(makeHeaderTab("Release Notes", n+"-history.html", "history".equals(mode)));
+    }
     b.append("</ul>\r\n");
 
     return b.toString();
@@ -4775,7 +4788,6 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     b.append(makeHeaderTab("Search Params", n+"-search.html", "search".equals(mode)));
     b.append(makeHeaderTab("Profiles", n+"-profiles.html", "profiles".equals(mode)));
     b.append(makeHeaderTab("Extensions", extensionsLocation+"extensions-"+("Resource".equals(title) ? "resource" : title)+".html", "profiles".equals(mode)));
-    b.append(makeHeaderTab("R4 Conversions", extensionsLocation+"conversions-"+("Resource".equals(title) ? "resource" : title)+".html", "profiles".equals(mode)));
 
     b.append("</ul>\r\n");
 
@@ -5540,6 +5552,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     Map<String, Integer> resDesc = new HashMap<>();
     ExampleStatusTracker est = new ExampleStatusTracker();
 
+    boolean genConformanceSummary = false;
     src = processTypeLinks(src);
 
     while (src.contains("<%") || src.contains("[%"))
@@ -6015,7 +6028,10 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
       } else if (com[0].equals("example-start")) { 
         src = s1+est.start()+s3;        
       } else if (com[0].equals("example-json")) { 
-        src = s1+est.json()+s3;        
+        src = s1+est.json()+s3;             
+      } else if (com[0].equals("conformance-statement-summary")) { 
+        src = s1+"<ul id=\"conf-summary\"></ul>"+s3;
+        genConformanceSummary = true;
       } else if (com[0].equals("example-end")) { 
         src = s1+est.end()+s3;        
       } else if (com[0].equals("example-init")) { 
@@ -6028,6 +6044,10 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
         src = s1+extensionsLocation+s3;
       } else
         throw new Exception("Instruction <%"+s2+"%> not understood parsing page "+file);
+    }
+
+    if (genConformanceSummary) {
+      src = genConformanceSummary(src);
     }
     return src;
   }
@@ -6414,7 +6434,9 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
       else if (com[0].equals("dtstatus")) 
         src = s1+buildDTStatus(com[1])+s3;       
       else if (com[0].equals("dtextensions")) 
-        src = s1+produceDataTypeExtensions(com[1])+s3;
+        src = s1+produceDataTypeExtensions(com[1])+s3;  
+      else if (com[0].equals("jira-task")) 
+        src = s1+produceJiraTaskLink(com[1])+s3;
       else if (com[0].equals("normative")) {
         String np = null;
         if (com[2].equals("%check") || com[2].equals("%check-op")) {
@@ -6622,6 +6644,8 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
         src = s1+resource.getName()+s3;
       else if (com[0].equals("search-location"))
         src = s1+searchLocation+s3;
+      else if (com[0].equals("release-notes"))
+        src = s1+FileUtilities.fileToString(Utilities.path(folders.srcDir, resource.getName(), resource.getName()+"-release-notes.xml"))+s3;
       else if (com[0].equals("extensions-location")) 
         src = s1+extensionsLocation+s3;
       else if (com[0].equals("resurl")) {
@@ -6639,6 +6663,10 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
         throw new Exception("Instruction <%"+s2+"%> not understood parsing resource "+name);
     }
     return src;
+  }
+
+  private String produceJiraTaskLink(String task) {
+    return "<a target=\"_blank\" href=\"http://jira.hl7.org/browse/"+task+"\">"+task+"</a>";
   }
 
   private String genLiquidNotes(ResourceDefn resource, String genlevel) throws Exception {
@@ -11380,7 +11408,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
       IniFile sini = new IniFile(Utilities.path(folders.rootDir, "temp", "stats.ini"));
       sini.setIntegerProperty("valuesets", vs.getId(), i, null);
       sini.save();
-      RenderingContext lrc = rc.copy(false).setLocalPrefix(prefix);
+      RenderingContext lrc = rc.copy(false).setLocalPrefix(prefix).withMode(ResourceRendererMode.END_USER);
       RendererFactory.factory(exp, lrc).renderResource(ResourceWrapper.forResource(lrc.getContextUtilities(), exp));
       return "<hr/>\r\n"+VS_INC_START+""+new XhtmlComposer(XhtmlComposer.HTML).compose(exp.getText().getDiv())+VS_INC_END;
     } catch (Exception e) {

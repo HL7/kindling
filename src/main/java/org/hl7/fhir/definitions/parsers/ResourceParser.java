@@ -125,25 +125,9 @@ public class ResourceParser {
     parseExamples(r, n, t);
     parseOperations(r, n, t);
     parsePacks(r, n, t);
-
     parseLiquid(r);
-
-//    private List<Profile> conformancePackages = new ArrayList<Profile>();
-//    private Profile conformancePack;
-
-//    search 
-//    profiles 
-//    examples
-//    bindings
-//    
-//    examples 
-//    extensions
-//    profiles 
-//    value sets 
-//    code systems
-//    
-//    
-    
+    File lt = new CSFile(Utilities.path(this.folder, r.getName()+"-release-notes.xml"));
+    r.setNotes(lt.exists());
     return r;
   }
 
