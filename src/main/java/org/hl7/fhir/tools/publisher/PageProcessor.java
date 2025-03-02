@@ -3894,7 +3894,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     if (b.length() == 0)
       return "<p>\r\nThis Code system is not currently used\r\n</p>\r\n";
     else
-      return "<p>\r\nThis Code system is used in the following value sets:\r\n</p>\r\n<ul>\r\n"+b.toString()+"</ul>\r\n";
+      return "<p>\r\n\"This Code system is used in the following FHIR core-defined or referenced value sets:\r\n</p>\r\n<ul>\r\n"+b.toString()+"</ul>\r\n";
   }
 
   private String generateValueSetUsage(ValueSet vs, String prefix, boolean addTitle) throws Exception {
@@ -10460,7 +10460,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     breadCrumbManager.setDefinitions(definitions);
     ITerminologyClient client;
     try {
-      client = new TerminologyClientR5("tx.fhir.org", tsServer, "fhir/main-build");
+      client = new TerminologyClientR5("tx-dev.fhir.org", tsServer, "fhir/main-build");
 //      client.setLogger(new TextClientLogger(Utilities.path("[tmp]", "tx-main-build.log")));
       client.setTimeoutFactor(2);
     } catch(Exception e) {
