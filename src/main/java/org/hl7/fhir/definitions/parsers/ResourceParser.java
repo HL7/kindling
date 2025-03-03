@@ -218,14 +218,18 @@ public class ResourceParser {
           sd.setWebPath("extension-"+sd.getId()+".html");
           sd.setVersion(context.getVersion());
           p.getExtensions().add(sd);
-          CanonicalResourceUtilities.setHl7WG(sd, wg.getCode());
+          if (!sd.hasExtension(ToolingExtensions.EXT_WORKGROUP)) {
+            CanonicalResourceUtilities.setHl7WG(sd, wg.getCode());
+          }
           context.cacheResource(sd);
         } else {
           ConstraintStructure tp = processProfile(rid, ig.getId().substring(ig.getId().indexOf("-")+1), res, wg);
           sd = tp.getResource();
           sd.setVersion(context.getVersion());
           sd.setWebPath(sd.getId()+".html");
-          CanonicalResourceUtilities.setHl7WG(sd, wg.getCode());
+          if (!sd.hasExtension(ToolingExtensions.EXT_WORKGROUP)) {
+            CanonicalResourceUtilities.setHl7WG(sd, wg.getCode());
+          }
           p.getProfiles().add(tp); 
         }
         if (ProfileUtilities.isExtensionDefinition(sd)) {
@@ -264,7 +268,7 @@ public class ResourceParser {
     sd.setVersion(version);
     sd.setFhirVersion(FHIRVersion.fromCode(version));
 
-    ConstraintStructure cs = new ConstraintStructure(sd, ig, wg == null ? wg(sd) : wg, fmm(sd), false);
+    ConstraintStructure cs = new ConstraintStructure(sd, ig, wg == null || sd.hasExtension(ToolingExtensions.EXT_WORKGROUP) ? wg(sd) : wg, fmm(sd), false);
     return cs;
   }
 

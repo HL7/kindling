@@ -1255,7 +1255,10 @@ public class ProfileGenerator {
       ToolingExtensions.addIntegerExtension(p, ToolingExtensions.EXT_FMM_LEVEL, Integer.parseInt(resource.getFmmLevel()));
     else if (baseResource != null && !Utilities.noString(baseResource.getFmmLevel()))
       ToolingExtensions.addIntegerExtension(p, ToolingExtensions.EXT_FMM_LEVEL, Integer.parseInt(baseResource.getFmmLevel()));
-    if (pack.hasMetadata("workgroup"))
+
+    if (profile.getWg() != null) {
+      ToolingExtensions.setCodeExtension(p, ToolingExtensions.EXT_WORKGROUP, profile.getWg().getCode());      
+    } else if (pack.hasMetadata("workgroup"))
       ToolingExtensions.setCodeExtension(p, ToolingExtensions.EXT_WORKGROUP, pack.getWg());
     else if (resource.getWg() != null) 
       ToolingExtensions.setCodeExtension(p, ToolingExtensions.EXT_WORKGROUP, resource.getWg().getCode());      

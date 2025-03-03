@@ -515,7 +515,7 @@ public class BuildWorkerContext extends BaseWorkerContext implements IWorkerCont
         triedServer = true;
         // for this, we use the FHIR client
         if (terminologyClientManager.getMasterClient() == null) {
-          terminologyClientManager.setMasterClient(new TerminologyClientR5("tx-dev.fhir.org", "?", "fhir/main-build"), true);
+          terminologyClientManager.setMasterClient(new TerminologyClientR5("tx.fhir.org", "?", "fhir/main-build"), true);
           this.txLog = new HTMLClientLogger(null);
         }
         Map<String, String> params = new HashMap<String, String>();
