@@ -1175,7 +1175,7 @@ public class Publisher implements URIResolver, SectionNumberer {
     for (ElementDefinition ed : sd.getDifferential().getElement()) {
       for (IdType t : ed.getCondition()) {
         if (!t.hasUserData("validated") && !isKnownBadInvariant(t.primitiveValue())) {
-          System.out.println("The element "+ed.getPath()+" claims that the invariant "+t.primitiveValue()+" affects it, but it isn't touched by that invariant");
+          System.out.println("Warning: The element "+ed.getPath()+" claims that the invariant "+t.primitiveValue()+" affects it, but it isn't touched by that invariant");
           result = true;
         }        
       }
@@ -1202,7 +1202,7 @@ public class Publisher implements URIResolver, SectionNumberer {
             }
           }
           if (cnd == null) {
-            System.out.println("The invariant "+sd.getType()+"#"+inv.getKey()+" touches "+edt.getPath()+" but isn't listed as a condition");
+            System.out.println("Hint: The invariant "+sd.getType()+"#"+inv.getKey()+" touches "+edt.getPath()+" but isn't listed as a condition");
             result = true; // we don't stop for this anymore
           } else {
             cnd.setUserData("validated", true);
@@ -1210,7 +1210,7 @@ public class Publisher implements URIResolver, SectionNumberer {
         }
       }
     } catch (Exception e) {
-      System.out.println ("Invariant error processing "+sd.getType()+"#"+inv.getKey()+": "+e.getMessage());
+      System.out.println ("Error processing invariant "+sd.getType()+"#"+inv.getKey()+": "+e.getMessage());
       if (!isKnownBadInvariant(inv.getKey(), e.getMessage())) {
         result = false;
       }

@@ -1012,7 +1012,7 @@ public class ResourceValidator extends BaseValidator {
   }
 
   private boolean isExemptFromCodeList(String path) {
-    return Utilities.existsInList(path, "Timing.repeat.when", "CapabilityStatement.patchFormat");
+    return Utilities.existsInList(path, "Timing.repeat.when", "CapabilityStatement.patchFormat", "TestScript.setup.action.operation.accept", "TestScript.setup.action.operation.contentType", "TestScript.setup.action.assert.contentType");
   }
 
   private boolean hasGoodCode(List<DefinedCode> codes) {
@@ -1310,7 +1310,9 @@ public class ResourceValidator extends BaseValidator {
   private boolean isExemptFromProperBindingRules(String path) {
     return Utilities.existsInList(path, "ModuleMetadata.type",
         "ActionDefinition.type", "ElementDefinition.type.code", "Account.status", "MedicationOrder.category", "MedicationStatement.category", "Sequence.type",
-        "StructureDefinition.type", "ImplementationGuide.definition.parameter.code", "TriggerDefinition.condition.language", "CapabilityStatement.format");
+        "StructureDefinition.type", "ImplementationGuide.definition.parameter.code", "TriggerDefinition.condition.language",
+        
+        "CapabilityStatement.format", "TestScript.setup.action.operation.accept", "TestScript.setup.action.operation.contentType");
   }
 
   private boolean hasInternalReference(ValueSet vs) {
