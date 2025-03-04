@@ -4921,7 +4921,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     CanonicalResourceManager<ValueSet> vslist = new CanonicalResourceManager<ValueSet>(false, false);
     for (String sn : definitions.getValuesets().keys()) {
       ValueSet vs = definitions.getValuesets().get(sn);
-      if (vs.hasUrl() && isLocalResource(vs)) {
+      if (vs.hasUrl() && isLocalResource(vs) && !isImplictValueSet(vs)) {
         vslist.see(vs, packageInfo());
         String n = getNamespace(sn);
         if (!n.equals("http://hl7.org/fhir/ValueSet") && !namespaces.contains(n) && !sn.startsWith("http://terminology.hl7.org/ValueSet/v2-") && !sn.startsWith("http://terminology.hl7.org/ValueSet/v3-"))
