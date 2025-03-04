@@ -1433,12 +1433,16 @@ public class Publisher implements URIResolver, SectionNumberer {
     for (StructureDefinition ex : page.getWorkerContext().getExtensionDefinitions())
         processExtension(ex);
 
-    for (ResourceDefn r : page.getDefinitions().getResources().values()) {
-//      boolean logged = false;
+
+    for (ResourceDefn r : page.getDefinitions().getBaseResources().values()) {
       for (Profile ap : r.getConformancePackages()) {
-//        if (!logged)
-//          page.log(" ...  resource "+r.getName(), LogMessageType.Process);
-//        logged = true;
+        for (ConstraintStructure p : ap.getProfiles())
+          processProfile(ap, p, ap.getId(), r);
+      }
+    }
+    
+    for (ResourceDefn r : page.getDefinitions().getResources().values()) {
+      for (Profile ap : r.getConformancePackages()) {
         for (ConstraintStructure p : ap.getProfiles())
           processProfile(ap, p, ap.getId(), r);
       }
@@ -7013,7 +7017,7 @@ private String csCounter() {
     page.log(" ...value sets (1)", LogMessageType.Process);
     for (ValueSet vs : page.getDefinitions().getBoundValueSets().values()) {
 
-      page.log(" ...value set: "+vs.getId(), LogMessageType.Process);
+      System.out.print(".");
       KindlingUtilities.makeUniversal(vs);
       if (!vs.hasText()) {
         vs.setText(new Narrative());
@@ -7033,6 +7037,8 @@ private String csCounter() {
     for (ValueSet vs : page.getDefinitions().getBoundValueSets().values()) {
       page.getVsValidator().validate(page.getValidationErrors(), vs.getUserString("filename"), vs, true, false);
     }
+    System.out.println("!");
+    page.log(" ...value sets (1) Done", LogMessageType.Process);
   }
 
   private void generateCodeSystemsPart1() throws Exception {
