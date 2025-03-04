@@ -20,7 +20,7 @@
         <lombok_version>1.18.32</lombok_version>
         <slf4jVersion>1.7.36</slf4jVersion>
         <jettyVersion>11.0.20</jettyVersion>
-        <logbackVersion>1.2.13</logbackVersion>
+        <logbackVersion>1.5.17</logbackVersion>
         <nettyConstrainedVersion>4.1.118.Final</nettyConstrainedVersion>
     </properties>
 
@@ -144,6 +144,16 @@
                 <artifactId>protobuf-java</artifactId>
                 <version>3.25.5</version>
             </dependency>
+            <dependency>
+                <groupId>ch.qos.logback</groupId>
+                <artifactId>logback-classic</artifactId>
+                <version>${logbackVersion}</version>
+            </dependency>
+            <dependency>
+                <groupId>ch.qos.logback</groupId>
+                <artifactId>logback-core</artifactId>
+                <version>${logbackVersion}</version>
+            </dependency>
         </dependencies>
     </dependencyManagement>
     <dependencies>
@@ -200,17 +210,10 @@
         <dependency>
             <groupId>ch.qos.logback</groupId>
             <artifactId>logback-classic</artifactId>
-            <version>${logbackVersion}</version>
-        </dependency>
-        <dependency>
-            <groupId>ch.qos.logback</groupId>
-            <artifactId>logback-classic</artifactId>
-            <version>${logbackVersion}</version>
         </dependency>
         <dependency>
             <groupId>ch.qos.logback</groupId>
             <artifactId>logback-core</artifactId>
-            <version>${logbackVersion}</version>
         </dependency>
         <dependency>
             <groupId>com.atlassian.commonmark</groupId>
@@ -325,11 +328,12 @@
             <artifactId>commons-net</artifactId>
             <version>3.9.0</version>
         </dependency>
+        <!--
         <dependency>
             <groupId>de.regnis.q.sequence</groupId>
             <artifactId>sequence-library</artifactId>
             <version>1.0.2</version>
-        </dependency>
+        </dependency>-->
         <dependency>
             <groupId>es.weso</groupId>
             <artifactId>rbe_2.12</artifactId>
@@ -620,11 +624,12 @@
             <artifactId>slf4s-api_2.11</artifactId>
             <version>1.7.13</version>
         </dependency>
+        <!--
         <dependency>
             <groupId>org.tmatesoft.sqljet</groupId>
             <artifactId>sqljet</artifactId>
             <version>1.1.10</version>
-        </dependency>
+        </dependency>-->
         <dependency>
             <groupId>xerces</groupId>
             <artifactId>xercesImpl</artifactId>
@@ -713,6 +718,18 @@
                         <phase>test-compile</phase>
                         <goals>
                             <goal>testCompile</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <version>3.1.2</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>analyze</goal>
                         </goals>
                     </execution>
                 </executions>
