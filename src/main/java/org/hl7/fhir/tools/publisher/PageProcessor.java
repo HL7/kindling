@@ -181,6 +181,7 @@ import org.hl7.fhir.r5.model.ElementDefinition.SlicingRules;
 import org.hl7.fhir.r5.model.ElementDefinition.TypeRefComponent;
 import org.hl7.fhir.r5.model.Enumeration;
 import org.hl7.fhir.r5.model.Enumerations;
+import org.hl7.fhir.r5.model.Enumerations.BindingStrength;
 import org.hl7.fhir.r5.model.Enumerations.ConceptMapRelationship;
 import org.hl7.fhir.r5.model.Enumerations.FHIRVersion;
 import org.hl7.fhir.r5.model.Enumerations.SearchParamType;
@@ -280,6 +281,8 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
+
+import shapeless.ops.nat.Div;
 
 
 public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferenceResolver, ILoggingService, TypeLinkProvider, ITypeParser, IMarkdownProcessor  {
@@ -1436,6 +1439,10 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
         src = s1+est.init()+s3;        
       } else if (com[0].equals("example-change")) { 
         src = s1+est.change()+s3;        
+      } else if (com[0].equals("type-characteristics")) { 
+        src = s1+typeCharacteristics()+s3;        
+      } else if (com[0].equals("bindings-list")) { 
+        src = s1+bindingsList()+s3;        
       } else if (com[0].equals("conformance-statement-summary")) { 
         src = s1+"<ul id=\"conf-summary\"></ul>"+s3;
         genConformanceSummary = true;
@@ -6037,7 +6044,11 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
       } else if (com[0].equals("example-init")) { 
         src = s1+est.init()+s3;        
       } else if (com[0].equals("example-change")) { 
-        src = s1+est.change()+s3;        
+        src = s1+est.change()+s3;            
+      } else if (com[0].equals("type-characteristics")) { 
+        src = s1+typeCharacteristics()+s3;        
+      } else if (com[0].equals("bindings-list")) { 
+        src = s1+bindingsList()+s3;   
       } else if (macros.containsKey(com[0])) {
         src = s1+macros.get(com[0])+s3;
       } else if (com[0].equals("extensions-location")) { 
@@ -12373,5 +12384,162 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     return "http://hl7.org/fhir";
   }
 
+  private String typeCharacteristics() throws IOException {
+   XhtmlNode div = new XhtmlNode(NodeType.Element, "div");
+   XhtmlNode tbl = div.table("grid").style("text-align: center");
+   XhtmlNode tr = tbl.tr();
+   tr.th().b().tx("Type");   
+   tr.th().b().tx("Is-a-Target");   
+   tr.th().b().tx("Be-a-Target");   
+   tr.th().b().tx("Has-Range");   
+   tr.th().b().tx("Is-Continuous");   
+   tr.th().b().tx("Has-Length");   
+   tr.th().b().tx("Has-Size");   
+   tr.th().b().tx("Bindable");   
+   tr.th().b().tx("Has-Units");   
+   tr.th().b().tx("Translatable");
+   for (String n : Utilities.sorted(definitions.getPrimitives().keySet())) {
+     DefinedCode pt = definitions.getPrimitives().get(n);
+     if (!pt.getCharacteristics().isEmpty()) {
+       tr = tbl.tr();
+       tr.td().tx(pt.getCode());
+       tc(tr.td(), pt, "has-target");   
+       tc(tr.td(), pt, "can-be-target");   
+       tc(tr.td(), pt, "has-range");   
+       tc(tr.td(), pt, "is-continuous");   
+       tc(tr.td(), pt, "has-length");   
+       tc(tr.td(), pt, "has-size");   
+       tc(tr.td(), pt, "can-bind");   
+       tc(tr.td(), pt, "has-units");
+       tc(tr.td(), pt, "do-translations");
+     }
+   }
 
+   for (String n : Utilities.sorted(definitions.getTypes().keySet())) {
+     TypeDefn td = definitions.getTypes().get(n);
+     if (!td.getCharacteristics().isEmpty()) {
+       tr = tbl.tr();
+       tr.td().tx(td.getName());
+       tc(tr.td(), td, "has-target");   
+       tc(tr.td(), td, "can-be-target");   
+       tc(tr.td(), td, "has-range");   
+       tc(tr.td(), td, "is-continuous");   
+       tc(tr.td(), td, "has-length");   
+       tc(tr.td(), td, "has-size");   
+       tc(tr.td(), td, "can-bind");   
+       tc(tr.td(), td, "has-units");
+       tc(tr.td(), td, "do-translations");
+     }
+   }
+
+   for (String n : Utilities.sorted(definitions.getInfrastructure().keySet())) {
+     TypeDefn td = definitions.getInfrastructure().get(n);
+     if (!td.getCharacteristics().isEmpty()) {
+       tr = tbl.tr();
+       tr.td().tx(td.getName());
+       tc(tr.td(), td, "has-target");   
+       tc(tr.td(), td, "can-be-target");   
+       tc(tr.td(), td, "has-range");   
+       tc(tr.td(), td, "is-continuous");   
+       tc(tr.td(), td, "has-length");   
+       tc(tr.td(), td, "has-size");   
+       tc(tr.td(), td, "can-bind");   
+       tc(tr.td(), td, "has-units");
+       tc(tr.td(), td, "do-translations");
+     }
+   }
+   tr = tbl.tr();
+   tr.td().tx("Resource");
+   tr.td().tx("");   
+   tr.td().style("background-color: #e6ffe6").tx("Y");   
+   tr.td().tx("");   
+   tr.td().tx("");   
+   tr.td().tx("");   
+   tr.td().tx("");   
+   tr.td().tx("");   
+   tr.td().tx("");
+   tr.td().tx("");
+
+
+   return new XhtmlComposer(false, true).compose(tbl);
+  }
+
+  private void tc(XhtmlNode x, TypeDefn td, String name) {
+    if (td.getCharacteristics().contains(name)) {
+      x.style("background-color: #e6ffe6").tx("Y");
+    }
+  }
+
+  private void tc(XhtmlNode x, DefinedCode td, String name) {
+    if (td.getCharacteristics().contains(name)) {
+      x.style("background-color: #e6ffe6").tx("Y");
+    }
+  }
+  
+  private String bindingsList() throws IOException {
+    XhtmlNode div = new XhtmlNode(NodeType.Element, "div");
+    XhtmlNode tbl = div.table("grid");
+    XhtmlNode tr = tbl.tr();
+    tr.th().b().tx("Path");   
+    tr.th().b().tx("Type");   
+    tr.th().b().tx("Strength");   
+    tr.th().b().tx("ValueSet");   
+    tr.th().b().tx("Description");   
+    for (String n : Utilities.sorted(definitions.getTypes().keySet())) {
+      TypeDefn td = definitions.getTypes().get(n);
+      produceBindings(tbl, td);
+    }
+
+    for (String n : Utilities.sorted(definitions.getInfrastructure().keySet())) {
+      TypeDefn td = definitions.getInfrastructure().get(n);
+      produceBindings(tbl, td);
+    }
+
+    for (String n : Utilities.sorted(definitions.getBaseResources().keySet())) {
+      ResourceDefn td = definitions.getBaseResources().get(n);
+      produceBindings(tbl, td.getRoot());
+    }
+    
+    for (String n : Utilities.sorted(definitions.getResources().keySet())) {
+      ResourceDefn td = definitions.getResources().get(n);
+      produceBindings(tbl, td.getRoot());
+    }
+    
+    div.para().tx(""+tbl.getChildNodes().size()+" bindings");
+    return new XhtmlComposer(false, true).compose(div.getChildNodes());
+  }
+
+  private void produceBindings(XhtmlNode tbl, ElementDefn ed) {
+    if (ed.hasBinding() && (ed.getBinding().getStrength() == BindingStrength.REQUIRED || ed.getBinding().getStrength() == BindingStrength.EXTENSIBLE)) {
+      XhtmlNode tr = tbl.tr();
+      tr.td().tx(br(ed.getPath()));   
+      tr.td().tx(br(ed.typeCodeNoParams()));   
+      tr.td().tx(ed.getBinding().getStrength().toCode());
+      if (ed.getBinding().getValueSet() == null) {
+        tr.td().tx("?");        
+      } else {
+        tr.td().ah(ed.getBinding().getValueSet().getWebPath()).tx(ed.getBinding().getValueSet().present());
+      }
+      tr.td().tx(ed.getBinding().getDescription() != null ? ed.getBinding().getDescription() : ed.getBinding().getDefinition());   
+    } else {
+      for (ElementDefn c : ed.getElements()) {
+        produceBindings(tbl, c);
+      }
+    }
+    
+  }
+
+  private String br(String path) {
+    if (path == null || path.length() < 20) {
+      return path;
+    }
+    StringBuilder b = new StringBuilder();
+    for (char c : path.toCharArray()) {
+      b.append(c);
+      if (c == '.' || c == '|') {
+        b.append(" ");
+      }
+    }
+    return b.toString();
+   }
 }
