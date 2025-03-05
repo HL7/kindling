@@ -22,6 +22,7 @@
         <jettyVersion>11.0.20</jettyVersion>
         <logbackVersion>1.5.17</logbackVersion>
         <nettyConstrainedVersion>4.1.118.Final</nettyConstrainedVersion>
+
     </properties>
 
     <repositories>
@@ -85,8 +86,23 @@
                 <version>2.18.0</version>
             </dependency>
             <dependency>
+                <groupId>org.apache.solr</groupId>
+                <artifactId>solr-solrj</artifactId>
+                <version>9.8.0</version>
+            </dependency>
+            <dependency>
                 <groupId>io.netty</groupId>
                 <artifactId>netty-handler</artifactId>
+                <version>${nettyConstrainedVersion}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.netty</groupId>
+                <artifactId>netty-common</artifactId>
+                <version>${nettyConstrainedVersion}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.netty</groupId>
+                <artifactId>netty-transport</artifactId>
                 <version>${nettyConstrainedVersion}</version>
             </dependency>
             <dependency>
@@ -96,7 +112,22 @@
             </dependency>
             <dependency>
                 <groupId>io.netty</groupId>
+                <artifactId>netty-transport-native</artifactId>
+                <version>${nettyConstrainedVersion}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.netty</groupId>
                 <artifactId>netty-transport-native-epoll</artifactId>
+                <version>${nettyConstrainedVersion}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.netty</groupId>
+                <artifactId>netty-buffer</artifactId>
+                <version>${nettyConstrainedVersion}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.netty</groupId>
+                <artifactId>netty-transport-native-unix-common</artifactId>
                 <version>${nettyConstrainedVersion}</version>
             </dependency>
             <dependency>
@@ -108,11 +139,6 @@
                 <groupId>org.apache.jena</groupId>
                 <artifactId>jena-shex</artifactId>
                 <version>4.9.0</version>
-            </dependency>
-            <dependency>
-                <groupId>org.apache.solr</groupId>
-                <artifactId>solr-solrj</artifactId>
-                <version>9.5.0</version>
             </dependency>
             <dependency>
                 <groupId>org.apache.xmlbeans</groupId>
