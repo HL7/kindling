@@ -27,7 +27,7 @@ There's no reason to use this code for any other purpose: all the generally purp
 
 You can find detailed instructions on setting up this project in your IDE [here](https://hl7.github.io/docs/kindling/getting-started).
 
-This project uses the [gradle build tool][Link-GradleWebpage] to build, and includes pre-build gradlew wrappers for common build tasks. 
+This project uses [Apache Maven][Link-Maven] to build.
 
 ### Build Commands
 
@@ -36,13 +36,7 @@ To build the project use the following:
 On Mac or Linux:
 
 ```
-gradlew build
-```
-
-On Windows:
-
-```
-gradlew.bat build
+mvn clean install
 ```
 
 ## CI/CD
@@ -70,7 +64,7 @@ This project is maintained by [Grahame Grieve][Link-grahameGithub], [David Otase
 [Link-grahameGithub]: https://github.com/grahamegrieve
 [Link-markGithub]: https://github.com/markiantorno
 
-[Link-GradleWebpage]: https://gradle.org/
+[Link-Maven]: http://maven.apache.org
 
 [Badge-BuildPipeline]: https://dev.azure.com/fhir-pipelines/kindling/_apis/build/status/Main%20Branch%20Pipeline?branchName=main
 [Badge-SonatypeSnapshots]: https://img.shields.io/nexus/s/https/oss.sonatype.org/org.hl7.fhir/kindling.svg "Sonatype Snapshots"
