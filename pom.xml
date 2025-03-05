@@ -86,69 +86,9 @@
                 <version>2.18.0</version>
             </dependency>
             <dependency>
-                <groupId>org.apache.solr</groupId>
-                <artifactId>solr-solrj</artifactId>
-                <version>9.8.0</version>
-            </dependency>
-            <dependency>
-                <groupId>io.netty</groupId>
-                <artifactId>netty-handler</artifactId>
-                <version>${nettyConstrainedVersion}</version>
-            </dependency>
-            <dependency>
-                <groupId>io.netty</groupId>
-                <artifactId>netty-common</artifactId>
-                <version>${nettyConstrainedVersion}</version>
-            </dependency>
-            <dependency>
-                <groupId>io.netty</groupId>
-                <artifactId>netty-transport</artifactId>
-                <version>${nettyConstrainedVersion}</version>
-            </dependency>
-            <dependency>
-                <groupId>io.netty</groupId>
-                <artifactId>netty-transport-classes-epoll</artifactId>
-                <version>${nettyConstrainedVersion}</version>
-            </dependency>
-            <dependency>
-                <groupId>io.netty</groupId>
-                <artifactId>netty-transport-native</artifactId>
-                <version>${nettyConstrainedVersion}</version>
-            </dependency>
-            <dependency>
-                <groupId>io.netty</groupId>
-                <artifactId>netty-transport-native-epoll</artifactId>
-                <version>${nettyConstrainedVersion}</version>
-            </dependency>
-            <dependency>
-                <groupId>io.netty</groupId>
-                <artifactId>netty-buffer</artifactId>
-                <version>${nettyConstrainedVersion}</version>
-            </dependency>
-            <dependency>
-                <groupId>io.netty</groupId>
-                <artifactId>netty-transport-native-unix-common</artifactId>
-                <version>${nettyConstrainedVersion}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.apache.jena</groupId>
-                <artifactId>jena-shacl</artifactId>
-                <version>4.9.0</version>
-            </dependency>
-            <dependency>
-                <groupId>org.apache.jena</groupId>
-                <artifactId>jena-shex</artifactId>
-                <version>4.9.0</version>
-            </dependency>
-            <dependency>
                 <groupId>org.apache.xmlbeans</groupId>
                 <artifactId>xmlbeans</artifactId>
                 <version>5.0.3</version>
-            </dependency>
-            <dependency>
-                <groupId>org.apache.zookeeper</groupId>
-                <artifactId>zookeeper</artifactId>
-                <version>3.9.3</version>
             </dependency>
             <dependency>
                 <groupId>org.eclipse.jetty.http2</groupId>
@@ -159,11 +99,6 @@
                 <groupId>org.eclipse.jetty.http2</groupId>
                 <artifactId>http2-http-client-transport</artifactId>
                 <version>11.0.20</version>
-            </dependency>
-            <dependency>
-                <groupId>org.jgrapht</groupId>
-                <artifactId>jgrapht-core</artifactId>
-                <version>1.5.2</version>
             </dependency>
             <dependency>
                 <groupId>com.google.protobuf</groupId>
@@ -354,64 +289,6 @@
             <artifactId>commons-net</artifactId>
             <version>3.9.0</version>
         </dependency>
-        <!--
-        <dependency>
-            <groupId>de.regnis.q.sequence</groupId>
-            <artifactId>sequence-library</artifactId>
-            <version>1.0.2</version>
-        </dependency>-->
-        <dependency>
-            <groupId>es.weso</groupId>
-            <artifactId>rbe_2.12</artifactId>
-            <version>0.2.33</version>
-        </dependency>
-        <dependency>
-            <groupId>es.weso</groupId>
-            <artifactId>schema_2.12</artifactId>
-            <version>0.2.4</version>
-        </dependency>
-        <dependency>
-            <groupId>es.weso</groupId>
-            <artifactId>shacl_2.12</artifactId>
-            <version>0.1.83</version>
-        </dependency>
-        <dependency>
-            <groupId>es.weso</groupId>
-            <artifactId>shex_2.12</artifactId>
-            <version>0.2.33</version>
-        </dependency>
-        <dependency>
-            <groupId>es.weso</groupId>
-            <artifactId>srdf_2.12</artifactId>
-            <version>0.1.125</version>
-        </dependency>
-        <dependency>
-            <groupId>es.weso</groupId>
-            <artifactId>srdfjena_2.12</artifactId>
-            <version>0.1.125</version>
-        </dependency>
-        <dependency>
-            <groupId>es.weso</groupId>
-            <artifactId>typing_2.12</artifactId>
-            <version>0.2.25</version>
-        </dependency>
-        <dependency>
-            <groupId>es.weso</groupId>
-            <artifactId>utils_2.12</artifactId>
-            <version>0.2.25</version>
-        </dependency>
-        <dependency>
-            <groupId>es.weso</groupId>
-            <artifactId>validating_2.12</artifactId>
-            <version>0.2.25</version>
-        </dependency>
-        <!--
-        <dependency>
-            <groupId>io.circe</groupId>
-            <artifactId>circe-core_2.11</artifactId>
-            <version>0.7.0-M2</version>
-        </dependency>
-        -->
         <dependency>
             <groupId>javax.servlet</groupId>
             <artifactId>javax.servlet-api</artifactId>
