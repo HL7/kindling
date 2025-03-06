@@ -19,7 +19,7 @@
         <log4jVersion>2.17.1</log4jVersion>
         <lombok_version>1.18.32</lombok_version>
         <slf4jVersion>1.7.36</slf4jVersion>
-        <jettyVersion>11.0.20</jettyVersion>
+        <jettyVersion>12.0.12</jettyVersion>
         <logbackVersion>1.5.17</logbackVersion>
         <nettyConstrainedVersion>4.1.118.Final</nettyConstrainedVersion>
 
@@ -93,12 +93,12 @@
             <dependency>
                 <groupId>org.eclipse.jetty.http2</groupId>
                 <artifactId>http2-client</artifactId>
-                <version>11.0.20</version>
+                <version>${jettyVersion}</version>
             </dependency>
             <dependency>
                 <groupId>org.eclipse.jetty.http2</groupId>
                 <artifactId>http2-http-client-transport</artifactId>
-                <version>11.0.20</version>
+                <version>${jettyVersion}</version>
             </dependency>
             <dependency>
                 <groupId>com.google.protobuf</groupId>
@@ -463,8 +463,8 @@
             <version>${jettyVersion}</version>
         </dependency>
         <dependency>
-            <groupId>org.eclipse.jetty</groupId>
-            <artifactId>jetty-servlet</artifactId>
+            <groupId>org.eclipse.jetty.ee10</groupId>
+            <artifactId>jetty-ee10-servlet</artifactId>
             <version>${jettyVersion}</version>
         </dependency>
         <dependency>
