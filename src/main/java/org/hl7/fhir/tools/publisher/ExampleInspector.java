@@ -22,7 +22,6 @@ import javax.xml.parsers.ParserConfigurationException;
 import org.apache.commons.lang3.NotImplementedException;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
-import org.apache.jena.riot.RDFDataMgr;
 import org.everit.json.schema.ValidationException;
 import org.everit.json.schema.loader.SchemaLoader;
 import org.hl7.fhir.definitions.model.Definitions;
@@ -36,7 +35,6 @@ import org.hl7.fhir.exceptions.FHIRException;
 import org.hl7.fhir.exceptions.PathEngineException;
 import org.hl7.fhir.r5.context.IWorkerContext;
 import org.hl7.fhir.r5.elementmodel.Element;
-import org.hl7.fhir.r5.elementmodel.Element.SpecialElement;
 import org.hl7.fhir.r5.elementmodel.Manager;
 import org.hl7.fhir.r5.elementmodel.Manager.FhirFormat;
 import org.hl7.fhir.r5.fhirpath.FHIRPathEngine;
@@ -58,18 +56,12 @@ import org.hl7.fhir.r5.utils.validation.IMessagingServices;
 import org.hl7.fhir.r5.utils.validation.IResourceValidator;
 import org.hl7.fhir.r5.utils.validation.IValidationPolicyAdvisor;
 import org.hl7.fhir.r5.utils.validation.IValidatorResourceFetcher;
-import org.hl7.fhir.r5.utils.validation.IValidationPolicyAdvisor.AdditionalBindingPurpose;
-import org.hl7.fhir.r5.utils.validation.IValidationPolicyAdvisor.CodedContentValidationAction;
-import org.hl7.fhir.r5.utils.validation.IValidationPolicyAdvisor.ElementValidationAction;
-import org.hl7.fhir.r5.utils.validation.IValidationPolicyAdvisor.ResourceValidationAction;
 import org.hl7.fhir.r5.utils.validation.constants.BestPracticeWarningLevel;
 import org.hl7.fhir.r5.utils.validation.constants.BindingKind;
-import org.hl7.fhir.r5.utils.validation.constants.CodedContentValidationPolicy;
 import org.hl7.fhir.r5.utils.validation.constants.ContainedReferenceValidationPolicy;
 import org.hl7.fhir.r5.utils.validation.constants.IdStatus;
 import org.hl7.fhir.r5.utils.validation.constants.ReferenceValidationPolicy;
 import org.hl7.fhir.rdf.ModelComparer;
-import org.hl7.fhir.rdf.ShExValidator;
 import org.hl7.fhir.utilities.Logger;
 import org.hl7.fhir.utilities.Logger.LogMessageType;
 import org.hl7.fhir.utilities.SIDUtilities;
@@ -88,8 +80,6 @@ import org.json.JSONObject;
 import org.json.JSONTokener;
 import org.xml.sax.SAXException;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonSyntaxException;
 
@@ -181,8 +171,7 @@ public class ExampleInspector implements IValidatorResourceFetcher, IValidationP
   private static final boolean VALIDATE_BY_PROFILE = true;
   private static final boolean VALIDATE_BY_SCHEMATRON = false;
   private static final boolean VALIDATE_BY_JSON_SCHEMA = false;
-  private static final boolean VALIDATE_RDF = false;
-  
+
   private IWorkerContext context;
   private String rootDir;
   private String xsltDir;
@@ -193,7 +182,6 @@ public class ExampleInspector implements IValidatorResourceFetcher, IValidationP
   private boolean byProfile = VALIDATE_BY_PROFILE;
   private boolean bySchematron = VALIDATE_BY_SCHEMATRON;
   private boolean byJsonSchema = VALIDATE_BY_JSON_SCHEMA;
-  private boolean byRdf = VALIDATE_RDF;
   private ExampleHostServices hostServices;
   
   public ExampleInspector(IWorkerContext context, Logger logger, String rootDir, String xsltDir, List<ValidationMessage> errors, Definitions definitions, FHIRVersion version) throws JsonSyntaxException, FileNotFoundException, IOException {
@@ -218,7 +206,7 @@ public class ExampleInspector implements IValidatorResourceFetcher, IValidationP
   private org.everit.json.schema.Schema jschema;
   private FHIRPathEngine fpe;
   private JsonObject jsonLdDefns;
-  private ShExValidator shex;
+
   private FHIRVersion version;
   
   public void prepare() throws Exception {
@@ -246,9 +234,7 @@ public class ExampleInspector implements IValidatorResourceFetcher, IValidationP
       JSONObject rawSchema = new JSONObject(new JSONTokener(source));
       jschema = SchemaLoader.load(rawSchema);
     }
-    if (VALIDATE_RDF) {
-      shex = new ShExValidator(Utilities.path(rootDir, "fhir.shex"));
-    }
+
     try {
       checkJsonLd();    
     } catch (Exception e) {
@@ -425,41 +411,6 @@ public class ExampleInspector implements IValidatorResourceFetcher, IValidationP
     }
   }
 
-  private void validateRDF(String fttl, String fjld, String rt) throws FileNotFoundException, IOException {
-    if (VALIDATE_RDF && new File(fjld).exists()) {
-      FileInputStream f = new FileInputStream(fjld);
-      int size = f.available();
-      f.close();
-      if (size > 1000000)
-        return;
-      // replace @context with the contents of the right context file
-      JsonObject json = (JsonObject) new com.google.gson.JsonParser().parse(FileUtilities.fileToString(fjld));
-      json.remove("@context");
-      json.add("@context", jsonLdDefns.get("@context"));
-      Gson gson = new GsonBuilder().setPrettyPrinting().create();
-      String jcnt = gson.toJson(json);
-//      FileUtilities.stringToFile(jcnt, Utilities.path("[tmp]", "jsonld\\"+rt+".jsonld");
-      // parse to a model
-      Model mj = ModelFactory.createDefaultModel();
-      mj.read(new StringReader(jcnt), null, "JSON-LD");
-
-      // read turtle file into Jena
-      Model mt = RDFDataMgr.loadModel(fttl);
-      // use ShEx to validate turtle file - TODO
-      shex.validate(mt);
-
-//      List<String> diffs = new ModelComparer().setModel1(mt, "ttl").setModel2(mj, "json").compare();
-//      if (!diffs.isEmpty()) {
-//        System.out.println("not isomorphic");
-//        for (String s : diffs) {
-//          System.out.println("  "+s);
-//        }
-//        RDFDataMgr.write(new FileOutputStream(Utilities.path("tmp]", "json.nt")), mj, RDFFormat.NTRIPLES_UTF8);
-//        RDFDataMgr.write(new FileOutputStream(Utilities.path("tmp]", "ttl.nt")), mt, RDFFormat.NTRIPLES_UTF8);
-//      }
-    }
-  }
-
   public void summarise() throws EValidationFailed {
     logger.log("Summary: Errors="+Integer.toString(errorCount)+", Warnings="+Integer.toString(warningCount)+", Information messages="+Integer.toString(informationCount), LogMessageType.Error);
     if (errorCount > 0) {
@@ -561,17 +512,6 @@ public class ExampleInspector implements IValidatorResourceFetcher, IValidationP
   public void setByJsonSchema(boolean byJsonSchema) {
     this.byJsonSchema = byJsonSchema;
   }
-
-
-  public boolean isByRdf() {
-    return byRdf;
-  }
-
-
-  public void setByRdf(boolean byRdf) {
-    this.byRdf = byRdf;
-  }
-
 
   @Override
   public Element fetch(IResourceValidator validator,Object appContext, String url) throws IOException, FHIRException {
