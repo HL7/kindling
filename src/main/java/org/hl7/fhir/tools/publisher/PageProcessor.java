@@ -7331,7 +7331,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
       } else {
         // Things have changed, so the reason may no longer be valid and needs to be checked.
         // Keep old content as a comment, but revert reason to 'Unknown'
-        if ((patternValue == null != (oldPattern==null || oldPattern.isEmpty())) || !patternValue.equals(oldPattern))
+        if ((patternValue == null != (oldPattern==null || oldPattern.isEmpty())) || !oldPattern.equals(patternValue))
           nameException.appendChild(doc.createComment("Old pattern: " + oldPattern));
         if ((resourceValue == null != (oldResource==null || oldResource.isEmpty())) || (resourceValue!=null && oldResource!=null && !resourceValue.equals(oldResource)))
           nameException.appendChild(doc.createComment("Old resource: " + oldResource));
