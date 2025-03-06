@@ -696,6 +696,7 @@ public class Publisher implements URIResolver, SectionNumberer {
         s = s + " "+args[i];
     }      
     page.log(s, LogMessageType.Process);
+    page.log("character encoding = "+java.nio.charset.Charset.defaultCharset()+" / "+System.getProperty("file.encoding"), LogMessageType.Process);
     page.log("Start Clock @ "+nowAsString(execTime)+" ("+nowAsDate(execTime)+")", LogMessageType.Process);
     page.log("", LogMessageType.Process);
     
