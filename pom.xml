@@ -249,7 +249,7 @@
         <dependency>
             <groupId>com.typesafe.scala-logging</groupId>
             <artifactId>scala-logging_2.12</artifactId>
-            <version>3.5.0</version>
+            <version>3.9.5</version>
         </dependency>
         <dependency>
             <groupId>commons-beanutils</groupId>
@@ -475,7 +475,7 @@
         <dependency>
             <groupId>org.eclipse.jgit</groupId>
             <artifactId>org.eclipse.jgit</artifactId>
-            <version>6.7.0.202309050840-r</version>
+            <version>6.10.0.202406032230-r</version>
         </dependency>
         <dependency>
             <groupId>org.fhir</groupId>
