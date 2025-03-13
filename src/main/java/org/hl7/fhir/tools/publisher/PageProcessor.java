@@ -266,6 +266,7 @@ import org.hl7.fhir.utilities.xhtml.XhtmlNode;
 import org.hl7.fhir.utilities.xhtml.XhtmlParser;
 import org.hl7.fhir.utilities.xml.XMLUtil;
 import org.hl7.fhir.utilities.xml.XhtmlGenerator;
+import org.hl7.fhir.validation.ValidatorSettings;
 import org.w3c.dom.Attr;
 import org.w3c.dom.Comment;
 import org.w3c.dom.Document;
@@ -4868,7 +4869,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
   private String genConceptMapsTable() throws Exception {
     StringBuilder s = new StringBuilder();
     s.append("<table class=\"codes\">\r\n");
-    s.append(" <tr><td><b>Name</b></td><td><b>Source</b></td><td><b>Target</b></td></tr>\r\n");
+    s.append(" <tr><td><b>ID</b></td><td><b>Name</b></td><td><b>Source</b></td><td><b>Target</b></td></tr>\r\n");
     List<String> sorts = new ArrayList<String>();
     sorts.addAll(conceptMaps.keys());
     Collections.sort(sorts);
@@ -10499,7 +10500,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     htmlchecker = new HTMLLinkChecker(this, validationErrors, webLocation, extensionsLocation, packages);
 
     log("  .. loaded", LogMessageType.Process);
-    vsValidator = new ValueSetValidator(workerContext, definitions.getVsFixups(), definitions.getStyleExemptions());
+    vsValidator = new ValueSetValidator(workerContext, definitions.getVsFixups(), definitions.getStyleExemptions(), new ValidatorSettings());
     breadCrumbManager.setContext(workerContext);
   }
 
