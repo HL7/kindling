@@ -28,6 +28,7 @@ import org.hl7.fhir.utilities.validation.ValidationMessage.IssueSeverity;
 import org.hl7.fhir.utilities.validation.ValidationMessage.IssueType;
 import org.hl7.fhir.utilities.validation.ValidationOptions;
 import org.hl7.fhir.validation.BaseValidator;
+import org.hl7.fhir.validation.ValidatorSettings;
 
 public class ValueSetValidator extends BaseValidator {
 
@@ -73,8 +74,8 @@ public class ValueSetValidator extends BaseValidator {
   private Set<String> valueSets = new HashSet<String>();
   private Map<String, CodeSystem> codeSystems = new HashMap<String, CodeSystem>();
 
-  public ValueSetValidator(BuildWorkerContext context, List<String> fixups, Set<String> styleExemptions) {
-    super(context, null, true,  null);
+  public ValueSetValidator(BuildWorkerContext context, List<String> fixups, Set<String> styleExemptions, ValidatorSettings settings) {
+    super(context, settings, null,  null);
     this.context = context;
     this.fixups = fixups;
     this.styleExemptions = styleExemptions;

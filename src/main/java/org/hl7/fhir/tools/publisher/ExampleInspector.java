@@ -74,6 +74,7 @@ import org.hl7.fhir.utilities.validation.ValidationMessage;
 import org.hl7.fhir.utilities.validation.ValidationMessage.IssueSeverity;
 import org.hl7.fhir.utilities.validation.ValidationMessage.IssueType;
 import org.hl7.fhir.utilities.validation.ValidationMessage.Source;
+import org.hl7.fhir.validation.ValidatorSettings;
 import org.hl7.fhir.validation.instance.InstanceValidator;
 import org.hl7.fhir.validation.instance.advisor.BasePolicyAdvisorForFullValidation;
 import org.json.JSONObject;
@@ -210,14 +211,14 @@ public class ExampleInspector implements IValidatorResourceFetcher, IValidationP
   private FHIRVersion version;
   
   public void prepare() throws Exception {
-    validator = new InstanceValidator(context, hostServices, null, null);
+    validator = new InstanceValidator(context, hostServices, null, null, new ValidatorSettings());
     validator.setSuppressLoincSnomedMessages(true);
     validator.setResourceIdRule(IdStatus.REQUIRED);
     validator.setBestPracticeWarningLevel(BestPracticeWarningLevel.Warning);
     validator.getExtensionDomains().add("http://hl7.org/fhir/us");
     validator.setFetcher(this);
     validator.setAllowExamples(true);
-    validator.setDebug(false);
+    validator.getSettings().setDebug(false);
     validator.setForPublication(true);
     validator.setPolicyAdvisor(new BasePolicyAdvisorForFullValidation(ReferenceValidationPolicy.CHECK_TYPE_IF_EXISTS));
     

@@ -293,6 +293,7 @@ import org.hl7.fhir.utilities.xhtml.XhtmlParser;
 import org.hl7.fhir.utilities.xml.XMLUtil;
 import org.hl7.fhir.utilities.xml.XhtmlGenerator;
 import org.hl7.fhir.utilities.xml.XmlGenerator;
+import org.hl7.fhir.validation.ValidatorSettings;
 import org.hl7.fhir.validation.profile.ProfileValidator;
 import org.stringtemplate.v4.ST;
 import org.w3c.dom.Document;
@@ -1537,7 +1538,7 @@ public class Publisher implements URIResolver, SectionNumberer {
 
   private void validateProfile(ConstraintStructure p) throws Exception {
     if (pv == null) {
-      pv = new ProfileValidator(page.getWorkerContext(), null, null);
+      pv = new ProfileValidator(page.getWorkerContext(), new ValidatorSettings(), null, null);
     }
     page.getValidationErrors().addAll(pv.validate(p.getResource(), true));
   }
@@ -2537,9 +2538,9 @@ public class Publisher implements URIResolver, SectionNumberer {
 
   private void validate() throws Exception {
     page.log("Validating", LogMessageType.Process);
-    ResourceValidator val = new ResourceValidator(page.getDefinitions(), page.getTranslations(), page.getCodeSystems(), page.getFolders().srcDir, fpUsages, page.getSuppressedMessages(), page.getWorkerContext());
+    ResourceValidator val = new ResourceValidator(page.getDefinitions(), page.getTranslations(), page.getCodeSystems(), page.getFolders().srcDir, fpUsages, page.getSuppressedMessages(), page.getWorkerContext(), new ValidatorSettings());
     val.resolvePatterns();
-    ProfileValidator valp = new ProfileValidator(page.getWorkerContext(), null, null);
+    ProfileValidator valp = new ProfileValidator(page.getWorkerContext(), new ValidatorSettings(), null, null);
 
     for (String n : page.getDefinitions().getTypes().keySet())
       page.getValidationErrors().addAll(val.checkStucture(n, page.getDefinitions().getTypes().get(n)));

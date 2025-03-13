@@ -50,6 +50,7 @@ import org.hl7.fhir.utilities.validation.ValidationMessage.IssueSeverity;
 import org.hl7.fhir.utilities.validation.ValidationMessage.IssueType;
 import org.hl7.fhir.utilities.validation.ValidationMessage.Source;
 import org.hl7.fhir.validation.BaseValidator;
+import org.hl7.fhir.validation.ValidatorSettings;
 
 
 /**
@@ -90,9 +91,9 @@ public class ResourceValidator extends BaseValidator {
   private Set<String> allowedPluralNames = new HashSet<>();
 
 
-  public ResourceValidator(Definitions definitions, Translations translations, CanonicalResourceManager<CodeSystem> map, String srcFolder, List<FHIRPathUsage> fpUsages, List<String> suppressedMessages, IWorkerContext context) throws IOException {
-    super(context, null, true, null);
-    source = Source.ResourceValidator;
+  public ResourceValidator(Definitions definitions, Translations translations, CanonicalResourceManager<CodeSystem> map, String srcFolder, List<FHIRPathUsage> fpUsages, List<String> suppressedMessages, IWorkerContext context, ValidatorSettings settings) throws IOException {
+    super(context, settings, null, null);
+    settings.setSource(Source.ResourceValidator);
     this.definitions = definitions;
     this.translations = translations;
     this.codeSystems = map;
