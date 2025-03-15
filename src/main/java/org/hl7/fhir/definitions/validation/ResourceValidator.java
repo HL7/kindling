@@ -801,6 +801,9 @@ public class ResourceValidator extends BaseValidator {
       if (cd != null) {
         check(errors, path, cd, sd, e);
         if (cd.getValueSet() != null) {
+          if ((cd.getStrength() == BindingStrength.REQUIRED || cd.getStrength() == BindingStrength.EXTENSIBLE)) {
+            rule(errors, ValidationMessage.NO_RULE_DATE, IssueType.STRUCTURE, path, !cd.getValueSet().getExperimental(), "Reference to experimental valueset "+cd.getValueSet().getUrl());
+          }
           if (e.getBinding().getStrength() == BindingStrength.EXAMPLE)
             ValueSetUtilities.markStatus(cd.getValueSet(), parent == null ? "fhir" : parent.getWg().getCode(), StandardsStatus.DRAFT, null, "1", context, null);
           else if (parent == null)

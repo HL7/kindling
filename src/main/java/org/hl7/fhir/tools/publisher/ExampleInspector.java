@@ -698,6 +698,7 @@ public class ExampleInspector implements IValidatorResourceFetcher, IValidationP
   }
 
   private boolean testInvariants(ResourceDefn rd, boolean result, File testsDir, ZipGenerator zip, Set<String> invsTested) throws IOException {
+    System.out.print(".");
     for (File f : testsDir.listFiles()) {
       zip.addFileName(Utilities.path(rd.getName(), f.getName()), f.getAbsolutePath(), false);
       if (f.getName().endsWith(".json")) {

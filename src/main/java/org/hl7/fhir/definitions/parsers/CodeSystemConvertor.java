@@ -23,6 +23,7 @@ package org.hl7.fhir.definitions.parsers;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 
 import org.hl7.fhir.r5.context.CanonicalResourceManager;
 import org.hl7.fhir.r5.formats.IParser;
@@ -49,27 +50,32 @@ public class CodeSystemConvertor {
     this.registry = registry;
   }
 
-  public CodeSystem convert(IParser p, ValueSet vs, String name, PackageInformation packageInfo) throws Exception {
+  public CodeSystem convert(IParser p, ValueSet vs, String name, PackageInformation packageInfo) throws Exception  {
     String nname = name.replace("valueset-", "codesystem-");
     if (nname.equals(name))
       nname = FileUtilities.changeFileExt(name, "-cs.xml");
     if (new File(nname).exists()) {
-      FileInputStream input = new FileInputStream(nname);
-      CodeSystem cs = CodeSystemUtilities.makeShareable((CodeSystem) p.parse(input));
-      if (!cs.hasTitle())
-        cs.setTitle(Utilities.capitalize(Utilities.unCamelCase(cs.getName())));
+      FileInputStream input;
+      try {
+        input = new FileInputStream(nname);
+        CodeSystem cs = CodeSystemUtilities.makeShareable((CodeSystem) p.parse(input));
+        if (!cs.hasTitle())
+          cs.setTitle(Utilities.capitalize(Utilities.unCamelCase(cs.getName())));
 
-      populate(cs, vs);
-//      if (codeSystems.containsKey(cs.getUrl())) 
-      //        throw new Exception("Duplicate Code System: "+cs.getUrl());
-      if (!CodeSystemUtilities.hasOID(cs)) {
-        String oid = registry.getOID(cs.getUrl());
-        if (oid != null) {
-          CodeSystemUtilities.setOID(cs, oid);
+        populate(cs, vs);
+        //      if (codeSystems.containsKey(cs.getUrl())) 
+        //        throw new Exception("Duplicate Code System: "+cs.getUrl());
+        if (!CodeSystemUtilities.hasOID(cs)) {
+          String oid = registry.getOID(cs.getUrl());
+          if (oid != null) {
+            CodeSystemUtilities.setOID(cs, oid);
+          }
         }
+        codeSystems.see(cs, packageInfo);
+        return cs;
+      } catch (Exception e) {
+        throw new Exception("Error parsing "+nname+": "+e.getMessage(), e);
       }
-      codeSystems.see(cs, packageInfo);
-      return cs;
     }    
     return null;
   }
