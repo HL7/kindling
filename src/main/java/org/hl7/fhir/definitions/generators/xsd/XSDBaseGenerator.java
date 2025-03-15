@@ -549,27 +549,31 @@ public class XSDBaseGenerator  extends XSDRootGenerator {
     for (BindingSpecification en : enums) {
       generateEnum(en);
     }
-
     genRegex();
-    
   }
   
 
   private void generateEnum(BindingSpecification bs) throws IOException {
-    if (bs.getValueSet() == null) {
+    ValueSet vs = bs.getValueSet();
+    if (vs == null) {
       throw new Error("Missing value set "+bs.getName());
     }
-    String en = namify(bs.getValueSet().getName());
+    if ("http://hl7.org/fhir/ValueSet/extended-resource-types".equals(vs.getUrl())) {
+      vs = vs.copy();
+      vs.getCompose().getInclude().remove(2); // remove the reference to additional resources
+    }
+    String en = namify(vs.getName());
     if (genEnums.contains(en))
       return;
     if (allenums.contains(en)) 
       return;
     allenums.add(en);
 
+    
     write("  <xs:simpleType name=\"" + en + "Enum\">\r\n");
     write("    <xs:restriction base=\"code-primitive\">\r\n");
-    bs.getValueSet().setUserData(ToolResourceUtilities.NAME_VS_USE_MARKER, true);
-    ValueSet ex = workerContext.expandVS(bs.getValueSet(), true, false).getValueset();
+    vs.setUserData(ToolResourceUtilities.NAME_VS_USE_MARKER, true);
+    ValueSet ex = workerContext.expandVS(vs, true, false).getValueset();
     if (ex == null)
       throw new Error("The expansion for "+bs.getName()+" is null");
     if (ex.getExpansion().getContains().isEmpty())

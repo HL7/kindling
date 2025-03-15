@@ -4890,7 +4890,6 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     return s.toString();
   }
 
-
   @SuppressWarnings("unchecked")
   private String genIGValueSetsTable() throws Exception {
     StringBuilder s = new StringBuilder();
@@ -11556,7 +11555,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     StringBuilder b = new StringBuilder();
     List<String> names = new ArrayList<String>();
     for (CodeSystem cs : definitions.getCodeSystems().getSortedList()) {
-      names.add(cs.getId());
+        names.add(cs.getId());
     }
     Collections.sort(names);
     Set<String> urls = new HashSet<>();
@@ -11590,7 +11589,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     Collections.sort(names);
     for (String n : names) {
       CodeSystem cs = definitions.getCodeSystems().get(n);
-      if (cs != null) {
+      if (cs != null && !Utilities.existsInList(cs.getUrl(), "http://hl7.org/fhir/tools/CodeSystem/additional-resources")) {
         if (cs.getUrl().startsWith("http://terminology.hl7.org/CodeSystem") && !cs.getUrl().startsWith("http://terminology.hl7.org/CodeSystem/v2-") && !cs.getUrl().startsWith("http://terminology.hl7.org/CodeSystem/v3-")) {
           b.append("  <tr>\r\n");
           b.append("    <td><a href=\""+cs.getWebPath()+"\">"+cs.getName()+"</a>");

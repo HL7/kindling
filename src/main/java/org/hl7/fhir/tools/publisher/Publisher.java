@@ -143,6 +143,7 @@ import org.hl7.fhir.definitions.validation.FHIRPathUsage;
 import org.hl7.fhir.definitions.validation.ResourceValidator;
 import org.hl7.fhir.definitions.validation.XmlValidator;
 import org.hl7.fhir.exceptions.FHIRException;
+import org.hl7.fhir.exceptions.FHIRFormatError;
 import org.hl7.fhir.r5.conformance.ShExGenerator;
 import org.hl7.fhir.r5.conformance.ShExGenerator.HTMLLinkPolicy;
 import org.hl7.fhir.r5.conformance.profile.ProfileUtilities;
@@ -265,6 +266,8 @@ import org.hl7.fhir.utilities.IniFile;
 import org.hl7.fhir.utilities.Logger.LogMessageType;
 import org.hl7.fhir.utilities.filesystem.CSFile;
 import org.hl7.fhir.utilities.filesystem.CSFileInputStream;
+import org.hl7.fhir.utilities.http.HTTPResult;
+import org.hl7.fhir.utilities.http.ManagedWebAccess;
 import org.hl7.fhir.utilities.NDJsonWriter;
 import org.hl7.fhir.utilities.PathBuilder;
 import org.hl7.fhir.utilities.SIDUtilities;
@@ -776,6 +779,7 @@ public class Publisher implements URIResolver, SectionNumberer {
       buildFeedsAndMaps();
       prsr.setExternals(externals);
       page.makeRenderingContext();
+      page.getWorkerContext().cacheResource(fetchAdditionalTypes());
 
       prsr.parse(page.getGenDate(), page.getValidationErrors());
       for (String n : page.getDefinitions().sortedResourceNames())
@@ -800,8 +804,8 @@ public class Publisher implements URIResolver, SectionNumberer {
       if (buildFlags.get("all")) {
         copyStaticContent();
       }
-      loadValueSets1();
 
+      loadValueSets1();
       generateSCMaps();
       processProfiles();
       validate();
@@ -894,6 +898,13 @@ public class Publisher implements URIResolver, SectionNumberer {
       FileUtilities.stringToFile(StringUtils.defaultString(e.getMessage()), Utilities.path(page.getFolders().dstDir, "simple-error.txt"));
       System.exit(1);
     }
+  }
+
+  private Resource fetchAdditionalTypes() throws FHIRFormatError, IOException {
+    HTTPResult cnt = ManagedWebAccess.get(Utilities.strings("web"), "https://raw.githubusercontent.com/FHIR/ig-registry/refs/heads/master/additional-resources.json");
+    Resource res = new JsonParser().parse(cnt.getContent());
+    res.setWebPath("https://raw.githubusercontent.com/FHIR/ig-registry/refs/heads/master/additional-resources.json");
+    return res;
   }
 
   private void checkPackages() throws FileNotFoundException, IOException {
@@ -1151,6 +1162,7 @@ public class Publisher implements URIResolver, SectionNumberer {
         ok = false;
       }
     }
+    System.out.println();
     zip.close();
     page.log("    "+invsTested.size()+" invariants tested ("+((invsTested.size() * 100) / invsFound.size())+"%)", LogMessageType.Process);
     if (!ok) {
@@ -1925,6 +1937,7 @@ public class Publisher implements URIResolver, SectionNumberer {
       produceResource1(r, false);
       produceResource2(r, false, null, false);
     }
+    
     generateCodeSystemsPart2();
     page.log(" ...resource ValueSet", LogMessageType.Process);
     r = page.getDefinitions().getResources().get("ValueSet");
@@ -2195,7 +2208,7 @@ public class Publisher implements URIResolver, SectionNumberer {
     cpd.setName("Base FHIR compartment definition for " +c.getTitle());
     cpd.setStatus(PublicationStatus.DRAFT);
     cpd.setDescription(c.getIdentity()+". "+c.getDescription());
-    cpd.setExperimental(true);
+    cpd.setExperimental(false);
     cpd.setVersion(page.getVersion().toCode());
     cpd.setDate(page.getGenDate().getTime());
     CanonicalResourceUtilities.setHl7WG(cpd, "fhir");
@@ -2228,7 +2241,7 @@ public class Publisher implements URIResolver, SectionNumberer {
     cpbs.setVersion(page.getVersion().toCode());
     cpbs.setName("Base FHIR Capability Statement " + (full ? "(Full)" : "(Empty)"));
     cpbs.setStatus(PublicationStatus.DRAFT);
-    cpbs.setExperimental(true);
+    cpbs.setExperimental(false);
     cpbs.setDate(page.getGenDate().getTime());
     CanonicalResourceUtilities.setHl7WG(cpbs, "fhir");
     cpbs.setKind(CapabilityStatementKind.CAPABILITY);
@@ -5181,10 +5194,6 @@ public class Publisher implements URIResolver, SectionNumberer {
             res.setVersion(page.getVersion().toCode());
             wantSave = true;
           }
-          if (!res.hasExperimental()) {
-            res.setExperimental(true);
-            wantSave = true;
-          }
         }
         if (res instanceof CapabilityStatement) {
           ((CapabilityStatement) res).setFhirVersion(page.getVersion());
@@ -5300,16 +5309,19 @@ public class Publisher implements URIResolver, SectionNumberer {
       }
     } else if (rt.equals("CodeSystem")) {
       CodeSystem cs = (CodeSystem) loadExample(file);
-      fixCanonicalResource(cs, prefix + n, true);
-      if (cs.getUrl().startsWith("http://hl7.org/fhir"))
-        cs.setVersion(page.getVersion().toCode());
-      cs.setUserData("example", "true");
-      cs.setUserData("filename", FileUtilities.changeFileExt(file.getName(), ""));
-      cs.addExtension().setUrl(ToolingExtensions.EXT_WORKGROUP).setValue(new CodeType("fhir"));
-      cs.setWebPath(prefix +n + ".html");
-      addToResourceFeed(cs, valueSetsFeed, file.getName());
-      page.getCodeSystems().see(cs, page.packageInfo());
-      sdm.seeResource(cs.present(), cs.getWebPath(), cs);
+      if (!Utilities.existsInList(cs.getUrl(), "http://hl7.org/fhir/tools/CodeSystem/additional-resources")) {
+        fixCanonicalResource(cs, prefix + n, true);
+        if (cs.getUrl().startsWith("http://hl7.org/fhir"))
+          cs.setVersion(page.getVersion().toCode());
+        cs.setUserData("example", "true");
+        cs.setUserData("filename", FileUtilities.changeFileExt(file.getName(), ""));
+        cs.addExtension().setUrl(ToolingExtensions.EXT_WORKGROUP).setValue(new CodeType("fhir"));
+        cs.setWebPath(prefix +n + ".html");
+        addToResourceFeed(cs, valueSetsFeed, file.getName());
+        page.getCodeSystems().see(cs, page.packageInfo());
+        sdm.seeResource(cs.present(), cs.getWebPath(), cs);
+      }
+
       // There's no longer a reason to exclude R4B concept maps
       //    } else if (rt.equals("ConceptMap") && !VersionUtilities.isR4BVer(page.getVersion().toCode())) {
     } else if (rt.equals("ConceptMap")) {
@@ -6756,59 +6768,11 @@ public class Publisher implements URIResolver, SectionNumberer {
 
   }
 
-  // public void logNoEoln(String content) {
-  // page.logNoEoln(content);
-  // }
-
-  @SuppressWarnings("unchecked")
-  private void generateIGValueSetsPart1() throws Exception {
-    for (Resource ae : page.getIgResources().values()) {
-      if (ae instanceof ValueSet) {
-        ValueSet vs = (ValueSet) ae;
-        page.getValueSets().see(vs, page.packageInfo());
-      }
-      if (ae instanceof CodeSystem) {
-        CodeSystem cs = (CodeSystem) ae;
-        page.getCodeSystems().see(cs, page.packageInfo());
-      }
-    }
-  }
-
-  private void generateIGValueSetsPart2(ImplementationGuideDefn ig) throws Exception {
-    for (Resource ae : page.getIgResources().values()) {
-      if (ae instanceof ValueSet) {
-        ValueSet vs = (ValueSet) ae;
-        String name = FileUtilities.fileTitle((String) ae.getWebPath());
-        String title = vs.getName();
-
-        if (vs.getText() == null || vs.getText().getDiv() == null || vs.getText().getDiv().allChildrenAreText()
-            && (Utilities.noString(vs.getText().getDiv().allText()) || !vs.getText().getDiv().allText().matches(".*\\w.*"))) {
-          RenderingContext lrc = page.getRc().copy(false).setLocalPrefix("");
-          RendererFactory.factory(vs, lrc).renderResource(ResourceWrapper.forResource(lrc.getContextUtilities(), vs));
-        }
-        page.getVsValidator().validate(page.getValidationErrors(), name, vs, true, false);
-
-        addToResourceFeed(vs, valueSetsFeed, null); // todo - what should the Oids be
-
-        String sf = page.processPageIncludes(title + ".html", FileUtilities.fileToString(page.getFolders().templateDir + "template-vs-ig.html"), "valueSet", null, name+".html", vs, null, "Value Set", null, null, wg("vocab"), "?p8?");
-        sf = addSectionNumbers(title + ".html", "template-valueset", sf, "??", 0, null, ig);
-        FileUtilities.stringToFile(sf, page.getFolders().dstDir + name + ".html");
-
-        String src = page.processPageIncludesForBook(title + ".html", FileUtilities.fileToString(page.getFolders().templateDir + "template-vs-ig-book.html"), "valueSet", vs, null, null);
-        cachePage(name + ".html", src, "Value Set " + title, false);
-        page.setId(null);
-
-        fixCanonicalResource(vs, name);
-        serializeResource(vs, name, "Definition for Value Set" + vs.getName(), "valueset-instance", "Value Set", wg("vocab"), true, true);
-      }
-    }
-  }
-
   private void generateCodeSystemsPart2() throws Exception {
     Set<String> urls = new HashSet<String>();
 
     for (CodeSystem cs : page.getDefinitions().getCodeSystems().getList()) {
-      if (cs != null && page.isLocalResource(cs)) {
+      if (cs != null && page.isLocalResource(cs) && !Utilities.existsInList(cs.getUrl(), "http://hl7.org/fhir/tools/CodeSystem/additional-resources")) {
         checkShareableCodeSystem(cs);
         if (cs.getUserData("example") == null && !cs.getUrl().contains("/v2-") && !cs.getUrl().contains("/v3-")) {
           if (!urls.contains(cs.getUrl())) {
@@ -7046,18 +7010,20 @@ private String csCounter() {
   private void generateCodeSystemsPart1() throws Exception {
     page.log(" ...code systems", LogMessageType.Process);
     for (CodeSystem cs : page.getDefinitions().getCodeSystems().getList()) {
-      KindlingUtilities.makeUniversal(cs);
-      if (cs != null && page.isLocalResource(cs)) {
-        if (!cs.hasText()) {
-          cs.setText(new Narrative());
-          cs.getText().setStatus(NarrativeStatus.EMPTY);
+      if (!Utilities.existsInList(cs.getUrl(), "http://hl7.org/fhir/tools/CodeSystem/additional-resources")) {
+        KindlingUtilities.makeUniversal(cs);
+        if (cs != null && page.isLocalResource(cs)) {
+          if (!cs.hasText()) {
+            cs.setText(new Narrative());
+            cs.getText().setStatus(NarrativeStatus.EMPTY);
+          }
+          if (!cs.getText().hasDiv()) {
+            cs.getText().setDiv(new XhtmlNode(NodeType.Element));
+            cs.getText().getDiv().setName("div");
+          }
+          //      if (ToolingExtensions.getOID(cs) == null)
+          //        throw new Exception("No OID on code system "+cs.getUrl());
         }
-        if (!cs.getText().hasDiv()) {
-          cs.getText().setDiv(new XhtmlNode(NodeType.Element));
-          cs.getText().getDiv().setName("div");
-        }
-        //      if (ToolingExtensions.getOID(cs) == null)
-        //        throw new Exception("No OID on code system "+cs.getUrl());
       }
     }
   }

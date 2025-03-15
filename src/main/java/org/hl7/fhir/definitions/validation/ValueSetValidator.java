@@ -247,8 +247,9 @@ public class ValueSetValidator extends BaseValidator {
   }
 
   public void checkValueSetCode(List<ValidationMessage> errors, String nameForErrors, ValueSet vs, int i, ConceptSetComponent inc) {
-    if (inc.hasSystem() && !context.hasResource(CodeSystem.class, inc.getSystem()) && !isContainedSystem(vs, inc.getSystem()))
+    if (inc.hasSystem() && !context.hasResource(CodeSystem.class, inc.getSystem()) && !isContainedSystem(vs, inc.getSystem())) {
       rule(errors, ValidationMessage.NO_RULE_DATE, IssueType.BUSINESSRULE, getWg(vs)+":ValueSet["+vs.getId()+"].compose.include["+Integer.toString(i)+"]", isKnownCodeSystem(inc.getSystem()), "The system '"+inc.getSystem()+"' is not valid");
+    }
     
     if (inc.hasSystem() && canValidate(inc.getSystem())) {
       for (ConceptReferenceComponent cc : inc.getConcept()) {
@@ -359,6 +360,10 @@ public class ValueSetValidator extends BaseValidator {
         "http://example.com",  "http://example.org", "https://precision.fda.gov/files/", "http://www.ebi.ac.uk/ipd/imgt/hla", 
         "https://www.iana.org/time-zones", "https://precision.fda.gov/jobs/"))
       return true;
+    
+    if (Utilities.existsInList(system, "http://hl7.org/fhir/tools/CodeSystem/additional-resources")) {
+      return true;
+    }
     
     if (SIDUtilities.isknownCodeSystem(system)) {
       return true;
