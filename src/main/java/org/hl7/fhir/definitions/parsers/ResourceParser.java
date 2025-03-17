@@ -179,6 +179,9 @@ public class ResourceParser {
     if (ig.hasExtension(BuildExtensions.EXT_FMM_LEVEL)) {
       p.forceMetadata("fmm", BuildExtensions.readStringExtension(ig, BuildExtensions.EXT_FMM_LEVEL));      
     }
+    if (ig.hasExtension(BuildExtensions.EXT_STANDARDS_STATUS)) {
+      p.forceMetadata("standards-status", BuildExtensions.readStringExtension(ig, BuildExtensions.EXT_STANDARDS_STATUS));      
+    }
     if (ig.hasDescription()) {
       p.forceMetadata("description", ig.getDescription());
     }

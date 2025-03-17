@@ -10,7 +10,7 @@
     <properties>
         <maven.compiler.source>11</maven.compiler.source>
         <maven.compiler.target>11</maven.compiler.target>
-        <fhirCoreVersion>6.5.16-SNAPSHOT</fhirCoreVersion>
+        <fhirCoreVersion>6.5.17-SNAPSHOT</fhirCoreVersion>
         <apachePoiVersion>5.2.1</apachePoiVersion>
         <jacksonVersion>2.16.0</jacksonVersion>
         <apacheHttpcomponentsVersion>4.5.13</apacheHttpcomponentsVersion>

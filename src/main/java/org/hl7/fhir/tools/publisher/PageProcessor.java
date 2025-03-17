@@ -11059,11 +11059,23 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
         src = s1 + getPackageContent(pack, genlevel(level)) + s3;
       else if (com[0].equals("search-footer"))
         src = s1+searchFooter(level)+s3;
-      else if (com[0].equals("search-header"))
+      else if (com[0].equals("sstatus")) {
+        if (com.length == 1) {
+          StandardsStatus ss = pack.getStandardsStatus();
+          if (ss == null)
+            ss = StandardsStatus.INFORMATIVE;
+          src = s1+"<a href=\""+genlevel(level)+"versions.html#std-process\">"+ss.toDisplay()+"</a>"+s3;
+        } else
+          src = s1+getStandardsStatus(com[1])+s3;
+      } else if (com[0].equals("search-header"))
         src = s1+searchHeader(level)+s3;
       else if (com[0].equals("pub-name"))
         src = s1+publicationType+s3;
-      else if (com[0].equals("package.search"))
+      else if (com[0].equals("fmm-style")) {
+        String fmm = pack.getFmmLevel();
+        StandardsStatus ss = pack.getStandardsStatus();
+        src = s1+fmmBarColorStyle(ss, fmm)+s3;
+      } else if (com[0].equals("package.search"))
         src = s1+getSearch(pack)+s3;
       else if (com[0].equals("search-location"))
         src = s1+searchLocation+s3;
