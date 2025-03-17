@@ -266,6 +266,7 @@ import org.hl7.fhir.utilities.xhtml.XhtmlNode;
 import org.hl7.fhir.utilities.xhtml.XhtmlParser;
 import org.hl7.fhir.utilities.xml.XMLUtil;
 import org.hl7.fhir.utilities.xml.XhtmlGenerator;
+import org.hl7.fhir.validation.ValidatorSettings;
 import org.w3c.dom.Attr;
 import org.w3c.dom.Comment;
 import org.w3c.dom.Document;
@@ -4868,7 +4869,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
   private String genConceptMapsTable() throws Exception {
     StringBuilder s = new StringBuilder();
     s.append("<table class=\"codes\">\r\n");
-    s.append(" <tr><td><b>Name</b></td><td><b>Source</b></td><td><b>Target</b></td></tr>\r\n");
+    s.append(" <tr><td><b>ID</b></td><td><b>Name</b></td><td><b>Source</b></td><td><b>Target</b></td></tr>\r\n");
     List<String> sorts = new ArrayList<String>();
     sorts.addAll(conceptMaps.keys());
     Collections.sort(sorts);
@@ -4888,7 +4889,6 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     s.append("</table>\r\n");
     return s.toString();
   }
-
 
   @SuppressWarnings("unchecked")
   private String genIGValueSetsTable() throws Exception {
@@ -10499,7 +10499,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     htmlchecker = new HTMLLinkChecker(this, validationErrors, webLocation, extensionsLocation, packages);
 
     log("  .. loaded", LogMessageType.Process);
-    vsValidator = new ValueSetValidator(workerContext, definitions.getVsFixups(), definitions.getStyleExemptions());
+    vsValidator = new ValueSetValidator(workerContext, definitions.getVsFixups(), definitions.getStyleExemptions(), new ValidatorSettings());
     breadCrumbManager.setContext(workerContext);
   }
 
@@ -11059,11 +11059,23 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
         src = s1 + getPackageContent(pack, genlevel(level)) + s3;
       else if (com[0].equals("search-footer"))
         src = s1+searchFooter(level)+s3;
-      else if (com[0].equals("search-header"))
+      else if (com[0].equals("sstatus")) {
+        if (com.length == 1) {
+          StandardsStatus ss = pack.getStandardsStatus();
+          if (ss == null)
+            ss = StandardsStatus.INFORMATIVE;
+          src = s1+"<a href=\""+genlevel(level)+"versions.html#std-process\">"+ss.toDisplay()+"</a>"+s3;
+        } else
+          src = s1+getStandardsStatus(com[1])+s3;
+      } else if (com[0].equals("search-header"))
         src = s1+searchHeader(level)+s3;
       else if (com[0].equals("pub-name"))
         src = s1+publicationType+s3;
-      else if (com[0].equals("package.search"))
+      else if (com[0].equals("fmm-style")) {
+        String fmm = pack.getFmmLevel();
+        StandardsStatus ss = pack.getStandardsStatus();
+        src = s1+fmmBarColorStyle(ss, fmm)+s3;
+      } else if (com[0].equals("package.search"))
         src = s1+getSearch(pack)+s3;
       else if (com[0].equals("search-location"))
         src = s1+searchLocation+s3;
@@ -11555,7 +11567,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     StringBuilder b = new StringBuilder();
     List<String> names = new ArrayList<String>();
     for (CodeSystem cs : definitions.getCodeSystems().getSortedList()) {
-      names.add(cs.getId());
+        names.add(cs.getId());
     }
     Collections.sort(names);
     Set<String> urls = new HashSet<>();
@@ -11589,7 +11601,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     Collections.sort(names);
     for (String n : names) {
       CodeSystem cs = definitions.getCodeSystems().get(n);
-      if (cs != null) {
+      if (cs != null && !Utilities.existsInList(cs.getUrl(), "http://hl7.org/fhir/tools/CodeSystem/additional-resources")) {
         if (cs.getUrl().startsWith("http://terminology.hl7.org/CodeSystem") && !cs.getUrl().startsWith("http://terminology.hl7.org/CodeSystem/v2-") && !cs.getUrl().startsWith("http://terminology.hl7.org/CodeSystem/v3-")) {
           b.append("  <tr>\r\n");
           b.append("    <td><a href=\""+cs.getWebPath()+"\">"+cs.getName()+"</a>");

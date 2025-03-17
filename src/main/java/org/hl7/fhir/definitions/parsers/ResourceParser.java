@@ -51,6 +51,7 @@ import org.hl7.fhir.r5.model.CodeSystem;
 import org.hl7.fhir.r5.model.CodeType;
 import org.hl7.fhir.r5.model.ConceptMap;
 import org.hl7.fhir.r5.model.ElementDefinition;
+import org.hl7.fhir.r5.model.ElementDefinition.AdditionalBindingPurposeVS;
 import org.hl7.fhir.r5.model.ElementDefinition.ElementDefinitionBindingAdditionalComponent;
 import org.hl7.fhir.r5.model.ElementDefinition.ElementDefinitionBindingComponent;
 import org.hl7.fhir.r5.model.ElementDefinition.ElementDefinitionConstraintComponent;
@@ -58,6 +59,7 @@ import org.hl7.fhir.r5.model.ElementDefinition.ElementDefinitionMappingComponent
 import org.hl7.fhir.r5.model.ElementDefinition.PropertyRepresentation;
 import org.hl7.fhir.r5.model.ElementDefinition.TypeRefComponent;
 import org.hl7.fhir.r5.model.Enumeration;
+import org.hl7.fhir.r5.model.Enumerations.BindingStrength;
 import org.hl7.fhir.r5.model.Enumerations.FHIRVersion;
 import org.hl7.fhir.r5.model.Enumerations.PublicationStatus;
 import org.hl7.fhir.r5.model.Enumerations.SearchParamType;
@@ -177,6 +179,9 @@ public class ResourceParser {
     if (ig.hasExtension(BuildExtensions.EXT_FMM_LEVEL)) {
       p.forceMetadata("fmm", BuildExtensions.readStringExtension(ig, BuildExtensions.EXT_FMM_LEVEL));      
     }
+    if (ig.hasExtension(BuildExtensions.EXT_STANDARDS_STATUS)) {
+      p.forceMetadata("standards-status", BuildExtensions.readStringExtension(ig, BuildExtensions.EXT_STANDARDS_STATUS));      
+    }
     if (ig.hasDescription()) {
       p.forceMetadata("description", ig.getDescription());
     }
@@ -240,7 +245,7 @@ public class ResourceParser {
         sd.setFhirVersion(FHIRVersion.fromCode(version));
         for (ElementDefinition ed : sd.getDifferential().getElement()) {
           if (ed.hasBinding() && ed.getBinding().hasValueSet()) { 
-            loadValueSet(ed.getBinding().getValueSet(), true);
+            loadValueSet(ed.getBinding().getValueSet(), true, ed.getBinding().getStrength());
           }
         }
       } else if ("SearchParameter".equals(type)) {
@@ -709,11 +714,11 @@ public class ResourceParser {
     bs.setBindingMethod(BindingMethod.ValueSet);
     bs.setReference(binding.getValueSet());
     if (bs.hasReference()) {
-      bs.setValueSet(loadValueSet(bs.getReference(), false));
+      bs.setValueSet(loadValueSet(bs.getReference(), false, binding.getStrength()));
     }
 
     if (binding.hasExtension(ToolingExtensions.EXT_MAX_VALUESET)) {
-      bs.getAdditionalBindings().add(new AdditionalBinding("maximum", binding.getExtensionString(ToolingExtensions.EXT_MAX_VALUESET), loadValueSet(binding.getExtensionString(ToolingExtensions.EXT_MAX_VALUESET), false)));
+      bs.getAdditionalBindings().add(new AdditionalBinding("maximum", binding.getExtensionString(ToolingExtensions.EXT_MAX_VALUESET), loadValueSet(binding.getExtensionString(ToolingExtensions.EXT_MAX_VALUESET), false, BindingStrength.REQUIRED)));
     }
     
     if (binding.hasExtension(BuildExtensions.EXT_V2_MAP)) {
@@ -751,13 +756,13 @@ public class ResourceParser {
     bs.setDescription(binding.getDescription());
     bs.setReference(binding.getValueSet());
     if (bs.hasReference()) {
-      bs.setValueSet(loadValueSet(bs.getReference(), false));
+      bs.setValueSet(loadValueSet(bs.getReference(), false, binding.getStrength()));
     }
     if (binding.hasExtension(ToolingExtensions.EXT_MAX_VALUESET)) {
-      bs.getAdditionalBindings().add(new AdditionalBinding("maximum", binding.getExtensionString(ToolingExtensions.EXT_MAX_VALUESET), loadValueSet(binding.getExtensionString(ToolingExtensions.EXT_MAX_VALUESET), false)));
+      bs.getAdditionalBindings().add(new AdditionalBinding("maximum", binding.getExtensionString(ToolingExtensions.EXT_MAX_VALUESET), loadValueSet(binding.getExtensionString(ToolingExtensions.EXT_MAX_VALUESET), false, BindingStrength.REQUIRED)));
     }
     for (ElementDefinitionBindingAdditionalComponent add : binding.getAdditional()) {
-      bs.getAdditionalBindings().add(new AdditionalBinding(add.getPurpose().toCode(), add.getValueSet(), loadValueSet(add.getValueSet(), false)).setDoco(add.getDocumentation()));      
+      bs.getAdditionalBindings().add(new AdditionalBinding(add.getPurpose().toCode(), add.getValueSet(), loadValueSet(add.getValueSet(), false, add.getPurpose() == AdditionalBindingPurposeVS.REQUIRED ? BindingStrength.REQUIRED : BindingStrength.EXTENSIBLE)).setDoco(add.getDocumentation()));      
     }
 
     if (binding.hasExtension(BuildExtensions.EXT_V2_MAP)) {
@@ -791,7 +796,7 @@ public class ResourceParser {
     return bs;
   }
 
-  private ValueSet loadValueSet(String reference, boolean ext) throws IOException {
+  private ValueSet loadValueSet(String reference, boolean ext, BindingStrength strength) throws IOException {
     if (reference == null) {
       return null;
     }
@@ -813,6 +818,10 @@ public class ResourceParser {
     String csfn = Utilities.path(folder, "codesystem-"+id+".xml");
     if (new File(csfn).exists()) {
       CodeSystem cs = (CodeSystem) parseXml("codesystem-"+id+".xml");
+      if ((strength == BindingStrength.REQUIRED || strength == BindingStrength.EXTENSIBLE) && cs.getExperimental()) {
+        cs.setExperimental(false);
+        saveXml(cs, "codesystem-"+id+".xml");
+      }
       if (!cs.hasId()) {
         cs.setId(id);
       }
@@ -877,6 +886,10 @@ public class ResourceParser {
       if (f.getAbsolutePath().startsWith(cmfn) && f.getName().endsWith(".xml")) {
         String cmid = f.getName().substring(11).replace(".xml", "");
         ConceptMap cm = (ConceptMap) parseXml(f.getName());
+        if ((strength == BindingStrength.REQUIRED || strength == BindingStrength.EXTENSIBLE) && cm.getExperimental()) {
+          cm.setExperimental(false);
+          saveXml(cm, f.getName());
+        }
         if (!cm.hasId()) {
           cm.setId(cmid);
         }
@@ -910,6 +923,10 @@ public class ResourceParser {
     String vsfn = Utilities.path(folder, "valueset-"+id+".xml");
     if (new File(vsfn).exists() ) {
       ValueSet vs = (ValueSet) parseXml("valueset-"+id+".xml");
+      if ((strength == BindingStrength.REQUIRED || strength == BindingStrength.EXTENSIBLE) && vs.getExperimental()) {
+        vs.setExperimental(false);
+        saveXml(vs, "valueset-"+id+".xml");
+      }
       if (!vs.hasId()) {
         vs.setId(id);
       }

@@ -1114,9 +1114,6 @@ public class ProfileGenerator {
     if (r.getFmmLevel() != null) {
       int fmm = Integer.parseInt(r.getFmmLevel());
       ToolingExtensions.addIntegerExtension(p, ToolingExtensions.EXT_FMM_LEVEL, fmm);
-      if (fmm < 1) {
-        p.setExperimental(true);
-      }
     }
     if (r.getSecurityCategorization() != null)
       ToolingExtensions.addCodeExtension(p, ToolingExtensions.EXT_SEC_CAT, r.getSecurityCategorization().toCode());

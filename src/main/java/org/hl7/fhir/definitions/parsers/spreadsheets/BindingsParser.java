@@ -29,6 +29,7 @@ POSSIBILITY OF SUCH DAMAGE.
  */
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
@@ -50,6 +51,7 @@ import org.hl7.fhir.r5.context.CanonicalResourceManager;
 import org.hl7.fhir.r5.formats.IParser;
 import org.hl7.fhir.r5.formats.JsonParser;
 import org.hl7.fhir.r5.formats.XmlParser;
+import org.hl7.fhir.r5.formats.IParser.OutputStyle;
 import org.hl7.fhir.r5.model.CodeSystem;
 import org.hl7.fhir.r5.model.CodeSystem.CodeSystemHierarchyMeaning;
 import org.hl7.fhir.r5.model.CodeSystem.ConceptDefinitionComponent;
@@ -165,13 +167,13 @@ public class BindingsParser {
         if (ref.startsWith("http:")) {
           cd.setReference(sheet.getColumn(row, "Reference")); // will sort this out later
         } else
-          cd.setValueSet(loadValueSet(ref, sheet.getColumn(row, "Committee").toLowerCase()));
+          cd.setValueSet(loadValueSet(ref, sheet.getColumn(row, "Committee").toLowerCase(), cd.getStrength()));
         String max = sheet.getColumn(row, "Max");
         if (!Utilities.noString(max)) {
           if (max.startsWith("http:")) {
             cd.getAdditionalBindings().add(new AdditionalBinding("maximum", max)); // will sort this out later
           } else {
-            cd.getAdditionalBindings().add(new AdditionalBinding("maximum", loadValueSet(max, sheet.getColumn(row, "Committee").toLowerCase())));
+            cd.getAdditionalBindings().add(new AdditionalBinding("maximum", loadValueSet(max, sheet.getColumn(row, "Committee").toLowerCase(), BindingStrength.REQUIRED)));
           }
         }
         for (String add : sheet.getColumn(row, "Additional").split("\\,")) {
@@ -180,7 +182,7 @@ public class BindingsParser {
             if (p[1].startsWith("http:")) {
               cd.getAdditionalBindings().add(new AdditionalBinding(p[0], p[1])); // will sort this out later
             } else {
-              cd.getAdditionalBindings().add(new AdditionalBinding(p[0], loadValueSet(p[1], sheet.getColumn(row, "Committee").toLowerCase())));
+              cd.getAdditionalBindings().add(new AdditionalBinding(p[0], loadValueSet(p[1], sheet.getColumn(row, "Committee").toLowerCase(), "required".equals(p[0]) ? BindingStrength.REQUIRED : BindingStrength.EXTENSIBLE)));
             }
         }
         for (AdditionalBinding vsc : cd .getAdditionalBindings()) {
@@ -300,7 +302,7 @@ public class BindingsParser {
     }
   }
 
-  private ValueSet loadValueSet(String ref, String committee) throws Exception {
+  private ValueSet loadValueSet(String ref, String committee, BindingStrength strength) throws Exception {
     String folder = new File(filename).getParent();
     String srcName;
     IParser p;
@@ -317,6 +319,10 @@ public class BindingsParser {
 
     try {
       ValueSet result = ValueSetUtilities.makeShareable((ValueSet) p.parse(input));
+      if ((strength == BindingStrength.REQUIRED || strength == BindingStrength.EXTENSIBLE) && result.getExperimental()) {
+        result.setExperimental(false);
+        new XmlParser().setOutputStyle(OutputStyle.PRETTY).compose(new FileOutputStream(srcName), result);
+      }
       result.setId(ref.substring(9));
       if (!result.hasExperimental())
         result.setExperimental(false);

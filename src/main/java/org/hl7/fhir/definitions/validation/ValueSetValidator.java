@@ -28,6 +28,7 @@ import org.hl7.fhir.utilities.validation.ValidationMessage.IssueSeverity;
 import org.hl7.fhir.utilities.validation.ValidationMessage.IssueType;
 import org.hl7.fhir.utilities.validation.ValidationOptions;
 import org.hl7.fhir.validation.BaseValidator;
+import org.hl7.fhir.validation.ValidatorSettings;
 
 public class ValueSetValidator extends BaseValidator {
 
@@ -73,8 +74,8 @@ public class ValueSetValidator extends BaseValidator {
   private Set<String> valueSets = new HashSet<String>();
   private Map<String, CodeSystem> codeSystems = new HashMap<String, CodeSystem>();
 
-  public ValueSetValidator(BuildWorkerContext context, List<String> fixups, Set<String> styleExemptions) {
-    super(context, null, true,  null);
+  public ValueSetValidator(BuildWorkerContext context, List<String> fixups, Set<String> styleExemptions, ValidatorSettings settings) {
+    super(context, settings, null,  null);
     this.context = context;
     this.fixups = fixups;
     this.styleExemptions = styleExemptions;
@@ -246,8 +247,9 @@ public class ValueSetValidator extends BaseValidator {
   }
 
   public void checkValueSetCode(List<ValidationMessage> errors, String nameForErrors, ValueSet vs, int i, ConceptSetComponent inc) {
-    if (inc.hasSystem() && !context.hasResource(CodeSystem.class, inc.getSystem()) && !isContainedSystem(vs, inc.getSystem()))
+    if (inc.hasSystem() && !context.hasResource(CodeSystem.class, inc.getSystem()) && !isContainedSystem(vs, inc.getSystem())) {
       rule(errors, ValidationMessage.NO_RULE_DATE, IssueType.BUSINESSRULE, getWg(vs)+":ValueSet["+vs.getId()+"].compose.include["+Integer.toString(i)+"]", isKnownCodeSystem(inc.getSystem()), "The system '"+inc.getSystem()+"' is not valid");
+    }
     
     if (inc.hasSystem() && canValidate(inc.getSystem())) {
       for (ConceptReferenceComponent cc : inc.getConcept()) {
@@ -358,6 +360,10 @@ public class ValueSetValidator extends BaseValidator {
         "http://example.com",  "http://example.org", "https://precision.fda.gov/files/", "http://www.ebi.ac.uk/ipd/imgt/hla", 
         "https://www.iana.org/time-zones", "https://precision.fda.gov/jobs/"))
       return true;
+    
+    if (Utilities.existsInList(system, "http://hl7.org/fhir/tools/CodeSystem/additional-resources")) {
+      return true;
+    }
     
     if (SIDUtilities.isknownCodeSystem(system)) {
       return true;

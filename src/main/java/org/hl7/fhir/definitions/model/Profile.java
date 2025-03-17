@@ -11,6 +11,7 @@ import org.hl7.fhir.r5.model.SearchParameter;
 import org.hl7.fhir.r5.model.StructureDefinition;
 import org.hl7.fhir.r5.model.ValueSet;
 import org.hl7.fhir.utilities.CommaSeparatedStringBuilder;
+import org.hl7.fhir.utilities.StandardsStatus;
 import org.hl7.fhir.utilities.xhtml.XhtmlComposer;
 
 // a named set of profiles and extensions
@@ -176,6 +177,9 @@ public class Profile {
   }
   public String getFmmLevel() {
     return metadata("fmm-level");
+  }
+  public StandardsStatus getStandardsStatus() {
+    return StandardsStatus.fromCode(metadata("standards-status"));
   }
   public String getWg() {
     return metadata("workgroup");
