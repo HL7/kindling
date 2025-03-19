@@ -6198,7 +6198,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
   }
 
   private boolean isImplictValueSet(ValueSet vs) {
-    return vs.getUrl().contains("?");
+    return vs.getUrl().contains("?") || vs.getUrl().startsWith("http://loinc.org/vs");
   }
 
   private String summariseSCTCLD(ValueSet vs) {
