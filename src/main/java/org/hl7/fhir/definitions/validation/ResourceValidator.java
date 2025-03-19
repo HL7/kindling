@@ -423,6 +423,10 @@ public class ResourceValidator extends BaseValidator {
             e = rd.getRoot().getElementForPath(pp, definitions, "Resolving Search Parameter Path", true, false);
             if (e == null) {
               rule(errors, ValidationMessage.NO_RULE_DATE, IssueType.STRUCTURE, rd.getName(), false, "Unable to find element for Search Parameter Path: \"" + pp + "\"");
+            } else if (e.getName().endsWith("[x]") && !path.endsWith("[x]")) {
+              String typeName = path.substring(path.lastIndexOf(".")+1+e.getName().length()-3);
+              if (typeName.equals("Reference"))
+                rule(errors, ValidationMessage.NO_RULE_DATE, IssueType.STRUCTURE, rd.getName(), false, "Parameters of type uri cannot refer to the types Reference or canonical (" + p.getCode() + ")");
             } else {
               for (TypeRef t : e.getTypes()) {
                 if (t.getName().equals("Reference")/* || t.getName().equals("canonical")*/) {
