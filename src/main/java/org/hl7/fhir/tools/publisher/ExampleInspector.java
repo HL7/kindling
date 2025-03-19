@@ -736,6 +736,9 @@ public class ExampleInspector implements IValidatorResourceFetcher, IValidationP
       con.setTestOutcome(f.getName().contains(".pass") ? !fail : fail);
       if (!con.getTestOutcome()) {
         System.out.println("Test case '"+f.getName()+"' Invariant failed: "+con.getId());
+        for (ValidationMessage vm : errs) {
+          System.out.println("  -- "+vm.summary());
+        }
       }
       return con.getTestOutcome();
     } else {
