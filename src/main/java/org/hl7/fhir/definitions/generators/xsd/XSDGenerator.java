@@ -395,6 +395,12 @@ public class XSDGenerator extends XSDRootGenerator {
 
 
   protected boolean isEnum(BindingSpecification cd) {
+    if (cd.getBinding() == BindingMethod.Special) {
+      return Utilities.existsInList(cd.getValueSet().getUrl(), "http://hl7.org/fhir/ValueSet/resource-types");
+    }
+    if (Utilities.existsInList(cd.getName(), "MimeType", "SupplementedMimeType")) {
+      return false;
+    }
     boolean ok = cd.getBinding() == (BindingSpecification.BindingMethod.CodeList) || (cd.getStrength() == BindingStrength.REQUIRED && cd.getBinding() == BindingMethod.ValueSet);
     if (ok) {
       if (cd.getValueSet() != null && cd.getValueSet().hasCompose() && cd.getValueSet().getCompose().getInclude().size() == 1) {
@@ -422,7 +428,7 @@ public class XSDGenerator extends XSDRootGenerator {
       return "CodeableReference";
 		else if (type.getName().equals("code")) {
 			String en = null;
-			if (e.hasBinding()) {
+			if (e.hasBinding() && isEnum(e.getBinding())) {
 				BindingSpecification cd = e.getBinding();
 				if (cd != null && isEnum(cd)) {
 				  if (cd.getValueSet() == null) {
