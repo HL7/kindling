@@ -4744,7 +4744,9 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     b.append(makeHeaderTab("Operations", n+"-operations.html", "operations".equals(mode)));
     b.append(makeHeaderTab("Search Params", n+"-search.html", "search".equals(mode)));
     b.append(makeHeaderTab("Profiles", n+"-profiles.html", "profiles".equals(mode)));
-    b.append(makeHeaderTab("Extensions", extensionsLocation+"extensions-"+ ("Resource".equals(res.getName()) ? "resource" : res.getName())+".html", "extensions".equals(mode)));
+    if (!Utilities.existsInList(n, "devicealert", "insuranceproduct", "personalrelationship", "moleculardefinition")) {
+      b.append(makeHeaderTab("Extensions", extensionsLocation+"extensions-"+ ("Resource".equals(res.getName()) ? "resource" : res.getName())+".html", "extensions".equals(mode)));
+    }
     if (res.hasNotes()) {
       b.append(makeHeaderTab("Release Notes", n+"-history.html", "history".equals(mode)));
     }
@@ -6647,6 +6649,12 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
         src = s1+resource.getName()+s3;
       else if (com[0].equals("search-location"))
         src = s1+searchLocation+s3;
+      else if (com[0].equals("search-ext-link"))
+        src = s1+(Utilities.existsInList(resource.getName().toLowerCase(), "devicealert", "insuranceproduct", "personalrelationship", "moleculardefinition") ? "" :
+          ". Also check the <a href=\""+extensionsLocation+"extensions-"+("Resource".equals(resource.getName()) ? "resource" : resource.getName())+".html\">Extensions registry</a> for search parameters  on extensions related to this resource")+s3;
+      else if (com[0].equals("ext-search-link"))
+        src = s1+(Utilities.existsInList(resource.getName().toLowerCase(), "devicealert", "insuranceproduct", "personalrelationship", "moleculardefinition") ? "" :
+          ", and check the <a href=\""+extensionsLocation+"extensions-"+resource.getName()+".html#search\">Extensions registry</a> for search parameters on extensions related to this resource")+s3;
       else if (com[0].equals("release-notes"))
         src = s1+FileUtilities.fileToString(Utilities.path(folders.srcDir, resource.getName().toLowerCase(), resource.getName()+"-release-notes.xml"))+s3;
       else if (com[0].equals("extensions-location")) 
