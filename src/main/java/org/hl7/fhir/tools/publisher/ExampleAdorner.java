@@ -128,6 +128,9 @@ public class ExampleAdorner implements XhtmlGeneratorAdorner {
   }
 
   private String extractType(String id) throws Exception {
+    if (id.contains("?")) {
+      id = id.substring(0, id.indexOf("?"));
+    }
     String[] parts = id.split("/");
     if (parts.length < 2)
       return null;
