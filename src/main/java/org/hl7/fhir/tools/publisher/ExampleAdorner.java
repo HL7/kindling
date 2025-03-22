@@ -99,6 +99,10 @@ public class ExampleAdorner implements XhtmlGeneratorAdorner {
   }
 
   private String extractId(String id, String type) throws Exception {
+    if (id.contains("?")) {
+      id = id.substring(0, id.indexOf("?"));
+    }
+    
     String[] parts = id.split("/");
     if (parts.length < 2)
       return null;

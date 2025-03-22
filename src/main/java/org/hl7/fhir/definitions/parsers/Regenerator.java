@@ -491,6 +491,7 @@ public class Regenerator {
       case number: sp.setType(SearchParamType.NUMBER); break;
       case quantity: sp.setType(SearchParamType.QUANTITY); break;
       case reference: sp.setType(SearchParamType.REFERENCE); break;
+      case resource: sp.setType(SearchParamType.RESOURCE); break;
       case special: sp.setType(SearchParamType.SPECIAL); break;
       case string: sp.setType(SearchParamType.STRING); break;
       case token: sp.setType(SearchParamType.TOKEN); break;

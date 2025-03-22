@@ -1123,6 +1123,8 @@ public class OldSpreadsheetParser {
       return SearchType.quantity;
     if ("special".equals(s))
       return SearchType.special;
+    if ("resource".equals(s))
+      return SearchType.resource;
 		throw new Exception("Unknown Search Type '" + s + "': " + getLocation(row));
 	}
 

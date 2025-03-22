@@ -2433,6 +2433,8 @@ public class Publisher implements URIResolver, SectionNumberer {
       return SearchParamType.QUANTITY;
     case special:
       return SearchParamType.SPECIAL;
+    case resource:
+      return SearchParamType.RESOURCE;
     }
     return null;
   }

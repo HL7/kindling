@@ -465,6 +465,7 @@ public class ResourceParser {
     case QUANTITY: return SearchType.quantity;
     case REFERENCE: return SearchType.reference;
     case SPECIAL: return SearchType.special;
+    case RESOURCE: return SearchType.resource;
     case STRING: return SearchType.string;
     case TOKEN: return SearchType.token;
     case URI: return SearchType.uri;

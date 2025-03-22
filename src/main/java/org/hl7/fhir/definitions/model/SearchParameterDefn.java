@@ -66,6 +66,7 @@ public class SearchParameterDefn {
     reference,// search parameter refers to a resource reference
     token,   // search parameter is onto a pair of fixed value strings, space and value. Space is optional
     uri,     // search onto a URI
+    resource,
     special;  // special case - not one of the others
   }
   
