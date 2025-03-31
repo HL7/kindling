@@ -220,6 +220,7 @@ import org.hl7.fhir.r5.renderers.StructureDefinitionRenderer;
 import org.hl7.fhir.r5.renderers.Renderer.RenderingStatus;
 import org.hl7.fhir.r5.renderers.utils.RenderingContext;
 import org.hl7.fhir.r5.renderers.utils.ResourceWrapper;
+import org.hl7.fhir.r5.renderers.utils.RenderingContext.DesignationMode;
 import org.hl7.fhir.r5.renderers.utils.RenderingContext.GenerationRules;
 import org.hl7.fhir.r5.renderers.utils.RenderingContext.ITypeParser;
 import org.hl7.fhir.r5.renderers.utils.RenderingContext.QuestionnaireRendererMode;
@@ -988,13 +989,13 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
         String p = com[1];
         String pd = p.contains("#") ? p.substring(0, p.indexOf("#")) : p;
         String t = s2.substring(com[0].length()+com[1].length()+2);
-        src = s1+"<a href=\""+p+"\">"+t+"</a> <a href=\"http://services.w3.org/htmldiff?doc1=http%3A%2F%2Fhl7.org%2Ffhir%2F2018May%2F"+pd+"&amp;doc2="+Utilities.URLEncode(webLocation)+pd+"\" no-external=\"true\" style=\"border: 1px solid lightgrey; white-space: nowrap; background-color: #EDFDFE; padding: 2px 2px 2px 2px\">&Delta;B</a>"+s3;
+        src = s1+"<a href=\""+p+"\">"+t+"</a> <a href=\"http://services.w3.org/htmldiff?doc1=http%3A%2F%2Fhl7.org%2Ffhir%2F2018May%2F"+pd+"&amp;doc2="+Utilities.URLEncode(webLocation)+pd+"\" data-no-external=\"true\" style=\"border: 1px solid lightgrey; white-space: nowrap; background-color: #EDFDFE; padding: 2px 2px 2px 2px\">&Delta;B</a>"+s3;
       } else if (com[0].equals("diffx")) {
         String p1 = com[1];
         String pd = p1.contains("#") ? p1.substring(0, p1.indexOf("#")) : p1;
         String p2 = com[2];
         String t = s2.substring(com[0].length()+com[1].length()+2);
-        src = s1+"<a href=\""+p1+"\">"+t+"</a> <a href=\"http://services.w3.org/htmldiff?doc1=http%3A%2F%2Fhl7.org%2Ffhir%2F2018May%2F"+p2+"&amp;doc2="+Utilities.URLEncode(webLocation)+pd+"\" no-external=\"true\" style=\"border: 1px solid lightgrey; white-space: nowrap; background-color: #EDFDFE; padding: 2px 2px 2px 2px\">&Delta;B</a>"+s3;
+        src = s1+"<a href=\""+p1+"\">"+t+"</a> <a href=\"http://services.w3.org/htmldiff?doc1=http%3A%2F%2Fhl7.org%2Ffhir%2F2018May%2F"+p2+"&amp;doc2="+Utilities.URLEncode(webLocation)+pd+"\" data-no-external=\"true\" style=\"border: 1px solid lightgrey; white-space: nowrap; background-color: #EDFDFE; padding: 2px 2px 2px 2px\">&Delta;B</a>"+s3;
       } else if (com[0].equals("StandardsStatus")) {
         src = s1+getStandardsStatusNote(genlevel(level), com[1], com[2], com.length == 4 ? com[3] : null)+s3;
       } else if (com[0].equals("circular-references")) {
@@ -1713,14 +1714,14 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
 
   private void resourceDiffLinks(StringBuilder b, String n) {
     b.append("<li>");
-    b.append("<a href=\""+n.toLowerCase()+".html\">"+n+"</a> <a href=\"http://services.w3.org/htmldiff?doc1=http%3A%2F%2Fhl7.org%2Ffhir%2F2018May%2F"+n.toLowerCase()+".html&amp;doc2="+Utilities.URLEncode(webLocation)+n.toLowerCase()+".html\" no-external=\"true\" style=\"border: 1px solid lightgrey; white-space: nowrap; background-color: #EDFDFE; padding: 2px 2px 2px 2px\">&Delta;B</a>");
-    b.append(", <a href=\""+n.toLowerCase()+"-definitions.html\">Definitions</a> <a href=\"http://services.w3.org/htmldiff?doc1=http%3A%2F%2Fhl7.org%2Ffhir%2F2018May%2F"+n.toLowerCase()+"-definitions.html&amp;doc2="+Utilities.URLEncode(webLocation)+n.toLowerCase()+"-definitions.html\" no-external=\"true\" style=\"border: 1px solid lightgrey; white-space: nowrap; background-color: #EDFDFE; padding: 2px 2px 2px 2px\">&Delta;B</a>");
-    b.append(", <a href=\""+n.toLowerCase()+"-operations.html\">Operations</a> <a href=\"http://services.w3.org/htmldiff?doc1=http%3A%2F%2Fhl7.org%2Ffhir%2F2018May%2F"+n.toLowerCase()+"-operations.html&amp;doc2="+Utilities.URLEncode(webLocation)+n.toLowerCase()+"-operations.html\" no-external=\"true\" style=\"border: 1px solid lightgrey; white-space: nowrap; background-color: #EDFDFE; padding: 2px 2px 2px 2px\">&Delta;B</a>");
+    b.append("<a href=\""+n.toLowerCase()+".html\">"+n+"</a> <a href=\"http://services.w3.org/htmldiff?doc1=http%3A%2F%2Fhl7.org%2Ffhir%2F2018May%2F"+n.toLowerCase()+".html&amp;doc2="+Utilities.URLEncode(webLocation)+n.toLowerCase()+".html\" data-no-external=\"true\" style=\"border: 1px solid lightgrey; white-space: nowrap; background-color: #EDFDFE; padding: 2px 2px 2px 2px\">&Delta;B</a>");
+    b.append(", <a href=\""+n.toLowerCase()+"-definitions.html\">Definitions</a> <a href=\"http://services.w3.org/htmldiff?doc1=http%3A%2F%2Fhl7.org%2Ffhir%2F2018May%2F"+n.toLowerCase()+"-definitions.html&amp;doc2="+Utilities.URLEncode(webLocation)+n.toLowerCase()+"-definitions.html\" data-no-external=\"true\" style=\"border: 1px solid lightgrey; white-space: nowrap; background-color: #EDFDFE; padding: 2px 2px 2px 2px\">&Delta;B</a>");
+    b.append(", <a href=\""+n.toLowerCase()+"-operations.html\">Operations</a> <a href=\"http://services.w3.org/htmldiff?doc1=http%3A%2F%2Fhl7.org%2Ffhir%2F2018May%2F"+n.toLowerCase()+"-operations.html&amp;doc2="+Utilities.URLEncode(webLocation)+n.toLowerCase()+"-operations.html\" data-no-external=\"true\" style=\"border: 1px solid lightgrey; white-space: nowrap; background-color: #EDFDFE; padding: 2px 2px 2px 2px\">&Delta;B</a>");
     b.append("</li>\r\n");    
   }
 
   private void pageDiffLinks(StringBuilder b, String p) {
-    b.append("<li><a href=\""+p+".html\">"+p+"</a> <a href=\"http://services.w3.org/htmldiff?doc1=http%3A%2F%2Fhl7.org%2Ffhir%2F2018May%2F"+p+".html&amp;doc2="+Utilities.URLEncode(webLocation)+p+".html\" no-external=\"true\" style=\"border: 1px solid lightgrey; white-space: nowrap; background-color: #EDFDFE; padding: 2px 2px 2px 2px\">&Delta;B</a></li>\r\n");    
+    b.append("<li><a href=\""+p+".html\">"+p+"</a> <a href=\"http://services.w3.org/htmldiff?doc1=http%3A%2F%2Fhl7.org%2Ffhir%2F2018May%2F"+p+".html&amp;doc2="+Utilities.URLEncode(webLocation)+p+".html\" data-no-external=\"true\" style=\"border: 1px solid lightgrey; white-space: nowrap; background-color: #EDFDFE; padding: 2px 2px 2px 2px\">&Delta;B</a></li>\r\n");    
   }
 
   private String listSpecialParameters() throws FHIRException {
@@ -1957,14 +1958,14 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
 
         if (pageExists(pnd))
           b.append("  <li><a href=\""+pn+"\">"+Utilities.escapeXml(s)+"</a></li>\r\n");
-        //              "<a href=\"http://services.w3.org/htmldiff?doc1=http%3A%2F%2Fhl7.org%2Ffhir%2F"+          pn+"&amp;doc2="+Utilities.URLEncode(webLocation)+pn+"\" no-external=\"true\" title=\"Difference to R3\" style=\"border: 1px solid lightgrey; white-space: nowrap; background-color: #FBF8D5; padding: 2px 2px 2px 2px\">&Delta;R</a>  "+
-        //              "<a href=\"http://services.w3.org/htmldiff?doc1=http%3A%2F%2Fhl7.org%2Ffhir%2F2018May%2F"+pn+"&amp;doc2="+Utilities.URLEncode(webLocation)+pn+"\" no-external=\"true\" title=\"Difference to last ballot\" style=\"border: 1px solid lightgrey; white-space: nowrap; background-color: #EDFDFE; padding: 2px 2px 2px 2px\">&Delta;B</a>\r\n"+
-        //              "<br/>+ <a href=\""+pnd+"\">Defns</a>: <a href=\"http://services.w3.org/htmldiff?doc1=http%3A%2F%2Fhl7.org%2Ffhir%2F"+ pnd+"&amp;doc2="+Utilities.URLEncode(webLocation)+pnd+"\" no-external=\"true\" title=\"Difference to R3\" style=\"border: 1px solid lightgrey; white-space: nowrap; background-color: #FBF8D5; padding: 2px 2px 2px 2px\">&Delta;R</a>  "+
-        //              "<a href=\"http://services.w3.org/htmldiff?doc1=http%3A%2F%2Fhl7.org%2Ffhir%2F2018May%2F"+pnd+"&amp;doc2="+Utilities.URLEncode(webLocation)+pnd+"\" no-external=\"true\" title=\"Difference to last ballot\" style=\"border: 1px solid lightgrey; white-space: nowrap; background-color: #EDFDFE; padding: 2px 2px 2px 2px\">&Delta;B</a>");
+        //              "<a href=\"http://services.w3.org/htmldiff?doc1=http%3A%2F%2Fhl7.org%2Ffhir%2F"+          pn+"&amp;doc2="+Utilities.URLEncode(webLocation)+pn+"\" data-no-external=\"true\" title=\"Difference to R3\" style=\"border: 1px solid lightgrey; white-space: nowrap; background-color: #FBF8D5; padding: 2px 2px 2px 2px\">&Delta;R</a>  "+
+        //              "<a href=\"http://services.w3.org/htmldiff?doc1=http%3A%2F%2Fhl7.org%2Ffhir%2F2018May%2F"+pn+"&amp;doc2="+Utilities.URLEncode(webLocation)+pn+"\" data-no-external=\"true\" title=\"Difference to last ballot\" style=\"border: 1px solid lightgrey; white-space: nowrap; background-color: #EDFDFE; padding: 2px 2px 2px 2px\">&Delta;B</a>\r\n"+
+        //              "<br/>+ <a href=\""+pnd+"\">Defns</a>: <a href=\"http://services.w3.org/htmldiff?doc1=http%3A%2F%2Fhl7.org%2Ffhir%2F"+ pnd+"&amp;doc2="+Utilities.URLEncode(webLocation)+pnd+"\" data-no-external=\"true\" title=\"Difference to R3\" style=\"border: 1px solid lightgrey; white-space: nowrap; background-color: #FBF8D5; padding: 2px 2px 2px 2px\">&Delta;R</a>  "+
+        //              "<a href=\"http://services.w3.org/htmldiff?doc1=http%3A%2F%2Fhl7.org%2Ffhir%2F2018May%2F"+pnd+"&amp;doc2="+Utilities.URLEncode(webLocation)+pnd+"\" data-no-external=\"true\" title=\"Difference to last ballot\" style=\"border: 1px solid lightgrey; white-space: nowrap; background-color: #EDFDFE; padding: 2px 2px 2px 2px\">&Delta;B</a>");
         else
           b.append("  <li><a href=\""+pn+"\">"+Utilities.escapeXml(s)+"</a></li>\r\n");
-        //            "<a href=\"http://services.w3.org/htmldiff?doc1=http%3A%2F%2Fhl7.org%2Ffhir%2F"+          pn+"&amp;doc2="+Utilities.URLEncode(webLocation)+pn+"\" no-external=\"true\" title=\"Difference to R3\" style=\"border: 1px solid lightgrey; white-space: nowrap; background-color: #FBF8D5; padding: 2px 2px 2px 2px\">&Delta;R</a>  "+
-        //            "<a href=\"http://services.w3.org/htmldiff?doc1=http%3A%2F%2Fhl7.org%2Ffhir%2F2018May%2F"+pn+"&amp;doc2="+Utilities.URLEncode(webLocation)+pn+"\" no-external=\"true\" title=\"Difference to last ballot\" style=\"border: 1px solid lightgrey; white-space: nowrap; background-color: #EDFDFE; padding: 2px 2px 2px 2px\">&Delta;B</a>;
+        //            "<a href=\"http://services.w3.org/htmldiff?doc1=http%3A%2F%2Fhl7.org%2Ffhir%2F"+          pn+"&amp;doc2="+Utilities.URLEncode(webLocation)+pn+"\" data-no-external=\"true\" title=\"Difference to R3\" style=\"border: 1px solid lightgrey; white-space: nowrap; background-color: #FBF8D5; padding: 2px 2px 2px 2px\">&Delta;R</a>  "+
+        //            "<a href=\"http://services.w3.org/htmldiff?doc1=http%3A%2F%2Fhl7.org%2Ffhir%2F2018May%2F"+pn+"&amp;doc2="+Utilities.URLEncode(webLocation)+pn+"\" data-no-external=\"true\" title=\"Difference to last ballot\" style=\"border: 1px solid lightgrey; white-space: nowrap; background-color: #EDFDFE; padding: 2px 2px 2px 2px\">&Delta;B</a>;
       }
       b.append("</ul>");      
       b.append("</td>\r\n");
@@ -4744,7 +4745,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     b.append(makeHeaderTab("Operations", n+"-operations.html", "operations".equals(mode)));
     b.append(makeHeaderTab("Search Params", n+"-search.html", "search".equals(mode)));
     b.append(makeHeaderTab("Profiles", n+"-profiles.html", "profiles".equals(mode)));
-    if (!Utilities.existsInList(n, "devicealert", "insuranceproduct", "personalrelationship", "moleculardefinition")) {
+    if (!Utilities.existsInList(n, "devicealert", "insuranceproduct", "personalrelationship", "moleculardefinition", "clinicalassessment")) {
       b.append(makeHeaderTab("Extensions", extensionsLocation+"extensions-"+ ("Resource".equals(res.getName()) ? "resource" : res.getName())+".html", "extensions".equals(mode)));
     }
     if (res.hasNotes()) {
@@ -5605,13 +5606,13 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
         String p = com[1];
         String pd = p.contains("#") ? p.substring(0, p.indexOf("#")) : p;
         String t = s2.substring(com[0].length()+com[1].length()+2);
-        src = s1+"<a href=\""+p+"\">"+t+"</a> <a href=\"http://services.w3.org/htmldiff?doc1=http%3A%2F%2Fhl7.org%2Ffhir%2F2018May%2F"+pd+"&amp;doc2="+Utilities.URLEncode(webLocation)+pd+"\" no-external=\"true\" style=\"border: 1px solid lightgrey; white-space: nowrap; background-color: #EDFDFE; padding: 2px 2px 2px 2px\">&Delta;B</a>"+s3;
+        src = s1+"<a href=\""+p+"\">"+t+"</a> <a href=\"http://services.w3.org/htmldiff?doc1=http%3A%2F%2Fhl7.org%2Ffhir%2F2018May%2F"+pd+"&amp;doc2="+Utilities.URLEncode(webLocation)+pd+"\" data-no-external=\"true\" style=\"border: 1px solid lightgrey; white-space: nowrap; background-color: #EDFDFE; padding: 2px 2px 2px 2px\">&Delta;B</a>"+s3;
       } else if (com[0].equals("diffx")) {
         String p1 = com[1];
         String pd = p1.contains("#") ? p1.substring(0, p1.indexOf("#")) : p1;
         String p2 = com[2];
         String t = s2.substring(com[0].length()+com[1].length()+2);
-        src = s1+"<a href=\""+p1+"\">"+t+"</a> <a href=\"http://services.w3.org/htmldiff?doc1=http%3A%2F%2Fhl7.org%2Ffhir%2F2018May%2F"+p2+"&amp;doc2="+Utilities.URLEncode(webLocation)+pd+"\" no-external=\"true\" style=\"border: 1px solid lightgrey; white-space: nowrap; background-color: #EDFDFE; padding: 2px 2px 2px 2px\">&Delta;B</a>"+s3;
+        src = s1+"<a href=\""+p1+"\">"+t+"</a> <a href=\"http://services.w3.org/htmldiff?doc1=http%3A%2F%2Fhl7.org%2Ffhir%2F2018May%2F"+p2+"&amp;doc2="+Utilities.URLEncode(webLocation)+pd+"\" data-no-external=\"true\" style=\"border: 1px solid lightgrey; white-space: nowrap; background-color: #EDFDFE; padding: 2px 2px 2px 2px\">&Delta;B</a>"+s3;
       }  else if (com[0].equals("dtmappings"))
         src = s1 + genDataTypeMappings(com[1]) + s3;
       else if (com[0].equals("sct-vs-list"))
@@ -6247,7 +6248,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
 
   private String searchHeader(int level) {
 
-    return "<div id=\"hl7-nav\"><a id=\"hl7-logo\" no-external=\"true\" href=\"http://hl7.org/fhir/search.cfm\"><img alt=\"Search FHIR\" src=\"./"+genlevel(level)+"assets/images/search.png\"/></a></div>";
+    return "<div id=\"hl7-nav\"><a id=\"hl7-logo\" data-no-external=\"true\" href=\"http://hl7.org/fhir/search.cfm\"><img alt=\"Search FHIR\" src=\"./"+genlevel(level)+"assets/images/search.png\"/></a></div>";
   }
 
 
@@ -12287,6 +12288,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     rc.setPkp(this);
     rc.setQuestionnaireMode(QuestionnaireRendererMode.TREE);
     rc.setRules(GenerationRules.VALID_RESOURCE);
+    rc.setDesignationMode(DesignationMode.LANGUAGES);
   }
 
   @Override
