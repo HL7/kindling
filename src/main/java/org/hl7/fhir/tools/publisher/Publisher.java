@@ -6417,7 +6417,7 @@ public class Publisher implements URIResolver, SectionNumberer {
     // while we're looking, mark external references explicitly
     String href = node.getAttribute("href");
     if (node.getNodeType() == NodeType.Element && node.getName().equals("a") &&
-        href != null && node.getAttribute("no-external") == null && node.getAttribute("xlink:type") == null &&
+        href != null && node.getAttribute("data-no-external") == null && node.getAttribute("xlink:type") == null &&
         (href.startsWith("http:") || href.startsWith("https:")) &&
         !node.getAttribute("href").startsWith(page.getExtensionsLocation())) {
       node.addText(" ");

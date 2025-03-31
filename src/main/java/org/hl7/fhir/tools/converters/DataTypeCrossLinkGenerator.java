@@ -76,22 +76,22 @@ public class DataTypeCrossLinkGenerator {
         String type = t.substring(8);
         CommaSeparatedStringBuilder b = new CommaSeparatedStringBuilder(", ", " and ");
         if (name.contains("-")) {
-          b.append("<a no-external=\"true\" href=\""+base+".html#"+type+"\">Base Definition</a>");
+          b.append("<a data-no-external=\"true\" href=\""+base+".html#"+type+"\">Base Definition</a>");
         }
         if (!name.contains("-examples") && !Utilities.existsInList(base, "types", "references", "resource")) {
-          b.append("<a no-external=\"true\" href=\""+base+"-examples.html#"+type+"\">Examples</a>");          
+          b.append("<a data-no-external=\"true\" href=\""+base+"-examples.html#"+type+"\">Examples</a>");          
         }
         if (!name.contains("-definitions")) {
-          b.append("<a no-external=\"true\" href=\""+base+"-definitions.html#"+type+"\">Detailed Descriptions</a>");          
+          b.append("<a data-no-external=\"true\" href=\""+base+"-definitions.html#"+type+"\">Detailed Descriptions</a>");          
         }
         if (!name.contains("-mappings") && !Utilities.existsInList(base, "references")) {
-          b.append("<a no-external=\"true\" href=\""+base+"-mappings.html#"+type+"\">Mappings</a>");          
+          b.append("<a data-no-external=\"true\" href=\""+base+"-mappings.html#"+type+"\">Mappings</a>");          
         }
         if (!name.contains("-profiles") && !Utilities.existsInList(base, "narrative")) {
-          b.append("<a no-external=\"true\" href=\""+base+"-profiles.html#"+type+"\">Profiles</a>");          
+          b.append("<a data-no-external=\"true\" href=\""+base+"-profiles.html#"+type+"\">Profiles</a>");          
         }
         if (!name.contains("-extensions") && !Utilities.existsInList(base, "narrative")) {
-          b.append("<a no-external=\"true\" href=\"[%extensions-location%]extensions-"+base+".html#"+type+"\">Extensions</a>");          
+          b.append("<a data-no-external=\"true\" href=\"[%extensions-location%]extensions-"+base+".html#"+type+"\">Extensions</a>");          
         }
         lines.set(i, "<!--xlp:"+type+"-->See also "+b.toString());
       }
@@ -110,22 +110,22 @@ public class DataTypeCrossLinkGenerator {
         String type = t.substring(8);
         CommaSeparatedStringBuilder b = new CommaSeparatedStringBuilder(", ", " and ");
         if (name.contains("-")) {
-          b.append("<a no-external=\"true\" href=\"{{site.data.fhir.path}}"+base+".html#"+type+"\">Base Definition</a>");
+          b.append("<a data-no-external=\"true\" href=\"{{site.data.fhir.path}}"+base+".html#"+type+"\">Base Definition</a>");
         }
         if (!name.contains("-examples") && !Utilities.existsInList(base, "types", "references")) {
-          b.append("<a no-external=\"true\" href=\"{{site.data.fhir.path}}"+base+"-examples.html#"+type+"\">Examples</a>");          
+          b.append("<a data-no-external=\"true\" href=\"{{site.data.fhir.path}}"+base+"-examples.html#"+type+"\">Examples</a>");          
         }
         if (!name.contains("-definitions")) {
-          b.append("<a no-external=\"true\" href=\"{{site.data.fhir.path}}"+base+"-definitions.html#"+type+"\">Detailed Descriptions</a>");          
+          b.append("<a data-no-external=\"true\" href=\"{{site.data.fhir.path}}"+base+"-definitions.html#"+type+"\">Detailed Descriptions</a>");          
         }
         if (!name.contains("-mappings") && !Utilities.existsInList(base, "references")) {
-          b.append("<a no-external=\"true\" href=\"{{site.data.fhir.path}}"+base+"-mappings.html#"+type+"\">Mappings</a>");          
+          b.append("<a data-no-external=\"true\" href=\"{{site.data.fhir.path}}"+base+"-mappings.html#"+type+"\">Mappings</a>");          
         }
         if (!name.contains("-profiles") && !Utilities.existsInList(base, "narrative")) {
-          b.append("<a no-external=\"true\" href=\"{{site.data.fhir.path}}"+base+"-profiles.html#"+type+"\">Profiles</a>");          
+          b.append("<a data-no-external=\"true\" href=\"{{site.data.fhir.path}}"+base+"-profiles.html#"+type+"\">Profiles</a>");          
         }
         if (!name.contains("-extensions") && !Utilities.existsInList(base, "narrative")) {
-          b.append("<a no-external=\"true\" href=\"extensions-"+base+".html#"+type+"\">Extensions</a>");          
+          b.append("<a data-no-external=\"true\" href=\"extensions-"+base+".html#"+type+"\">Extensions</a>");          
         }
         lines.set(i, "<!--xlp:"+type+"-->See also "+b.toString());
       }
