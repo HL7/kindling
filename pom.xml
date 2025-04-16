@@ -10,8 +10,8 @@
     <properties>
         <maven.compiler.source>11</maven.compiler.source>
         <maven.compiler.target>11</maven.compiler.target>
-        <fhirCoreVersion>6.5.18-SNAPSHOT</fhirCoreVersion>
-        <apachePoiVersion>5.2.1</apachePoiVersion>
+        <fhirCoreVersion>6.5.19-SNAPSHOT</fhirCoreVersion>
+        <apachePoiVersion>5.4.1</apachePoiVersion>
         <jacksonVersion>2.16.0</jacksonVersion>
         <apacheHttpcomponentsVersion>4.5.13</apacheHttpcomponentsVersion>
         <apacheHttpcomponents5Version>5.0.4</apacheHttpcomponents5Version>
@@ -88,7 +88,7 @@
             <dependency>
                 <groupId>org.apache.xmlbeans</groupId>
                 <artifactId>xmlbeans</artifactId>
-                <version>5.0.3</version>
+                <version>5.3.0</version>
             </dependency>
             <dependency>
                 <groupId>org.eclipse.jetty.http2</groupId>
@@ -369,11 +369,7 @@
             <artifactId>httpclient5</artifactId>
             <version>5.3.1</version>
         </dependency>
-        <dependency>
-            <groupId>org.apache.httpcomponents.client5</groupId>
-            <artifactId>httpclient5</artifactId>
-            <version>${apacheHttpcomponents5Version}</version>
-        </dependency>
+
         <dependency>
             <groupId>org.apache.httpcomponents.core5</groupId>
             <artifactId>httpcore5</artifactId>
@@ -464,11 +460,7 @@
             <artifactId>jdom2</artifactId>
             <version>2.0.6.1</version>
         </dependency>
-        <dependency>
-            <groupId>org.jetbrains.kotlin</groupId>
-            <artifactId>kotlin-stdlib</artifactId>
-            <version>1.6.10</version>
-        </dependency>
+
         <dependency>
             <groupId>org.json</groupId>
             <artifactId>json</artifactId>
