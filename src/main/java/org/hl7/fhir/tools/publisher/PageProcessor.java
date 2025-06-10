@@ -34,7 +34,6 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
 import java.lang.management.ManagementFactory;
 import java.lang.management.MemoryMXBean;
@@ -54,7 +53,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 import java.util.StringJoiner;
 import java.util.UUID;
@@ -63,12 +61,7 @@ import java.util.regex.Pattern;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.transform.OutputKeys;
-import javax.xml.transform.Transformer;
-import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.TransformerFactoryConfigurationError;
-import javax.xml.transform.dom.DOMSource;
-import javax.xml.transform.stream.StreamResult;
 
 import org.apache.commons.lang3.NotImplementedException;
 import org.fhir.ucum.UcumException;
@@ -136,15 +129,14 @@ import org.hl7.fhir.r5.conformance.profile.ProfileKnowledgeProvider;
 import org.hl7.fhir.r5.conformance.profile.ProfileUtilities;
 import org.hl7.fhir.r5.context.CanonicalResourceManager;
 import org.hl7.fhir.r5.context.ILoggingService;
-import org.hl7.fhir.r5.context.TextClientLogger;
 import org.hl7.fhir.r5.elementmodel.Element;
 import org.hl7.fhir.r5.elementmodel.Manager;
 import org.hl7.fhir.r5.elementmodel.Manager.FhirFormat;
-import org.hl7.fhir.r5.fhirpath.FHIRPathEngine;
-import org.hl7.fhir.r5.fhirpath.TypeDetails;
 import org.hl7.fhir.r5.fhirpath.ExpressionNode.CollectionStatus;
+import org.hl7.fhir.r5.fhirpath.FHIRPathEngine;
 import org.hl7.fhir.r5.fhirpath.FHIRPathEngine.IEvaluationContext;
 import org.hl7.fhir.r5.fhirpath.FHIRPathUtilityClasses.FunctionDetails;
+import org.hl7.fhir.r5.fhirpath.TypeDetails;
 import org.hl7.fhir.r5.formats.FormatUtilities;
 import org.hl7.fhir.r5.formats.IParser;
 import org.hl7.fhir.r5.formats.IParser.OutputStyle;
@@ -215,11 +207,10 @@ import org.hl7.fhir.r5.model.ValueSet.ConceptSetFilterComponent;
 import org.hl7.fhir.r5.model.ValueSet.ValueSetExpansionContainsComponent;
 import org.hl7.fhir.r5.renderers.DataRenderer;
 import org.hl7.fhir.r5.renderers.IMarkdownProcessor;
+import org.hl7.fhir.r5.renderers.Renderer.RenderingStatus;
 import org.hl7.fhir.r5.renderers.RendererFactory;
 import org.hl7.fhir.r5.renderers.StructureDefinitionRenderer;
-import org.hl7.fhir.r5.renderers.Renderer.RenderingStatus;
 import org.hl7.fhir.r5.renderers.utils.RenderingContext;
-import org.hl7.fhir.r5.renderers.utils.ResourceWrapper;
 import org.hl7.fhir.r5.renderers.utils.RenderingContext.DesignationMode;
 import org.hl7.fhir.r5.renderers.utils.RenderingContext.GenerationRules;
 import org.hl7.fhir.r5.renderers.utils.RenderingContext.ITypeParser;
@@ -228,6 +219,7 @@ import org.hl7.fhir.r5.renderers.utils.RenderingContext.ResourceRendererMode;
 import org.hl7.fhir.r5.renderers.utils.Resolver.IReferenceResolver;
 import org.hl7.fhir.r5.renderers.utils.Resolver.ResourceReferenceKind;
 import org.hl7.fhir.r5.renderers.utils.Resolver.ResourceWithReference;
+import org.hl7.fhir.r5.renderers.utils.ResourceWrapper;
 import org.hl7.fhir.r5.terminologies.CodeSystemUtilities;
 import org.hl7.fhir.r5.terminologies.TerminologyCacheManager;
 import org.hl7.fhir.r5.terminologies.ValueSetUtilities;
@@ -244,12 +236,19 @@ import org.hl7.fhir.r5.utils.structuremap.StructureMapUtilities;
 import org.hl7.fhir.r5.utils.validation.IResourceValidator;
 import org.hl7.fhir.tools.converters.MarkDownPreProcessor;
 import org.hl7.fhir.tools.publisher.ReferenceTracker.RefType;
-import org.hl7.fhir.utilities.*;
+import org.hl7.fhir.utilities.CommaSeparatedStringBuilder;
+import org.hl7.fhir.utilities.FileUtilities;
+import org.hl7.fhir.utilities.IniFile;
+import org.hl7.fhir.utilities.Logger;
+import org.hl7.fhir.utilities.MarkDownProcessor;
 import org.hl7.fhir.utilities.MarkDownProcessor.Dialect;
+import org.hl7.fhir.utilities.OIDUtilities;
+import org.hl7.fhir.utilities.StandardsStatus;
+import org.hl7.fhir.utilities.Utilities;
+import org.hl7.fhir.utilities.VersionUtilities;
 import org.hl7.fhir.utilities.filesystem.CSFile;
 import org.hl7.fhir.utilities.filesystem.CSFileInputStream;
 import org.hl7.fhir.utilities.i18n.RenderingI18nContext;
-import org.hl7.fhir.utilities.Logger.LogMessageType;
 import org.hl7.fhir.utilities.npm.FilesystemPackageCacheManager;
 import org.hl7.fhir.utilities.npm.NpmPackage;
 import org.hl7.fhir.utilities.validation.ValidationMessage;
@@ -478,6 +477,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
   private String searchLocation;
   private String extensionsLocation;
   private long maxMemory = 0;
+  private OIDUtilities oids = new OIDUtilities();
 
   private String getComputerName()
   {
@@ -1472,8 +1472,8 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
 
   private String igLink(String code) {
     switch (code) {
-    case "crmi" : return "https://build.fhir.org/ig/HL7/crmi-ig";
-    case "ebm" : return "https://build.fhir.org/ig/HL7/ebm";
+    case "crmi" : return "https://hl7.org/fhir/uv/crmi/STU1";
+    case "ebm" : return "https://hl7.org/fhir/uv/ebm/2025May";
     case "guidance" : return "https://build.fhir.org/ig/FHIR/ig-guidance";
     }
     throw new Error("Unknown IG code '"+code+"'");
@@ -2822,11 +2822,11 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
       }
       l = l + ec.getExpression().length();
       if (ec.getType() == ExtensionContextType.ELEMENT) {
-        String ref = OIDUtilities.oidRoot(ec.getExpression());
+        String ref = oids.oidRoot(ec.getExpression());
         if (ref.startsWith("@"))
           ref = ref.substring(1);
         if (definitions.hasElementDefn(ref)) 
-          s.append("<a href=\""+definitions.getSrcFile(ref)+".html#"+OIDUtilities.oidRoot(ec.getExpression())+"\">"+ec.getExpression()+"</a>");
+          s.append("<a href=\""+definitions.getSrcFile(ref)+".html#"+oids.oidRoot(ec.getExpression())+"\">"+ec.getExpression()+"</a>");
         else if (definitions.hasResource(ref))
           s.append("<a href=\""+ref.toLowerCase()+".html\">"+ec.getExpression()+"</a>");
         else

@@ -317,6 +317,7 @@ public class SvgGenerator extends BaseGenerator {
     String t = e.getName();
     if (isRoot) {
       t = t + " {"+e.typeCodeNoParams()+")";
+      throw new Error("Needs fixing!");
     }
     if (definitions.getBaseResources().containsKey(e.getName()) && definitions.getBaseResources().get(e.getName()).isInterface()) {
       t = t + " «Interface»";

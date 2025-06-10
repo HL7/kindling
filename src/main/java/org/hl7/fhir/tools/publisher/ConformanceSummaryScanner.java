@@ -19,11 +19,16 @@ public class ConformanceSummaryScanner {
     }
     int i = 0;
     for (XhtmlNode stmt : statements) {
-      XhtmlNode li = list.li();
-      li.ah("#fcs"+i).tx("§");
+      XhtmlNode li = list.li().id("fcss"+i);
+      XhtmlNode ah = li.ah("#fcs"+i);
+      ah.tx("§");
+      ah.supr(""+i);
       li.tx(" ");
-      li.add(stmt);
-      stmt.an("fcs"+i).style("display: none").tx(" ");
+      li.add(stmt.copy());
+      ah = stmt.id("fcs"+i).ah("#fcss"+i);
+      ah.tx("§");
+      ah.supr(""+i);
+      i++;
     }
   }
 

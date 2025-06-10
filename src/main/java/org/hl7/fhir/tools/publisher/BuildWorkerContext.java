@@ -3,8 +3,6 @@ package org.hl7.fhir.tools.publisher;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -18,11 +16,6 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 
 import org.apache.commons.lang3.NotImplementedException;
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpResponse;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.impl.client.DefaultHttpClient;
 import org.fhir.ucum.UcumEssenceService;
 import org.fhir.ucum.UcumException;
 import org.fhir.ucum.UcumService;
@@ -34,9 +27,7 @@ import org.hl7.fhir.r5.conformance.profile.BindingResolution;
 import org.hl7.fhir.r5.conformance.profile.ProfileKnowledgeProvider;
 import org.hl7.fhir.r5.conformance.profile.ProfileUtilities;
 import org.hl7.fhir.r5.context.BaseWorkerContext;
-import org.hl7.fhir.r5.context.BaseWorkerContext.IByteProvider;
 import org.hl7.fhir.r5.context.CanonicalResourceManager;
-import org.hl7.fhir.r5.context.ContextUtilities;
 import org.hl7.fhir.r5.context.HTMLClientLogger;
 import org.hl7.fhir.r5.context.IContextResourceLoader;
 import org.hl7.fhir.r5.context.IWorkerContext;
@@ -67,17 +58,12 @@ import org.hl7.fhir.r5.terminologies.utilities.ValidationResult;
 import org.hl7.fhir.r5.utils.client.EFhirClientException;
 import org.hl7.fhir.r5.utils.validation.IResourceValidator;
 import org.hl7.fhir.utilities.CommaSeparatedStringBuilder;
-import org.hl7.fhir.utilities.FileUtilities;
-import org.hl7.fhir.utilities.TranslatorXml;
 import org.hl7.fhir.utilities.Utilities;
-import org.hl7.fhir.utilities.VersionUtil;
-import org.hl7.fhir.utilities.VersionUtilities;
 import org.hl7.fhir.utilities.filesystem.CSFileInputStream;
 import org.hl7.fhir.utilities.i18n.I18nConstants;
 import org.hl7.fhir.utilities.npm.BasePackageCacheManager;
 import org.hl7.fhir.utilities.npm.NpmPackage;
 import org.hl7.fhir.utilities.npm.NpmPackage.PackageResourceInformation;
-import org.hl7.fhir.utilities.settings.FhirSettings;
 import org.hl7.fhir.utilities.validation.ValidationMessage;
 import org.hl7.fhir.utilities.validation.ValidationMessage.IssueSeverity;
 import org.hl7.fhir.utilities.validation.ValidationMessage.IssueType;
@@ -726,7 +712,7 @@ public class BuildWorkerContext extends BaseWorkerContext implements IWorkerCont
 
 
   @Override
-  public int loadFromPackage(NpmPackage pi, IContextResourceLoader loader, List<String> types) throws FileNotFoundException, IOException, FHIRException {
+  public int loadFromPackage(NpmPackage pi, IContextResourceLoader loader, Set<String> types) throws FileNotFoundException, IOException, FHIRException {
     throw new Error("Not implemented yet");    
   }
 
@@ -741,15 +727,15 @@ public class BuildWorkerContext extends BaseWorkerContext implements IWorkerCont
   }
 
 
-  public static List<String> defaultTypesToLoad() {
+  public static Set<String> defaultTypesToLoad() {
     // there's no penalty for listing resources that don't exist, so we just all the relevant possibilities for all versions 
-    return Utilities.strings("CodeSystem", "ValueSet", "ConceptMap", "NamingSystem");
+    return Utilities.stringSet("CodeSystem", "ValueSet", "ConceptMap", "NamingSystem");
   }
 
 
-  public static List<String> extensionTypesToLoad() {
+  public static Set<String> extensionTypesToLoad() {
     // there's no penalty for listing resources that don't exist, so we just all the relevant possibilities for all versions 
-    return Utilities.strings("CodeSystem", "ValueSet", "ConceptMap", "NamingSystem", "StructureDefinition", "SearchParameter");
+    return Utilities.stringSet("CodeSystem", "ValueSet", "ConceptMap", "NamingSystem", "StructureDefinition", "SearchParameter");
   }
 
   @Override
@@ -757,7 +743,7 @@ public class BuildWorkerContext extends BaseWorkerContext implements IWorkerCont
     throw new Error("Not implemented yet");
   }
 
-  public int loadFromPackageInt(NpmPackage pi, IContextResourceLoader loader, List<String> types) throws FileNotFoundException, IOException, FHIRException {
+  public int loadFromPackageInt(NpmPackage pi, IContextResourceLoader loader, Set<String> types) throws FileNotFoundException, IOException, FHIRException {
     int t = 0;
     System.out.println("Load Package "+pi.name()+"#"+pi.version());
     if (loadedPackages .contains(pi.id()+"#"+pi.version())) {
