@@ -17,7 +17,7 @@
         <apacheHttpcomponents5Version>5.0.4</apacheHttpcomponents5Version>
         <apacheJenaVersion>4.10.0</apacheJenaVersion>
         <log4jVersion>2.17.1</log4jVersion>
-        <lombok_version>1.18.32</lombok_version>
+        <lombok_version>1.18.38</lombok_version>
         <slf4jVersion>1.7.36</slf4jVersion>
         <jettyVersion>12.0.12</jettyVersion>
         <logbackVersion>1.5.17</logbackVersion>
@@ -723,7 +723,7 @@
                         <configuration>
                             <publishingServerId>central</publishingServerId>
                             <autoPublish>true</autoPublish>
-                            <waitUntil>published</waitUntil>
+                            <waitUntil>validated</waitUntil>
                         </configuration>
                     </plugin>
                     <plugin>
