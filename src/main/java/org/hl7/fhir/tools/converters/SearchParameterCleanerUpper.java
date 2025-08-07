@@ -9,6 +9,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import org.hl7.fhir.r5.extensions.ExtensionUtilities;
 import org.hl7.fhir.r5.formats.IParser.OutputStyle;
 import org.hl7.fhir.r5.formats.XmlParser;
 import org.hl7.fhir.r5.model.Bundle;
@@ -20,7 +21,7 @@ import org.hl7.fhir.r5.model.Enumerations.SearchParamType;
 import org.hl7.fhir.r5.model.SearchParameter;
 import org.hl7.fhir.r5.model.SearchParameter.SearchProcessingModeType;
 import org.hl7.fhir.r5.model.StructureDefinition;
-import org.hl7.fhir.r5.utils.ToolingExtensions;
+import org.hl7.fhir.r5.extensions.ExtensionDefinitions;
 import org.hl7.fhir.utilities.CommaSeparatedStringBuilder;
 import org.hl7.fhir.utilities.IniFile;
 import org.hl7.fhir.utilities.StandardsStatus;
@@ -75,7 +76,7 @@ public class SearchParameterCleanerUpper {
 
 
   private void processResource(String rn, ResourceInfo info) throws FileNotFoundException, IOException {
-    StandardsStatus rstatus = ToolingExtensions.getStandardsStatus((DomainResource) info.sd);
+    StandardsStatus rstatus = ExtensionUtilities.getStandardsStatus((DomainResource) info.sd);
     int c = 0;
     // first pass: lower everything to the status of the resource 
     if (rstatus == StandardsStatus.NORMATIVE) {
@@ -164,12 +165,12 @@ public class SearchParameterCleanerUpper {
       if (be.getResource() instanceof SearchParameter) {
         SearchParameter sp = (SearchParameter) be.getResource();
         ElementDefinition ed = getED(sd, sp.getExpression());
-        StandardsStatus spstatus = ToolingExtensions.getStandardsStatus(sp);
-        StandardsStatus nstatus = ToolingExtensions.getStandardsStatus(ed);
+        StandardsStatus spstatus = ExtensionUtilities.getStandardsStatus(sp);
+        StandardsStatus nstatus = ExtensionUtilities.getStandardsStatus(ed);
         nstatus = nstatus == null ? rstatus : nstatus;
         if (nstatus != null && nstatus != spstatus) {
           c++;
-          ToolingExtensions.setStandardsStatus(sp, nstatus, null);          
+          ExtensionUtilities.setStandardsStatus(sp, nstatus, null);          
         }
       }
     }
@@ -199,7 +200,7 @@ public class SearchParameterCleanerUpper {
     for (BundleEntryComponent be : bnd.getEntry()) {
        if (be.getResource() instanceof SearchParameter) {
          SearchParameter sp = (SearchParameter) be.getResource();
-         StandardsStatus spstatus = ToolingExtensions.getStandardsStatus(sp);
+         StandardsStatus spstatus = ExtensionUtilities.getStandardsStatus(sp);
          if (spstatus != null) {
            boolean inlist = true;
            for (StandardsStatus s : existing) {
@@ -207,7 +208,7 @@ public class SearchParameterCleanerUpper {
            }
            if (inlist) {
             c++;
-            ToolingExtensions.setStandardsStatus(sp, value, null);
+            ExtensionUtilities.setStandardsStatus(sp, value, null);
            }
          }
        }

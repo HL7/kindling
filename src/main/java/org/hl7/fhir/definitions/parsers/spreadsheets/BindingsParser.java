@@ -48,6 +48,7 @@ import org.hl7.fhir.definitions.parsers.CodeSystemConvertor;
 import org.hl7.fhir.definitions.parsers.OIDRegistry;
 import org.hl7.fhir.exceptions.FHIRFormatError;
 import org.hl7.fhir.r5.context.CanonicalResourceManager;
+import org.hl7.fhir.r5.extensions.ExtensionUtilities;
 import org.hl7.fhir.r5.formats.IParser;
 import org.hl7.fhir.r5.formats.JsonParser;
 import org.hl7.fhir.r5.formats.XmlParser;
@@ -69,7 +70,7 @@ import org.hl7.fhir.r5.model.ValueSet;
 import org.hl7.fhir.r5.model.ValueSet.ValueSetComposeComponent;
 import org.hl7.fhir.r5.terminologies.CodeSystemUtilities;
 import org.hl7.fhir.r5.terminologies.ValueSetUtilities;
-import org.hl7.fhir.r5.utils.ToolingExtensions;
+import org.hl7.fhir.r5.extensions.ExtensionDefinitions;
 import org.hl7.fhir.tools.publisher.KindlingUtilities;
 import org.hl7.fhir.utilities.TranslationServices;
 import org.hl7.fhir.utilities.Utilities;
@@ -142,7 +143,7 @@ public class BindingsParser {
         KindlingUtilities.makeUniversal(cd.getValueSet());
 
         if (!Utilities.noString(sheet.getColumn(row, "Committee"))) {
-          cd.getValueSet().addExtension().setUrl(ToolingExtensions.EXT_WORKGROUP).setValue(new CodeType(sheet.getColumn(row, "Committee").toLowerCase()));
+          cd.getValueSet().addExtension().setUrl(ExtensionDefinitions.EXT_WORKGROUP).setValue(new CodeType(sheet.getColumn(row, "Committee").toLowerCase()));
         }
         cd.getValueSet().setUserData("filename", "valueset-"+cd.getValueSet().getId());
         cd.getValueSet().setWebPath("valueset-"+cd.getValueSet().getId()+".html");
@@ -249,10 +250,10 @@ public class BindingsParser {
     vs.setExperimental(false);
 
     vs.setUserData("filename", "valueset-"+vs.getId());
-    if (!vs.hasExtension(ToolingExtensions.EXT_WORKGROUP)) {
-      vs.addExtension().setUrl(ToolingExtensions.EXT_WORKGROUP).setValue(new CodeType("fhir"));
+    if (!vs.hasExtension(ExtensionDefinitions.EXT_WORKGROUP)) {
+      vs.addExtension().setUrl(ExtensionDefinitions.EXT_WORKGROUP).setValue(new CodeType("fhir"));
     } else {
-      String ec = ToolingExtensions.readStringExtension(vs, ToolingExtensions.EXT_WORKGROUP);
+      String ec = ExtensionUtilities.readStringExtension(vs, ExtensionDefinitions.EXT_WORKGROUP);
       if (!ec.equals("fhir"))
         System.out.println("ValueSet "+vs.getUrl()+" WG mismatch 11: is "+ec+", want to set to "+"fhir");
     }     
@@ -333,10 +334,10 @@ public class BindingsParser {
         result.setVersion(version);
 
       if (!Utilities.noString(committee)) {
-        if (!result.hasExtension(ToolingExtensions.EXT_WORKGROUP)) {
-          result.addExtension().setUrl(ToolingExtensions.EXT_WORKGROUP).setValue(new CodeType(committee));
+        if (!result.hasExtension(ExtensionDefinitions.EXT_WORKGROUP)) {
+          result.addExtension().setUrl(ExtensionDefinitions.EXT_WORKGROUP).setValue(new CodeType(committee));
         } else {
-          String ec = ToolingExtensions.readStringExtension(result, ToolingExtensions.EXT_WORKGROUP);
+          String ec = ExtensionUtilities.readStringExtension(result, ExtensionDefinitions.EXT_WORKGROUP);
           if (!ec.equals(committee))
             System.out.println("ValueSet "+result.getUrl()+" WG mismatch 1: is "+ec+", want to set to "+committee);
         } 

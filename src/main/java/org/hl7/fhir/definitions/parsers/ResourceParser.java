@@ -41,6 +41,7 @@ import org.hl7.fhir.exceptions.FHIRException;
 import org.hl7.fhir.exceptions.FHIRFormatError;
 import org.hl7.fhir.r5.conformance.profile.ProfileUtilities;
 import org.hl7.fhir.r5.context.CanonicalResourceManager;
+import org.hl7.fhir.r5.extensions.ExtensionUtilities;
 import org.hl7.fhir.r5.formats.IParser.OutputStyle;
 import org.hl7.fhir.r5.formats.JsonParser;
 import org.hl7.fhir.r5.formats.XmlParser;
@@ -86,7 +87,7 @@ import org.hl7.fhir.r5.terminologies.ConceptMapUtilities;
 import org.hl7.fhir.r5.terminologies.ValueSetUtilities;
 import org.hl7.fhir.r5.utils.BuildExtensions;
 import org.hl7.fhir.r5.utils.CanonicalResourceUtilities;
-import org.hl7.fhir.r5.utils.ToolingExtensions;
+import org.hl7.fhir.r5.extensions.ExtensionDefinitions;
 import org.hl7.fhir.tools.publisher.BuildWorkerContext;
 import org.hl7.fhir.utilities.PathBuilder;
 import org.hl7.fhir.utilities.StandardsStatus;
@@ -174,13 +175,13 @@ public class ResourceParser {
       p.forceMetadata("author.name", ig.getPublisher());
     }
     if (ig.hasExtension(BuildExtensions.EXT_CODE)) {
-      p.forceMetadata("code", BuildExtensions.readStringExtension(ig, BuildExtensions.EXT_CODE));      
+      p.forceMetadata("code", ExtensionUtilities.readStringExtension(ig, BuildExtensions.EXT_CODE));
     }
     if (ig.hasExtension(BuildExtensions.EXT_FMM_LEVEL)) {
-      p.forceMetadata("fmm", BuildExtensions.readStringExtension(ig, BuildExtensions.EXT_FMM_LEVEL));      
+      p.forceMetadata("fmm", ExtensionUtilities.readStringExtension(ig, BuildExtensions.EXT_FMM_LEVEL));      
     }
     if (ig.hasExtension(BuildExtensions.EXT_STANDARDS_STATUS)) {
-      p.forceMetadata("standards-status", BuildExtensions.readStringExtension(ig, BuildExtensions.EXT_STANDARDS_STATUS));      
+      p.forceMetadata("standards-status", ExtensionUtilities.readStringExtension(ig, BuildExtensions.EXT_STANDARDS_STATUS));      
     }
     if (ig.hasDescription()) {
       p.forceMetadata("description", ig.getDescription());
@@ -195,7 +196,7 @@ public class ResourceParser {
       p.forceMetadata("display", ig.getTitle());
     }
     if (ig.hasExtension(BuildExtensions.EXT_WORKGROUP)) {
-      p.forceMetadata("workgroup", BuildExtensions.readStringExtension(ig, BuildExtensions.EXT_WORKGROUP));      
+      p.forceMetadata("workgroup", ExtensionUtilities.readStringExtension(ig, BuildExtensions.EXT_WORKGROUP));      
     }
     if (ig.hasDate()) {
       p.forceMetadata("date", ig.getDateElement().primitiveValue());
@@ -205,11 +206,11 @@ public class ResourceParser {
     }
 
     if (ig.hasExtension(BuildExtensions.EXT_INTRODUCTION)) {
-      p.setIntroduction(Utilities.path(folder, BuildExtensions.readStringExtension(ig, BuildExtensions.EXT_INTRODUCTION)));
+      p.setIntroduction(Utilities.path(folder, ExtensionUtilities.readStringExtension(ig, BuildExtensions.EXT_INTRODUCTION)));
     }    
 
     if (ig.hasExtension(BuildExtensions.EXT_NOTES)) {
-      p.setNotes(Utilities.path(folder, BuildExtensions.readStringExtension(ig, BuildExtensions.EXT_NOTES)));
+      p.setNotes(Utilities.path(folder, ExtensionUtilities.readStringExtension(ig, BuildExtensions.EXT_NOTES)));
     }    
 
     for (ImplementationGuideDefinitionResourceComponent res : ig.getDefinition().getResource()) {
@@ -223,7 +224,7 @@ public class ResourceParser {
           sd.setWebPath("extension-"+sd.getId()+".html");
           sd.setVersion(context.getVersion());
           p.getExtensions().add(sd);
-          if (!sd.hasExtension(ToolingExtensions.EXT_WORKGROUP)) {
+          if (!sd.hasExtension(ExtensionDefinitions.EXT_WORKGROUP)) {
             CanonicalResourceUtilities.setHl7WG(sd, wg.getCode());
           }
           context.cacheResource(sd);
@@ -232,7 +233,7 @@ public class ResourceParser {
           sd = tp.getResource();
           sd.setVersion(context.getVersion());
           sd.setWebPath(sd.getId()+".html");
-          if (!sd.hasExtension(ToolingExtensions.EXT_WORKGROUP)) {
+          if (!sd.hasExtension(ExtensionDefinitions.EXT_WORKGROUP)) {
             CanonicalResourceUtilities.setHl7WG(sd, wg.getCode());
           }
           p.getProfiles().add(tp); 
@@ -266,23 +267,23 @@ public class ResourceParser {
 
   private ConstraintStructure processProfile(String rid, String igId, ImplementationGuideDefinitionResourceComponent res, WorkGroup wg) throws FHIRFormatError, FileNotFoundException, IOException {
     StructureDefinition sd = (StructureDefinition) parseXml("structuredefinition-profile-"+rid+".xml");
-    ImplementationGuideDefn ig = definitions.getIgs().get(BuildExtensions.readStringExtension(res, igId));
+    ImplementationGuideDefn ig = definitions.getIgs().get(ExtensionUtilities.readStringExtension(res, igId));
     if (ig == null ) {
       ig = definitions.getIgs().get("core");
     }
     sd.setVersion(version);
     sd.setFhirVersion(FHIRVersion.fromCode(version));
 
-    ConstraintStructure cs = new ConstraintStructure(sd, ig, wg == null || sd.hasExtension(ToolingExtensions.EXT_WORKGROUP) ? wg(sd) : wg, fmm(sd), false);
+    ConstraintStructure cs = new ConstraintStructure(sd, ig, wg == null || sd.hasExtension(ExtensionDefinitions.EXT_WORKGROUP) ? wg(sd) : wg, fmm(sd), false);
     return cs;
   }
 
   private String fmm(StructureDefinition sd) {
-    return ToolingExtensions.readStringExtension(sd, ToolingExtensions.EXT_FMM_LEVEL);
+    return ExtensionUtilities.readStringExtension(sd, ExtensionDefinitions.EXT_FMM_LEVEL);
   }
 
   private WorkGroup wg(StructureDefinition ed) {
-    return definitions.getWorkgroups().get(ToolingExtensions.readStringExtension(ed, ToolingExtensions.EXT_WORKGROUP));
+    return definitions.getWorkgroups().get(ExtensionUtilities.readStringExtension(ed, ExtensionDefinitions.EXT_WORKGROUP));
   }
 
   private SearchParameter processSearchParameter(String rid) throws FHIRFormatError, FileNotFoundException, IOException {
@@ -317,12 +318,12 @@ public class ResourceParser {
       }
     }
     Operation op = new Operation(src.getCode(), src.getSystem(), src.getType(), src.getInstance(), src.getKind().toCode(), src.getTitle(), src.getDescription(), 
-        BuildExtensions.readStringExtension(src, BuildExtensions.EXT_FOOTER), reqExamples, respExamples, !src.getAffectsState());
+        ExtensionUtilities.readStringExtension(src, BuildExtensions.EXT_FOOTER), reqExamples, respExamples, !src.getAffectsState());
     op.getExamples2().addAll(examples2);
     op.setResource(src);
-    op.setStandardsStatus(StandardsStatus.fromCode(BuildExtensions.readStringExtension(src, BuildExtensions.EXT_STANDARDS_STATUS)));
-    op.setFmm(BuildExtensions.readStringExtension(src, BuildExtensions.EXT_FMM_LEVEL));
-    op.setFooter2(BuildExtensions.readStringExtension(src, BuildExtensions.EXT_FOOTER2));
+    op.setStandardsStatus(StandardsStatus.fromCode(ExtensionUtilities.readStringExtension(src, BuildExtensions.EXT_STANDARDS_STATUS)));
+    op.setFmm(ExtensionUtilities.readStringExtension(src, BuildExtensions.EXT_FMM_LEVEL));
+    op.setFooter2(ExtensionUtilities.readStringExtension(src, BuildExtensions.EXT_FOOTER2));
     for (OperationDefinitionParameterComponent psrc : src.getParameter()) {
       op.getParameters().add(convertOperationParameter(psrc, false));
     }
@@ -406,7 +407,7 @@ public class ResourceParser {
       t = "Tuple";
     }
     OperationParameter p = new OperationParameter(psrc.getName(), part ? null : psrc.getUse().toCode(), psrc.getDocumentation(), psrc.getMin(), psrc.getMax(), t, psrc.hasSearchType() ? psrc.getSearchType().toCode() : null, null,
-        ToolingExtensions.getStandardsStatus(psrc));
+        ExtensionUtilities.getStandardsStatus(psrc));
     if (psrc.hasBinding()) {
       p.setBs(parseBinding(psrc.getBinding()));
     }
@@ -434,12 +435,12 @@ public class ResourceParser {
     }
     src.setVersion(version);
     SearchParameterDefn sp = new SearchParameterDefn(src.getCode(), src.getDescription(), type(src.getType()), src.getProcessingMode(), 
-        StandardsStatus.fromCode(BuildExtensions.readStringExtension(src, "http://hl7.org/fhir/StructureDefinition/structuredefinition-standards-status")));
+        StandardsStatus.fromCode(ExtensionUtilities.readStringExtension(src, "http://hl7.org/fhir/StructureDefinition/structuredefinition-standards-status")));
     r.getSearchParams().put(sp.getCode(), sp);
     sp.setExpression(src.getExpression());
     sp.setResource(src);
     sp.setBase(r.getName());
-    String s = BuildExtensions.readStringExtension(src, BuildExtensions.EXT_PATH);
+    String s = ExtensionUtilities.readStringExtension(src, BuildExtensions.EXT_PATH);
     if (!Utilities.noString(s)) {
       for (String p : s.split("\\,")) {
         String v = p.trim();
@@ -481,18 +482,18 @@ public class ResourceParser {
 
     ResourceDefn r = new ResourceDefn();
     r.setName(sd.getName());
-    r.setEnteredInErrorStatus(ToolingExtensions.readStringExtension(sd, BuildExtensions.EXT_ENTERED_IN_ERROR_STATUS));
-    r.setStatus(StandardsStatus.fromCode(ToolingExtensions.readStringExtension(sd, ToolingExtensions.EXT_STANDARDS_STATUS)));
+    r.setEnteredInErrorStatus(ExtensionUtilities.readStringExtension(sd, BuildExtensions.EXT_ENTERED_IN_ERROR_STATUS));
+    r.setStatus(StandardsStatus.fromCode(ExtensionUtilities.readStringExtension(sd, ExtensionDefinitions.EXT_STANDARDS_STATUS)));
     r.setAbstract(sd.getAbstract());
-    r.setInterface(ToolingExtensions.readBoolExtension(sd, BuildExtensions.EXT_RESOURCE_INTERFACE));
-    r.setWg(definitions.getWorkgroups().get(ToolingExtensions.readStringExtension(sd, ToolingExtensions.EXT_WORKGROUP)));
-    r.setFmmLevel(ToolingExtensions.readStringExtension(sd, ToolingExtensions.EXT_FMM_LEVEL));
-    r.setProposedOrder(ToolingExtensions.readStringExtension(sd, BuildExtensions.EXT_PROPOSED_ORDER));
-    r.setSecurityCategorization(SecurityCategorization.fromCode(ToolingExtensions.readStringExtension(sd, "http://hl7.org/fhir/StructureDefinition/structuredefinition-security-category")));
+    r.setInterface(ExtensionUtilities.readBoolExtension(sd, BuildExtensions.EXT_RESOURCE_INTERFACE));
+    r.setWg(definitions.getWorkgroups().get(ExtensionUtilities.readStringExtension(sd, ExtensionDefinitions.EXT_WORKGROUP)));
+    r.setFmmLevel(ExtensionUtilities.readStringExtension(sd, ExtensionDefinitions.EXT_FMM_LEVEL));
+    r.setProposedOrder(ExtensionUtilities.readStringExtension(sd, BuildExtensions.EXT_PROPOSED_ORDER));
+    r.setSecurityCategorization(SecurityCategorization.fromCode(ExtensionUtilities.readStringExtension(sd, "http://hl7.org/fhir/StructureDefinition/structuredefinition-security-category")));
     r.setRequirements(sd.getPurpose());
     r.setDefinition(sd.getDescription());
     if (sd.hasExtension(BuildExtensions.EXT_TEMPLATE)) {
-      String tname = BuildExtensions.readStringExtension(sd, BuildExtensions.EXT_TEMPLATE);  
+      String tname = ExtensionUtilities.readStringExtension(sd, BuildExtensions.EXT_TEMPLATE);  
       ResourceDefn template = definitions.getResourceByName(tname);
       r.setTemplate(template.getRoot());
     }
@@ -558,17 +559,17 @@ public class ResourceParser {
     ed.setModifierReason(focus.getIsModifierReason());
     ed.setMustSupport(focus.getMustSupport());
     ed.setSummaryItem(focus.getIsSummary());
-    ed.setRegex(ToolingExtensions.readStringExtension(focus, ToolingExtensions.EXT_REGEX));
+    ed.setRegex(ExtensionUtilities.readStringExtension(focus, ExtensionDefinitions.EXT_REGEX));
     ed.setXmlAttribute(focus.hasRepresentation(PropertyRepresentation.XMLATTR));
 
-    if (ToolingExtensions.hasExtension(focus, BuildExtensions.EXT_UML_DIR)) {
-      ed.setUmlDir(ToolingExtensions.readStringExtension(focus, BuildExtensions.EXT_UML_DIR));
+    if (ExtensionUtilities.hasExtension(focus, BuildExtensions.EXT_UML_DIR)) {
+      ed.setUmlDir(ExtensionUtilities.readStringExtension(focus, BuildExtensions.EXT_UML_DIR));
     }
-    if (ToolingExtensions.hasExtension(focus, BuildExtensions.EXT_UML_BREAK)) {
-      ed.setUmlBreak(ToolingExtensions.readBoolExtension(focus, BuildExtensions.EXT_UML_BREAK));
+    if (ExtensionUtilities.hasExtension(focus, BuildExtensions.EXT_UML_BREAK)) {
+      ed.setUmlBreak(ExtensionUtilities.readBoolExtension(focus, BuildExtensions.EXT_UML_BREAK));
     }
-    if (BuildExtensions.hasExtension(focus, BuildExtensions.EXT_SVG)) {
-      String svg = BuildExtensions.readStringExtension(focus, BuildExtensions.EXT_SVG);
+    if (ExtensionUtilities.hasExtension(focus, BuildExtensions.EXT_SVG)) {
+      String svg = ExtensionUtilities.readStringExtension(focus, BuildExtensions.EXT_SVG);
       if (svg.contains("w=")) {
         ed.setSvgWidth(Integer.parseInt(svg.substring(svg.indexOf("w=")+2)));
         svg = svg.substring(0, svg.indexOf(";"));
@@ -581,17 +582,17 @@ public class ResourceParser {
     ed.setDefinition(focus.getDefinition());
     ed.setRequirements(focus.getRequirements());
     ed.setComments(focus.getComment());
-    if (BuildExtensions.hasExtension(focus, BuildExtensions.EXT_TODO)) {
-      ed.setTodo(BuildExtensions.readStringExtension(focus, BuildExtensions.EXT_TODO));
+    if (ExtensionUtilities.hasExtension(focus, BuildExtensions.EXT_TODO)) {
+      ed.setTodo(ExtensionUtilities.readStringExtension(focus, BuildExtensions.EXT_TODO));
     }
-    if (BuildExtensions.hasExtension(focus, BuildExtensions.EXT_COMMITTEE_NOTES)) {
-      ed.setCommitteeNotes(BuildExtensions.readStringExtension(focus, BuildExtensions.EXT_COMMITTEE_NOTES));
+    if (ExtensionUtilities.hasExtension(focus, BuildExtensions.EXT_COMMITTEE_NOTES)) {
+      ed.setCommitteeNotes(ExtensionUtilities.readStringExtension(focus, BuildExtensions.EXT_COMMITTEE_NOTES));
     }
-    if (BuildExtensions.hasExtension(focus, BuildExtensions.EXT_HINT)) {
-      ed.setDisplayHint(BuildExtensions.readStringExtension(focus, BuildExtensions.EXT_HINT));
+    if (ExtensionUtilities.hasExtension(focus, BuildExtensions.EXT_HINT)) {
+      ed.setDisplayHint(ExtensionUtilities.readStringExtension(focus, BuildExtensions.EXT_HINT));
     }
 
-    if (focus.hasExtension(BuildExtensions.EXT_NO_BINDING) || focus.hasExtension(ToolingExtensions.EXT_NO_BINDING)) {
+    if (focus.hasExtension(BuildExtensions.EXT_NO_BINDING) || focus.hasExtension(ExtensionDefinitions.EXT_NO_BINDING)) {
       ed.setNoBindingAllowed(focus.getExtensionString(BuildExtensions.EXT_NO_BINDING).equals("true"));
     }    
     
@@ -603,20 +604,20 @@ public class ResourceParser {
     }
     ed.setExample(focus.getExampleFirstRep().getValue());
     ed.setMeaningWhenMissing(focus.getMeaningWhenMissing());
-    if (ToolingExtensions.hasExtension(focus, BuildExtensions.EXT_TRANSLATABLE)) {
-      ed.setTranslatable(ToolingExtensions.readBoolExtension(focus, BuildExtensions.EXT_TRANSLATABLE));
+    if (ExtensionUtilities.hasExtension(focus, BuildExtensions.EXT_TRANSLATABLE)) {
+      ed.setTranslatable(ExtensionUtilities.readBoolExtension(focus, BuildExtensions.EXT_TRANSLATABLE));
     }
     ed.setOrderMeaning(focus.getOrderMeaning());
-    if (BuildExtensions.hasExtension(focus, BuildExtensions.EXT_STANDARDS_STATUS)) {
-      Extension sse = BuildExtensions.getExtension(focus, BuildExtensions.EXT_STANDARDS_STATUS);
+    if (ExtensionUtilities.hasExtension(focus, BuildExtensions.EXT_STANDARDS_STATUS)) {
+      Extension sse = ExtensionUtilities.getExtension(focus, BuildExtensions.EXT_STANDARDS_STATUS);
       ed.setStandardsStatus(StandardsStatus.fromCode(sse.getValue().primitiveValue()));
-      Extension ssr = sse.getValue().getExtensionByUrl(ToolingExtensions.EXT_STANDARDS_STATUS_REASON);
+      Extension ssr = sse.getValue().getExtensionByUrl(ExtensionDefinitions.EXT_STANDARDS_STATUS_REASON);
       if (ssr != null) {
         ed.setStandardsStatusReason(ssr.getValue().primitiveValue());
       }
     }
-    if (BuildExtensions.hasExtension(focus, BuildExtensions.EXT_NORMATIVE_VERSION)) {
-      ed.setNormativeVersion(BuildExtensions.readStringExtension(focus, BuildExtensions.EXT_NORMATIVE_VERSION));
+    if (ExtensionUtilities.hasExtension(focus, BuildExtensions.EXT_NORMATIVE_VERSION)) {
+      ed.setNormativeVersion(ExtensionUtilities.readStringExtension(focus, BuildExtensions.EXT_NORMATIVE_VERSION));
     }
 
     for (ElementDefinitionConstraintComponent cst : focus.getConstraint()) {
@@ -648,13 +649,13 @@ public class ResourceParser {
         if (!Utilities.existsInList(tr.getCode(), "Element", "BackboneElement")) {
           TypeRef t = new TypeRef();
           ed.getTypes().add(t);
-          if (tr.hasExtension(ToolingExtensions.EXT_FHIR_TYPE)) {
-            t.setName(tr.getExtensionString(ToolingExtensions.EXT_FHIR_TYPE));
+          if (tr.hasExtension(ExtensionDefinitions.EXT_FHIR_TYPE)) {
+            t.setName(tr.getExtensionString(ExtensionDefinitions.EXT_FHIR_TYPE));
           } else { 
             t.setName(tr.getCode());
           }
-          if (ToolingExtensions.hasExtension(tr, BuildExtensions.EXT_HIERARCHY)) {
-            ed.setHierarchy(ToolingExtensions.readBoolExtension(tr, BuildExtensions.EXT_HIERARCHY));
+          if (ExtensionUtilities.hasExtension(tr, BuildExtensions.EXT_HIERARCHY)) {
+            ed.setHierarchy(ExtensionUtilities.readBoolExtension(tr, BuildExtensions.EXT_HIERARCHY));
           }
 
           for (CanonicalType u : tr.getProfile()) {
@@ -688,8 +689,8 @@ public class ResourceParser {
     }
 
     String name = parentName + Utilities.capitalize(ed.getName());
-    if (focus.hasExtension(ToolingExtensions.EXT_EXPLICIT_TYPE)) {
-      ed.setStatedType(focus.getExtensionString(ToolingExtensions.EXT_EXPLICIT_TYPE));
+    if (focus.hasExtension(ExtensionDefinitions.EXT_EXPLICIT_TYPE)) {
+      ed.setStatedType(focus.getExtensionString(ExtensionDefinitions.EXT_EXPLICIT_TYPE));
       ed.setDeclaredTypeName(ed.getStatedType());
     } else if (ed.getTypes().isEmpty() && !focus.hasContentReference()) {      
       ed.setDeclaredTypeName(name+"Component");
@@ -718,8 +719,8 @@ public class ResourceParser {
       bs.setValueSet(loadValueSet(bs.getReference(), false, binding.getStrength()));
     }
 
-    if (binding.hasExtension(ToolingExtensions.EXT_MAX_VALUESET)) {
-      bs.getAdditionalBindings().add(new AdditionalBinding("maximum", binding.getExtensionString(ToolingExtensions.EXT_MAX_VALUESET), loadValueSet(binding.getExtensionString(ToolingExtensions.EXT_MAX_VALUESET), false, BindingStrength.REQUIRED)));
+    if (binding.hasExtension(ExtensionDefinitions.EXT_MAX_VALUESET)) {
+      bs.getAdditionalBindings().add(new AdditionalBinding("maximum", binding.getExtensionString(ExtensionDefinitions.EXT_MAX_VALUESET), loadValueSet(binding.getExtensionString(ExtensionDefinitions.EXT_MAX_VALUESET), false, BindingStrength.REQUIRED)));
     }
     
     if (binding.hasExtension(BuildExtensions.EXT_V2_MAP)) {
@@ -759,8 +760,8 @@ public class ResourceParser {
     if (bs.hasReference()) {
       bs.setValueSet(loadValueSet(bs.getReference(), false, binding.getStrength()));
     }
-    if (binding.hasExtension(ToolingExtensions.EXT_MAX_VALUESET)) {
-      bs.getAdditionalBindings().add(new AdditionalBinding("maximum", binding.getExtensionString(ToolingExtensions.EXT_MAX_VALUESET), loadValueSet(binding.getExtensionString(ToolingExtensions.EXT_MAX_VALUESET), false, BindingStrength.REQUIRED)));
+    if (binding.hasExtension(ExtensionDefinitions.EXT_MAX_VALUESET)) {
+      bs.getAdditionalBindings().add(new AdditionalBinding("maximum", binding.getExtensionString(ExtensionDefinitions.EXT_MAX_VALUESET), loadValueSet(binding.getExtensionString(ExtensionDefinitions.EXT_MAX_VALUESET), false, BindingStrength.REQUIRED)));
     }
     for (ElementDefinitionBindingAdditionalComponent add : binding.getAdditional()) {
       bs.getAdditionalBindings().add(new AdditionalBinding(add.getPurpose().toCode(), add.getValueSet(), loadValueSet(add.getValueSet(), false, add.getPurpose() == AdditionalBindingPurposeVS.REQUIRED ? BindingStrength.REQUIRED : BindingStrength.EXTENSIBLE)).setDoco(add.getDocumentation()));      
@@ -853,11 +854,11 @@ public class ResourceParser {
         cs.setPublisher("HL7 International");
       }
       cs.setVersion(version);
-      if (!cs.hasExtension(ToolingExtensions.EXT_WORKGROUP)) {
-        cs.addExtension().setUrl(ToolingExtensions.EXT_WORKGROUP).setValue(new CodeType(committee.getCode()));
+      if (!cs.hasExtension(ExtensionDefinitions.EXT_WORKGROUP)) {
+        cs.addExtension().setUrl(ExtensionDefinitions.EXT_WORKGROUP).setValue(new CodeType(committee.getCode()));
         save = true;
       } else {
-        String ec = ToolingExtensions.readStringExtension(cs, ToolingExtensions.EXT_WORKGROUP);
+        String ec = ExtensionUtilities.readStringExtension(cs, ExtensionDefinitions.EXT_WORKGROUP);
         if (!ec.equals(committee.getCode()))
           System.out.println("CodeSystem "+cs.getUrl()+" WG mismatch 4a: is "+ec+", want to set to "+committee.getCode());
       } 
@@ -952,11 +953,11 @@ public class ResourceParser {
       if (!vs.hasStatus()) {
         vs.setStatus(PublicationStatus.ACTIVE);
       }
-      if (!vs.hasExtension(ToolingExtensions.EXT_WORKGROUP)) {
-        vs.addExtension().setUrl(ToolingExtensions.EXT_WORKGROUP).setValue(new CodeType(committee.getCode()));
+      if (!vs.hasExtension(ExtensionDefinitions.EXT_WORKGROUP)) {
+        vs.addExtension().setUrl(ExtensionDefinitions.EXT_WORKGROUP).setValue(new CodeType(committee.getCode()));
         save = true;
       } else {
-        String ec = ToolingExtensions.readStringExtension(vs, ToolingExtensions.EXT_WORKGROUP);
+        String ec = ExtensionUtilities.readStringExtension(vs, ExtensionDefinitions.EXT_WORKGROUP);
         if (!ec.equals(committee.getCode()))
           System.out.println("ValueSet "+vs.getUrl()+" WG mismatch 4b: is "+ec+", want to set to "+committee.getCode());
       } 
@@ -1033,7 +1034,7 @@ public class ResourceParser {
   private void parseExamples(ResourceDefn r, String n, String t) throws FHIRException, Exception {
     ListResource list = (ListResource) parseXml("list-"+t+"-examples.xml");
     for (ListResourceEntryComponent le : list.getEntry()) {
-      boolean reg = le.hasExtension(BuildExtensions.EXT_NOT_REGISTERED) ? !BuildExtensions.readBoolExtension(le, BuildExtensions.EXT_NOT_REGISTERED) : true;
+      boolean reg = le.hasExtension(BuildExtensions.EXT_NOT_REGISTERED) ? !ExtensionUtilities.readBoolExtension(le, BuildExtensions.EXT_NOT_REGISTERED) : true;
       ExampleType type = ExampleType.XmlFile;
       if (le.getFlag().hasCoding(BuildExtensions.EXT_EXAMPLE_TYPE, "container")) {
         type = ExampleType.Container;

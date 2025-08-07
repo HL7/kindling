@@ -19,6 +19,7 @@ import org.hl7.fhir.exceptions.FHIRException;
 import org.hl7.fhir.exceptions.FHIRFormatError;
 import org.hl7.fhir.r5.conformance.profile.ProfileUtilities;
 import org.hl7.fhir.r5.context.BaseWorkerContext;
+import org.hl7.fhir.r5.extensions.ExtensionUtilities;
 import org.hl7.fhir.r5.model.BooleanType;
 import org.hl7.fhir.r5.model.Bundle;
 import org.hl7.fhir.r5.model.Bundle.BundleEntryComponent;
@@ -54,7 +55,7 @@ import org.hl7.fhir.r5.model.StructureDefinition;
 import org.hl7.fhir.r5.model.UriType;
 import org.hl7.fhir.r5.model.UrlType;
 import org.hl7.fhir.r5.utils.BuildExtensions;
-import org.hl7.fhir.r5.utils.ToolingExtensions;
+import org.hl7.fhir.r5.extensions.ExtensionDefinitions;
 import org.hl7.fhir.tools.publisher.KindlingUtilities;
 import org.hl7.fhir.utilities.FileUtilities;
 import org.hl7.fhir.utilities.IniFile;
@@ -188,8 +189,8 @@ public class SpreadSheetReloader extends SpreadSheetBase {
 
   private void readInvariant(XSSFRow row, XSSFRow cols, ElementDefinitionConstraintComponent inv) {
     readExt(inv, row, cols, CN_NAME, BuildExtensions.EXT_NAME, ExtensionType.String);
-    readExt(inv, row, cols, CN_BEST_PRACTICE, BuildExtensions.EXT_BEST_PRACTICE, ExtensionType.Boolean);
-    readExt(inv, row, cols, CN_BEST_PRACTICE_COMMENT, BuildExtensions.EXT_BEST_PRACTICE_EXPLANATION, ExtensionType.Markdown);
+    readExt(inv, row, cols, CN_BEST_PRACTICE, ExtensionDefinitions.EXT_BEST_PRACTICE, ExtensionType.Boolean);
+    readExt(inv, row, cols, CN_BEST_PRACTICE_COMMENT, ExtensionDefinitions.EXT_BEST_PRACTICE_EXPLANATION, ExtensionType.Markdown);
     readExt(inv, row, cols, CN_COMMITTEE_NOTES, BuildExtensions.EXT_COMMITTEE_NOTES, ExtensionType.Boolean);
     inv.setSeverity(ConstraintSeverity.fromCode(getValue(row, cols, CN_SEVERITY)));
     inv.setHuman(getValue(row, cols, CN_ENGLISH));
@@ -212,7 +213,7 @@ public class SpreadSheetReloader extends SpreadSheetBase {
     ed.getType().clear();
     ed.setContentReferenceElement(null);
     if (ed.getPath().equals("Resource.id")) {
-      ed.addType().setCode("http://hl7.org/fhirpath/System.String").addExtension(ToolingExtensions.EXT_FHIR_TYPE, new UrlType("id"));      
+      ed.addType().setCode("http://hl7.org/fhirpath/System.String").addExtension(ExtensionDefinitions.EXT_FHIR_TYPE, new UrlType("id"));      
     } else {
       if (Utilities.noString(value)) {
         if (ed.getPath().contains(".")) {
@@ -230,7 +231,7 @@ public class SpreadSheetReloader extends SpreadSheetBase {
           }
           for (String p : tr.getParams()) {
             if (p.equals("Definition")) {
-              t.addExtension(BuildExtensions.EXT_PATTERN, new CanonicalType("http://hl7.org/fhir/StructureDefinition/Definition"));
+              t.addExtension(ExtensionDefinitions.EXT_PATTERN, new CanonicalType("http://hl7.org/fhir/StructureDefinition/Definition"));
               t.addTargetProfile("http://hl7.org/fhir/StructureDefinition/ActivityDefinition");
               t.addTargetProfile("http://hl7.org/fhir/StructureDefinition/EventDefinition");
               t.addTargetProfile("http://hl7.org/fhir/StructureDefinition/EvidenceVariable");
@@ -244,7 +245,7 @@ public class SpreadSheetReloader extends SpreadSheetBase {
             }
           }
           if (Utilities.existsInList(tr.getName(), "canonical", "Reference") && !Utilities.noString(hierarchy)) {
-            t.addExtension(BuildExtensions.EXT_HIERARCHY, new BooleanType(Utilities.existsInList(hierarchy, "true", "True", "TRUE", "1", "y", "Y")));
+            t.addExtension(ExtensionDefinitions.EXT_HIERARCHY, new BooleanType(Utilities.existsInList(hierarchy, "true", "True", "TRUE", "1", "y", "Y")));
           }
         }
       }
@@ -263,7 +264,7 @@ public class SpreadSheetReloader extends SpreadSheetBase {
       ElementDefinitionBindingComponent bs = ed.getBinding();
       bs.removeExtension(BuildExtensions.EXT_NAME);
       readExt(bs, row, cols, CN_BINDING_NAME, BuildExtensions.EXT_BINDING_NAME, ExtensionType.String);
-      readExt(bs, row, cols, CN_DEFINITION, BuildExtensions.EXT_BINDING_DEFINITION, ExtensionType.Markdown);
+      readExt(bs, row, cols, CN_DEFINITION, ExtensionDefinitions.EXT_BINDING_DEFINITION, ExtensionType.Markdown);
       bs.setStrength(BindingStrength.fromCode(getValue(row, cols, CN_STRENGTH)));
       bs.setValueSet(getValue(row, cols, CN_VALUE_SET));
       readExt(bs, row, cols, CN_URI, BuildExtensions.EXT_URI, ExtensionType.String);
@@ -287,7 +288,7 @@ public class SpreadSheetReloader extends SpreadSheetBase {
       OperationDefinitionParameterBindingComponent bs = param.getBinding();
       bs.removeExtension(BuildExtensions.EXT_NAME);
       readExt(bs, row, cols, CN_BINDING_NAME, BuildExtensions.EXT_BINDING_NAME, ExtensionType.String);
-      readExt(bs, row, cols, CN_DEFINITION, BuildExtensions.EXT_BINDING_DEFINITION, ExtensionType.Markdown);
+      readExt(bs, row, cols, CN_DEFINITION, ExtensionDefinitions.EXT_BINDING_DEFINITION, ExtensionType.Markdown);
       bs.setStrength(BindingStrength.fromCode(getValue(row, cols, CN_STRENGTH)));
       bs.setValueSet(getValue(row, cols, CN_VALUE_SET));
       readExt(bs, row, cols, CN_URI, BuildExtensions.EXT_URI, ExtensionType.String);
@@ -315,30 +316,30 @@ public class SpreadSheetReloader extends SpreadSheetBase {
   }
 
   private void parseStatus(Element ed, String value) {
-    ed.removeExtension(BuildExtensions.EXT_FMM_LEVEL);
-    ed.removeExtension(BuildExtensions.EXT_STANDARDS_STATUS);
-    ed.removeExtension(BuildExtensions.EXT_NORMATIVE_VERSION);
+    ed.removeExtension(ExtensionDefinitions.EXT_FMM_LEVEL);
+    ed.removeExtension(ExtensionDefinitions.EXT_STANDARDS_STATUS);
+    ed.removeExtension(ExtensionDefinitions.EXT_NORMATIVE_VERSION);
 
     if (!Utilities.noString(value) && value.contains("/")) {
       String[] p = value.split("\\/");
       if (Utilities.noString(p[0].trim())) {
-        ed.removeExtension(BuildExtensions.EXT_FMM_LEVEL);
+        ed.removeExtension(ExtensionDefinitions.EXT_FMM_LEVEL);
       } else {
-        ed.addExtension(BuildExtensions.EXT_FMM_LEVEL, new IntegerType(p[0]));        
+        ed.addExtension(ExtensionDefinitions.EXT_FMM_LEVEL, new IntegerType(p[0]));
       }
       if (p[1].contains(";")) {
-        ed.addExtension(BuildExtensions.EXT_STANDARDS_STATUS, new CodeType(p[1].substring(0, p[1].indexOf(";"))));                
-        ed.addExtension(BuildExtensions.EXT_NORMATIVE_VERSION, new CodeType(p[1].substring(p[1].indexOf("from=")+5)));                
+        ed.addExtension(ExtensionDefinitions.EXT_STANDARDS_STATUS, new CodeType(p[1].substring(0, p[1].indexOf(";"))));
+        ed.addExtension(ExtensionDefinitions.EXT_NORMATIVE_VERSION, new CodeType(p[1].substring(p[1].indexOf("from=")+5)));
       } else {
-        ed.addExtension(BuildExtensions.EXT_STANDARDS_STATUS, new CodeType(p[1]));        
+        ed.addExtension(ExtensionDefinitions.EXT_STANDARDS_STATUS, new CodeType(p[1]));
       }
     }
     sortExtensions(ed);
   }
 
   private void parseStatus(DomainResource ed, String value) {
-    ed.getExtension().removeIf(ext -> ext.getUrl().equals(BuildExtensions.EXT_FMM_LEVEL));
-    ed.getExtension().removeIf(ext -> ext.getUrl().equals(BuildExtensions.EXT_STANDARDS_STATUS));
+    ed.getExtension().removeIf(ext -> ext.getUrl().equals(ExtensionDefinitions.EXT_FMM_LEVEL));
+    ed.getExtension().removeIf(ext -> ext.getUrl().equals(ExtensionDefinitions.EXT_STANDARDS_STATUS));
     ed.getExtension().removeIf(ext -> ext.getUrl().equals(BuildExtensions.EXT_NORMATIVE_VERSION));
 
     if (!Utilities.noString(value) && value.contains("/")) {
@@ -419,7 +420,7 @@ public class SpreadSheetReloader extends SpreadSheetBase {
 
   private void readExt(DomainResource dr, XSSFRow row, XSSFRow cols, String colName, String url, ExtensionType extType) {
     if (dr.hasExtension(url)) {
-      BuildExtensions.removeExtension(dr,  url);
+      ExtensionUtilities.removeExtension(dr,  url);
     }
     String s = getValue(row, cols, colName);
     if (!Utilities.noString(s)) {
@@ -430,7 +431,7 @@ public class SpreadSheetReloader extends SpreadSheetBase {
 
   private void readExt(DomainResource e, String s, String url, ExtensionType extType) {
     if (e.hasExtension(url)) {
-      BuildExtensions.removeExtension(e,  url);
+      ExtensionUtilities.removeExtension(e,  url);
     }
     if (!Utilities.noString(s)) {
       e.addExtension(extFactory(url, s, extType));

@@ -23,7 +23,7 @@ import org.hl7.fhir.r5.model.StructureDefinition.StructureDefinitionKind;
 import org.hl7.fhir.r5.model.StructureDefinition.TypeDerivationRule;
 import org.hl7.fhir.r5.model.ValueSet;
 import org.hl7.fhir.r5.model.ValueSet.ConceptSetComponent;
-import org.hl7.fhir.r5.utils.ToolingExtensions;
+import org.hl7.fhir.r5.extensions.ExtensionDefinitions;
 import org.hl7.fhir.utilities.FileUtilities;
 import org.hl7.fhir.utilities.Utilities;
 import org.hl7.fhir.utilities.npm.FilesystemPackageCacheManager;
@@ -160,7 +160,7 @@ public class VersionTransformGenerator {
               ValueSet vs = context.fetchResource(ValueSet.class, ted.getBinding().getValueSet());
               CodeSystem cs = vs == null ? null : getCodeSystemForValueSet(vs);
               if (vs != null && cs != null) {
-                String cmName = ted.getBinding().hasExtension(ToolingExtensions.EXT_BINDING_NAME) ? ted.getBinding().getExtensionString(ToolingExtensions.EXT_BINDING_NAME) : vs.getId();
+                String cmName = ted.getBinding().hasExtension(ExtensionDefinitions.EXT_BINDING_NAME) ? ted.getBinding().getExtensionString(ExtensionDefinitions.EXT_BINDING_NAME) : vs.getId();
                 genConceptMap(conceptMaps, cmName, vs, cs, sv, tv);
                 b.append("  src."+ted.getNameBase()+" as v -> tgt."+ted.getNameBase()+" = translate(v, '#"+cmName+"', 'code');\r\n");
                 break;

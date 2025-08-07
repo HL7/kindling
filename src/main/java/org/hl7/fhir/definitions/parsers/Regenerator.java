@@ -55,7 +55,7 @@ import org.hl7.fhir.r5.model.StructureDefinition.StructureDefinitionDifferential
 import org.hl7.fhir.r5.model.ValueSet;
 import org.hl7.fhir.r5.model.ValueSet.ConceptSetComponent;
 import org.hl7.fhir.r5.utils.BuildExtensions;
-import org.hl7.fhir.r5.utils.ToolingExtensions;
+import org.hl7.fhir.r5.extensions.ExtensionDefinitions;
 import org.hl7.fhir.tools.publisher.KindlingUtilities;
 import org.hl7.fhir.utilities.CommaSeparatedStringBuilder;
 import org.hl7.fhir.utilities.Utilities;
@@ -167,13 +167,13 @@ public class Regenerator {
           case "name": ig.setName(v); break;
           case "author.name": ig.setPublisher(v); break;
           case "code": ig.addExtension(BuildExtensions.EXT_CODE, new CodeType(v)); break;
-          case "fmm": ig.addExtension(ToolingExtensions.EXT_FMM_LEVEL, new CodeType(v)); break;
+          case "fmm": ig.addExtension(ExtensionDefinitions.EXT_FMM_LEVEL, new CodeType(v)); break;
           case "description": ig.setDescription(v); break;
           case "status": ig.setStatus(PublicationStatus.fromCode(v)); break;
           case "publication.status": break;
           case "version": ig.setVersion(v); break;
           case "display": ig.setTitle(v); break;
-          case "workgroup": ig.addExtension(ToolingExtensions.EXT_WORKGROUP, new CodeType(v)); break;
+          case "workgroup": ig.addExtension(ExtensionDefinitions.EXT_WORKGROUP, new CodeType(v)); break;
           case "date": ig.getDateElement().setValueAsString(v); break;
           case "Experimental": ig.setExperimental(Utilities.existsInList(v.toLowerCase(), "y", "yes", "1", "true")); break;
           default:
@@ -266,7 +266,7 @@ public class Regenerator {
     StructureDefinition sd = cs.getResource().copy();
     sd.setSnapshot(null);
     if (!Utilities.noString(cs.getSummary())) {
-      sd.addExtension(ToolingExtensions.EXT_SUMMARY, new MarkdownType(cs.getSummary()));
+      sd.addExtension(ExtensionDefinitions.EXT_SUMMARY, new MarkdownType(cs.getSummary()));
     }
     File fn = new File(Utilities.path(root,  sd.fhirType().toLowerCase()+"-profile-"+sd.getId()+".gen.xml"));
     new XmlParser().setOutputStyle(OutputStyle.PRETTY).compose(new FileOutputStream(fn), sd);
@@ -414,7 +414,7 @@ public class Regenerator {
         constrant.addExtension(BuildExtensions.EXT_TURTLE, new StringType(inv.getTurtle()));
       }
       if (!Utilities.noString(inv.getExplanation())) {
-        constrant.addExtension(BuildExtensions.EXT_BEST_PRACTICE_EXPLANATION, new StringType(inv.getExplanation()));
+        constrant.addExtension(ExtensionDefinitions.EXT_BEST_PRACTICE_EXPLANATION, new StringType(inv.getExplanation()));
       }
     }
   }
@@ -512,7 +512,7 @@ public class Regenerator {
         }
       }
       if (spd.getStandardsStatus() != null) {
-        sp.addExtension(ToolingExtensions.EXT_STANDARDS_STATUS, new CodeType(spd.getStandardsStatus().toCode()));
+        sp.addExtension(ExtensionDefinitions.EXT_STANDARDS_STATUS, new CodeType(spd.getStandardsStatus().toCode()));
       }
       for (CompositeDefinition c : spd.getComposites()) {
         sp.addComponent().setExpression(c.getExpression()).setDefinition(c.getDefinition());

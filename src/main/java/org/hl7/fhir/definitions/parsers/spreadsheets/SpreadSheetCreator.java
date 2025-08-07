@@ -17,6 +17,7 @@ import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.hl7.fhir.exceptions.FHIRFormatError;
 import org.hl7.fhir.r5.context.BaseWorkerContext;
+import org.hl7.fhir.r5.extensions.ExtensionUtilities;
 import org.hl7.fhir.r5.formats.JsonParser;
 import org.hl7.fhir.r5.model.BooleanType;
 import org.hl7.fhir.r5.model.Bundle;
@@ -44,7 +45,7 @@ import org.hl7.fhir.r5.model.SearchParameter;
 import org.hl7.fhir.r5.model.StringType;
 import org.hl7.fhir.r5.model.StructureDefinition;
 import org.hl7.fhir.r5.utils.BuildExtensions;
-import org.hl7.fhir.r5.utils.ToolingExtensions;
+import org.hl7.fhir.r5.extensions.ExtensionDefinitions;
 import org.hl7.fhir.utilities.FileUtilities;
 import org.hl7.fhir.utilities.IniFile;
 import org.hl7.fhir.utilities.Utilities;
@@ -197,7 +198,7 @@ public class SpreadSheetCreator extends SpreadSheetBase {
   private void addElements(XSSFSheet resources, XSSFSheet bindings, XSSFSheet invariants, ElementDefinition ed, int rowCount) throws IOException {
     Row row = resources.createRow(rowCount);    
     int columnCount = 0;
-    ed.removeExtension(ToolingExtensions.EXT_ED_HIERARCHY);
+    ed.removeExtension(ExtensionDefinitions.EXT_ED_HIERARCHY);
     addCell(ed.getPath(), row, columnCount++); // Path
     addCell(aliases(ed), row, columnCount++); // Aliases
     addCell(ed.getMin()+".."+ed.getMax(), row, columnCount++); // Card.
@@ -235,7 +236,7 @@ public class SpreadSheetCreator extends SpreadSheetBase {
   
   private String typeHierarchy(ElementDefinition ed, String extHierarchy) {
     for (TypeRefComponent tr : ed.getType()) {
-      if (BuildExtensions.readBoolExtension(tr, BuildExtensions.EXT_HIERARCHY)) {
+      if (ExtensionUtilities.readBoolExtension(tr, BuildExtensions.EXT_HIERARCHY)) {
         return "true";
       }
     }
@@ -312,7 +313,7 @@ public class SpreadSheetCreator extends SpreadSheetBase {
   private String ext(DomainResource res, String uri) {
     sortExtensions(res);
     if (res.hasExtension(uri)) {
-      return ToolingExtensions.readStringExtension(res, uri);
+      return ExtensionUtilities.readStringExtension(res, uri);
     } else {
       return null;
     }
@@ -463,7 +464,7 @@ public class SpreadSheetCreator extends SpreadSheetBase {
     int rowCount = 1;
     sortExtensions(ig);
     addPackRow(sheet, CN_ID, ig.getId(), rowCount++);
-    addPackRow(sheet, CN_CODE, BuildExtensions.readStringExtension(ig, BuildExtensions.EXT_CODE), rowCount++);
+    addPackRow(sheet, CN_CODE, ExtensionUtilities.readStringExtension(ig, BuildExtensions.EXT_CODE), rowCount++);
     addPackRow(sheet, CN_NAME, ig.getName(), rowCount++);
     addPackRow(sheet, CN_TITLE, ig.getTitle(), rowCount++);
     addPackRow(sheet, CN_VERSION, ig.getVersion(), rowCount++);
@@ -472,10 +473,10 @@ public class SpreadSheetCreator extends SpreadSheetBase {
     addPackRow(sheet, CN_STATUS, ig.getStatus().toCode(), rowCount++);
     addPackRow(sheet, CN_EXPERIMENTAL, ig.getExperimentalElement().primitiveValue(), rowCount++);
     addPackRow(sheet, CN_DATE, ig.getDateElement().primitiveValue(), rowCount++);
-    addPackRow(sheet, CN_FMM, BuildExtensions.readStringExtension(ig, BuildExtensions.EXT_FMM_LEVEL), rowCount++);
-    addPackRow(sheet, CN_WORK_GROUP, BuildExtensions.readStringExtension(ig, BuildExtensions.EXT_WORKGROUP), rowCount++);
-    addPackRow(sheet, CN_INTRODUCTION, BuildExtensions.readStringExtension(ig, BuildExtensions.EXT_INTRODUCTION), rowCount++);
-    addPackRow(sheet, CN_NOTES, BuildExtensions.readStringExtension(ig, BuildExtensions.EXT_NOTES), rowCount++);
+    addPackRow(sheet, CN_FMM, ExtensionUtilities.readStringExtension(ig, BuildExtensions.EXT_FMM_LEVEL), rowCount++);
+    addPackRow(sheet, CN_WORK_GROUP, ExtensionUtilities.readStringExtension(ig, BuildExtensions.EXT_WORKGROUP), rowCount++);
+    addPackRow(sheet, CN_INTRODUCTION, ExtensionUtilities.readStringExtension(ig, BuildExtensions.EXT_INTRODUCTION), rowCount++);
+    addPackRow(sheet, CN_NOTES, ExtensionUtilities.readStringExtension(ig, BuildExtensions.EXT_NOTES), rowCount++);
 
     for (ImplementationGuideDefinitionResourceComponent res : ig.getDefinition().getResource()) {
       String r = res.getReference().getReference();
@@ -625,9 +626,9 @@ public class SpreadSheetCreator extends SpreadSheetBase {
 
   private String status(DomainResource dr) {
     sortExtensions(dr);
-    String fmm = BuildExtensions.readStringExtension(dr,  BuildExtensions.EXT_FMM_LEVEL);
-    String ss = BuildExtensions.readStringExtension(dr,  BuildExtensions.EXT_STANDARDS_STATUS);
-    String nv = BuildExtensions.readStringExtension(dr,  BuildExtensions.EXT_NORMATIVE_VERSION);
+    String fmm = ExtensionUtilities.readStringExtension(dr,  BuildExtensions.EXT_FMM_LEVEL);
+    String ss = ExtensionUtilities.readStringExtension(dr,  BuildExtensions.EXT_STANDARDS_STATUS);
+    String nv = ExtensionUtilities.readStringExtension(dr,  BuildExtensions.EXT_NORMATIVE_VERSION);
     return status(fmm, ss, nv);
   }
 
@@ -646,9 +647,9 @@ public class SpreadSheetCreator extends SpreadSheetBase {
 
   private String status(Element e) {
     sortExtensions(e);
-    String fmm = BuildExtensions.readStringExtension(e,  BuildExtensions.EXT_FMM_LEVEL);
-    String ss = BuildExtensions.readStringExtension(e,  BuildExtensions.EXT_STANDARDS_STATUS);
-    String nv = BuildExtensions.readStringExtension(e,  BuildExtensions.EXT_NORMATIVE_VERSION);
+    String fmm = ExtensionUtilities.readStringExtension(e,  BuildExtensions.EXT_FMM_LEVEL);
+    String ss = ExtensionUtilities.readStringExtension(e,  BuildExtensions.EXT_STANDARDS_STATUS);
+    String nv = ExtensionUtilities.readStringExtension(e,  BuildExtensions.EXT_NORMATIVE_VERSION);
     return status(fmm, ss, nv);
   }
 

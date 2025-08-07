@@ -132,9 +132,10 @@ import org.hl7.fhir.r5.context.ILoggingService;
 import org.hl7.fhir.r5.elementmodel.Element;
 import org.hl7.fhir.r5.elementmodel.Manager;
 import org.hl7.fhir.r5.elementmodel.Manager.FhirFormat;
+import org.hl7.fhir.r5.extensions.ExtensionUtilities;
 import org.hl7.fhir.r5.fhirpath.ExpressionNode.CollectionStatus;
 import org.hl7.fhir.r5.fhirpath.FHIRPathEngine;
-import org.hl7.fhir.r5.fhirpath.FHIRPathEngine.IEvaluationContext;
+import org.hl7.fhir.r5.fhirpath.IHostApplicationServices;
 import org.hl7.fhir.r5.fhirpath.FHIRPathUtilityClasses.FunctionDetails;
 import org.hl7.fhir.r5.fhirpath.TypeDetails;
 import org.hl7.fhir.r5.formats.FormatUtilities;
@@ -226,7 +227,7 @@ import org.hl7.fhir.r5.terminologies.ValueSetUtilities;
 import org.hl7.fhir.r5.terminologies.client.ITerminologyClient;
 import org.hl7.fhir.r5.terminologies.client.TerminologyClientR5;
 import org.hl7.fhir.r5.terminologies.expansion.ValueSetExpansionOutcome;
-import org.hl7.fhir.r5.utils.ToolingExtensions;
+import org.hl7.fhir.r5.extensions.ExtensionDefinitions;
 import org.hl7.fhir.r5.utils.Translations;
 import org.hl7.fhir.r5.utils.TypesUtilities;
 import org.hl7.fhir.r5.utils.TypesUtilities.TypeClassification;
@@ -246,6 +247,7 @@ import org.hl7.fhir.utilities.OIDUtilities;
 import org.hl7.fhir.utilities.StandardsStatus;
 import org.hl7.fhir.utilities.Utilities;
 import org.hl7.fhir.utilities.VersionUtilities;
+import org.hl7.fhir.utilities.fhirpath.FHIRPathConstantEvaluationMode;
 import org.hl7.fhir.utilities.filesystem.CSFile;
 import org.hl7.fhir.utilities.filesystem.CSFileInputStream;
 import org.hl7.fhir.utilities.i18n.RenderingI18nContext;
@@ -329,15 +331,15 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
 
   }
 
-  public class PageEvaluationContext implements IEvaluationContext {
+  public class PageEvaluationContext implements IHostApplicationServices {
 
     @Override
-    public List<Base> resolveConstant(FHIRPathEngine engine, Object appContext, String name, boolean beforeContext, boolean explicitConstant)  throws PathEngineException {
+    public List<Base> resolveConstant(FHIRPathEngine engine, Object appContext, String name, FHIRPathConstantEvaluationMode mode)  throws PathEngineException {
       return null;
     }
 
     @Override
-    public TypeDetails resolveConstantType(FHIRPathEngine engine, Object appContext, String name, boolean explicitConstant) throws PathEngineException {
+    public TypeDetails resolveConstantType(FHIRPathEngine engine, Object appContext, String name, FHIRPathConstantEvaluationMode mode) throws PathEngineException {
       return null;
     }
 
@@ -866,11 +868,11 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
         src = s1+getXcmChk(com[1])+s3;
       } else if (com[0].equals("sstatus")) {
         if (com.length == 1) {
-          StandardsStatus ss = ToolingExtensions.getStandardsStatus((DomainResource) resource);
+          StandardsStatus ss = ExtensionUtilities.getStandardsStatus((DomainResource) resource);
           if (ss == null)
             ss = StandardsStatus.INFORMATIVE;
-          if (ss == StandardsStatus.NORMATIVE && ToolingExtensions.hasExtension((DomainResource) resource, ToolingExtensions.EXT_NORMATIVE_VERSION))
-            src = s1+"<a href=\""+genlevel(level)+"versions.html#std-process\">"+ss.toDisplay()+"</a> (from v"+ToolingExtensions.readStringExtension((DomainResource) resource, ToolingExtensions.EXT_NORMATIVE_VERSION)+")"+s3;
+          if (ss == StandardsStatus.NORMATIVE && ExtensionUtilities.hasExtension((DomainResource) resource, ExtensionDefinitions.EXT_NORMATIVE_VERSION))
+            src = s1+"<a href=\""+genlevel(level)+"versions.html#std-process\">"+ss.toDisplay()+"</a> (from v"+ExtensionUtilities.readStringExtension((DomainResource) resource, ExtensionDefinitions.EXT_NORMATIVE_VERSION)+")"+s3;
           else
             src = s1+"<a href=\""+genlevel(level)+"versions.html#std-process\">"+ss.toDisplay()+"</a>"+s3;
         } else
@@ -912,12 +914,12 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
       } else if (com[0].equals("r4r5transform")) {
         src = s1+dtR4R5Transform(com[1])+s3;
       } else if (com[0].equals("fmm-style")) {
-        String fmm = resource == null ? "N/A" :  ToolingExtensions.readStringExtension((DomainResource) resource, ToolingExtensions.EXT_FMM_LEVEL);
-        StandardsStatus ss = ToolingExtensions.getStandardsStatus((DomainResource) resource);
+        String fmm = resource == null ? "N/A" :  ExtensionUtilities.readStringExtension((DomainResource) resource, ExtensionDefinitions.EXT_FMM_LEVEL);
+        StandardsStatus ss = ExtensionUtilities.getStandardsStatus((DomainResource) resource);
         src = s1+fmmBarColorStyle(ss, fmm)+s3;
       } else if (com[0].equals("fmm")) {
-        String fmm = resource == null || !(resource instanceof CanonicalResource) ? getFmm(com[1], false) : ToolingExtensions.readStringExtension((DomainResource) resource, ToolingExtensions.EXT_FMM_LEVEL);
-        StandardsStatus ss = ToolingExtensions.getStandardsStatus((DomainResource) resource);
+        String fmm = resource == null || !(resource instanceof CanonicalResource) ? getFmm(com[1], false) : ExtensionUtilities.readStringExtension((DomainResource) resource, ExtensionDefinitions.EXT_FMM_LEVEL);
+        StandardsStatus ss = ExtensionUtilities.getStandardsStatus((DomainResource) resource);
         if (StandardsStatus.EXTERNAL == ss)
           src = s1+getFmmFromlevel(genlevel(level), "N/A")+s3;
         else if (StandardsStatus.NORMATIVE == ss)
@@ -933,7 +935,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
         if (com.length >= 3) {
           if (!com[2].equals("%check"))
             p = com[2]; 
-          else if (StandardsStatus.NORMATIVE == ToolingExtensions.getStandardsStatus((DomainResource) resource)) {
+          else if (StandardsStatus.NORMATIVE == ExtensionUtilities.getStandardsStatus((DomainResource) resource)) {
             p = resource.getUserString("ballot.package");
             wt = ((CanonicalResource) resource).fhirType()+" "+((CanonicalResource) resource).present();
           }
@@ -945,7 +947,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
         if (com.length >= 3) {
           if (!com[2].equals("%check"))
             p = com[2]; 
-          else if (StandardsStatus.NORMATIVE == ToolingExtensions.getStandardsStatus((DomainResource) resource)) {
+          else if (StandardsStatus.NORMATIVE == ExtensionUtilities.getStandardsStatus((DomainResource) resource)) {
             p = resource.getUserString("ballot.package");
             wt = ((CanonicalResource) resource).fhirType()+" "+((CanonicalResource) resource).present();
           }
@@ -957,7 +959,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
         if (com.length >= 3) {
           if (!com[2].equals("%check"))
             p = com[2]; 
-          else if (StandardsStatus.NORMATIVE == ToolingExtensions.getStandardsStatus((DomainResource) resource)) {
+          else if (StandardsStatus.NORMATIVE == ExtensionUtilities.getStandardsStatus((DomainResource) resource)) {
             p = resource.getUserString("ballot.package");
             wt = ((CanonicalResource) resource).fhirType()+" "+((CanonicalResource) resource).present();
           }
@@ -968,10 +970,10 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
         String wt = rd.getName()+" Operation " + ((Operation) object).getName(); 
         StandardsStatus st = ((Operation) object).getStandardsStatus();
         if (st == null)
-          st = ToolingExtensions.getStandardsStatus((DomainResource) resource);
+          st = ExtensionUtilities.getStandardsStatus((DomainResource) resource);
         src = s1+(st == StandardsStatus.NORMATIVE ? getNormativeNote(genlevel(level), p, com[1], wt, file) : "")+s3;
       } else if (com[0].equals("fmmshort")) {
-        String fmm = resource == null || !(resource instanceof CanonicalResource) ? getFmm(com[1], true) : ToolingExtensions.readStringExtension((DomainResource) resource, ToolingExtensions.EXT_FMM_LEVEL);
+        String fmm = resource == null || !(resource instanceof CanonicalResource) ? getFmm(com[1], true) : ExtensionUtilities.readStringExtension((DomainResource) resource, ExtensionDefinitions.EXT_FMM_LEVEL);
         String npr = resource == null || !(resource instanceof CanonicalResource) ? getNormativePackageRef(com[1]) : "";
         src = s1+fmm+npr+s3;
       } else if (com[0].equals("normative-pages")) {
@@ -2414,7 +2416,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
 
   private String vscommittee(Resource resource) {
     CanonicalResource vs = (CanonicalResource) resource;
-    WorkGroup wg = definitions.getWorkgroups().get(ToolingExtensions.readStringExtension(vs, ToolingExtensions.EXT_WORKGROUP));
+    WorkGroup wg = definitions.getWorkgroups().get(ExtensionUtilities.readStringExtension(vs, ExtensionDefinitions.EXT_WORKGROUP));
     return wg == null ? "??" : "<a _target=\"blank\" href=\""+wg.getUrl()+"\">"+wg.getName()+"</a> Work Group";
   }
 
@@ -2538,14 +2540,14 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
   }
 
   private String vsWarning(ValueSet resource) throws Exception {
-    String warning = ToolingExtensions.readStringExtension(resource, "http://hl7.org/fhir/StructureDefinition/valueset-warning");
+    String warning = ExtensionUtilities.readStringExtension(resource, "http://hl7.org/fhir/StructureDefinition/valueset-warning");
     if (Utilities.noString(warning))
       return "";
     return "<div class=\"warning\">\r\n<p><b>Note for Implementer:</b></p>"+processMarkdown("vs-warning", warning, "")+"</div>\r\n";
   }
 
   private String vsSpecialStatus(DomainResource resource) throws Exception {
-    String note = ToolingExtensions.readStringExtension(resource, "http://hl7.org/fhir/StructureDefinition/valueset-special-status");
+    String note = ExtensionUtilities.readStringExtension(resource, "http://hl7.org/fhir/StructureDefinition/valueset-special-status");
     if (Utilities.noString(note))
       return "";
     return "<div class=\"warning\">\r\n<p>"+processMarkdown("vsSpecialStatus", note, "")+"</p></div>\r\n";
@@ -2642,7 +2644,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
   private String genCompModel(StructureDefinition sd, String name, String base, String prefix) throws Exception {
     if (sd == null)
       return "<p style=\"color: maroon\">No "+name+" could be generated</p>\r\n";
-    return new XhtmlComposer(XhtmlComposer.HTML).compose(new StructureDefinitionRenderer(rc).generateTable(new RenderingStatus(), "??", sd, false, folders.dstDir, false, base, true, prefix, prefix, false, false, null, false, rc.copy(false).withLocale(null), "", ResourceWrapper.forResource(rc.getContextUtilities(), sd)));
+    return new XhtmlComposer(XhtmlComposer.HTML).compose(new StructureDefinitionRenderer(rc).generateTable(new RenderingStatus(), "??", sd, false, folders.dstDir, false, base, true, prefix, prefix, false, false, null, false, rc.copy(false).withLocale(null), "", ResourceWrapper.forResource(rc.getContextUtilities(), sd), "sdc"));
   }
 
   private String genPCLink(String leftName, String leftLink) {
@@ -2794,7 +2796,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
   }
 
   private void genExtensionRow(ImplementationGuideDefn ig, StringBuilder s, StructureDefinition ed) throws Exception {
-    StandardsStatus status = ToolingExtensions.getStandardsStatus(ed);
+    StandardsStatus status = ExtensionUtilities.getStandardsStatus(ed);
     if (status  == StandardsStatus.DEPRECATED) {
       s.append("<tr style=\"background-color: #ffeeee\">");
     } else if (status  == StandardsStatus.NORMATIVE) {
@@ -2851,7 +2853,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     } else if (status == StandardsStatus.INFORMATIVE) {
       s.append("<td><a href=\"versions.html#std-process\" title=\"Informative Content\" class=\"deprecated-flag\">I</a></td>");      
     } else { 
-      String fmm = ToolingExtensions.readStringExtension(ed, ToolingExtensions.EXT_FMM_LEVEL);
+      String fmm = ExtensionUtilities.readStringExtension(ed, ExtensionDefinitions.EXT_FMM_LEVEL);
       s.append("<td>"+(Utilities.noString(fmm) ? "0" : fmm)+"</td>");
     }
     String uc = ed.hasUserData("usage.count") ? ed.getUserData("usage.count").toString() : "";
@@ -3546,9 +3548,9 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
         if (cd.hasLanguage())
           res.add(cd.getLanguage());
       }
-      Extension ex = cc.getExtensionByUrl(ToolingExtensions.EXT_CS_COMMENT);
+      Extension ex = cc.getExtensionByUrl(ExtensionDefinitions.EXT_CS_COMMENT);
       if (ex != null) {
-        for (String l : ToolingExtensions.getLanguageTranslations(ex).keySet())
+        for (String l : ExtensionUtilities.getLanguageTranslations(ex).keySet())
           res.add(l);
       }
       findTranslations(res, cc.getConcept());
@@ -3652,8 +3654,8 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     String color = even ? "#EFEFEF" : "#FFFFFF";
     if (definitions.hasResource(name)) {
       ResourceDefn r = definitions.getResourceByName(name);
-      if (resourceCategory != null && !ToolingExtensions.hasExtension(r.getProfile(), ToolingExtensions.EXT_RESOURCE_CATEGORY)) {
-        ToolingExtensions.setStringExtension(r.getProfile(), ToolingExtensions.EXT_RESOURCE_CATEGORY, resourceCategory); 
+      if (resourceCategory != null && !ExtensionUtilities.hasExtension(r.getProfile(), ExtensionDefinitions.EXT_RESOURCE_CATEGORY)) {
+        ExtensionUtilities.setStringExtension(r.getProfile(), ExtensionDefinitions.EXT_RESOURCE_CATEGORY, resourceCategory); 
         ini.setStringProperty("category", r.getName(), resourceCategory, null);
         ini.save();
       }
@@ -3679,8 +3681,8 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     if (definitions.hasResource(name)) {
       ResourceDefn r = definitions.getResourceByName(name);
       if (resourceCategory != null) {
-        if (!ToolingExtensions.hasExtension(r.getProfile(), ToolingExtensions.EXT_RESOURCE_CATEGORY)) {
-          ToolingExtensions.setStringExtension(r.getProfile(), ToolingExtensions.EXT_RESOURCE_CATEGORY, resourceCategory); 
+        if (!ExtensionUtilities.hasExtension(r.getProfile(), ExtensionDefinitions.EXT_RESOURCE_CATEGORY)) {
+          ExtensionUtilities.setStringExtension(r.getProfile(), ExtensionDefinitions.EXT_RESOURCE_CATEGORY, resourceCategory); 
         }
         IniFile cini = new IniFile(Utilities.path(folders.rootDir, "temp", "categories.ini"));
         if (!resourceCategory.equals(cini.getStringProperty("category", r.getName()))) {
@@ -4664,34 +4666,34 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
       throw new Exception("No Code system for "+mode+" from "+source);
     boolean hasComments = false;
     for (ConceptDefinitionComponent c : cs.getConcept())
-      hasComments = hasComments || checkHasComment(c);
+      hasComments = hasComments || checkHasComment(cs, c);
 
     StringBuilder b = new StringBuilder();
     if (heading && !Utilities.noString(cs.getDescription()))
       b.append("<h3>"+cs.getDescription()+"</h3>\r\n");
     b.append("<table class=\"codes\">\r\n");
     for (ConceptDefinitionComponent c : cs.getConcept()) {
-      genCodeItem(links, hasComments, b, c);
+      genCodeItem(links, hasComments, b, cs, c);
     }
     b.append("</table>\r\n");
     return b.toString();
   }
 
-  private void genCodeItem(boolean links, boolean hasComments, StringBuilder b, ConceptDefinitionComponent c) {
+  private void genCodeItem(boolean links, boolean hasComments, StringBuilder b, CodeSystem cs, ConceptDefinitionComponent c) {
     if (hasComments)
-      b.append(" <tr><td>"+(links ? "<a href=\"#"+c.getCode()+"\">"+c.getCode()+"</a>" : c.getCode())+"</td><td>"+Utilities.escapeXml(c.getDefinition())+"</td><td>"+Utilities.escapeXml(ToolingExtensions.getCSComment(c))+"</td></tr>\r\n");
+      b.append(" <tr><td>"+(links ? "<a href=\"#"+c.getCode()+"\">"+c.getCode()+"</a>" : c.getCode())+"</td><td>"+Utilities.escapeXml(c.getDefinition())+"</td><td>"+Utilities.escapeXml(CodeSystemUtilities.getCSComments(cs, c))+"</td></tr>\r\n");
     else
       b.append(" <tr><td>"+(links ? "<a href=\"#"+c.getCode()+"\">"+c.getCode()+"</a>" : c.getCode())+"</td><td>"+Utilities.escapeXml(c.getDefinition())+"</td></tr>\r\n");
     for (ConceptDefinitionComponent cc : c.getConcept()) {
-      genCodeItem(links, hasComments, b, cc);
+      genCodeItem(links, hasComments, b, cs, cc);
     }
   }
 
-  private boolean checkHasComment(ConceptDefinitionComponent c) {
-    if (ToolingExtensions.getCSComment(c) != null)
+  private boolean checkHasComment(CodeSystem cs, ConceptDefinitionComponent c) {
+    if (CodeSystemUtilities.getCSComments(cs, c) != null)
       return true;
     for (ConceptDefinitionComponent cc : c.getConcept())
-      if (checkHasComment(cc))
+      if (checkHasComment(cs, cc))
         return true;
     return false;
   }
@@ -4966,7 +4968,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
         if (wantPublish(vs)) {
           String path = ae.hasUserData("external.url") ? ae.getUserString("external.url") : pathTail(FileUtilities.changeFileExt(ae.getWebPath(), ".html"));
           s.append(" <tr><td><a href=\""+path+"\">"+n+"</a>");
-          if (StandardsStatus.NORMATIVE == ToolingExtensions.getStandardsStatus(vs))
+          if (StandardsStatus.NORMATIVE == ExtensionUtilities.getStandardsStatus(vs))
             s.append(" <a href=\"versions.html#std-process\" title=\"Normative Content\" class=\"normative-flag\">N</a>");
           s.append("</td><td>"+Utilities.escapeXml(vs.getDescription())+"</td><td>"+sourceSummary(vs)+"</td>");
           s.append("</tr>\r\n");
@@ -6700,11 +6702,13 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
   }
 
   private String genNoExtensionsWarning(ResourceDefn resource) {
-    boolean hasExtensions = !resource.getRoot().typeCode().equals("DomainResource");
-    if (hasExtensions)
+    boolean hasExtensions = Utilities.existsInList(resource.getRoot().typeCode(), "DomainResource", "CanonicalResource", "MetadataResource");
+    if (hasExtensions) {
       return "";
-    else
-      return "<p>Resources of type "+resource.getName()+" do not have extensions at the root element, but extensions MAY be present on the elements in the resource</p>\r\n";
+    } else {
+      return "";
+//      return "<p>Resources of type " + resource.getName() + " do not have extensions at the root element, but extensions MAY be present on the elements in the resource</p>\r\n";
+    }
   }
 
   private String genImplementationList(ResourceDefn logical) throws FHIRException {
@@ -9496,8 +9500,8 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
         else
           src = s1+ "<a _target=\"blank\" href=\""+definitions.getWorkgroups().get(wg).getUrl()+"\">"+definitions.getWorkgroups().get(wg).getName()+"</a> Work Group"+s3;
       } else if (com[0].equals("fmm-style")) {
-        String fmm = ToolingExtensions.readStringExtension(profile.getResource(), ToolingExtensions.EXT_FMM_LEVEL);
-        StandardsStatus ss = ToolingExtensions.getStandardsStatus(profile.getResource());
+        String fmm = ExtensionUtilities.readStringExtension(profile.getResource(), ExtensionDefinitions.EXT_FMM_LEVEL);
+        StandardsStatus ss = ExtensionUtilities.getStandardsStatus(profile.getResource());
         src = s1+fmmBarColorStyle(ss, fmm)+s3;
       } else if (com[0].equals("fmm")) {
         String fmm = profile.getFmm();
@@ -9507,11 +9511,11 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
       } else if (com[0].equals("profile-context"))
         src = s1+getProfileContext(pack.getCandidateResource(), genlevel(level))+s3;
       else if (com[0].equals("sstatus")) {
-        StandardsStatus ss = ToolingExtensions.getStandardsStatus(profile.getResource());
+        StandardsStatus ss = ExtensionUtilities.getStandardsStatus(profile.getResource());
         if (ss == null)
           ss = StandardsStatus.INFORMATIVE;
-        if (ss == StandardsStatus.NORMATIVE && ToolingExtensions.hasExtension(profile.getResource(), ToolingExtensions.EXT_NORMATIVE_VERSION))
-          src = s1+"<a href=\""+genlevel(level)+"versions.html#std-process\">"+ss.toDisplay()+"</a> (from v"+ToolingExtensions.readStringExtension(profile.getResource(), ToolingExtensions.EXT_NORMATIVE_VERSION)+")"+s3;
+        if (ss == StandardsStatus.NORMATIVE && ExtensionUtilities.hasExtension(profile.getResource(), ExtensionDefinitions.EXT_NORMATIVE_VERSION))
+          src = s1+"<a href=\""+genlevel(level)+"versions.html#std-process\">"+ss.toDisplay()+"</a> (from v"+ExtensionUtilities.readStringExtension(profile.getResource(), ExtensionDefinitions.EXT_NORMATIVE_VERSION)+")"+s3;
         else
           src = s1+"<a href=\""+genlevel(level)+"versions.html#std-process\">"+ss.toDisplay()+"</a>"+s3;
       } else if (com[0].equals("past-narrative-link")) {
@@ -9589,7 +9593,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
   }
 
   private boolean isTrialUse(CanonicalResource mr) {
-    String s = ToolingExtensions.readStringExtension(mr, "http://hl7.org/fhir/StructureDefinition/structuredefinition-standards-status");
+    String s = ExtensionUtilities.readStringExtension(mr, "http://hl7.org/fhir/StructureDefinition/structuredefinition-standards-status");
     return s == null ? false : s.toLowerCase().contains("trial");
   }
 
@@ -9619,7 +9623,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
   }
 
   private String profileDictionaryLink(ConstraintStructure profile) {
-    String uri = ToolingExtensions.readStringExtension(profile.getResource(), "http://hl7.org/fhir/StructureDefinition/datadictionary");
+    String uri = ExtensionUtilities.readStringExtension(profile.getResource(), "http://hl7.org/fhir/StructureDefinition/datadictionary");
     if (Utilities.noString(uri))
       return "<!-- no uri -->";
     Dictionary dict = definitions.getDictionaries().get(uri);
@@ -9682,8 +9686,8 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
         }
       }
       StringBuilder res = new StringBuilder("<a name=\"summary\"> </a>\r\n<p><b>\r\nSummary\r\n</b></p>\r\n");
-      if (ToolingExtensions.hasExtension(profile, "http://hl7.org/fhir/StructureDefinition/structuredefinition-summary")) {
-        res.append(processMarkdown("Profile.summary", ToolingExtensions.readStringExtension(profile, "http://hl7.org/fhir/StructureDefinition/structuredefinition-summary"), prefix));
+      if (ExtensionUtilities.hasExtension(profile, "http://hl7.org/fhir/StructureDefinition/structuredefinition-summary")) {
+        res.append(processMarkdown("Profile.summary", ExtensionUtilities.readStringExtension(profile, "http://hl7.org/fhir/StructureDefinition/structuredefinition-summary"), prefix));
       }
       if (supports + requiredOutrights + requiredNesteds + fixeds + prohibits > 0) {
         boolean started = false;
@@ -10017,15 +10021,15 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
       else if (com[0].startsWith("!"))
         src = s1 + s3;
       else if (com[0].equals("wg")) {
-        String wg = ToolingExtensions.readStringExtension(ed, ToolingExtensions.EXT_WORKGROUP);
+        String wg = ExtensionUtilities.readStringExtension(ed, ExtensionDefinitions.EXT_WORKGROUP);
         src = s1+(wg == null || !definitions.getWorkgroups().containsKey(wg) ?  "(No assigned work group) ("+wg+") (3)" : "<a _target=\"blank\" href=\""+definitions.getWorkgroups().get(wg).getUrl()+"\">"+definitions.getWorkgroups().get(wg).getName()+"</a> Work Group")+s3;
       } else if (com[0].equals("fmm-style"))  {
-        String fmm = ed == null ? "N/A" :  ToolingExtensions.readStringExtension(ed, ToolingExtensions.EXT_FMM_LEVEL);
-        StandardsStatus ss = ToolingExtensions.getStandardsStatus(ed);
+        String fmm = ed == null ? "N/A" :  ExtensionUtilities.readStringExtension(ed, ExtensionDefinitions.EXT_FMM_LEVEL);
+        StandardsStatus ss = ExtensionUtilities.getStandardsStatus(ed);
         src = s1+fmmBarColorStyle(ss, fmm)+s3;
       } else if (com[0].equals("fmm")) {
-        String fmm = ToolingExtensions.readStringExtension(ed, ToolingExtensions.EXT_FMM_LEVEL);
-        StandardsStatus ss = ToolingExtensions.getStandardsStatus(ed);
+        String fmm = ExtensionUtilities.readStringExtension(ed, ExtensionDefinitions.EXT_FMM_LEVEL);
+        StandardsStatus ss = ExtensionUtilities.getStandardsStatus(ed);
         if (StandardsStatus.EXTERNAL == ss)
           src = s1+getFmmFromlevel(genlevel(level), "N/A")+s3;
         else if (StandardsStatus.NORMATIVE == ss)
@@ -10033,7 +10037,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
         else
           src = s1+getFmmFromlevel(genlevel(level), fmm)+s3;
       } else if (com[0].equals("sstatus")) {
-        StandardsStatus ss = ToolingExtensions.getStandardsStatus(ed);
+        StandardsStatus ss = ExtensionUtilities.getStandardsStatus(ed);
         if (ss == null)
           ss = StandardsStatus.INFORMATIVE;
         src = s1+"<a href=\""+genlevel(level)+"versions.html#std-process\">"+ss.toDisplay()+"</a>"+s3;
@@ -10048,7 +10052,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
       } else if (com[0].equals("ext-title"))  {
         src = s1 + ed.getTitle() + s3;
       } else if (com[0].equals("ext-committee"))  {
-        WorkGroup wg = definitions.getWorkgroups().get(ToolingExtensions.readStringExtension(ed, ToolingExtensions.EXT_WORKGROUP));
+        WorkGroup wg = definitions.getWorkgroups().get(ExtensionUtilities.readStringExtension(ed, ExtensionDefinitions.EXT_WORKGROUP));
         String s = wg == null ? "??" : "<a _target=\"blank\" href=\""+wg.getUrl()+"\">"+wg.getName()+"</a> Work Group";
         src = s1 + s + s3;
       } else if (com[0].equals("ext-name"))  {
@@ -10080,12 +10084,12 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
   }
 
   private String extPubDetails(StructureDefinition ed) throws FHIRException, Exception {
-    Extension ext = ToolingExtensions.getExtension(ed, ToolingExtensions.EXT_STANDARDS_STATUS);
+    Extension ext = ExtensionUtilities.getExtension(ed, ExtensionDefinitions.EXT_STANDARDS_STATUS);
     if (ext == null) {
       return "";
     }
-    if (ext.getValue().hasExtension(ToolingExtensions.EXT_STANDARDS_STATUS_REASON)) {
-      return "<p><b>"+ToolingExtensions.getStandardsStatus(ed).toDisplay()+" Status Comment:</b></p>\r\n"+processMarkdown("ext-status", ext.getValue().getExtensionString(ToolingExtensions.EXT_STANDARDS_STATUS_REASON), null);
+    if (ext.getValue().hasExtension(ExtensionDefinitions.EXT_STANDARDS_STATUS_REASON)) {
+      return "<p><b>"+ExtensionUtilities.getStandardsStatus(ed).toDisplay()+" Status Comment:</b></p>\r\n"+processMarkdown("ext-status", ext.getValue().getExtensionString(ExtensionDefinitions.EXT_STANDARDS_STATUS_REASON), null);
     } else {
       return "";
     }
@@ -10270,8 +10274,8 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
         for (ElementDefinitionConstraintComponent inv : invs) {
           b.append("<tr>"+presentLevel(inv)+" <td>").append(inv.getKey()).append("</td><td>").append(path).append("</td><td>").append(Utilities.escapeXml(inv.getHuman()))
           .append("<br/><a href=\"http://hl7.org/fhirpath\">Expression</a>: ").append(Utilities.escapeXml(inv.getExpression())).append("</td><td>").append(Utilities.escapeXml(inv.getRequirements()));
-          if (inv.hasExtension(ToolingExtensions.EXT_BEST_PRACTICE_EXPLANATION)) 
-            b.append(". This is (only) a best practice guideline because: <blockquote>"+processMarkdown("best practice guideline", inv.getExtensionString(ToolingExtensions.EXT_BEST_PRACTICE_EXPLANATION), "")+"</blockquote>");
+          if (inv.hasExtension(ExtensionDefinitions.EXT_BEST_PRACTICE_EXPLANATION)) 
+            b.append(". This is (only) a best practice guideline because: <blockquote>"+processMarkdown("best practice guideline", inv.getExtensionString(ExtensionDefinitions.EXT_BEST_PRACTICE_EXPLANATION), "")+"</blockquote>");
 
           b.append("</td></tr>\r\n");
         }
@@ -10284,7 +10288,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
 
   private String presentLevel(ElementDefinitionConstraintComponent inv) {
     if (inv.getSeverity() == ConstraintSeverity.WARNING) {
-      if (inv.hasExtension(ToolingExtensions.EXT_BEST_PRACTICE))
+      if (inv.hasExtension(ExtensionDefinitions.EXT_BEST_PRACTICE))
         return "<a href=\"conformance-rules.html#best-practice\" style=\"color: DarkGreen\">Guideline</a> ";
       else
         return "<a href=\"conformance-rules.html#warning\" style=\"color: Chocolate\">Warning</a> ";
@@ -10411,7 +10415,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
   private String generateProfileStructureTable(ConstraintStructure profile, boolean diff, String filename, String baseName, String prefix) throws Exception {
     String fn = filename.contains(".") ? filename.substring(0, filename.indexOf('.')) : filename;
     String deffile = fn+"-definitions.html";
-    return new XhtmlComposer(XhtmlComposer.HTML).compose(new StructureDefinitionRenderer(rc).generateTable(new RenderingStatus(), deffile, profile.getResource(), diff, folders.dstDir, false, baseName, !diff, prefix, prefix, false, false, null, false, getRc(), "", ResourceWrapper.forResource(rc.getContextUtilities(), profile.getResource())));
+    return new XhtmlComposer(XhtmlComposer.HTML).compose(new StructureDefinitionRenderer(rc).generateTable(new RenderingStatus(), deffile, profile.getResource(), diff, folders.dstDir, false, baseName, !diff, prefix, prefix, false, false, null, false, getRc(), "", ResourceWrapper.forResource(rc.getContextUtilities(), profile.getResource()), "sd"));
   }
 
   private boolean isAggregationEndpoint(String name) {
@@ -11588,7 +11592,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
             urls.add(cs.getUrl());
             b.append("  <tr>\r\n");
             b.append("    <td><a href=\""+cs.getWebPath()+"\">"+cs.getId()+"</a>");
-            if (StandardsStatus.NORMATIVE == ToolingExtensions.getStandardsStatus(cs))
+            if (StandardsStatus.NORMATIVE == ExtensionUtilities.getStandardsStatus(cs))
               b.append(" <a href=\"versions.html#std-process\" title=\"Normative Content\" class=\"normative-flag\">N</a>");
             b.append("</td>\r\n");
             b.append("    <td>"+Utilities.escapeXml(cs.present())+"</td>\r\n");
@@ -11614,7 +11618,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
         if (cs.getUrl().startsWith("http://terminology.hl7.org/CodeSystem") && !cs.getUrl().startsWith("http://terminology.hl7.org/CodeSystem/v2-") && !cs.getUrl().startsWith("http://terminology.hl7.org/CodeSystem/v3-")) {
           b.append("  <tr>\r\n");
           b.append("    <td><a href=\""+cs.getWebPath()+"\">"+cs.getName()+"</a>");
-          if (StandardsStatus.NORMATIVE == ToolingExtensions.getStandardsStatus(cs))
+          if (StandardsStatus.NORMATIVE == ExtensionUtilities.getStandardsStatus(cs))
             b.append(" <a href=\"versions.html#std-process\" title=\"Normative Content\" class=\"normative-flag\">N</a>");
           b.append("</td>\r\n");
           b.append("    <td>"+(cs.hasTitle() ? cs.getTitle()+": " : "")+Utilities.escapeXml(cs.getDescription())+"</td>\r\n");
@@ -11882,7 +11886,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
       b.append("<tr><td colspan=\"5\" style=\"background-color: #dddddd\"><b><a href=\""+base.toLowerCase()+".html\">"+base+"</a><a name=\""+base.toLowerCase()+"\"> </a></b>"+makeStandardsStatusRef(bss)+"</td></tr>\r\n");
       for (SearchParameter sp : list) {
         String ss = "";
-        StandardsStatus spss = ToolingExtensions.getStandardsStatus(sp);
+        StandardsStatus spss = ExtensionUtilities.getStandardsStatus(sp);
         if (spss != null && spss != bss)
           ss = makeStandardsStatusRef(spss);
         if (sp.getBase().size() > 1) {
@@ -11922,7 +11926,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
       b.append("<tr><td colspan=\"5\" style=\"background-color: #dddddd\"><b>"+(name == null ? "Common Search Parameters" : 
         "<b><a href=\""+name.toLowerCase()+".html\">"+name+"</a><a name=\""+name.toLowerCase()+"\"> </a></b>")+"<a name=\"common\"> </a></b></td></tr>\r\n");
       for (SearchParameter sp : list) {
-        b.append("<tr><td>"+sp.getCode()+"<a name=\""+sp.getId()+"\"> </a>"+makeStandardsStatusRef(ToolingExtensions.getStandardsStatus(sp))+"</td><td><a href=\"search.html#"+sp.getType().toCode()+"\">"+sp.getType().toCode()+"</a></td><td>"+sp.getId()+"</td><td>"+processMarkdown("allsearchparams", sp.getDescription(), "")+"</td><td>"+Utilities.escapeXml(sp.getExpression()).replace(".", ".&#8203;")+"</td></tr>\r\n");
+        b.append("<tr><td>"+sp.getCode()+"<a name=\""+sp.getId()+"\"> </a>"+makeStandardsStatusRef(ExtensionUtilities.getStandardsStatus(sp))+"</td><td><a href=\"search.html#"+sp.getType().toCode()+"\">"+sp.getType().toCode()+"</a></td><td>"+sp.getId()+"</td><td>"+processMarkdown("allsearchparams", sp.getDescription(), "")+"</td><td>"+Utilities.escapeXml(sp.getExpression()).replace(".", ".&#8203;")+"</td></tr>\r\n");
       }
     }
   }
@@ -11985,13 +11989,13 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     this.resourceBundle = resourceBundle;
   }
 
-  private IEvaluationContext evaluationContext;
+  private IHostApplicationServices evaluationContext;
   private TerminologyCacheManager tcm;
   private NpmPackage utg;
   private NpmPackage ext;
   private NpmPackage dicom;
 
-  public IEvaluationContext getExpressionResolver() {
+  public IHostApplicationServices getExpressionResolver() {
     if (evaluationContext == null)
       evaluationContext = new PageEvaluationContext();
     return evaluationContext;
@@ -12556,4 +12560,11 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     }
     return b.toString();
    }
+
+
+  @Override
+  public String getDefinitionsName(Resource resource) {
+    return "http://hl7.org/fhir/definitions";
+  }
+
 }

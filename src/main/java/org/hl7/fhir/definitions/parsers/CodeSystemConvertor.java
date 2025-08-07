@@ -26,6 +26,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 
 import org.hl7.fhir.r5.context.CanonicalResourceManager;
+import org.hl7.fhir.r5.extensions.ExtensionUtilities;
 import org.hl7.fhir.r5.formats.IParser;
 import org.hl7.fhir.r5.model.CodeSystem;
 import org.hl7.fhir.r5.model.ContactDetail;
@@ -35,7 +36,7 @@ import org.hl7.fhir.r5.model.UsageContext;
 import org.hl7.fhir.r5.model.ValueSet;
 import org.hl7.fhir.r5.terminologies.CodeSystemUtilities;
 import org.hl7.fhir.r5.utils.CanonicalResourceUtilities;
-import org.hl7.fhir.r5.utils.ToolingExtensions;
+import org.hl7.fhir.r5.extensions.ExtensionDefinitions;
 import org.hl7.fhir.utilities.FileUtilities;
 import org.hl7.fhir.utilities.Utilities;
 
@@ -122,7 +123,7 @@ public class CodeSystemConvertor {
       }
     }
     CanonicalResourceUtilities.setHl7WG(vs);
-    String wg = ToolingExtensions.readStringExtension(vs, ToolingExtensions.EXT_WORKGROUP);
+    String wg = ExtensionUtilities.readStringExtension(vs, ExtensionDefinitions.EXT_WORKGROUP);
     CanonicalResourceUtilities.setHl7WG(cs, wg);
     if (!cs.hasDate()) {
       cs.setDate(vs.getDate());

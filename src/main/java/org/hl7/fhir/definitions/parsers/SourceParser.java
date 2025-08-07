@@ -91,6 +91,7 @@ import org.hl7.fhir.definitions.validation.FHIRPathUsage;
 import org.hl7.fhir.exceptions.FHIRException;
 import org.hl7.fhir.exceptions.FHIRFormatError;
 import org.hl7.fhir.r5.conformance.profile.ProfileUtilities;
+import org.hl7.fhir.r5.extensions.ExtensionUtilities;
 import org.hl7.fhir.r5.formats.FormatUtilities;
 import org.hl7.fhir.r5.formats.XmlParser;
 import org.hl7.fhir.r5.model.Bundle;
@@ -111,7 +112,7 @@ import org.hl7.fhir.r5.model.StructureDefinition.TypeDerivationRule;
 import org.hl7.fhir.r5.model.ValueSet;
 import org.hl7.fhir.r5.terminologies.CodeSystemUtilities;
 import org.hl7.fhir.r5.terminologies.ValueSetUtilities;
-import org.hl7.fhir.r5.utils.ToolingExtensions;
+import org.hl7.fhir.r5.extensions.ExtensionDefinitions;
 import org.hl7.fhir.tools.publisher.BuildWorkerContext;
 import org.hl7.fhir.tools.publisher.PageProcessor;
 import org.hl7.fhir.tools.publisher.PageProcessor.PageInfo;
@@ -1029,13 +1030,13 @@ public class SourceParser {
           if (Utilities.noString(ed.getBaseDefinition()))
             ed.setBaseDefinition("http://hl7.org/fhir/StructureDefinition/Extension");
           ed.setDerivation(TypeDerivationRule.CONSTRAINT);
-          if (ToolingExtensions.getStandardsStatus(ed) == null) {
-            ToolingExtensions.setStandardsStatus(ed, StandardsStatus.TRIAL_USE, null);
+          if (ExtensionUtilities.getStandardsStatus(ed) == null) {
+            ExtensionUtilities.setStandardsStatus(ed, StandardsStatus.TRIAL_USE, null);
           }
           ed.setVersion(version.toCode());
           ed.setFhirVersion(version);
-          if (ToolingExtensions.readStringExtension(ed, ToolingExtensions.EXT_WORKGROUP) == null)
-            ToolingExtensions.setCodeExtension(ed, ToolingExtensions.EXT_WORKGROUP, wg.getCode());
+          if (ExtensionUtilities.readStringExtension(ed, ExtensionDefinitions.EXT_WORKGROUP) == null)
+            ExtensionUtilities.setCodeExtension(ed, ExtensionDefinitions.EXT_WORKGROUP, wg.getCode());
           if (!ed.hasUrl())
             if (ae.hasFullUrl())
               ed.setUrl(ae.getFullUrl());
@@ -1052,14 +1053,14 @@ public class SourceParser {
 
 
   private String fmm(StructureDefinition ed) {
-    return Integer.toString(ToolingExtensions.readIntegerExtension(ed, ToolingExtensions.EXT_FMM_LEVEL, 1)); // default fmm level
+    return Integer.toString(ExtensionUtilities.readIntegerExtension(ed, ExtensionDefinitions.EXT_FMM_LEVEL, 1)); // default fmm level
   }
 
 
 
 
   private WorkGroup wg(StructureDefinition ed) {
-    return definitions.getWorkgroups().get(ToolingExtensions.readStringExtension(ed, ToolingExtensions.EXT_WORKGROUP));
+    return definitions.getWorkgroups().get(ExtensionUtilities.readStringExtension(ed, ExtensionDefinitions.EXT_WORKGROUP));
   }
 
 
@@ -1086,8 +1087,8 @@ public class SourceParser {
       ap.putMetadata("title", sd.getTitle());
       ap.putMetadata("status", sd.getStatus().toCode());
       ap.putMetadata("description", new XhtmlComposer(XhtmlComposer.HTML).compose(sd.getText().getDiv()));
-      if (ToolingExtensions.hasExtension(sd, "http://hl7.org/fhir/StructureDefinition/structuredefinition-wg")) {
-        wg = definitions.getWorkgroups().get(ToolingExtensions.readStringExtension(sd, "http://hl7.org/fhir/StructureDefinition/structuredefinition-wg"));
+      if (ExtensionUtilities.hasExtension(sd, "http://hl7.org/fhir/StructureDefinition/structuredefinition-wg")) {
+        wg = definitions.getWorkgroups().get(ExtensionUtilities.readStringExtension(sd, "http://hl7.org/fhir/StructureDefinition/structuredefinition-wg"));
         ap.putMetadata("workgroup", wg.getCode());
       }
       ap.setTitle(sd.getTitle());

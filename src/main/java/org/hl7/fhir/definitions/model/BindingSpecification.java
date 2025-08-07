@@ -32,6 +32,7 @@ import java.util.List;
 
 import org.hl7.fhir.definitions.generators.specification.ToolResourceUtilities;
 import org.hl7.fhir.r5.context.CanonicalResourceManager;
+import org.hl7.fhir.r5.extensions.ExtensionUtilities;
 import org.hl7.fhir.r5.model.CodeSystem;
 import org.hl7.fhir.r5.model.CodeSystem.ConceptDefinitionComponent;
 import org.hl7.fhir.r5.model.Enumerations.BindingStrength;
@@ -40,7 +41,7 @@ import org.hl7.fhir.r5.model.ValueSet;
 import org.hl7.fhir.r5.model.ValueSet.ConceptReferenceComponent;
 import org.hl7.fhir.r5.model.ValueSet.ConceptSetComponent;
 import org.hl7.fhir.r5.terminologies.CodeSystemUtilities;
-import org.hl7.fhir.r5.utils.ToolingExtensions;
+import org.hl7.fhir.r5.extensions.ExtensionDefinitions;
 import org.hl7.fhir.utilities.StandardsStatus;
 
 /**
@@ -443,12 +444,12 @@ public class BindingSpecification {
     DefinedCode code = new DefinedCode();
     code.setCode(c.getCode());
     code.setDisplay(c.getDisplay());
-    code.setComment(ToolingExtensions.getCSComment(c));
+    code.setComment(CodeSystemUtilities.getCSComments(cs, c));
     code.setDefinition(c.getDefinition());
     code.setParent(parent);
     code.setSystem(system);
     code.setAbstract(CodeSystemUtilities.isNotSelectable(cs, c));
-    code.setDeprecated(ToolingExtensions.getStandardsStatus(c) == StandardsStatus.DEPRECATED);
+    code.setDeprecated(ExtensionUtilities.getStandardsStatus(c) == StandardsStatus.DEPRECATED);
     allCodes.add(code);
     for (ConceptDefinitionComponent cc : c.getConcept())
       processCode(cs, cc, system, c.getCode());

@@ -8,6 +8,7 @@ import java.util.Map;
 
 import org.hl7.fhir.definitions.model.BindingSpecification.BindingMethod;
 import org.hl7.fhir.definitions.parsers.spreadsheets.BindingsParser;
+import org.hl7.fhir.r5.extensions.ExtensionUtilities;
 import org.hl7.fhir.r5.formats.IParser.OutputStyle;
 import org.hl7.fhir.r5.formats.XmlParser;
 import org.hl7.fhir.r5.model.CodeSystem;
@@ -17,7 +18,7 @@ import org.hl7.fhir.r5.model.Enumerations.PublicationStatus;
 import org.hl7.fhir.r5.model.ValueSet;
 import org.hl7.fhir.r5.terminologies.CodeSystemUtilities;
 import org.hl7.fhir.r5.terminologies.ValueSetUtilities;
-import org.hl7.fhir.r5.utils.ToolingExtensions;
+import org.hl7.fhir.r5.extensions.ExtensionDefinitions;
 import org.hl7.fhir.tools.publisher.KindlingUtilities;
 import org.hl7.fhir.utilities.FileUtilities;
 import org.hl7.fhir.utilities.Utilities;
@@ -120,7 +121,7 @@ public class BindingsFixer {
           cc.setDisplay(Utilities.humanize(cc.getCode()));
         cc.setDefinition(Utilities.appendPeriod(sheet.getColumn(row, "Definition")));
         if (!Utilities.noString(sheet.getColumn(row, "Comment")))
-          ToolingExtensions.addCSComment(cc, sheet.getColumn(row, "Comment"));
+          CodeSystemUtilities.addCSComments(cs, cc, sheet.getColumn(row, "Comment"));
         String parent = sheet.getColumn(row, "Parent");
         if (Utilities.noString(parent))
           cs.addConcept(cc);

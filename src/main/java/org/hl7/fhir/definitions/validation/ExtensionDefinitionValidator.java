@@ -5,7 +5,7 @@ import org.hl7.fhir.r5.model.ElementDefinition;
 import org.hl7.fhir.r5.model.ElementDefinition.TypeRefComponent;
 import org.hl7.fhir.r5.model.Enumerations.BindingStrength;
 import org.hl7.fhir.r5.model.StructureDefinition;
-import org.hl7.fhir.r5.utils.ToolingExtensions;
+import org.hl7.fhir.r5.extensions.ExtensionDefinitions;
 import org.hl7.fhir.utilities.Utilities;
 
 public class ExtensionDefinitionValidator {
@@ -29,7 +29,7 @@ public class ExtensionDefinitionValidator {
       if (ed.getPath().startsWith("Extension.value") && !"0".equals(ed.getMax())) {
         for (TypeRefComponent tr : ed.getType()) {
           if ("code".equals(tr.getWorkingCode())) {
-            if (!ed.hasSlicing() && (!ed.hasBinding() || (ed.getBinding().getStrength() != BindingStrength.REQUIRED && !ed.getBinding().hasExtension(ToolingExtensions.EXT_MAX_VALUESET))))
+            if (!ed.hasSlicing() && (!ed.hasBinding() || (ed.getBinding().getStrength() != BindingStrength.REQUIRED && !ed.getBinding().hasExtension(ExtensionDefinitions.EXT_MAX_VALUESET))))
               throw new FHIRException("Extension "+sd.getUrl()+" has an element of type 'code' which must have required binding");
           }
         }

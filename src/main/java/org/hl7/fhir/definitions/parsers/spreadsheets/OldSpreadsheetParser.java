@@ -83,6 +83,7 @@ import org.hl7.fhir.exceptions.FHIRException;
 import org.hl7.fhir.r5.conformance.profile.ProfileKnowledgeProvider;
 import org.hl7.fhir.r5.conformance.profile.ProfileUtilities;
 import org.hl7.fhir.r5.context.CanonicalResourceManager;
+import org.hl7.fhir.r5.extensions.ExtensionUtilities;
 import org.hl7.fhir.r5.formats.FormatUtilities;
 import org.hl7.fhir.r5.formats.IParser;
 import org.hl7.fhir.r5.formats.IParser.OutputStyle;
@@ -135,7 +136,7 @@ import org.hl7.fhir.r5.model.UuidType;
 import org.hl7.fhir.r5.model.ValueSet;
 import org.hl7.fhir.r5.renderers.utils.RenderingContext;
 import org.hl7.fhir.r5.terminologies.ValueSetUtilities;
-import org.hl7.fhir.r5.utils.ToolingExtensions;
+import org.hl7.fhir.r5.extensions.ExtensionDefinitions;
 import org.hl7.fhir.tools.converters.MarkDownPreProcessor;
 import org.hl7.fhir.tools.publisher.BuildWorkerContext;
 import org.hl7.fhir.tools.publisher.KindlingUtilities;
@@ -1169,10 +1170,10 @@ public class OldSpreadsheetParser {
         cd.getValueSet().setUserData("filename", "valueset-"+cd.getValueSet().getId());
         KindlingUtilities.makeUniversal(cd.getValueSet());
 
-        if (!cd.getValueSet().hasExtension(ToolingExtensions.EXT_WORKGROUP)) {
-          cd.getValueSet().addExtension().setUrl(ToolingExtensions.EXT_WORKGROUP).setValue(new CodeType(committee.getCode()));
+        if (!cd.getValueSet().hasExtension(ExtensionDefinitions.EXT_WORKGROUP)) {
+          cd.getValueSet().addExtension().setUrl(ExtensionDefinitions.EXT_WORKGROUP).setValue(new CodeType(committee.getCode()));
         } else {
-          String ec = ToolingExtensions.readStringExtension(cd.getValueSet(), ToolingExtensions.EXT_WORKGROUP);
+          String ec = ExtensionUtilities.readStringExtension(cd.getValueSet(), ExtensionDefinitions.EXT_WORKGROUP);
           if (!ec.equals(committee.getCode()))
             System.out.println("ValueSet "+cd.getValueSet().getUrl()+" WG mismatch 3: is "+ec+", want to set to "+committee.getCode());
         } 
@@ -1229,10 +1230,10 @@ public class OldSpreadsheetParser {
         ValueSet vs = cd.getValueSet();
         ValueSetUtilities.makeShareable(vs);
         vs.setUserData("filename", "valueset-"+vs.getId());
-        if (!vs.hasExtension(ToolingExtensions.EXT_WORKGROUP)) {
-          vs.addExtension().setUrl(ToolingExtensions.EXT_WORKGROUP).setValue(new CodeType(committee.getCode()));
+        if (!vs.hasExtension(ExtensionDefinitions.EXT_WORKGROUP)) {
+          vs.addExtension().setUrl(ExtensionDefinitions.EXT_WORKGROUP).setValue(new CodeType(committee.getCode()));
         } else {
-          String ec = ToolingExtensions.readStringExtension(vs, ToolingExtensions.EXT_WORKGROUP);
+          String ec = ExtensionUtilities.readStringExtension(vs, ExtensionDefinitions.EXT_WORKGROUP);
           if (!ec.equals(committee.getCode()))
             System.out.println("ValueSet "+vs.getUrl()+" WG mismatch 4: is "+ec+", want to set to "+committee.getCode());
         } 
@@ -1351,10 +1352,10 @@ public class OldSpreadsheetParser {
 	      result.setVersion(version.toCode());
       result.setUserData("filename", ref);
       result.setWebPath(((ig == null || ig.isCore()) ? "" : ig.getCode()+"/")+ ref+".html");
-      if (!result.hasExtension(ToolingExtensions.EXT_WORKGROUP)) {
-        result.addExtension().setUrl(ToolingExtensions.EXT_WORKGROUP).setValue(new CodeType(committee.getCode()));
+      if (!result.hasExtension(ExtensionDefinitions.EXT_WORKGROUP)) {
+        result.addExtension().setUrl(ExtensionDefinitions.EXT_WORKGROUP).setValue(new CodeType(committee.getCode()));
       } else {
-        String ec = ToolingExtensions.readStringExtension(result, ToolingExtensions.EXT_WORKGROUP);
+        String ec = ExtensionUtilities.readStringExtension(result, ExtensionDefinitions.EXT_WORKGROUP);
         if (!ec.equals(committee.getCode()))
           System.out.println("ValueSet "+result.getUrl()+" WG mismatch 5: is "+ec+", want to set to "+committee.getCode());
       } 
@@ -2173,17 +2174,17 @@ public class OldSpreadsheetParser {
     ex.setFhirVersion(version);
     ex.setVersion(version.toCode());
     if (wg != null)
-      ToolingExtensions.setCodeExtension(ex, ToolingExtensions.EXT_WORKGROUP, wg.getCode());
+      ExtensionUtilities.setCodeExtension(ex, ExtensionDefinitions.EXT_WORKGROUP, wg.getCode());
     String fmm = sheet.getColumn(row, "FMM");
     if (Utilities.noString(fmm))
       fmm = "1"; // default fmm value for extensions
-    ToolingExtensions.addIntegerExtension(ex, ToolingExtensions.EXT_FMM_LEVEL, Integer.parseInt(fmm));
-    ToolingExtensions.setStandardsStatus(ex, StandardsStatus.TRIAL_USE, null);
+    ExtensionUtilities.addIntegerExtension(ex, ExtensionDefinitions.EXT_FMM_LEVEL, Integer.parseInt(fmm));
+    ExtensionUtilities.setStandardsStatus(ex, StandardsStatus.TRIAL_USE, null);
     
     if (ap.hasMetadata("fmm-level"))
-      ToolingExtensions.addIntegerExtension(ex, ToolingExtensions.EXT_FMM_LEVEL, Integer.parseInt(ap.getFmmLevel()));
+      ExtensionUtilities.addIntegerExtension(ex, ExtensionDefinitions.EXT_FMM_LEVEL, Integer.parseInt(ap.getFmmLevel()));
     if (ap.hasMetadata("workgroup"))
-      ToolingExtensions.setCodeExtension(ex, ToolingExtensions.EXT_WORKGROUP, ap.getWg());
+      ExtensionUtilities.setCodeExtension(ex, ExtensionDefinitions.EXT_WORKGROUP, ap.getWg());
 
     ToolResourceUtilities.updateUsage(ex, ap.getCategory());
 	  String name = sheet.getColumn(row, "Code");
@@ -2242,11 +2243,11 @@ public class OldSpreadsheetParser {
 	  }
     String sss = sheet.getColumn(row, "standards-status");
     if (!Utilities.noString(sss)) {
-      ToolingExtensions.setStandardsStatus(ex, StandardsStatus.fromCode(sss), null);
+      ExtensionUtilities.setStandardsStatus(ex, StandardsStatus.fromCode(sss), null);
       sss = sheet.getColumn(row, "standards-status-reason");
       if (!Utilities.noString(sss)) {
-        Extension ess = ex.getExtensionByUrl(ToolingExtensions.EXT_STANDARDS_STATUS);
-        ess.getValue().addExtension(ToolingExtensions.EXT_STANDARDS_STATUS_REASON, new MarkdownType(sss));
+        Extension ess = ex.getExtensionByUrl(ExtensionDefinitions.EXT_STANDARDS_STATUS);
+        ess.getValue().addExtension(ExtensionDefinitions.EXT_STANDARDS_STATUS_REASON, new MarkdownType(sss));
       }
     }    
 

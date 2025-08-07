@@ -712,11 +712,6 @@ public class BuildWorkerContext extends BaseWorkerContext implements IWorkerCont
 
 
   @Override
-  public int loadFromPackage(NpmPackage pi, IContextResourceLoader loader, Set<String> types) throws FileNotFoundException, IOException, FHIRException {
-    throw new Error("Not implemented yet");    
-  }
-
-  @Override
   public boolean hasPackage(String id, String ver) {
     throw new Error("Not implemented yet");
   }
@@ -800,11 +795,18 @@ public class BuildWorkerContext extends BaseWorkerContext implements IWorkerCont
 
   @Override
   public <T extends Resource> T fetchResourceRaw(Class<T> class_, String uri) {
-    throw new NotImplementedException();
+    return fetchResource(class_, uri);
   }
 
   @Override
   public String getCanonicalForDefaultContext() {
     return "http://hl7.org/fhir";
   }
+
+
+  @Override
+  public String getDefinitionsName(Resource resource) {
+    return "http://hl7.org/fhir/definitions";
+  }
+
 }

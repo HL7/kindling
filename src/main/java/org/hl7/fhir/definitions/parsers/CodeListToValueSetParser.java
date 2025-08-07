@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.hl7.fhir.r5.context.CanonicalResourceManager;
+import org.hl7.fhir.r5.extensions.ExtensionUtilities;
 import org.hl7.fhir.r5.model.CodeSystem;
 import org.hl7.fhir.r5.model.CodeSystem.ConceptDefinitionComponent;
 import org.hl7.fhir.r5.model.ConceptMap;
@@ -26,7 +27,7 @@ import org.hl7.fhir.r5.model.ValueSet.ConceptSetComponent;
 import org.hl7.fhir.r5.model.ValueSet.ValueSetComposeComponent;
 import org.hl7.fhir.r5.terminologies.CodeSystemUtilities;
 import org.hl7.fhir.r5.utils.CanonicalResourceUtilities;
-import org.hl7.fhir.r5.utils.ToolingExtensions;
+import org.hl7.fhir.r5.extensions.ExtensionDefinitions;
 import org.hl7.fhir.tools.publisher.KindlingUtilities;
 import org.hl7.fhir.utilities.StandardsStatus;
 import org.hl7.fhir.utilities.Utilities;
@@ -111,7 +112,7 @@ public class CodeListToValueSetParser {
             cc.setDisplay(Utilities.humanize(cc.getCode()));
           cc.setDefinition(Utilities.appendPeriod(sheet.getColumn(row, "Definition")));
           if (!Utilities.noString(sheet.getColumn(row, "Comment")))
-            ToolingExtensions.addCSComment(cc, sheet.getColumn(row, "Comment"));
+            CodeSystemUtilities.addCSComments(cs, cc, sheet.getColumn(row, "Comment"));
           cc.setUserData("v2", sheet.getColumn(row, "v2"));
           cc.setUserData("v3", sheet.getColumn(row, "v3"));
           for (String ct : sheet.columns) 
@@ -120,11 +121,11 @@ public class CodeListToValueSetParser {
           String deprecated = sheet.getColumn(row, "Deprecated");
           if (!Utilities.noString(deprecated)) {
             CodeSystemUtilities.setDeprecated(cs, cc, new DateTimeType(deprecated));
-            ToolingExtensions.setStandardsStatus(cc, StandardsStatus.DEPRECATED, null);
+            ExtensionUtilities.setStandardsStatus(cc, StandardsStatus.DEPRECATED, null);
             String deprecatedReason = sheet.getColumn(row, "DeprecatedReason");
             if (!Utilities.noString(deprecatedReason)) {
-              cc.getExtensionByUrl(ToolingExtensions.EXT_STANDARDS_STATUS).getValue()
-                 .addExtension(ToolingExtensions.EXT_STANDARDS_STATUS_REASON, new MarkdownType(deprecatedReason));
+              cc.getExtensionByUrl(ExtensionDefinitions.EXT_STANDARDS_STATUS).getValue()
+                 .addExtension(ExtensionDefinitions.EXT_STANDARDS_STATUS_REASON, new MarkdownType(deprecatedReason));
             }
           }
           String parent = sheet.getColumn(row, "Parent");
@@ -158,9 +159,9 @@ public class CodeListToValueSetParser {
         codes.put(cc.getCode(), null);
         cc.setDisplay(sheet.getColumn(row, "Display"));
         if (!Utilities.noString(sheet.getColumn(row, "Definition")))
-          ToolingExtensions.addDefinition(cc, sheet.getColumn(row, "Definition"));
+          ExtensionUtilities.addDefinition(cc, sheet.getColumn(row, "Definition"));
         if (!Utilities.noString(sheet.getColumn(row, "Comment")))
-          ToolingExtensions.addVSComment(cc, sheet.getColumn(row, "Comment"));
+          ExtensionUtilities.addVSComment(cc, sheet.getColumn(row, "Comment"));
         cc.setUserDataINN("v2", sheet.getColumn(row, "v2"));
         cc.setUserDataINN("v3", sheet.getColumn(row, "v3"));
         for (String ct : sheet.columns) 

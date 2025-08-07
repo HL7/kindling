@@ -77,6 +77,7 @@ import org.hl7.fhir.exceptions.FHIRFormatError;
 import org.hl7.fhir.r5.conformance.profile.ProfileKnowledgeProvider;
 import org.hl7.fhir.r5.conformance.profile.ProfileUtilities;
 import org.hl7.fhir.r5.context.ContextUtilities;
+import org.hl7.fhir.r5.extensions.ExtensionUtilities;
 import org.hl7.fhir.r5.formats.FormatUtilities;
 import org.hl7.fhir.r5.model.BooleanType;
 import org.hl7.fhir.r5.model.Bundle;
@@ -142,7 +143,7 @@ import org.hl7.fhir.r5.renderers.utils.RenderingContext;
 import org.hl7.fhir.r5.renderers.utils.ResourceWrapper;
 import org.hl7.fhir.r5.utils.BuildExtensions;
 import org.hl7.fhir.r5.utils.CanonicalResourceUtilities;
-import org.hl7.fhir.r5.utils.ToolingExtensions;
+import org.hl7.fhir.r5.extensions.ExtensionDefinitions;
 import org.hl7.fhir.r5.utils.TypesUtilities;
 import org.hl7.fhir.tools.converters.MarkDownPreProcessor;
 import org.hl7.fhir.tools.publisher.BuildWorkerContext;
@@ -309,7 +310,7 @@ public class ProfileGenerator {
     p.setDerivation(TypeDerivationRule.SPECIALIZATION);
     p.setFhirVersion(version);
     p.setVersion(version.toCode());
-    ToolingExtensions.setStandardsStatus(p, StandardsStatus.NORMATIVE, "4.0.0");
+    ExtensionUtilities.setStandardsStatus(p, StandardsStatus.NORMATIVE, "4.0.0");
     KindlingUtilities.makeUniversal(p);
     populateCharacteristics(p, type.getCharacteristics());
     
@@ -348,9 +349,9 @@ public class ProfileGenerator {
     TypeRefComponent t = ec.addType();
     t.getFormatCommentsPre().add("Note: special primitive values have a FHIRPath system type. e.g. this is compiler magic (a)");
     t.setCode(Constants.NS_SYSTEM_TYPE+type.getFHIRPathType());
-    ToolingExtensions.addUrlExtension(t, ToolingExtensions.EXT_FHIR_TYPE, type.getCode());
+    ExtensionUtilities.addUrlExtension(t, ExtensionDefinitions.EXT_FHIR_TYPE, type.getCode());
     if (!Utilities.noString(type.getRegex())) {
-      ToolingExtensions.addStringExtension(t, ToolingExtensions.EXT_REGEX, type.getRegex());
+      ExtensionUtilities.addStringExtension(t, ExtensionDefinitions.EXT_REGEX, type.getRegex());
     }
     addSpecificDetails(type.getCode(), ec);
 
@@ -381,7 +382,7 @@ public class ProfileGenerator {
     TypeRefComponent tr = ec2.addType();
     t.getFormatCommentsPre().add("Note: special primitive values have a FHIRPath system type. e.g. this is compiler magic (b)");
     tr.setCode(Constants.NS_SYSTEM_TYPE+ "String"); 
-    ToolingExtensions.addUrlExtension(tr, ToolingExtensions.EXT_FHIR_TYPE, "string");
+    ExtensionUtilities.addUrlExtension(tr, ExtensionDefinitions.EXT_FHIR_TYPE, "string");
 
     generateElementDefinition(p, ec2, ec1);
     ec2.makeBase("Element.id", 0, "1");
@@ -402,9 +403,9 @@ public class ProfileGenerator {
     t.setCodeElement(new UriType());
     t.getFormatCommentsPre().add("Note: special primitive values have a FHIRPath system type. e.g. this is compiler magic (c)");
     t.setCode(Constants.NS_SYSTEM_TYPE+type.getFHIRPathType());
-    ToolingExtensions.addUrlExtension(t, ToolingExtensions.EXT_FHIR_TYPE, type.getCode());
+    ExtensionUtilities.addUrlExtension(t, ExtensionDefinitions.EXT_FHIR_TYPE, type.getCode());
     if (!Utilities.noString(type.getRegex()))
-      ToolingExtensions.addStringExtension(t, ToolingExtensions.EXT_REGEX, type.getRegex());
+      ExtensionUtilities.addStringExtension(t, ExtensionDefinitions.EXT_REGEX, type.getRegex());
     addSpecificDetails(type.getCode(), ec3);
     generateElementDefinition(p, ec3, ec);
 
@@ -429,7 +430,7 @@ public class ProfileGenerator {
 
   private void populateCharacteristic(StructureDefinition p, String s) {
     if (!Utilities.noString(s)) {
-      Extension ext = new Extension(ToolingExtensions.EXT_TYPE_CHARACTERISTICS);
+      Extension ext = new Extension(ExtensionDefinitions.EXT_TYPE_CHARACTERISTICS);
       ext.setValue(new CodeType(s));  
       p.getExtension().add(ext);
     }
@@ -549,7 +550,7 @@ public class ProfileGenerator {
     p.setDerivation(TypeDerivationRule.SPECIALIZATION);
     p.setFhirVersion(version);
     p.setVersion(version.toCode());
-    ToolingExtensions.setStandardsStatus(p, StandardsStatus.NORMATIVE, "4.0.0");
+    ExtensionUtilities.setStandardsStatus(p, StandardsStatus.NORMATIVE, "4.0.0");
     KindlingUtilities.makeUniversal(p);
     populateCharacteristic(p, "has-size");
 
@@ -593,7 +594,7 @@ public class ProfileGenerator {
     t.setCodeElement(new UriType());
     t.getFormatCommentsPre().add("Note: special primitive values have a FHIRPath system type. e.g. this is compiler magic (d)");
     t.setCode(Constants.NS_SYSTEM_TYPE+"String");
-    ToolingExtensions.addUrlExtension(t, ToolingExtensions.EXT_FHIR_TYPE, "string");
+    ExtensionUtilities.addUrlExtension(t, ExtensionDefinitions.EXT_FHIR_TYPE, "string");
 
     reset();
     // now. the snapshot
@@ -622,7 +623,7 @@ public class ProfileGenerator {
     TypeRefComponent tr = ec2.addType();
     t.getFormatCommentsPre().add("Note: special primitive values have a FHIRPath system type. e.g. this is compiler magic (e)");
     tr.setCode(Constants.NS_SYSTEM_TYPE+ "String"); 
-    ToolingExtensions.addUrlExtension(tr, ToolingExtensions.EXT_FHIR_TYPE, "string");
+    ExtensionUtilities.addUrlExtension(tr, ExtensionDefinitions.EXT_FHIR_TYPE, "string");
     generateElementDefinition(p, ec2, ec1);
     ec2.makeBase("Element.id", 0, "1");
 
@@ -642,7 +643,7 @@ public class ProfileGenerator {
     t.setCodeElement(new UriType());
     t.getFormatCommentsPre().add("Note: special primitive values have a FHIRPath system type. e.g. this is compiler magic (f)");
     t.setCode(Constants.NS_SYSTEM_TYPE+"String");
-    ToolingExtensions.addUrlExtension(t, ToolingExtensions.EXT_FHIR_TYPE, "string");
+    ExtensionUtilities.addUrlExtension(t, ExtensionDefinitions.EXT_FHIR_TYPE, "string");
     ec3.makeBase();
     generateElementDefinition(p, ec3, ec);
 
@@ -685,7 +686,7 @@ public class ProfileGenerator {
     p.setVersion(version.toCode());
     p.setFhirVersion(version);
 
-    ToolingExtensions.setStandardsStatus(p, StandardsStatus.NORMATIVE, "4.0.0");
+    ExtensionUtilities.setStandardsStatus(p, StandardsStatus.NORMATIVE, "4.0.0");
     KindlingUtilities.makeUniversal(p);
     populateCharacteristics(p, type.getCharacteristics());
 
@@ -729,9 +730,9 @@ public class ProfileGenerator {
     t.setCodeElement(new UriType());
     t.getFormatCommentsPre().add("Note: special primitive values have a FHIRPath system type. e.g. this is compiler magic (g)");
     t.setCode(Constants.NS_SYSTEM_TYPE+type.getFHIRPathType());
-    ToolingExtensions.addUrlExtension(t, ToolingExtensions.EXT_FHIR_TYPE, type.getCode());
+    ExtensionUtilities.addUrlExtension(t, ExtensionDefinitions.EXT_FHIR_TYPE, type.getCode());
     if (!Utilities.noString(type.getRegex())) {
-      ToolingExtensions.addStringExtension(t, ToolingExtensions.EXT_REGEX, type.getRegex());
+      ExtensionUtilities.addStringExtension(t, ExtensionDefinitions.EXT_REGEX, type.getRegex());
     }
     reset();
     // now. the snapshot
@@ -761,7 +762,7 @@ public class ProfileGenerator {
     TypeRefComponent tr = ecid.addType();
     tr.getFormatCommentsPre().add("Note: special primitive values have a FHIRPath system type. e.g. this is compiler magic (h)");
     tr.setCode(Constants.NS_SYSTEM_TYPE+ "String"); 
-    ToolingExtensions.addUrlExtension(tr, ToolingExtensions.EXT_FHIR_TYPE, "string");
+    ExtensionUtilities.addUrlExtension(tr, ExtensionDefinitions.EXT_FHIR_TYPE, "string");
     ecid.makeBase("Element.id", 0, "1");
 
     makeExtensionSlice("extension", p, p.getSnapshot(), null, type.getCode());
@@ -780,9 +781,9 @@ public class ProfileGenerator {
     t = ecB.addType();
     t.getFormatCommentsPre().add("Note: special primitive values have a FHIRPath system type. e.g. this is compiler magic (i)");
     t.setCode(Constants.NS_SYSTEM_TYPE+"String");
-    ToolingExtensions.addUrlExtension(t, ToolingExtensions.EXT_FHIR_TYPE, type.getCode());
+    ExtensionUtilities.addUrlExtension(t, ExtensionDefinitions.EXT_FHIR_TYPE, type.getCode());
     if (!Utilities.noString(type.getRegex()))
-      ToolingExtensions.addStringExtension(t, ToolingExtensions.EXT_REGEX, type.getRegex());
+      ExtensionUtilities.addStringExtension(t, ExtensionDefinitions.EXT_REGEX, type.getRegex());
 //    generateElementDefinition(ecB, ecA);
 
     containedSlices.clear();
@@ -818,7 +819,7 @@ public class ProfileGenerator {
     p.setType(t.getName());
     p.setFhirVersion(version);
     p.setVersion(version.toCode());
-    ToolingExtensions.setStandardsStatus(p, t.getStandardsStatus(), t.getNormativeVersion());
+    ExtensionUtilities.setStandardsStatus(p, t.getStandardsStatus(), t.getNormativeVersion());
     KindlingUtilities.makeUniversal(p);
     populateCharacteristics(p, t.getCharacteristics());
 
@@ -942,7 +943,7 @@ public class ProfileGenerator {
     p.setWebPath("datatypes.html#"+pt.getName());
     p.setFhirVersion(version);
     p.setVersion(version.toCode());
-    ToolingExtensions.setStandardsStatus(p, StandardsStatus.NORMATIVE, "4.0.0");
+    ExtensionUtilities.setStandardsStatus(p, StandardsStatus.NORMATIVE, "4.0.0");
     p.setStatus(PublicationStatus.fromCode("active")); 
     KindlingUtilities.makeUniversal(p);
     populateCharacteristics(p, pt.getCharacteristics());
@@ -1081,25 +1082,25 @@ public class ProfileGenerator {
     else 
       p.setKind(StructureDefinitionKind.RESOURCE);
     if (r.isInterface()) {
-      ToolingExtensions.addBooleanExtension(p, ToolingExtensions.EXT_RESOURCE_INTERFACE, true);       
+      ExtensionUtilities.addBooleanExtension(p, ExtensionDefinitions.EXT_RESOURCE_INTERFACE, true);       
     }
     IniFile cini = new IniFile(Utilities.path(rootFolder, "temp", "categories.ini"));
     String cat = cini.getStringProperty("category", r.getName());
     if (!Utilities.noString(cat))
-      ToolingExtensions.setStringExtension(p, ToolingExtensions.EXT_RESOURCE_CATEGORY, cat); 
+      ExtensionUtilities.setStringExtension(p, ExtensionDefinitions.EXT_RESOURCE_CATEGORY, cat); 
     p.setAbstract(r.isAbstract());
     assert !Utilities.noString(r.getRoot().typeCode());
     if (!Utilities.noString(r.getRoot().typeCode())) {
       if (Utilities.existsInList(r.getRoot().typeCode(), definitions.getInterfaceNames())) {
         p.setBaseDefinition("http://hl7.org/fhir/StructureDefinition/DomainResource");
         p.setDerivation(TypeDerivationRule.SPECIALIZATION);        
-        ToolingExtensions.addUriExtension(p, ToolingExtensions.EXT_RESOURCE_IMPLEMENTS, "http://hl7.org/fhir/StructureDefinition/"+r.getRoot().typeCode());       
+        ExtensionUtilities.addCanonicalExtension(p, ExtensionDefinitions.EXT_RESOURCE_IMPLEMENTS, "http://hl7.org/fhir/StructureDefinition/"+r.getRoot().typeCode());
       } else {
         p.setBaseDefinition("http://hl7.org/fhir/StructureDefinition/"+r.getRoot().typeCode());
         p.setDerivation(TypeDerivationRule.SPECIALIZATION);
       }
 //      if (r.getTemplate() != null)
-//        ToolingExtensions.addStringExtension(p.getBaseDefinitionElement(), ToolingExtensions.EXT_CODE_GENERATION_PARENT, r.getTemplate().getName());
+//        ExtensionUtilities.addStringExtension(p.getBaseDefinitionElement(), ExtensionDefinitions.EXT_CODE_GENERATION_PARENT, r.getTemplate().getName());
     }
     p.setType(r.getRoot().getName());
     p.setUserData("filename", r.getName().toLowerCase());
@@ -1107,16 +1108,16 @@ public class ProfileGenerator {
     p.setTitle(pack.metadata("display"));
     p.setFhirVersion(version);
     p.setVersion(version.toCode());
-    ToolingExtensions.setStandardsStatus(p, r.getStatus(), r.getNormativeVersion());
+    ExtensionUtilities.setStandardsStatus(p, r.getStatus(), r.getNormativeVersion());
     KindlingUtilities.makeUniversal(p);
 
     CanonicalResourceUtilities.setHl7WG(p, "fhir");
     if (r.getFmmLevel() != null) {
       int fmm = Integer.parseInt(r.getFmmLevel());
-      ToolingExtensions.addIntegerExtension(p, ToolingExtensions.EXT_FMM_LEVEL, fmm);
+      ExtensionUtilities.addIntegerExtension(p, ExtensionDefinitions.EXT_FMM_LEVEL, fmm);
     }
     if (r.getSecurityCategorization() != null)
-      ToolingExtensions.addCodeExtension(p, ToolingExtensions.EXT_SEC_CAT, r.getSecurityCategorization().toCode());
+      ExtensionUtilities.addCodeExtension(p, ExtensionDefinitions.EXT_SEC_CAT, r.getSecurityCategorization().toCode());
     ToolResourceUtilities.updateUsage(p, usage);
     p.setName(r.getRoot().getName());
     if (r.getWg() != null) {
@@ -1221,7 +1222,7 @@ public class ProfileGenerator {
     KindlingUtilities.makeUniversal(p);
 
     if (pack.hasMetadata("summary-"+profile.getTitle()))
-      ToolingExtensions.addMarkdownExtension(p, "http://hl7.org/fhir/StructureDefinition/structuredefinition-summary", pack.metadata("summary-"+profile.getTitle()));
+      ExtensionUtilities.addMarkdownExtension(p, "http://hl7.org/fhir/StructureDefinition/structuredefinition-summary", pack.metadata("summary-"+profile.getTitle()));
     ToolResourceUtilities.updateUsage(p, usage.getCode());
     p.setName(pack.metadata("name"));
     p.setPublisher(pack.metadata("author.name"));
@@ -1243,32 +1244,32 @@ public class ProfileGenerator {
       p.setDate(genDate.getTime());
 
     if (profile.getFmm() != null) {
-      ToolingExtensions.addIntegerExtension(p, ToolingExtensions.EXT_FMM_LEVEL, Integer.parseInt(profile.getFmm()));      
+      ExtensionUtilities.addIntegerExtension(p, ExtensionDefinitions.EXT_FMM_LEVEL, Integer.parseInt(profile.getFmm()));      
     } else if (pack.hasMetadata("fmm-level"))
-      ToolingExtensions.addIntegerExtension(p, ToolingExtensions.EXT_FMM_LEVEL, Integer.parseInt(pack.getFmmLevel()));
+      ExtensionUtilities.addIntegerExtension(p, ExtensionDefinitions.EXT_FMM_LEVEL, Integer.parseInt(pack.getFmmLevel()));
     else if (pack.hasMetadata("fmm"))
-      ToolingExtensions.addIntegerExtension(p, ToolingExtensions.EXT_FMM_LEVEL, Integer.parseInt(pack.metadata("fmm")));
+      ExtensionUtilities.addIntegerExtension(p, ExtensionDefinitions.EXT_FMM_LEVEL, Integer.parseInt(pack.metadata("fmm")));
     else if (!Utilities.noString(resource.getFmmLevel()))
-      ToolingExtensions.addIntegerExtension(p, ToolingExtensions.EXT_FMM_LEVEL, Integer.parseInt(resource.getFmmLevel()));
+      ExtensionUtilities.addIntegerExtension(p, ExtensionDefinitions.EXT_FMM_LEVEL, Integer.parseInt(resource.getFmmLevel()));
     else if (baseResource != null && !Utilities.noString(baseResource.getFmmLevel()))
-      ToolingExtensions.addIntegerExtension(p, ToolingExtensions.EXT_FMM_LEVEL, Integer.parseInt(baseResource.getFmmLevel()));
+      ExtensionUtilities.addIntegerExtension(p, ExtensionDefinitions.EXT_FMM_LEVEL, Integer.parseInt(baseResource.getFmmLevel()));
 
     if (profile.getWg() != null) {
-      ToolingExtensions.setCodeExtension(p, ToolingExtensions.EXT_WORKGROUP, profile.getWg().getCode());      
+      ExtensionUtilities.setCodeExtension(p, ExtensionDefinitions.EXT_WORKGROUP, profile.getWg().getCode());      
     } else if (pack.hasMetadata("workgroup"))
-      ToolingExtensions.setCodeExtension(p, ToolingExtensions.EXT_WORKGROUP, pack.getWg());
+      ExtensionUtilities.setCodeExtension(p, ExtensionDefinitions.EXT_WORKGROUP, pack.getWg());
     else if (resource.getWg() != null) 
-      ToolingExtensions.setCodeExtension(p, ToolingExtensions.EXT_WORKGROUP, resource.getWg().getCode());      
+      ExtensionUtilities.setCodeExtension(p, ExtensionDefinitions.EXT_WORKGROUP, resource.getWg().getCode());      
     else if (baseResource != null && baseResource.getWg() != null) 
-      ToolingExtensions.setCodeExtension(p, ToolingExtensions.EXT_WORKGROUP, baseResource.getWg().getCode());  
+      ExtensionUtilities.setCodeExtension(p, ExtensionDefinitions.EXT_WORKGROUP, baseResource.getWg().getCode());  
     else 
-      ToolingExtensions.setCodeExtension(p, ToolingExtensions.EXT_WORKGROUP, "fhir");  
+      ExtensionUtilities.setCodeExtension(p, ExtensionDefinitions.EXT_WORKGROUP, "fhir");  
     CanonicalResourceUtilities.setHl7WG(p);
 
     if (pack.hasMetadata("Standards-Status")) 
-      ToolingExtensions.setStandardsStatus(p, StandardsStatus.fromCode(pack.metadata("Standards-Status")), null);
+      ExtensionUtilities.setStandardsStatus(p, StandardsStatus.fromCode(pack.metadata("Standards-Status")), null);
     else
-      ToolingExtensions.setStandardsStatus(p, resource.getStatus(), null);
+      ExtensionUtilities.setStandardsStatus(p, resource.getStatus(), null);
     
     if (pack.hasMetadata("status")) 
       p.setStatus(PublicationStatus.fromCode(pack.metadata("status")));
@@ -1278,7 +1279,7 @@ public class ProfileGenerator {
           p.getKeyword().add(Factory.makeCoding(s));
 
     if (pack.hasMetadata("datadictionary"))
-      ToolingExtensions.setStringExtension(p, "http://hl7.org/fhir/StructureDefinition/datadictionary", pack.metadata("datadictionary"));
+      ExtensionUtilities.setStringExtension(p, "http://hl7.org/fhir/StructureDefinition/datadictionary", pack.metadata("datadictionary"));
 
     Set<String> containedSlices = new HashSet<String>();
 
@@ -1395,9 +1396,9 @@ public class ProfileGenerator {
       definitions.addNs(sp.getUrl(), "Search Parameter: "+sp.getName(), rn.toLowerCase()+".html#search");
       sp.setStatus(spd.getStandardsStatus() == StandardsStatus.NORMATIVE ? PublicationStatus.fromCode("active") : PublicationStatus.fromCode("draft"));
       if (spd.getStandardsStatus() == null) {
-        ToolingExtensions.setStandardsStatus(sp, StandardsStatus.TRIAL_USE, null);
+        ExtensionUtilities.setStandardsStatus(sp, StandardsStatus.TRIAL_USE, null);
       } else {
-        ToolingExtensions.setStandardsStatus(sp, spd.getStandardsStatus(), spd.getNormativeVersion());
+        ExtensionUtilities.setStandardsStatus(sp, spd.getStandardsStatus(), spd.getNormativeVersion());
       }
       sp.setExperimental(p.getExperimental());
       sp.setName(spd.getCode());
@@ -1413,8 +1414,8 @@ public class ProfileGenerator {
           t.getTelecom().add(ts.copy());
       }
 
-      if (p.hasExtension(ToolingExtensions.EXT_WORKGROUP)) {
-        CanonicalResourceUtilities.setHl7WG(sp, ToolingExtensions.readStringExtension(p, ToolingExtensions.EXT_WORKGROUP));
+      if (p.hasExtension(ExtensionDefinitions.EXT_WORKGROUP)) {
+        CanonicalResourceUtilities.setHl7WG(sp, ExtensionUtilities.readStringExtension(p, ExtensionDefinitions.EXT_WORKGROUP));
       } else {
         CanonicalResourceUtilities.setHl7WG(p, "fhir");
       }
@@ -1465,7 +1466,7 @@ public class ProfileGenerator {
       } else {
         Enumeration<VersionIndependentResourceTypesAll> t = sp.addBaseElement();
         t.setValueAsString("Resource");
-        t.addExtension(ToolingExtensions.EXT_SEARCH_PARAMETER_BASE, new CodeType(p.getType()));
+        t.addExtension(ExtensionDefinitions.EXT_SEARCH_PARAMETER_BASE, new CodeType(p.getType()));
       }
     } else {
       if (sp.getType() != getSearchParamType(spd.getType()))
@@ -1494,16 +1495,16 @@ public class ProfileGenerator {
       spx.setUserData("common-id", spd.getCommonId());
       spd.setResource(spx);
 
-      StandardsStatus sst = ToolingExtensions.getStandardsStatus(sp);
+      StandardsStatus sst = ExtensionUtilities.getStandardsStatus(sp);
       if (sst == null || (spd.getStandardsStatus() == null && spd.getStandardsStatus().isLowerThan(sst))) {
         for (Enumeration<VersionIndependentResourceTypesAll> ct : sp.getBase()) {
-          if (!ToolingExtensions.hasExtension(ct, ToolingExtensions.EXT_STANDARDS_STATUS)) {
-            ToolingExtensions.setStandardsStatus(ct, sst, null);
+          if (!ExtensionUtilities.hasExtension(ct, ExtensionDefinitions.EXT_STANDARDS_STATUS)) {
+            ExtensionUtilities.setStandardsStatus(ct, sst, null);
           }
         }
-        ToolingExtensions.setStandardsStatus(sp, spd.getStandardsStatus(), spd.getNormativeVersion());
+        ExtensionUtilities.setStandardsStatus(sp, spd.getStandardsStatus(), spd.getNormativeVersion());
       }
-      sst = ToolingExtensions.getStandardsStatus(sp);
+      sst = ExtensionUtilities.getStandardsStatus(sp);
       
       boolean found = false;
       for (Enumeration<VersionIndependentResourceTypesAll> ct : sp.getBase())
@@ -1512,7 +1513,7 @@ public class ProfileGenerator {
       if (!found) {
         CodeType ct = new CodeType(p.getType());
         if (sst != spd.getStandardsStatus()) {          
-          ToolingExtensions.setStandardsStatus(ct, spd.getStandardsStatus(), null);
+          ExtensionUtilities.setStandardsStatus(ct, spd.getStandardsStatus(), null);
         }
         sp.getBase().add(new VersionIndependentResourceTypesAllEnumFactory().fromType(ct));
       }
@@ -1646,7 +1647,7 @@ public class ProfileGenerator {
     ElementDefinitionBindingComponent dst = new ElementDefinitionBindingComponent();
     dst.setDescription(src.getDescription());
     if (!Utilities.noString(src.getDefinition())) {
-      dst.addExtension().setUrl(BuildExtensions.EXT_BINDING_DEFINITION).setValue(new MarkdownType(src.getDefinition()));
+      dst.addExtension().setUrl(ExtensionDefinitions.EXT_BINDING_DEFINITION).setValue(new MarkdownType(src.getDefinition()));
       if (!dst.hasDescription()) {
         dst.setDescription(src.getDefinition());
       }
@@ -1665,7 +1666,7 @@ public class ProfileGenerator {
       dst.setStrength(BindingStrength.EXAMPLE);    
     }
     if (!Utilities.noString(src.getName())) {
-      dst.addExtension().setUrl(ToolingExtensions.EXT_BINDING_NAME).setValue(new StringType(src.getName()));
+      dst.addExtension().setUrl(ExtensionDefinitions.EXT_BINDING_NAME).setValue(new StringType(src.getName()));
     }
     if (src.isShared())
       dst.addExtension().setUrl("http://hl7.org/fhir/StructureDefinition/elementdefinition-isCommonBinding").setValue(new BooleanType(true));
@@ -1765,7 +1766,7 @@ public class ProfileGenerator {
 //    todo ce.setId(path.substring(path.indexOf(".")+1));
 
     if (e.getStandardsStatus() != null)
-      ToolingExtensions.setStandardsStatus(ce, e.getStandardsStatus(), e.getNormativeVersion());
+      ExtensionUtilities.setStandardsStatus(ce, e.getStandardsStatus(), e.getNormativeVersion());
 
     ce.setId(path);
     ce.setPath(path);
@@ -1795,7 +1796,7 @@ public class ProfileGenerator {
     }
 
     if (e.isTranslatable()) {
-      ce.addExtension(BuildExtensions.EXT_TRANSLATABLE, new BooleanType(true));      
+      ce.addExtension(ExtensionDefinitions.EXT_TRANSLATABLE, new BooleanType(true));
     }
 
     if (Utilities.existsInList(ce.getPath(), "Element.extension", "DomainResource.extension", "DomainResource.modifierExtension") && !ce.hasSlicing() && !ce.hasSliceName()) {
@@ -1809,10 +1810,10 @@ public class ProfileGenerator {
     }
     buildDefinitionFromElement(path, ce, e, ap, p, null, false);
     if (!Utilities.noString(e.getStatedType())) {
-      ToolingExtensions.addStringExtension(ce, "http://hl7.org/fhir/StructureDefinition/structuredefinition-explicit-type-name", e.getStatedType());
+      ExtensionUtilities.addStringExtension(ce, "http://hl7.org/fhir/StructureDefinition/structuredefinition-explicit-type-name", e.getStatedType());
     }
     if (e.isNoBindingAllowed()) {
-      ToolingExtensions.addBooleanExtension(ce, ToolingExtensions.EXT_NO_BINDING, true);      
+      ExtensionUtilities.addBooleanExtension(ce, ExtensionDefinitions.EXT_NO_BINDING, true);      
     }
 
     if (!root) {
@@ -1823,16 +1824,16 @@ public class ProfileGenerator {
         tr.getFormatCommentsPre().add("Note: special primitive values have a FHIRPath system type. e.g. this is compiler magic (j)");
         tr.setCode(Constants.NS_SYSTEM_TYPE+ "String"); 
         if (path.equals("Extension.url")) {
-          ToolingExtensions.addUrlExtension(tr, ToolingExtensions.EXT_FHIR_TYPE, "uri");
+          ExtensionUtilities.addUrlExtension(tr, ExtensionDefinitions.EXT_FHIR_TYPE, "uri");
 // Had added this in the PR, but don't know why.  Keeping it here commented out in case it helps resolve a subsequent issue
 // (in which case, we can document why it's needed)
 //        } else if (p.getKind() == StructureDefinitionKind.RESOURCE && !path.substring(0, path.length()-3).contains(".")) {
         } else if ("Element.id".equals(path)) {
-          ToolingExtensions.addUrlExtension(tr, ToolingExtensions.EXT_FHIR_TYPE, "string");
+          ExtensionUtilities.addUrlExtension(tr, ExtensionDefinitions.EXT_FHIR_TYPE, "string");
         } else if (Utilities.charCount(path, '.') < 2) {
-          ToolingExtensions.addUrlExtension(tr, ToolingExtensions.EXT_FHIR_TYPE, "id");
+          ExtensionUtilities.addUrlExtension(tr, ExtensionDefinitions.EXT_FHIR_TYPE, "id");
         } else {
-          ToolingExtensions.addUrlExtension(tr, ToolingExtensions.EXT_FHIR_TYPE, "string");
+          ExtensionUtilities.addUrlExtension(tr, ExtensionDefinitions.EXT_FHIR_TYPE, "string");
         }
       } else {
         List<TypeRef> expandedTypes = new ArrayList<TypeRef>();
@@ -1894,7 +1895,7 @@ public class ProfileGenerator {
           }
           if (t.getPatterns() != null) {
             for (String s : t.getPatterns()) {
-              type.addExtension(ToolingExtensions.EXT_PATTERN, new CanonicalType("http://hl7.org/fhir/StructureDefinition/"+s));
+              type.addExtension(ExtensionDefinitions.EXT_PATTERN, new CanonicalType("http://hl7.org/fhir/StructureDefinition/"+s));
             }
           }
           if (profile != null) {
@@ -1923,7 +1924,7 @@ public class ProfileGenerator {
               for (String pn : pr) {
                 type.addTargetProfile(pn);
                 if (e.hasHierarchy())
-                  ToolingExtensions.addBooleanExtension(type, ToolingExtensions.EXT_HIERARCHY, e.getHierarchy());
+                  ExtensionUtilities.addBooleanExtension(type, ExtensionDefinitions.EXT_HIERARCHY, e.getHierarchy());
               }
             } else
               for (String pn : pr) {
@@ -1941,7 +1942,7 @@ public class ProfileGenerator {
     if (w5 != null)
       addMapping(p, ce, "http://hl7.org/fhir/fivews", w5, ap);
     if (e.isTranslatable())
-      ce.addExtension(ToolingExtensions.EXT_TRANSLATABLE, new BooleanType(true));
+      ce.addExtension(ExtensionDefinitions.EXT_TRANSLATABLE, new BooleanType(true));
     if (!Utilities.noString(e.getOrderMeaning()))
         ce.setOrderMeaning(e.getOrderMeaning());
     
@@ -2085,7 +2086,7 @@ public class ProfileGenerator {
         addMapping(p, ce, n, e.getMapping(n), ap);
       }
     }
-    ToolingExtensions.addDisplayHint(ce, e.getDisplayHint());
+    ExtensionUtilities.addDisplayHint(ce, e.getDisplayHint());
 
     if (!isInterface) {
       convertConstraints(e, ce, inheritedType == null ? p.getUrl() : "http://hl7.org/fhir/StructureDefinition/"+inheritedType);
@@ -2107,10 +2108,10 @@ public class ProfileGenerator {
         con.setSeverity(ConstraintSeverity.ERROR);
       else if (inv.getSeverity().equals("best-practice")) {
         con.setSeverity(ConstraintSeverity.WARNING);
-        ToolingExtensions.addBooleanExtension(con, ToolingExtensions.EXT_BEST_PRACTICE, true);
+        ExtensionUtilities.addBooleanExtension(con, ExtensionDefinitions.EXT_BEST_PRACTICE, true);
         if (Utilities.noString(inv.getExplanation()))
           throw new FHIRException("Best Practice Invariants need to have an explanation");
-        con.addExtension().setUrl(ToolingExtensions.EXT_BEST_PRACTICE_EXPLANATION).setValue(new MarkdownType(inv.getExplanation()));
+        con.addExtension().setUrl(ExtensionDefinitions.EXT_BEST_PRACTICE_EXPLANATION).setValue(new MarkdownType(inv.getExplanation()));
       } else
         con.setSeverity(ConstraintSeverity.fromCode(inv.getSeverity()));
       con.setHuman(inv.getEnglish());
@@ -2386,11 +2387,11 @@ public class ProfileGenerator {
   }
 
   public ConstraintStructure wrapProfile(StructureDefinition profile) throws Exception {
-    return new ConstraintStructure(profile, definitions.getUsageIG((String) profile.getUserData(ToolResourceUtilities.NAME_SPEC_USAGE), "generating profile "+profile.getId()), wg(ToolingExtensions.readStringExtension(profile, ToolingExtensions.EXT_WORKGROUP)), fmm(profile), profile.getExperimental());
+    return new ConstraintStructure(profile, definitions.getUsageIG((String) profile.getUserData(ToolResourceUtilities.NAME_SPEC_USAGE), "generating profile "+profile.getId()), wg(ExtensionUtilities.readStringExtension(profile, ExtensionDefinitions.EXT_WORKGROUP)), fmm(profile), profile.getExperimental());
   }
 
   private String fmm(StructureDefinition ed) {
-    return ToolingExtensions.readStringExtension(ed, ToolingExtensions.EXT_FMM_LEVEL); // default fmm level
+    return ExtensionUtilities.readStringExtension(ed, ExtensionDefinitions.EXT_FMM_LEVEL); // default fmm level
   }
 
   private WorkGroup wg(String code) {
@@ -2466,9 +2467,9 @@ public class ProfileGenerator {
 //          ElementDefinition.TypeRefComponent tt = dst.addType();
 //          tt.setCodeElement(new UriType());
 //          tt.getFormatCommentsPre().add("Note: special primitive values do not have an assigned type. e.g. this is compiler magic. XML, JSON and RDF types provided by extension");
-//          ToolingExtensions.addStringExtension(tt.getCodeElement(), ToolingExtensions.EXT_JSON_TYPE, "string");
-//          ToolingExtensions.addStringExtension(tt.getCodeElement(), ToolingExtensions.EXT_XML_TYPE, "xs:anyURI");
-//          ToolingExtensions.addStringExtension(tt.getCodeElement(), ToolingExtensions.EXT_RDF_TYPE, "xs:anyURI");          
+//          ExtensionUtilities.addStringExtension(tt.getCodeElement(), ExtensionDefinitions.EXT_JSON_TYPE, "string");
+//          ExtensionUtilities.addStringExtension(tt.getCodeElement(), ExtensionDefinitions.EXT_XML_TYPE, "xs:anyURI");
+//          ExtensionUtilities.addStringExtension(tt.getCodeElement(), ExtensionDefinitions.EXT_RDF_TYPE, "xs:anyURI");          
         } else {
           ElementDefinition.TypeRefComponent type = dst.getType(t.getName());
           if (t.hasProfile())
@@ -2575,10 +2576,10 @@ public class ProfileGenerator {
     OperationDefinition opd = new OperationDefinition();
     op.setResource(opd);
     if (Utilities.noString(op.getFmm()))
-      ToolingExtensions.addIntegerExtension(opd, ToolingExtensions.EXT_FMM_LEVEL, Integer.parseInt(rd.getFmmLevel()));
+      ExtensionUtilities.addIntegerExtension(opd, ExtensionDefinitions.EXT_FMM_LEVEL, Integer.parseInt(rd.getFmmLevel()));
     else
-      ToolingExtensions.addIntegerExtension(opd, ToolingExtensions.EXT_FMM_LEVEL, Integer.parseInt(op.getFmm()));
-    ToolingExtensions.setStandardsStatus(opd, op.getStandardsStatus() == null ? rd.getStatus() : op.getStandardsStatus(), op.getNormativeVersion());
+      ExtensionUtilities.addIntegerExtension(opd, ExtensionDefinitions.EXT_FMM_LEVEL, Integer.parseInt(op.getFmm()));
+    ExtensionUtilities.setStandardsStatus(opd, op.getStandardsStatus() == null ? rd.getStatus() : op.getStandardsStatus(), op.getNormativeVersion());
     opd.setId(FormatUtilities.makeId(id));
     opd.setUrl("http://hl7.org/fhir/OperationDefinition/"+id);
     opd.setName(fixName(op.getName()));
@@ -2652,7 +2653,7 @@ public class ProfileGenerator {
     pp.setMin(p.getMin());
     pp.setMax(p.getMax());
     if (p.getStatus() != null) {
-      ToolingExtensions.setStandardsStatus(pp, p.getStatus(), null);
+      ExtensionUtilities.setStandardsStatus(pp, p.getStatus(), null);
     }
     for (String s : p.getScopes()) {
       pp.addScope(OperationParameterScope.fromCode(s));
@@ -2662,7 +2663,7 @@ public class ProfileGenerator {
         throw new Error("Max binding not handled yet");
       pp.setBinding(new OperationDefinitionParameterBindingComponent().setStrength(p.getBs().getStrength()).setValueSet(buildValueSetReference(p.getBs())));
       if (!Utilities.noString(p.getBinding().getName())) {
-        pp.getBinding().addExtension(ToolingExtensions.EXT_BINDING_NAME, new StringType(p.getBinding().getName()));
+        pp.getBinding().addExtension(ExtensionDefinitions.EXT_BINDING_NAME, new StringType(p.getBinding().getName()));
       }
     }
     if (!Utilities.noString(p.getProfile())) {
@@ -2680,7 +2681,7 @@ public class ProfileGenerator {
           pp.setSearchType(SearchParamType.fromCode(p.getSearchType()));
         pp.setType(Enumerations.FHIRTypes.fromCode("Element"));
         for (TypeRef tr : trs) {
-          pp.addExtension(ToolingExtensions.EXT_ALLOWED_TYPE, new UriType(tr.getName()));
+          pp.addExtension(ExtensionDefinitions.EXT_ALLOWED_TYPE, new UriType(tr.getName()));
           if (tr.getParams().size() > 0)
             throw new Error("Multiple types for an operation parameter, where one is a reference, is not supported by the build tools");
         }        
@@ -2725,7 +2726,7 @@ public class ProfileGenerator {
     p.setFhirVersion(version);
     p.setVersion(version.toCode());
     p.setType(r.getRoot().getName());
-    ToolingExtensions.setStandardsStatus(p, r.getStatus(), null);
+    ExtensionUtilities.setStandardsStatus(p, r.getStatus(), null);
     KindlingUtilities.makeUniversal(p);
 
     p.setBaseDefinition("http://hl7.org/fhir/StructureDefinition/Base");
@@ -2736,7 +2737,7 @@ public class ProfileGenerator {
     p.addContact().getTelecom().add(Factory.newContactPoint(ContactPointSystem.URL, "http://hl7.org/fhir"));
     if (r.getWg() != null) {
       p.addContact().getTelecom().add(Factory.newContactPoint(ContactPointSystem.URL, r.getWg().getUrl()));
-      ToolingExtensions.setCodeExtension(p, ToolingExtensions.EXT_WORKGROUP, r.getWg().getCode());
+      ExtensionUtilities.setCodeExtension(p, ExtensionDefinitions.EXT_WORKGROUP, r.getWg().getCode());
     } else {
       CanonicalResourceUtilities.setHl7WG(p, "fhir");
     }

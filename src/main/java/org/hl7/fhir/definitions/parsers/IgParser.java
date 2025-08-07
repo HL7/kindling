@@ -25,6 +25,7 @@ import org.hl7.fhir.definitions.parsers.spreadsheets.OldSpreadsheetParser;
 import org.hl7.fhir.r5.conformance.profile.ProfileKnowledgeProvider;
 import org.hl7.fhir.r5.conformance.profile.ProfileUtilities;
 import org.hl7.fhir.r5.context.CanonicalResourceManager;
+import org.hl7.fhir.r5.extensions.ExtensionUtilities;
 import org.hl7.fhir.r5.formats.XmlParser;
 import org.hl7.fhir.r5.model.CodeSystem;
 import org.hl7.fhir.r5.model.CodeType;
@@ -45,7 +46,7 @@ import org.hl7.fhir.r5.model.StructureDefinition;
 import org.hl7.fhir.r5.model.StructureDefinition.StructureDefinitionKind;
 import org.hl7.fhir.r5.model.UriType;
 import org.hl7.fhir.r5.model.ValueSet;
-import org.hl7.fhir.r5.utils.ToolingExtensions;
+import org.hl7.fhir.r5.extensions.ExtensionDefinitions;
 import org.hl7.fhir.tools.publisher.BuildWorkerContext;
 import org.hl7.fhir.utilities.FileUtilities;
 import org.hl7.fhir.utilities.Logger;
@@ -191,10 +192,10 @@ return null;
           vs.setWebPath(igd.getPath()+"valueset-"+id+".html");
           vs.setUserData("filename", "valueset-"+id);
           if (committee != null) {
-          if (!vs.hasExtension(ToolingExtensions.EXT_WORKGROUP)) {
-            vs.addExtension().setUrl(ToolingExtensions.EXT_WORKGROUP).setValue(new CodeType(committee.getCode()));
+          if (!vs.hasExtension(ExtensionDefinitions.EXT_WORKGROUP)) {
+            vs.addExtension().setUrl(ExtensionDefinitions.EXT_WORKGROUP).setValue(new CodeType(committee.getCode()));
           } else {
-            String ec = ToolingExtensions.readStringExtension(vs, ToolingExtensions.EXT_WORKGROUP);
+            String ec = ExtensionUtilities.readStringExtension(vs, ExtensionDefinitions.EXT_WORKGROUP);
             if (!ec.equals(committee.getCode()))
               System.out.println("ValueSet "+vs.getUrl()+" WG mismatch 2: is "+ec+", want to set to "+committee);
           } 
@@ -310,8 +311,8 @@ return null;
           igd.getLogicalModels().add(lm);
         }
       }
-      ToolingExtensions.removeExtension(p, ToolResourceUtilities.EXT_PROFILE_SPREADSHEET);
-      ToolingExtensions.removeExtension(p, ToolResourceUtilities.EXT_LOGICAL_SPREADSHEET);
+      ExtensionUtilities.removeExtension(p, ToolResourceUtilities.EXT_PROFILE_SPREADSHEET);
+      ExtensionUtilities.removeExtension(p, ToolResourceUtilities.EXT_LOGICAL_SPREADSHEET);
     }
     for (Example ex : exr) {
       Profile tp = null;
@@ -458,13 +459,13 @@ return null;
   
 
   private String fmm(StructureDefinition ed) {
-    return Integer.toString(ToolingExtensions.readIntegerExtension(ed, ToolingExtensions.EXT_FMM_LEVEL, 1)); // default fmm level
+    return Integer.toString(ExtensionUtilities.readIntegerExtension(ed, ExtensionDefinitions.EXT_FMM_LEVEL, 1)); // default fmm level
   }
 
 
 
 
   private WorkGroup wg(StructureDefinition ed) {
-    return workgroups.get(ToolingExtensions.readStringExtension(ed, ToolingExtensions.EXT_WORKGROUP));
+    return workgroups.get(ExtensionUtilities.readStringExtension(ed, ExtensionDefinitions.EXT_WORKGROUP));
   }
 }

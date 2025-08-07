@@ -12,9 +12,10 @@ import org.hl7.fhir.definitions.model.ResourceDefn;
 import org.hl7.fhir.definitions.model.TypeDefn;
 import org.hl7.fhir.definitions.model.TypeRef;
 import org.hl7.fhir.exceptions.FHIRException;
+import org.hl7.fhir.r5.extensions.ExtensionUtilities;
 import org.hl7.fhir.r5.model.Enumerations.BindingStrength;
 import org.hl7.fhir.r5.model.ValueSet;
-import org.hl7.fhir.r5.utils.ToolingExtensions;
+import org.hl7.fhir.r5.extensions.ExtensionDefinitions;
 import org.hl7.fhir.tools.publisher.PageProcessor;
 import org.hl7.fhir.utilities.StandardsStatus;
 import org.hl7.fhir.utilities.Utilities;
@@ -249,8 +250,8 @@ public class ResourceDependencyGenerator  extends BaseGenerator {
     StandardsStatus tgtSS = null;
     ValueSet vs = binding.getValueSet();
     if (vs != null) {
-      tgtFMM = ToolingExtensions.readStringExtension(vs, ToolingExtensions.EXT_FMM_LEVEL);
-      tgtSS = ToolingExtensions.getStandardsStatus(vs);
+      tgtFMM = ExtensionUtilities.readStringExtension(vs, ExtensionDefinitions.EXT_FMM_LEVEL);
+      tgtSS = ExtensionUtilities.getStandardsStatus(vs);
     } else if (Utilities.existsInList(binding.getReference(), "http://www.rfc-editor.org/bcp/bcp13.txt")) {
       tgtFMM = "5";
       tgtSS = StandardsStatus.EXTERNAL;      

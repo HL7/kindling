@@ -39,7 +39,7 @@ import org.hl7.fhir.r5.elementmodel.Manager;
 import org.hl7.fhir.r5.elementmodel.Manager.FhirFormat;
 import org.hl7.fhir.r5.fhirpath.FHIRPathEngine;
 import org.hl7.fhir.r5.fhirpath.TypeDetails;
-import org.hl7.fhir.r5.fhirpath.FHIRPathEngine.IEvaluationContext;
+import org.hl7.fhir.r5.fhirpath.IHostApplicationServices;
 import org.hl7.fhir.r5.fhirpath.FHIRPathUtilityClasses.FunctionDetails;
 import org.hl7.fhir.r5.elementmodel.ObjectConverter;
 import org.hl7.fhir.r5.formats.XmlParser;
@@ -55,14 +55,11 @@ import org.hl7.fhir.r5.utils.validation.constants.ContainedReferenceValidationPo
 import org.hl7.fhir.r5.utils.validation.constants.IdStatus;
 import org.hl7.fhir.r5.utils.validation.constants.ReferenceValidationPolicy;
 import org.hl7.fhir.rdf.ModelComparer;
-import org.hl7.fhir.utilities.Logger;
+import org.hl7.fhir.utilities.*;
 import org.hl7.fhir.utilities.Logger.LogMessageType;
-import org.hl7.fhir.utilities.SIDUtilities;
+import org.hl7.fhir.utilities.fhirpath.FHIRPathConstantEvaluationMode;
 import org.hl7.fhir.utilities.filesystem.CSFileInputStream;
 import org.hl7.fhir.utilities.http.ManagedWebAccess;
-import org.hl7.fhir.utilities.FileUtilities;
-import org.hl7.fhir.utilities.Utilities;
-import org.hl7.fhir.utilities.ZipGenerator;
 import org.hl7.fhir.utilities.validation.ValidationMessage;
 import org.hl7.fhir.utilities.validation.ValidationMessage.IssueSeverity;
 import org.hl7.fhir.utilities.validation.ValidationMessage.IssueType;
@@ -77,7 +74,7 @@ import org.xml.sax.SAXException;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonSyntaxException;
 
-public class ExampleInspector implements IValidatorResourceFetcher, IValidationPolicyAdvisor, IEvaluationContext {
+public class ExampleInspector implements IValidatorResourceFetcher, IValidationPolicyAdvisor, IHostApplicationServices {
 
   public static class EValidationFailed extends Exception {
     private static final long serialVersionUID = 1538324138218778487L;
@@ -86,15 +83,15 @@ public class ExampleInspector implements IValidatorResourceFetcher, IValidationP
     }
   }
 
-  private class ExampleHostServices implements IEvaluationContext {
+  private class ExampleHostServices implements IHostApplicationServices {
 
     @Override
-    public List<Base> resolveConstant(FHIRPathEngine engine, Object appContext, String name, boolean beforeContext, boolean explicitConstant) throws PathEngineException {
+    public List<Base> resolveConstant(FHIRPathEngine engine, Object appContext, String name, FHIRPathConstantEvaluationMode mode) throws PathEngineException {
       return new ArrayList<>();
     }
 
     @Override
-    public TypeDetails resolveConstantType(FHIRPathEngine engine, Object appContext, String name, boolean explicitConstant) throws PathEngineException {
+    public TypeDetails resolveConstantType(FHIRPathEngine engine, Object appContext, String name, FHIRPathConstantEvaluationMode mode) throws PathEngineException {
       return null;
     }
 
@@ -314,10 +311,13 @@ public class ExampleInspector implements IValidatorResourceFetcher, IValidationP
     errorsInt.clear();
     System.out.print(" validate: " + Utilities.padRight(n, ' ', 50));
 
+    if ("codesystem-additional-resources".equals(n)) {
+      DebugUtilities.breakpoint();
+    }
     long t = System.currentTimeMillis();
     validator.resetTimes();
     try {
-      Element e = validateLogical(Utilities.path(rootDir, n+".xml"), profile, FhirFormat.XML);
+      Element e = validateLogical(Utilities.path(rootDir, n+".json"), profile, FhirFormat.JSON);
 //      org.w3c.dom.Element xe = validateXml(Utilities.path(rootDir, n+".xml"), profile == null ? null : profile.getId());
 
 //      validateLogical(Utilities.path(rootDir, n+".json"), profile, FhirFormat.JSON);
@@ -757,12 +757,12 @@ public class ExampleInspector implements IValidatorResourceFetcher, IValidationP
   }
 
   @Override
-  public List<Base> resolveConstant(FHIRPathEngine engine, Object appContext, String name, boolean beforeContext, boolean explicitConstant) throws PathEngineException {
+  public List<Base> resolveConstant(FHIRPathEngine engine, Object appContext, String name, FHIRPathConstantEvaluationMode mode) throws PathEngineException {
     throw new NotImplementedException();
   }
 
   @Override
-  public TypeDetails resolveConstantType(FHIRPathEngine engine, Object appContext, String name, boolean explicitConstant) throws PathEngineException {
+  public TypeDetails resolveConstantType(FHIRPathEngine engine, Object appContext, String name, FHIRPathConstantEvaluationMode mode) throws PathEngineException {
     throw new NotImplementedException();
   }
 

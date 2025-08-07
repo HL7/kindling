@@ -14,14 +14,16 @@ import org.hl7.fhir.r5.conformance.profile.BindingResolution;
 import org.hl7.fhir.r5.conformance.profile.ProfileKnowledgeProvider;
 import org.hl7.fhir.r5.conformance.profile.ProfileUtilities;
 import org.hl7.fhir.r5.context.ContextUtilities;
+import org.hl7.fhir.r5.extensions.ExtensionUtilities;
 import org.hl7.fhir.r5.model.ElementDefinition.ElementDefinitionBindingComponent;
 import org.hl7.fhir.r5.model.Enumerations.FHIRVersion;
+import org.hl7.fhir.r5.model.Resource;
 import org.hl7.fhir.r5.model.StructureDefinition;
 import org.hl7.fhir.r5.renderers.Renderer.RenderingStatus;
 import org.hl7.fhir.r5.renderers.StructureDefinitionRenderer;
 import org.hl7.fhir.r5.renderers.utils.RenderingContext;
 import org.hl7.fhir.r5.renderers.utils.ResourceWrapper;
-import org.hl7.fhir.r5.utils.ToolingExtensions;
+import org.hl7.fhir.r5.extensions.ExtensionDefinitions;
 import org.hl7.fhir.utilities.StandardsStatus;
 import org.hl7.fhir.utilities.Utilities;
 import org.hl7.fhir.utilities.xhtml.XhtmlComposer;
@@ -79,32 +81,32 @@ public class LogicalModelProcessor extends BuildToolScriptedPageProcessor implem
     else if (com[0].equals("mappings"))
       return "{todo}";      
     else if (com[0].equals("fmm-style")) {
-      String fmm = ToolingExtensions.readStringExtension(definition, ToolingExtensions.EXT_FMM_LEVEL);
-      StandardsStatus ss = ToolingExtensions.getStandardsStatus(definition);
+      String fmm = ExtensionUtilities.readStringExtension(definition, ExtensionDefinitions.EXT_FMM_LEVEL);
+      StandardsStatus ss = ExtensionUtilities.getStandardsStatus(definition);
       if (StandardsStatus.EXTERNAL == ss)
         return "colse";
       else
         return "colsi";
     } else if (com[0].equals("fmm")) {
-      String fmm = ToolingExtensions.readStringExtension(definition, ToolingExtensions.EXT_FMM_LEVEL);
-      StandardsStatus ss = ToolingExtensions.getStandardsStatus(definition);
+      String fmm = ExtensionUtilities.readStringExtension(definition, ExtensionDefinitions.EXT_FMM_LEVEL);
+      StandardsStatus ss = ExtensionUtilities.getStandardsStatus(definition);
       if (StandardsStatus.EXTERNAL == ss)
         return getFmmFromlevel("", "N/A");
       else
         return getFmmFromlevel("", fmm);
     } else if (com[0].equals("wg")) {
-      String wg = ToolingExtensions.readStringExtension(definition, ToolingExtensions.EXT_WORKGROUP);
+      String wg = ExtensionUtilities.readStringExtension(definition, ExtensionDefinitions.EXT_WORKGROUP);
       return (wg == null || !definitions.getWorkgroups().containsKey(wg) ?  "(No assigned work group)" : "<a _target=\"blank\" href=\""+definitions.getWorkgroups().get(wg).getUrl()+"\">"+definitions.getWorkgroups().get(wg).getName()+"</a> Work Group");
     } else if (com[0].equals("fmm-style"))  {
-      String fmm = ToolingExtensions.readStringExtension(definition, ToolingExtensions.EXT_FMM_LEVEL);
-      StandardsStatus ss = ToolingExtensions.getStandardsStatus(definition);
+      String fmm = ExtensionUtilities.readStringExtension(definition, ExtensionDefinitions.EXT_FMM_LEVEL);
+      StandardsStatus ss = ExtensionUtilities.getStandardsStatus(definition);
       if (StandardsStatus.EXTERNAL == ss)
         return "colse";
       else
         return "colsi";
     } else if (com[0].equals("wgt")) {
-      String fmm = ToolingExtensions.readStringExtension(definition, ToolingExtensions.EXT_FMM_LEVEL);
-      StandardsStatus ss = ToolingExtensions.getStandardsStatus(definition);
+      String fmm = ExtensionUtilities.readStringExtension(definition, ExtensionDefinitions.EXT_FMM_LEVEL);
+      StandardsStatus ss = ExtensionUtilities.getStandardsStatus(definition);
       if (StandardsStatus.EXTERNAL == ss)
         return getFmmFromlevel("", "N/A");
       else
@@ -150,7 +152,7 @@ public class LogicalModelProcessor extends BuildToolScriptedPageProcessor implem
     ProfileUtilities pu = new ProfileUtilities(page.getWorkerContext(), null, this);
     StructureDefinitionRenderer sdr = new StructureDefinitionRenderer(rc);
     XhtmlNode x = sdr.generateTable(new RenderingStatus(), sd.getId()+"-definitions.html", sd, sd.hasSnapshot() ? false : true, page.getFolders().dstDir, false, sd.getId(), true, prefix, prefix, true, false, null, false, rc, "",
-        ResourceWrapper.forResource(rc.getContextUtilities(), sd));
+        ResourceWrapper.forResource(rc.getContextUtilities(), sd), "lm");
     return new XhtmlComposer(XhtmlComposer.HTML).compose(x);
   }
 
@@ -233,4 +235,8 @@ public class LogicalModelProcessor extends BuildToolScriptedPageProcessor implem
     return "http://hl7.org/fhir";
   }
 
+  @Override
+  public String getDefinitionsName(Resource resource) {
+    return "http://hl7.org/fhir/definitions";
+  }
 }

@@ -6,6 +6,4 @@ public class KindlingConstants {
   
   public final static String DEF_TS_SERVER = FhirSettings.getTxFhirProduction()+"/r5";
 
-  public final static String DEF_TS_SERVER = FhirSettings.getTxFhirProduction()+"/r5";
-
 }

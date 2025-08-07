@@ -19,6 +19,7 @@ import org.hl7.fhir.definitions.model.EventDefn;
 import org.hl7.fhir.definitions.model.ResourceDefn;
 import org.hl7.fhir.definitions.model.TypeRef;
 import org.hl7.fhir.r5.context.IWorkerContext;
+import org.hl7.fhir.r5.extensions.ExtensionUtilities;
 import org.hl7.fhir.r5.model.CodeSystem;
 import org.hl7.fhir.r5.model.CodeSystem.CodeSystemHierarchyMeaning;
 import org.hl7.fhir.r5.model.CodeSystem.ConceptDefinitionComponent;
@@ -34,7 +35,7 @@ import org.hl7.fhir.r5.model.ValueSet;
 import org.hl7.fhir.r5.model.ValueSet.ValueSetComposeComponent;
 import org.hl7.fhir.r5.terminologies.CodeSystemUtilities;
 import org.hl7.fhir.r5.terminologies.ValueSetUtilities;
-import org.hl7.fhir.r5.utils.ToolingExtensions;
+import org.hl7.fhir.r5.extensions.ExtensionDefinitions;
 import org.hl7.fhir.tools.publisher.KindlingUtilities;
 import org.hl7.fhir.utilities.StandardsStatus;
 import org.hl7.fhir.utilities.TranslationServices;
@@ -84,10 +85,10 @@ public class ValueSetGenerator {
       vs.setCompose(new ValueSetComposeComponent());
     vs.getCompose().addInclude().setSystem("http://hl7.org/fhir/data-types");
     vs.setUserData("filename", "valueset-"+vs.getId());
-    if (!vs.hasExtension(ToolingExtensions.EXT_WORKGROUP)) {
-      vs.addExtension().setUrl(ToolingExtensions.EXT_WORKGROUP).setValue(new CodeType("fhir"));
+    if (!vs.hasExtension(ExtensionDefinitions.EXT_WORKGROUP)) {
+      vs.addExtension().setUrl(ExtensionDefinitions.EXT_WORKGROUP).setValue(new CodeType("fhir"));
     } else {
-      String ec = ToolingExtensions.readStringExtension(vs, ToolingExtensions.EXT_WORKGROUP);
+      String ec = ExtensionUtilities.readStringExtension(vs, ExtensionDefinitions.EXT_WORKGROUP);
       if (!ec.equals("fhir"))
         System.out.println("ValueSet "+vs.getUrl()+" WG mismatch 6: is "+ec+", want to set to "+"fhir");
     }     
@@ -125,7 +126,7 @@ public class ValueSetGenerator {
           c.setDefinition("...to do...");
       }
     }
-    ToolingExtensions.addCSComment(cs.addConcept().setCode("xhtml").setDisplay("XHTML").setDefinition("XHTML format, as defined by W3C, but restricted usage (mainly, no active content)"), "Special case: xhtml can only be used in the narrative Datatype");
+    CodeSystemUtilities.addCSComments(cs, cs.addConcept().setCode("xhtml").setDisplay("XHTML").setDefinition("XHTML format, as defined by W3C, but restricted usage (mainly, no active content)"), "Special case: xhtml can only be used in the narrative Datatype");
     markSpecialStatus(vs, cs, true);
   }
 
@@ -137,21 +138,21 @@ public class ValueSetGenerator {
     "The definition will remain fixed  across versions, but the actual contents will change from version to version";
   
   private void markSpecialStatus(ValueSet vs, CodeSystem cs, boolean isNormative) {
-    ToolingExtensions.setStringExtension(vs, "http://hl7.org/fhir/StructureDefinition/valueset-special-status", SPECIAL_STATUS_NOTE.replaceAll("\\{name\\}", "Value Set"));
+    ExtensionUtilities.setStringExtension(vs, "http://hl7.org/fhir/StructureDefinition/valueset-special-status", SPECIAL_STATUS_NOTE.replaceAll("\\{name\\}", "Value Set"));
     if (isNormative) {
-    ToolingExtensions.setStandardsStatus(vs, StandardsStatus.NORMATIVE, "4.0.0");
-    ToolingExtensions.addIntegerExtension(vs, ToolingExtensions.EXT_FMM_LEVEL, 5);
+    ExtensionUtilities.setStandardsStatus(vs, StandardsStatus.NORMATIVE, "4.0.0");
+    ExtensionUtilities.addIntegerExtension(vs, ExtensionDefinitions.EXT_FMM_LEVEL, 5);
     }
-    ToolingExtensions.setCodeExtension(vs, ToolingExtensions.EXT_WORKGROUP, "fhir");
+    ExtensionUtilities.setCodeExtension(vs, ExtensionDefinitions.EXT_WORKGROUP, "fhir");
     vs.setStatus(PublicationStatus.ACTIVE);
     vs.setExperimental(false);
     if (cs != null) {
-      ToolingExtensions.setStringExtension(cs, "http://hl7.org/fhir/StructureDefinition/valueset-special-status", SPECIAL_STATUS_NOTE.replaceAll("\\{name\\}", "Code System"));
+      ExtensionUtilities.setStringExtension(cs, "http://hl7.org/fhir/StructureDefinition/valueset-special-status", SPECIAL_STATUS_NOTE.replaceAll("\\{name\\}", "Code System"));
       if (isNormative) {
-      ToolingExtensions.setStandardsStatus(cs, StandardsStatus.NORMATIVE, "4.0.0");
-      ToolingExtensions.addIntegerExtension(cs, ToolingExtensions.EXT_FMM_LEVEL, 5);
+      ExtensionUtilities.setStandardsStatus(cs, StandardsStatus.NORMATIVE, "4.0.0");
+      ExtensionUtilities.addIntegerExtension(cs, ExtensionDefinitions.EXT_FMM_LEVEL, 5);
       }
-      ToolingExtensions.setCodeExtension(cs, ToolingExtensions.EXT_WORKGROUP, "fhir");
+      ExtensionUtilities.setCodeExtension(cs, ExtensionDefinitions.EXT_WORKGROUP, "fhir");
       cs.setStatus(PublicationStatus.ACTIVE);
       cs.setExperimental(false);
     }    
@@ -162,10 +163,10 @@ public class ValueSetGenerator {
       vs.setCompose(new ValueSetComposeComponent());
     vs.getCompose().addInclude().setSystem("http://hl7.org/fhir/resource-types");
     vs.setUserData("filename", "valueset-"+vs.getId());
-    if (!vs.hasExtension(ToolingExtensions.EXT_WORKGROUP)) {
-      vs.addExtension().setUrl(ToolingExtensions.EXT_WORKGROUP).setValue(new CodeType("fhir"));
+    if (!vs.hasExtension(ExtensionDefinitions.EXT_WORKGROUP)) {
+      vs.addExtension().setUrl(ExtensionDefinitions.EXT_WORKGROUP).setValue(new CodeType("fhir"));
     } else {
-      String ec = ToolingExtensions.readStringExtension(vs, ToolingExtensions.EXT_WORKGROUP);
+      String ec = ExtensionUtilities.readStringExtension(vs, ExtensionDefinitions.EXT_WORKGROUP);
       if (!ec.equals("fhir"))
         System.out.println("ValueSet "+vs.getUrl()+" WG mismatch 7: is "+ec+", want to set to "+"fhir");
     }     
@@ -232,10 +233,10 @@ public class ValueSetGenerator {
       vs.setCompose(new ValueSetComposeComponent());
     vs.getCompose().addInclude().setSystem("http://hl7.org/fhir/abstract-types");
     vs.setUserData("filename", "valueset-"+vs.getId());
-    if (!vs.hasExtension(ToolingExtensions.EXT_WORKGROUP)) {
-      vs.addExtension().setUrl(ToolingExtensions.EXT_WORKGROUP).setValue(new CodeType("fhir"));
+    if (!vs.hasExtension(ExtensionDefinitions.EXT_WORKGROUP)) {
+      vs.addExtension().setUrl(ExtensionDefinitions.EXT_WORKGROUP).setValue(new CodeType("fhir"));
     } else {
-      String ec = ToolingExtensions.readStringExtension(vs, ToolingExtensions.EXT_WORKGROUP);
+      String ec = ExtensionUtilities.readStringExtension(vs, ExtensionDefinitions.EXT_WORKGROUP);
       if (!ec.equals("fhir"))
         System.out.println("ValueSet "+vs.getUrl()+" WG mismatch 8: is "+ec+", want to set to "+"fhir");
     }     
@@ -266,10 +267,10 @@ public class ValueSetGenerator {
       vs.setCompose(new ValueSetComposeComponent());
     vs.getCompose().addInclude().setSystem("http://hl7.org/fhir/fhir-types");
     vs.setUserData("filename", "valueset-"+vs.getId());
-    if (!vs.hasExtension(ToolingExtensions.EXT_WORKGROUP)) {
-      vs.addExtension().setUrl(ToolingExtensions.EXT_WORKGROUP).setValue(new CodeType("fhir"));
+    if (!vs.hasExtension(ExtensionDefinitions.EXT_WORKGROUP)) {
+      vs.addExtension().setUrl(ExtensionDefinitions.EXT_WORKGROUP).setValue(new CodeType("fhir"));
     } else {
-      String ec = ToolingExtensions.readStringExtension(vs, ToolingExtensions.EXT_WORKGROUP);
+      String ec = ExtensionUtilities.readStringExtension(vs, ExtensionDefinitions.EXT_WORKGROUP);
       if (!ec.equals("fhir"))
         System.out.println("ValueSet "+vs.getUrl()+" WG mismatch 8: is "+ec+", want to set to "+"fhir");
     }     
@@ -282,7 +283,8 @@ public class ValueSetGenerator {
     CodeSystemConvertor.populate(cs, vs);
     cs.setUrl("http://hl7.org/fhir/fhir-types");
     cs.setVersion(version);
-    cs.setCaseSensitive(true);    
+    cs.setCaseSensitive(true);
+    cs.setHierarchyMeaning(CodeSystemHierarchyMeaning.ISA);
     cs.setContent(CodeSystemContentMode.COMPLETE);
     if (!cs.hasStatus()) {
       cs.setStatus(PublicationStatus.DRAFT);
@@ -300,10 +302,10 @@ public class ValueSetGenerator {
     if (doAbstract)
       compose.addInclude().setSystem("http://hl7.org/fhir/abstract-types");
     vs.setUserData("filename", "valueset-"+vs.getId());
-    if (!vs.hasExtension(ToolingExtensions.EXT_WORKGROUP)) {
-      vs.addExtension().setUrl(ToolingExtensions.EXT_WORKGROUP).setValue(new CodeType("fhir"));
+    if (!vs.hasExtension(ExtensionDefinitions.EXT_WORKGROUP)) {
+      vs.addExtension().setUrl(ExtensionDefinitions.EXT_WORKGROUP).setValue(new CodeType("fhir"));
     } else {
-      String ec = ToolingExtensions.readStringExtension(vs, ToolingExtensions.EXT_WORKGROUP);
+      String ec = ExtensionUtilities.readStringExtension(vs, ExtensionDefinitions.EXT_WORKGROUP);
       if (!ec.equals("fhir"))
         System.out.println("ValueSet "+vs.getUrl()+" WG mismatch 9: is "+ec+", want to set to "+"fhir");
     }     
@@ -316,10 +318,10 @@ public class ValueSetGenerator {
       vs.setCompose(new ValueSetComposeComponent());
     vs.getCompose().addInclude().setSystem("http://hl7.org/fhir/message-events");
     vs.setUserData("filename", "valueset-"+vs.getId());
-    if (!vs.hasExtension(ToolingExtensions.EXT_WORKGROUP)) {
-      vs.addExtension().setUrl(ToolingExtensions.EXT_WORKGROUP).setValue(new CodeType("fhir"));
+    if (!vs.hasExtension(ExtensionDefinitions.EXT_WORKGROUP)) {
+      vs.addExtension().setUrl(ExtensionDefinitions.EXT_WORKGROUP).setValue(new CodeType("fhir"));
     } else {
-      String ec = ToolingExtensions.readStringExtension(vs, ToolingExtensions.EXT_WORKGROUP);
+      String ec = ExtensionUtilities.readStringExtension(vs, ExtensionDefinitions.EXT_WORKGROUP);
       if (!ec.equals("fhir"))
         System.out.println("ValueSet "+vs.getUrl()+" WG mismatch 10: is "+ec+", want to set to "+"fhir");
     }     
@@ -416,10 +418,10 @@ public class ValueSetGenerator {
     KindlingUtilities.makeUniversal(vs);
 
     vs.setUserData("filename", "valueset-"+vs.getId());
-    if (!vs.hasExtension(ToolingExtensions.EXT_WORKGROUP)) {
-      vs.addExtension().setUrl(ToolingExtensions.EXT_WORKGROUP).setValue(new CodeType("fhir"));
+    if (!vs.hasExtension(ExtensionDefinitions.EXT_WORKGROUP)) {
+      vs.addExtension().setUrl(ExtensionDefinitions.EXT_WORKGROUP).setValue(new CodeType("fhir"));
     } else {
-      String ec = ToolingExtensions.readStringExtension(vs, ToolingExtensions.EXT_WORKGROUP);
+      String ec = ExtensionUtilities.readStringExtension(vs, ExtensionDefinitions.EXT_WORKGROUP);
       if (!ec.equals("fhir"))
         System.out.println("ValueSet "+vs.getUrl()+" WG mismatch 11: is "+ec+", want to set to "+"fhir");
     }     

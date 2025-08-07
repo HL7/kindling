@@ -9,6 +9,7 @@ import java.util.Set;
 
 import org.hl7.fhir.exceptions.FHIRException;
 import org.hl7.fhir.exceptions.TerminologyServiceException;
+import org.hl7.fhir.r5.extensions.ExtensionUtilities;
 import org.hl7.fhir.r5.model.CanonicalResource;
 import org.hl7.fhir.r5.model.CodeSystem;
 import org.hl7.fhir.r5.model.CodeSystem.ConceptDefinitionComponent;
@@ -18,7 +19,7 @@ import org.hl7.fhir.r5.model.ValueSet;
 import org.hl7.fhir.r5.model.ValueSet.ConceptReferenceComponent;
 import org.hl7.fhir.r5.model.ValueSet.ConceptSetComponent;
 import org.hl7.fhir.r5.terminologies.CodeSystemUtilities;
-import org.hl7.fhir.r5.utils.ToolingExtensions;
+import org.hl7.fhir.r5.extensions.ExtensionDefinitions;
 import org.hl7.fhir.tools.publisher.BuildWorkerContext;
 import org.hl7.fhir.utilities.FhirPublication;
 import org.hl7.fhir.utilities.SIDUtilities;
@@ -520,7 +521,7 @@ public class ValueSetValidator extends BaseValidator {
   }
 
   private String getWg(CanonicalResource mr) {
-   return ToolingExtensions.readStringExtension(mr, ToolingExtensions.EXT_WORKGROUP);
+   return ExtensionUtilities.readStringExtension(mr, ExtensionDefinitions.EXT_WORKGROUP);
   }
 
   private boolean isInternal(String url) {
