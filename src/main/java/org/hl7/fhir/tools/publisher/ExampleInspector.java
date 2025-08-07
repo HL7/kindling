@@ -311,9 +311,6 @@ public class ExampleInspector implements IValidatorResourceFetcher, IValidationP
     errorsInt.clear();
     System.out.print(" validate: " + Utilities.padRight(n, ' ', 50));
 
-    if ("codesystem-additional-resources".equals(n)) {
-      DebugUtilities.breakpoint();
-    }
     long t = System.currentTimeMillis();
     validator.resetTimes();
     try {
