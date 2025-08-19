@@ -10,15 +10,14 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import org.hl7.fhir.definitions.model.Definitions;
 import org.hl7.fhir.definitions.model.ElementDefn;
 import org.hl7.fhir.definitions.model.ResourceDefn;
 import org.hl7.fhir.definitions.model.TypeRef;
 import org.hl7.fhir.utilities.FileUtilities;
 import org.hl7.fhir.utilities.json.JsonTrackingParser;
-
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
 
 public class XVerPathsGenerator {
 
@@ -144,7 +143,7 @@ public class XVerPathsGenerator {
 
 
   private void loadR4() throws IOException {
-    JsonObject r4 = JsonTrackingParser.parseJson(new File(r4Source)); 
+    JsonObject r4 = JsonTrackingParser.parseJson(new File(r4Source));
     for (Entry<String, JsonElement> e : r4.entrySet()) {
       if (e.getValue().isJsonObject()) {
         JsonObject eo = (JsonObject) e.getValue();
