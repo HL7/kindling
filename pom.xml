@@ -5,10 +5,10 @@
 
     <groupId>org.hl7.fhir</groupId>
     <artifactId>kindling</artifactId>
-    <version>1.19.0-SNAPSHOT</version>
+    <version>1.20.0-SNAPSHOT</version>
 
     <properties>
-        <fhirCoreVersion>6.6.4-SNAPSHOT</fhirCoreVersion>
+        <fhirCoreVersion>6.6.5-SNAPSHOT</fhirCoreVersion>
         <apachePoiVersion>5.4.1</apachePoiVersion>
         <jacksonVersion>2.16.0</jacksonVersion>
         <apacheHttpcomponentsVersion>4.5.13</apacheHttpcomponentsVersion>
