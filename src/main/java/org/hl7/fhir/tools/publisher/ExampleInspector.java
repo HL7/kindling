@@ -330,15 +330,13 @@ public class ExampleInspector implements IValidatorResourceFetcher, IValidationP
       e.printStackTrace();
       errorsInt.add(new ValidationMessage(Source.InstanceValidator, IssueType.STRUCTURE, -1, -1, n, e.getMessage(), IssueSeverity.ERROR));
     }
-    
+
     long size = fileSize(n);
     t =  System.currentTimeMillis() - t;
-    long tt = validator.timeNoTX() / 1000;
-    long bps = tt == 0 ? 0 : size / tt;
     logger.log(": "+
-        Utilities.padLeft(Long.toString(t)+"ms ", ' ', 8)+ 
-      Utilities.padLeft(Utilities.describeSize(size), ' ', 7)+" " +
-      Utilities.padLeft(Long.toString(bps), ' ', 5)+"b/sec", LogMessageType.Process);
+      Utilities.padLeft(Long.toString(t)+"ms ", ' ', 8)+
+      Utilities.padLeft(Utilities.describeSize(size), ' ', 7)+" = " +
+      validator.reportTimesShort(), LogMessageType.Process);
     for (ValidationMessage m : errorsInt) {
       if (!m.getLevel().equals(IssueSeverity.INFORMATION) && !m.getLevel().equals(IssueSeverity.WARNING)) {
         m.setMessage(n+":: "+m.getLocation()+": "+m.getMessage());
