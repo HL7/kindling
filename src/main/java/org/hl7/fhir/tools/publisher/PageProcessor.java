@@ -3701,7 +3701,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
       return "";
     StringBuilder b = new StringBuilder();
     b.append(aliases.get(0));
-    for (int i = 1; i < aliases.size() - 1; i++) {
+    for (int i = 1; i < aliases.size(); i++) {
       b.append(", ").append(aliases.get(i));
     }
     return b.toString();
