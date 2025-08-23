@@ -1716,8 +1716,8 @@ public class ProfileGenerator {
         throw new Exception("not done yet");
     }
     if (ref.contains("|") && !v.isEmpty()) {
-      String refVer = ref.substring(ref.indexOf("|"));
-      if (!VersionUtilities.refersTo(refVer, v)) {
+      String refVer = ref.substring(ref.indexOf("|") + 1);
+      if (!VersionUtilities.versionMatches(refVer, v.substring(1))) {
         System.out.println("Versioned valueset reference " + ref + " not using expected version of " + v);
       }
       return ref;
