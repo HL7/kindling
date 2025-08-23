@@ -4825,13 +4825,6 @@ public class Publisher implements URIResolver, SectionNumberer {
           producePage(p, n);
         }
       }
-      try {
-        if (!isAbstract)
-          processQuestionnaire(resource, profile, st, true, "", null);
-      } catch (Exception e) {
-        //      e.printStackTrace();
-        page.log("Questionnaire Generation Failed: "+e.getMessage(), LogMessageType.Error);
-      }
 
       if (!isAbstract || !resource.getExamples().isEmpty()) {
         src = FileUtilities.fileToString(page.getFolders().templateDir + template+"-examples.html");
@@ -5076,58 +5069,6 @@ public class Publisher implements URIResolver, SectionNumberer {
 
   private boolean hasNarrative(Document xdoc) {
     return XMLUtil.hasNamedChild(XMLUtil.getNamedChild(xdoc.getDocumentElement(), "text"), "div");
-  }
-
-  private void processQuestionnaire(ResourceDefn res, StructureDefinition profile, SectionTracker st, boolean isResource, String prefix, ImplementationGuideDefn ig) throws Exception {
-
-    QuestionnaireBuilder qb = new QuestionnaireBuilder(page.getWorkerContext(), "http://hl7.org/fhir");
-    qb.setProfile(profile);
-    qb.build();
-    Questionnaire q = qb.getQuestionnaire();
-
-    String fName = prefix+ profile.getId().toLowerCase() + "-questionnaire";
-    fixCanonicalResource(q, fName);
-    serializeResource(q, fName, true);
-
-    String json = "<div class=\"example\">\r\n<p>Generated Questionnaire for "+profile.getId()+"</p>\r\n<pre class=\"json\" style=\"white-space: pre; overflow: hidden\">\r\n" + Utilities.escapeXml(new JsonParser().setOutputStyle(OutputStyle.PRETTY).composeString(q)) + "\r\n</pre>\r\n</div>\r\n";
-    String html = FileUtilities.fileToString(page.getFolders().templateDir + "template-example-json.html").replace("<%example%>", json);
-    html = page.processPageIncludes(prefix+profile.getId().toLowerCase() + "-questionnaire.json.html", html, (isResource ? "resource-questionnaire:" : "profile-questionnaire:") + profile.getId(), null, null, null, "Questionnaire", ig, res, res == null ? wg("fhir") : res.getWg(), q.fhirType()+"/"+q.getId());
-    FileUtilities.stringToFile(html, page.getFolders().dstDir + prefix+ profile.getId().toLowerCase() + "-questionnaire.json.html");
-
-    String xml = "<div class=\"example\">\r\n<p>Generated Questionnaire for "+profile.getId()+"</p>\r\n<pre class=\"xml\" style=\"white-space: pre; overflow: hidden\">\r\n" + Utilities.escapeXml(new XmlParser().setOutputStyle(OutputStyle.PRETTY).composeString(q)) + "\r\n</pre>\r\n</div>\r\n";
-    html = FileUtilities.fileToString(page.getFolders().templateDir + "template-example-xml.html").replace("<%example%>", xml);
-    html = page.processPageIncludes(prefix+profile.getId().toLowerCase() + "-questionnaire.xml.html", html, (isResource ? "resource-questionnaire:" : "profile-questionnaire:") + profile.getId(), null, null, null, "Questionnaire", ig, res, res == null ? wg("fhir") : res.getWg(), q.fhirType()+"/"+q.getId());
-    FileUtilities.stringToFile(html, page.getFolders().dstDir + prefix+ profile.getId().toLowerCase() + "-questionnaire.xml.html");
-
-    if (false) {
-      File tmpTransform = FileUtilities.createTempFile("tmp", ".html");
-      //    if (web) {
-      HashMap<String, String> params = new HashMap<String, String>();
-      params.put("suppressWarnings", "true");
-      XsltUtilities.saxonTransform(
-          Utilities.path(page.getFolders().rootDir, "implementations", "xmltools"), // directory for xslt references
-          page.getFolders().dstDir + prefix+ profile.getId().toLowerCase() + "-questionnaire.xml",  // source to run xslt on
-          Utilities.path(page.getFolders().rootDir, "implementations", "xmltools", "QuestionnaireToHTML.xslt"), // xslt file to run
-          tmpTransform.getAbsolutePath(), // file to produce
-          this, // handle to self to implement URI resolver for terminology fetching
-          params
-          );
-      //    } else
-      //      FileUtilities.stringToFile("test", tmpTransform.getAbsolutePath());
-
-      // now, generate the form
-      html = FileUtilities.fileToString(page.getFolders().templateDir + (isResource ? "template-questionnaire.html" : "template-profile-questionnaire.html")).replace("<%questionnaire%>", loadHtmlForm(tmpTransform.getAbsolutePath()));
-    } else
-      html = "<html><p>Not generated in this build</p></html>";
-    html = page.processPageIncludes(profile.getId().toLowerCase() + "-questionnaire.html", html, (isResource ? "resource-questionnaire:" : "profile-questionnaire:") + profile.getId(), null, profile, null, "Questionnaire", ig, res, res == null ? wg("fhir") : res.getWg(), q.fhirType()+"/"+q.getId());
-    int level = (ig == null || ig.isCore()) ? 0 : 1;
-    if (st != null)
-      html = insertSectionNumbers(html, st, profile.getId().toLowerCase() + "-questionnaire.html", level, null);
-    FileUtilities.stringToFile(html, page.getFolders().dstDir + prefix+ profile.getId().toLowerCase() + "-questionnaire.html");
-
-    page.getHTMLChecker().registerExternal(prefix+ profile.getId().toLowerCase() + "-questionnaire.html");
-    page.getHTMLChecker().registerExternal(prefix+ profile.getId().toLowerCase() + "-questionnaire.json.html");
-    page.getHTMLChecker().registerExternal(prefix+ profile.getId().toLowerCase() + "-questionnaire.xml.html");
   }
 
   private String loadHtmlForm(String path) throws Exception {
@@ -5884,12 +5825,6 @@ public class Publisher implements URIResolver, SectionNumberer {
     page.getHTMLChecker().registerFile(prefix +title + "-mappings.html", "Mappings for StructureDefinition " + profile.getResource().getName(), HTMLLinkChecker.XHTML_TYPE, true);
     FileUtilities.stringToFile(src, page.getFolders().dstDir + prefix +title + "-mappings.html");
 
-    try {
-      processQuestionnaire(resource, profile.getResource(), st, false, prefix, ig);
-    } catch (Exception e) {
-      e.printStackTrace();
-      page.log("Questionnaire Generation Failed: "+e.getMessage(), LogMessageType.Error);
-    }
     new ReviewSpreadsheetGenerator().generate(page.getFolders().dstDir +prefix+ FileUtilities.changeFileExt((String) profile.getResource().getUserData("filename"), "-review.xls"), "HL7 International", page.getGenDate(), profile.getResource(), page);
 
     // xml to xhtml of xml
