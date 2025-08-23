@@ -335,8 +335,8 @@ public class ExampleInspector implements IValidatorResourceFetcher, IValidationP
     t =  System.currentTimeMillis() - t;
     logger.log(": "+
       Utilities.padLeft(Long.toString(t)+"ms ", ' ', 8)+
-      Utilities.padLeft(Utilities.describeSize(size), ' ', 7)+" = " +
-      validator.reportTimesShort(), LogMessageType.Process);
+      Utilities.padLeft(Utilities.describeSize(size), ' ', 7)+" (" +
+      validator.reportTimesShort()+")", LogMessageType.Process);
     for (ValidationMessage m : errorsInt) {
       if (!m.getLevel().equals(IssueSeverity.INFORMATION) && !m.getLevel().equals(IssueSeverity.WARNING)) {
         m.setMessage(n+":: "+m.getLocation()+": "+m.getMessage());
