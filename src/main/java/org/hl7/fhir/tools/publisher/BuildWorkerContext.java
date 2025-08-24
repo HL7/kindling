@@ -101,7 +101,6 @@ public class BuildWorkerContext extends BaseWorkerContext implements IWorkerCont
 
   private static final String SNOMED_EDITION = "900000000000207008"; // international
 //  private static final String SNOMED_EDITION = "731000124108"; // us edition
-
   
   private UcumService ucum;
   private String version;
@@ -112,8 +111,6 @@ public class BuildWorkerContext extends BaseWorkerContext implements IWorkerCont
   private boolean triedServer = false;
   private boolean serverOk = false;
   private List<String> loadedPackages = new ArrayList<>();
-  
-
 
   public BuildWorkerContext(Definitions definitions, String terminologyCachePath, ITerminologyClient client, CanonicalResourceManager<CodeSystem> codeSystems, CanonicalResourceManager<ValueSet> valueSets, CanonicalResourceManager<ConceptMap> maps, CanonicalResourceManager<StructureDefinition> profiles, CanonicalResourceManager<ImplementationGuide> guides, String folder) throws UcumException, ParserConfigurationException, SAXException, IOException, FHIRException {
     super(codeSystems, valueSets, maps, profiles, guides);
@@ -128,7 +125,7 @@ public class BuildWorkerContext extends BaseWorkerContext implements IWorkerCont
 
   private Parameters buildExpansionProfile() {
     Parameters res = new Parameters();
-    res.addParameter("profile-url", "urn:uuid:"+UUID.randomUUID().toString().toLowerCase());
+    res.addParameter("profile-url", "urn:uuid:8250d817-124b-4bc9-858f-678cc0183af6");
     res.addParameter("excludeNested", false);
     res.addParameter("includeDesignations", true);
     // res.addParameter("activeOnly", true);
