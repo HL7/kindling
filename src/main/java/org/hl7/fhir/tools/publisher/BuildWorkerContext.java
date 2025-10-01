@@ -62,6 +62,7 @@ import org.hl7.fhir.utilities.Utilities;
 import org.hl7.fhir.utilities.filesystem.CSFileInputStream;
 import org.hl7.fhir.utilities.i18n.I18nConstants;
 import org.hl7.fhir.utilities.npm.BasePackageCacheManager;
+import org.hl7.fhir.utilities.npm.IPackageCacheManager;
 import org.hl7.fhir.utilities.npm.NpmPackage;
 import org.hl7.fhir.utilities.npm.NpmPackage.PackageResourceInformation;
 import org.hl7.fhir.utilities.validation.ValidationMessage;
@@ -189,9 +190,10 @@ public class BuildWorkerContext extends BaseWorkerContext implements IWorkerCont
 //    return new InstanceValidator(this, null);
   }
 
-  @Override
+
   public boolean supportsSystem(String system) throws TerminologyServiceException {
-    return "http://snomed.info/sct".equals(system) || "http://www.nlm.nih.gov/research/umls/rxnorm".equals(system) || "http://loinc.org".equals(system) || "http://unitsofmeasure.org".equals(system) || super.supportsSystem(system) ;
+    return "http://snomed.info/sct".equals(system) || "http://www.nlm.nih.gov/research/umls/rxnorm".equals(system) || "http://loinc.org".equals(system) || "http://unitsofmeasure.org".equals(system)
+            || super.getTxSupportInfo(system, null).isSupported();
   }
   
   public static class Concept {
@@ -718,6 +720,16 @@ public class BuildWorkerContext extends BaseWorkerContext implements IWorkerCont
     return loadFromPackageInt(pi, loader, loader == null ? defaultTypesToLoad() : loader.getTypes());
   }
 
+  @Override
+  public int loadPackage(NpmPackage pi) throws FileNotFoundException, IOException, FHIRException {
+    return 0;
+  }
+
+  @Override
+  public int loadPackage(String idAndVer) throws FileNotFoundException, IOException, FHIRException {
+    return 0;
+  }
+
 
   public static Set<String> defaultTypesToLoad() {
     // there's no penalty for listing resources that don't exist, so we just all the relevant possibilities for all versions 
@@ -769,6 +781,16 @@ public class BuildWorkerContext extends BaseWorkerContext implements IWorkerCont
   public boolean isPrimitiveType(String typeSimple) {
     StructureDefinition sd = fetchTypeDefinition(typeSimple);
     return (sd != null && sd.getKind() == StructureDefinitionKind.PRIMITIVETYPE);
+  }
+
+  @Override
+  public IPackageCacheManager packageManager() {
+    return null;
+  }
+
+  @Override
+  public void setPackageManager(IPackageCacheManager manager) {
+
   }
 
   @Override

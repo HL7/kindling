@@ -1795,7 +1795,7 @@ public class ProfileGenerator {
       }
     }
 
-    if (e.isTranslatable()) {
+    if (e.isTranslatable() && !ce.hasExtension(ExtensionDefinitions.EXT_TRANSLATABLE)) {
       ce.addExtension(ExtensionDefinitions.EXT_TRANSLATABLE, new BooleanType(true));
     }
 
@@ -1941,7 +1941,7 @@ public class ProfileGenerator {
     String w5 = translateW5(e.getW5());
     if (w5 != null)
       addMapping(p, ce, "http://hl7.org/fhir/fivews", w5, ap);
-    if (e.isTranslatable())
+    if (e.isTranslatable() && !ce.hasExtension(ExtensionDefinitions.EXT_TRANSLATABLE))
       ce.addExtension(ExtensionDefinitions.EXT_TRANSLATABLE, new BooleanType(true));
     if (!Utilities.noString(e.getOrderMeaning()))
         ce.setOrderMeaning(e.getOrderMeaning());
