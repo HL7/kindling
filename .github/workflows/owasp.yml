@@ -3,8 +3,6 @@ name: "OWASP Security Scans"
 on:
   push:
     branches: [ "main" ]
-  pull_request:
-    branches: [ "main" ]
 
   workflow_dispatch:
 
@@ -31,8 +29,12 @@ jobs:
       - env:
           NVD_API_KEY:
             ${{ secrets.NVD_API_KEY }}
+          OSSINDEX_USERNAME:
+            ${{ secrets.OSSINDEX_USERNAME }}
+          OSSINDEX_PASSWORD:
+            ${{ secrets.OSSINDEX_PASSWORD }}
         run: |
-          mvn -DskipTests install -P OWASP_CHECK
+          mvn -DskipTests install -P OWASP_CHECK -DossIndexUsername=${{ env.OSSINDEX_USERNAME }} -DossIndexPassword=${{ env.OSSINDEX_PASSWORD }}
 
       - name: Upload SARIF file
         uses: github/codeql-action/upload-sarif@76621b61decf072c1cee8dd1ce2d2a82d33c17ed # v3.29.8
