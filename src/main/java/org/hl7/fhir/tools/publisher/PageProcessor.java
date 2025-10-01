@@ -1478,6 +1478,9 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     case "ebm" : return "https://hl7.org/fhir/uv/ebm/2025May";
     case "guidance" : return "https://build.fhir.org/ig/FHIR/ig-guidance";
     }
+    if (definitions.getIgList().containsKey(code)) {
+      return definitions.getIgList().get(code);
+    }
     throw new Error("Unknown IG code '"+code+"'");
   }
 

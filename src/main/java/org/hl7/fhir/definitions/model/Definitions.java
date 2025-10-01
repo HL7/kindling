@@ -189,7 +189,8 @@ public class Definitions {
   private Map<String, NamespacePair> redirectList = new HashMap<String, NamespacePair>();
   private Map<String, String> badInvariants = new HashMap<>();
   private Map<String, String> allowedSearchTypes = new HashMap<>();
-  
+  public Map<String, String> igList = new HashMap<>();
+
   // Returns the root TypeDefn of a CompositeType or Resource,
 	// excluding future Resources (as they don't have definitions yet).
 	public TypeDefn getElementDefn(String name) throws Exception {
@@ -1002,5 +1003,9 @@ public class Definitions {
 
   public List<Operation> genOpList() {
     return genOpList;
+  }
+
+  public Map<String, String> getIgList() {
+    return igList;
   }
 }

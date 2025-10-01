@@ -206,6 +206,7 @@ public class SourceParser {
     loadW5s();
     loadMappingSpaces();
     loadGlobalBindings();
+    loadAdditionalIGList();
 
     loadExternals();
     
@@ -367,6 +368,12 @@ public class SourceParser {
       definitions.getAllowedSearchTypes().put(s, ini.getStringProperty("allowed-search-types", s));
     }
     
+  }
+
+  private void loadAdditionalIGList() {
+    for (String n : ini.getPropertyNames("additional-ig-list")) {
+      definitions.getIgList().put(n, ini.getStringProperty("additional-ig-list", n));
+    }
   }
 
   private String getFmmForType(String n, String def) {
