@@ -116,6 +116,20 @@ public class FHIRResourceFactory {
         return fhir_class(name, RDFNamespace.FHIR.resourceRef(superClass));
     }
 
+    
+    public FHIRResource fhir_class_with_provenance(String name, String definitionCanonical) {
+        return fhir_resource(name, OWL2.Class, name)
+                .addProvenance(definitionCanonical);
+    }
+
+    public FHIRResource fhir_class_with_provenance(String name, String superClass, String definitionCanonical) {
+        return fhir_class_with_provenance(name, RDFNamespace.FHIR.resourceRef(superClass), definitionCanonical);
+    }
+
+    public FHIRResource fhir_class_with_provenance(String name, Resource superClass, String definitionCanonical) {
+        return fhir_class_with_provenance(name, definitionCanonical).addObjectProperty(RDFS.subClassOf, superClass);
+    }
+
 
     /**
      * Create a new ObjectProperty in the FHIR namespace
@@ -123,8 +137,9 @@ public class FHIRResourceFactory {
      * @param name property name and label
      * @return
      */
-    public FHIRResource fhir_objectProperty(String name) {
-        return fhir_resource(name, OWL2.ObjectProperty, name);
+    public FHIRResource fhir_objectProperty(String name, String definitionCanonical) {
+        return fhir_resource(name, OWL2.ObjectProperty, name)
+                .addProvenance(definitionCanonical);
     }
 
     /**
@@ -134,10 +149,10 @@ public class FHIRResourceFactory {
      * @param superProperty parent property
      * @return
      */
-    public FHIRResource fhir_objectProperty(String name, Resource superProperty) {
+    public FHIRResource fhir_objectProperty(String name, Resource superProperty, String definitionCanonical) {
         if(superProperty.getLocalName().equals(name))
-            return fhir_objectProperty(name); // do not add something as a subProperty of itself
-        return fhir_objectProperty(name).addObjectProperty(RDFS.subPropertyOf, superProperty);
+            return fhir_objectProperty(name, definitionCanonical); // do not add something as a subProperty of itself
+        return fhir_objectProperty(name, definitionCanonical).addObjectProperty(RDFS.subPropertyOf, superProperty);
     }
 
     /**
@@ -147,8 +162,8 @@ public class FHIRResourceFactory {
      * @param superProperty parent property name
      * @return
      */
-    public FHIRResource fhir_objectProperty(String name, String superProperty) {
-        return fhir_objectProperty(name, RDFNamespace.FHIR.resourceRef(superProperty));
+    public FHIRResource fhir_objectProperty(String name, String superProperty, String definitionCanonical) {
+        return fhir_objectProperty(name, RDFNamespace.FHIR.resourceRef(superProperty), definitionCanonical);
     }
 
     /**
@@ -208,7 +223,56 @@ public class FHIRResourceFactory {
     }
 
     /**
-     * Create a new OWL restriction with the appropriate cardinality
+     * Build only the OWL cardinality restrictions for a given property.
+     *
+     * @param onProperty property to apply the restriction to
+     * @param min        min cardinality
+     * @param max        max cardinality
+     * @return restriction list of resources containing only cardinality constraints
+     */
+    public List<Resource> build_cardinality_restrictions(Resource onProperty, int min, int max) {
+        ArrayList<Resource> restrictions = new ArrayList<>();
+        if (min == max) {
+            restrictions.add(
+                    create_empty_owl_restriction(onProperty)
+                            .addDataProperty(OWL2.cardinality, Integer.toString(min), XSDDatatype.XSDinteger)
+                            .resource
+            );
+        } else {
+            if (min > 0) {
+                restrictions.add(
+                        create_empty_owl_restriction(onProperty)
+                                .addDataProperty(OWL2.minCardinality, Integer.toString(min), XSDDatatype.XSDinteger)
+                                .resource
+                );
+            }
+            if (max < Integer.MAX_VALUE) {
+                //TODO:add fix to normal String instead of Binary as a String (9 was previously  owl:maxCardinality  1001 ;) also changed to maxQualifiedCardinality
+                restrictions.add(
+                        create_empty_owl_restriction(onProperty)
+                                .addDataProperty(OWL2.maxCardinality, Integer.toString(max), XSDDatatype.XSDinteger)
+                                .resource
+                );
+            }
+        }
+        return restrictions;
+    }
+
+    /**
+     * Create only OWL cardinality restrictions (no allValuesFrom). Useful when
+     * value constraints are handled separately.
+     *
+     * @param onProperty property to apply the restriction to
+     * @param min        min cardinality
+     * @param max        max cardinality
+     * @return restriction list of resources containing only cardinality constraints
+     */
+    public List<Resource> fhir_cardinality_restriction(Resource onProperty, int min, int max) {
+        return build_cardinality_restrictions(onProperty, min, max);
+    }
+
+    /**
+     * Create a new OWL restrictions for a given class and cardinality
      *
      * @param onProperty property to apply the restriction to
      * @param from       only/some target
@@ -216,18 +280,16 @@ public class FHIRResourceFactory {
      * @param max        max cardinality
      * @return restriction list of resources
      */
-    public List<Resource> fhir_cardinality_restriction(Resource onProperty, Resource from, int min, int max) {
+    public List<Resource> fhir_class_cardinality_restriction(Resource onProperty, Resource from, int min, int max) {
         ArrayList<Resource> restrictions = new ArrayList<>();
-        restrictions.add(create_empty_owl_restriction(onProperty).addObjectProperty(OWL2.allValuesFrom, from).resource);
-        if (min == max)
-            restrictions.add(create_empty_owl_restriction(onProperty).addDataProperty(OWL2.cardinality, Integer.toString(min), XSDDatatype.XSDinteger).resource);
-        else {
-            if (min > 0)
-                restrictions.add(create_empty_owl_restriction(onProperty).addDataProperty(OWL2.minCardinality, Integer.toString(min), XSDDatatype.XSDinteger).resource);
-                //restrictions.add(create_empty_owl_restriction(onProperty).addObjectProperty(OWL2.someValuesFrom, from).resource);  // use minCardinality instead
-            if (max < Integer.MAX_VALUE)
-                restrictions.add(create_empty_owl_restriction(onProperty).addDataProperty(OWL2.maxCardinality, Integer.toString(max), XSDDatatype.XSDinteger).resource);  //TODO:add fix to normal String instead of Binary as a String (9 was previously  owl:maxCardinality  1001 ;) also changed to maxQualifiedCardinality
-        }
+        // value constraint
+        restrictions.add(
+                create_empty_owl_restriction(onProperty)
+                        .addObjectProperty(OWL2.allValuesFrom, from)
+                        .resource
+        );
+        // cardinality constraints (if any)
+        restrictions.addAll(build_cardinality_restrictions(onProperty, min, max));
         return restrictions;
     }
 
@@ -243,7 +305,7 @@ public class FHIRResourceFactory {
     public List<Resource> fhir_cardinality_restriction(Resource onProperty, List<Resource> from, int min, int max) {
         Resource targetFrom = fhir_bnode().addObjectProperty(OWL2.unionOf, new FHIRResource(model, from))
                 .addObjectProperty(RDF.type, RDFS.Datatype).resource;
-        return fhir_cardinality_restriction(onProperty, targetFrom, min, max);
+        return fhir_class_cardinality_restriction(onProperty, targetFrom, min, max);
     }
 
 
@@ -255,7 +317,7 @@ public class FHIRResourceFactory {
      * @return
      */
     public List<Resource> fhir_restriction(Resource onProperty, Resource from) {
-        return fhir_cardinality_restriction(onProperty, from, 0, Integer.MAX_VALUE);
+        return fhir_class_cardinality_restriction(onProperty, from, 0, Integer.MAX_VALUE);
     }
 
 
@@ -269,6 +331,30 @@ public class FHIRResourceFactory {
         return fhir_bnode()
                 .addObjectProperty(OWL2.unionOf, new FHIRResource(model, members))
                 .resource;
+    }
+
+    /**
+     * Return an OWL class that is an intersection of the supplied members
+     *
+     * @param members list of class expressions to intersect
+     * @return Resource representing intersectionOf (typed owl:Class)
+     */
+    public FHIRResource owl_class_intersection(List<Resource> members) {
+        return fhir_bnode()
+                .addObjectProperty(OWL2.intersectionOf, new FHIRResource(model, members))
+                .addType(OWL2.Class);
+    }
+
+    /**
+     * Return an OWL class that is a union of the supplied members
+     *
+     * @param members list of class expressions to union
+     * @return Resource representing unionOf (typed owl:Class)
+     */
+    public FHIRResource owl_class_union(List<Resource> members) {
+        return fhir_bnode()
+                .addObjectProperty(OWL2.unionOf, new FHIRResource(model, members))
+                .addType(OWL2.Class);
     }
 
     /**
