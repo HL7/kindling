@@ -168,7 +168,7 @@ public class FhirTurtleGenerator {
                 .addDataProperty(RDFS.comment, "Some resources can contain other resources. Given that the relationships can appear in any order in RDF, it cannot be assumed that the first encountered element represents the resource of interest that is being represented by the set of Turtle statements. The focal resource -- where to start when parsing -- is the resource with the relationship fhir:nodeRole to fhir:treeRoot. If there is more than one node labeled as a 'treeRoot' in a set of Turtle statements, it cannot be determined how to parse them as a single resource.");
 
         FHIRResource nodeRole = fact.fhir_objectProperty("nodeRole", fhirRdfPageUrl)
-                .addTitle("Identifies role of subject in context of a given document.")
+                .addTitle("Identifies role of subject in context of a given document")
                 .domain(Resource)
                 .range(treeRoot.resource);
         Resource.restriction(fact.fhir_class_cardinality_restriction(nodeRole.resource, treeRoot.resource, 0, 1));
@@ -182,7 +182,8 @@ public class FhirTurtleGenerator {
 //        Element.restriction(fact.fhir_cardinality_restriction(index.resource, XSD.nonNegativeInteger, 0, 1));
 
         // References have an optional link
-        FHIRResource link = fact.fhir_objectProperty(fhirRdfLinkName, fhirRdfPageUrl)
+        FHIRResource link = fact.fhir_resource(fhirRdfLinkName, OWL2.ObjectProperty, "fhir:" + fhirRdfLinkName)
+                                .addProvenance(fhirRdfPageUrl)
                                 .addTitle("IRI of a reference");
         Reference.restriction(fact.fhir_class_cardinality_restriction(link.resource, Resource.resource, 0, 1));
 

@@ -120,23 +120,23 @@ public class TurtleSpecGenerator extends OutputStreamWriter {
       // Resources - Not Extension or Meta or "abstract"
       if (!Utilities.noString(root.typeCode())) {
         write("  # from <a href=\"" + prefix + "resource.html\">Resource</a>: <a href=\"" + prefix
-            + "resource.html#id\">.id</a>, <a href=\"" + prefix + "resource.html#meta\">.meta</a>, <a href=\"" + prefix
-            + "resource.html#implicitRules\">.implicitRules</a>, and <a href=\"" + prefix
-            + "resource.html#language\">.language</a>\r\n");
+            + "resource.html#id\">fhir:id</a>, <a href=\"" + prefix + "resource.html#meta\">fhir:meta</a>, <a href=\"" + prefix
+            + "resource.html#implicitRules\">fhir:implicitRules</a>, and <a href=\"" + prefix
+            + "resource.html#language\">fhir:language</a>\r\n");
         if (root.typeCode().equals("DomainResource")
             || Utilities.existsInList(root.typeCode(), definitions.getInterfaceNames())) {
           write("  # from <a href=\"" + prefix + "domainresource.html\">DomainResource</a>: <a href=\"" + prefix
-              + "narrative.html#Narrative\">.text</a>, <a href=\"" + prefix
-              + "references.html#contained\">.contained</a>, <a href=\"" + prefix
-              + "extensibility.html\">.extension</a>, and <a href=\"" + prefix
-              + "extensibility.html#modifierExtension\">.modifierExtension</a>\r\n");
+              + "narrative.html#Narrative\">fhir:text</a>, <a href=\"" + prefix
+              + "references.html#contained\">fhir:contained</a>, <a href=\"" + prefix
+              + "extensibility.html\">fhir:extension</a>, and <a href=\"" + prefix
+              + "extensibility.html#modifierExtension\">fhir:modifierExtension</a>\r\n");
         }
       }
     } else {
       if (root.typeCode().equals("BackboneElement"))
-        write(" # from BackboneElement: <a href=\""+prefix+"extensibility.html\">Element.extension</a>, <a href=\""+prefix+"extensibility.html\">BackboneElement.modifierextension</a>\r\n");
+        write(" # from BackboneElement: <a href=\""+prefix+"extensibility.html\">fhir:extension</a>, <a href=\""+prefix+"extensibility.html\">fhir:modifierextension</a>\r\n");
       else
-        write(" # from Element: <a href=\"" + prefix + "extensibility.html\">Element.extension</a>\r\n");
+        write(" # from Element: <a href=\"" + prefix + "extensibility.html\">fhir:extension</a>\r\n");
     }
 
     if (isReference) {
