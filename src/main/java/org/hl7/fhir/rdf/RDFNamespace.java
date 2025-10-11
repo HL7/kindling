@@ -22,8 +22,8 @@ public class RDFNamespace {
      *  FHIR specific namespaces
      */
     public static final RDFNamespace FHIR = new RDFNamespace("fhir", "http://hl7.org/fhir/");
-    public static final RDFNamespace FHIR_VS = new RDFNamespace("fhir-vs", "http://hl7.org/fhir/ValueSet/");
-    public static final RDFNamespace EX = new RDFNamespace("ex", "http://hl7.org/fhir/StructureDefinition/");
+    public static final RDFNamespace FHIR_VS = new RDFNamespace("fhirvs", "http://hl7.org/fhir/ValueSet/");
+    public static final RDFNamespace EX = new RDFNamespace("fhirsd", "http://hl7.org/fhir/StructureDefinition/");
     public static final RDFNamespace RIM = new RDFNamespace("rim", "http://hl7.org/owl/rim/");
     public static final RDFNamespace CS = new RDFNamespace("cs", "http://hl7.org/orim/codesystem/");
     public static final RDFNamespace VS = new RDFNamespace("vs", "http://hl7.org/orim/valueset/");
