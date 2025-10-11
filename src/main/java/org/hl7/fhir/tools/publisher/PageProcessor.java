@@ -1478,6 +1478,9 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     case "ebm" : return "https://hl7.org/fhir/uv/ebm/2025May";
     case "guidance" : return "https://build.fhir.org/ig/FHIR/ig-guidance";
     }
+    if (definitions.getIgList().containsKey(code)) {
+      return definitions.getIgList().get(code);
+    }
     throw new Error("Unknown IG code '"+code+"'");
   }
 
@@ -9276,8 +9279,9 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
 
   private boolean isFirstChildElementH2(XhtmlNode x) {
     XhtmlNode c = x.getFirstElement();
-    while (c.getName() != null && c.getName().equals("a") || c.getName().equals("blockquote") )
+    while (c != null && c.getName() != null && (c.getName().equals("a") || c.getName().equals("blockquote"))) {
       c = x.getNextElement(c);
+    }
     return c != null && c.getName().equals("h2");
   }
 
@@ -10184,9 +10188,10 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
 
   private String generateExtensionTable(StructureDefinition ed, String filename, String full, String prefix) throws Exception {
     StructureDefinitionRenderer sdr = new StructureDefinitionRenderer(rc);
-    return new XhtmlComposer(XhtmlComposer.HTML).compose(sdr.generateExtensionTable(new RenderingStatus(), filename, ed, folders.dstDir, false, full.equals("true"), prefix, prefix, null, getRc(), null, null, ResourceWrapper.forResource(rc.getContextUtilities(), ed)));
+    return new XhtmlComposer(XhtmlComposer.HTML).compose(sdr.generateExtensionTable(
+            new RenderingStatus(), filename, ed, folders.dstDir, false, full.equals("true"), prefix, prefix,
+              null, getRc(), null, null, ResourceWrapper.forResource(rc.getContextUtilities(), ed), false));
   }
-
 
   private String getTerminologyNotes(StructureDefinition profile, int level) throws FHIRException {
     List<String> txlist = new ArrayList<String>();
