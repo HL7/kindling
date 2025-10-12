@@ -128,6 +128,7 @@ import org.hl7.fhir.r5.conformance.profile.BindingResolution;
 import org.hl7.fhir.r5.conformance.profile.ProfileKnowledgeProvider;
 import org.hl7.fhir.r5.conformance.profile.ProfileUtilities;
 import org.hl7.fhir.r5.context.CanonicalResourceManager;
+import org.hl7.fhir.r5.context.ExpansionOptions;
 import org.hl7.fhir.r5.context.ILoggingService;
 import org.hl7.fhir.r5.elementmodel.Element;
 import org.hl7.fhir.r5.elementmodel.Manager;
@@ -2342,7 +2343,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
         if (vs.hasUserData("expansion"))
           evs = (ValueSet) vs.getUserData("expansion");
         else {
-          ValueSetExpansionOutcome vse = getWorkerContext().expandVS(vs, true, false, true);
+          ValueSetExpansionOutcome vse = getWorkerContext().expandVS(ExpansionOptions.cacheNoHeirarchy().withIncompleteOk(true), vs);
           if (vse.getValueset() != null) {
             evs = vse.getValueset();
             vs.setUserData("expansion", evs);
@@ -11424,7 +11425,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
   public String expandVS(ValueSet vs, String prefix, String base) {
     try {
 
-      ValueSetExpansionOutcome result = workerContext.expandVS(vs, true, true, true);
+      ValueSetExpansionOutcome result = workerContext.expandVS(ExpansionOptions.cacheNoHeirarchy().withIncompleteOk(true), vs);
       if (result.getError() != null)
         return "<hr/>\r\n"+VS_INC_START+"<!--3-->"+processExpansionError(result.getError())+VS_INC_END;
 
