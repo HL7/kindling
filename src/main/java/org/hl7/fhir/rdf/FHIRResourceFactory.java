@@ -20,7 +20,7 @@ public class FHIRResourceFactory {
 
     public FHIRResourceFactory() {
         model = ModelFactory.createDefaultModel();
-        RDFNamespace.addFHIRNamespaces(model);
+        RDFNamespace.addOntologyNamespaces(model);
     }
 
     /**

@@ -404,6 +404,7 @@ public class FhirTurtleGenerator {
             throws Exception {
 
         for (ElementDefn ed : td.getElements()) {
+            // Example: ValueSet.compose + include -> ValueSet.compose.include
             String predicateName = predicateBase + "." + (ed.getName().endsWith("[x]")?
                     ed.getName().substring(0, ed.getName().length() - 3) : ed.getName());
             String shortenedPropertyName = shortenName(predicateName);
@@ -446,13 +447,14 @@ public class FhirTurtleGenerator {
                     // Monomorphic complex type (no type specified, but has sub-elements)
                     predicateResource = fact.fhir_objectProperty(shortenedPropertyName, definitionCanonical);
                     genPropertyModifierExtensions(shortenedPropertyName, predicateResource, predicateName, definitionCanonical);
+                    // The class name is just the element ID (example: ValueSet.compose.include)
+                    String targetClassName = predicateName;
+                    baseDef = fact.fhir_class(targetClassName, innerIsBackbone ? "BackboneElement" : "Element")
+                            .addDefinition(targetClassName + ": " + ed.getDefinition())
+                            .addTitle(ed.getShortDefn());
                     
-                    String targetClassName = mapComponentName(baseResourceName, ed.getDeclaredTypeName());
-                    String shortedClassName = shortenName(targetClassName);
-                    baseDef = fact.fhir_class(shortedClassName, innerIsBackbone ? "BackboneElement" : "Element")
-                            .addDefinition(targetClassName + ": " + ed.getDefinition());
-                    
-                    if (!isPrimitive(shortedClassName)) {
+                    // Don't add provenance annotation for anywhere PrimitiveTypes are used (too many)
+                    if (!isPrimitive(targetClassName)) {
                         baseDef.addProvenance(definitionCanonical);
                     }
                     targetRestriction = baseDef;
@@ -466,16 +468,15 @@ public class FhirTurtleGenerator {
                     if (targetName.startsWith("@")) {        // Link to earlier definition
                         ElementDefn targetRef = getElementForPath(targetName.substring(1));
                         String targetRefName = targetRef.getName();
-                        String targetClassName = baseResourceName +
-                                Character.toUpperCase(targetRefName.charAt(0)) + targetRefName.substring(1);
+                        // Remove @ from start of targetName (example: @ValueSet.compose.include)
+                        String targetClassName = targetName.charAt(0) == '@' ? targetName.substring(1) : targetName;
                         baseDef = fact.fhir_class(targetClassName, innerIsBackbone ? "BackboneElement" : "Element")
-                                .addDefinition(ed.getDefinition())
-                                .addTitle(ed.getShortDefn());
+                                      .addDefinition(ed.getDefinition())
+                                      .addTitle(ed.getShortDefn());
 
+                        // Don't add provenance annotation for anywhere PrimitiveTypes are used (too many)
                         if (!isPrimitive(targetRefName)) {
-                            baseDef.addProvenance(definitionCanonical)
-                                .addDefinition(ed.getDefinition())
-                                .addTitle(ed.getShortDefn());
+                            baseDef.addProvenance(definitionCanonical);
                         }
 
                         targetRestriction = baseDef;
@@ -593,10 +594,6 @@ public class FhirTurtleGenerator {
             targetRes = fact.fhir_class(typeRefName);
         }
         return targetRes;
-    }
-
-    private String mapComponentName(String baseResourceName, String componentName) {
-        return componentName.startsWith(baseResourceName)? componentName : baseResourceName + "." + componentName;
     }
 
     private ElementDefn getElementForPath(String pathname) throws Exception {
