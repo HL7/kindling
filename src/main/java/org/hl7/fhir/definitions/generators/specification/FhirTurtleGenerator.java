@@ -399,201 +399,225 @@ public class FhirTurtleGenerator {
      * @param predicateBase Root name for predicate
      * @param innerIsBackbone True if we're processing a backbone element
      */
-    HashSet<String> processing = new HashSet<String>();
-    private void processTypes(String baseResourceName, FHIRResource baseResource, ElementDefn td, String predicateBase, boolean innerIsBackbone, String definitionCanonical)
-            throws Exception {
-
+    private void processTypes(String baseResourceName, FHIRResource baseResource, ElementDefn td, String predicateBase, boolean innerIsBackbone, String definitionCanonical) throws Exception {
         for (ElementDefn ed : td.getElements()) {
-            // Example: ValueSet.compose + include -> ValueSet.compose.include
-            String predicateName = predicateBase + "." + (ed.getName().endsWith("[x]")?
-                    ed.getName().substring(0, ed.getName().length() - 3) : ed.getName());
-            String shortenedPropertyName = shortenName(predicateName);
-            FHIRResource predicateResource;
-
-            if (ed.getName().endsWith("[x]")) {
-                predicateResource = fact.fhir_objectProperty(shortenedPropertyName, definitionCanonical);
-                genPropertyModifierExtensions(shortenedPropertyName, predicateResource, predicateName, definitionCanonical);
-
-                // Choice entry
-                if (ed.typeCode().equals("*")) {
-                    // Wild card -- any element works (probably should be more restrictive but...)
-                    Resource targetResource = RDFNamespace.FHIR.resourceRef("Element");
-                    baseResource.restriction(
-                            fact.fhir_class_cardinality_restriction(
-                                    predicateResource.resource,
-                                    targetResource,
-                                    ed.getMinCardinality(),
-                                    ed.getMaxCardinality()));
-                } else {
-                    // Create a restriction on the union of possible types
-                    List<Resource> typeRestrictions = new ArrayList<Resource>();
-                    for (TypeRef tr : ed.getTypes()) {
-                        Resource typeRestriction = processChoiceTypeRef(shortenedPropertyName, predicateName, predicateResource, tr, typeRestrictions, definitionCanonical);
-                        typeRestrictions.add(typeRestriction);
-                    }
-                    // Add the type restrictions
-                    baseResource.restriction(fact.fhir_union(typeRestrictions));
-                    // Add the cardinality restrictions separately here
-                    baseResource.restriction(
-                        fact.build_cardinality_restrictions(predicateResource.resource, 
-                            ed.getMinCardinality(), 
-                            ed.getMaxCardinality())
-                    );
-                }
-            } else {  // does not end with [x]
-                FHIRResource baseDef;
-                FHIRResource targetRestriction;
-                if (ed.getTypes().isEmpty()) {  //subnodes
-                    // Monomorphic complex type (no type specified, but has sub-elements)
-                    predicateResource = fact.fhir_objectProperty(shortenedPropertyName, definitionCanonical);
-                    genPropertyModifierExtensions(shortenedPropertyName, predicateResource, predicateName, definitionCanonical);
-                    // The class name is just the element ID (example: ValueSet.compose.include)
-                    String targetClassName = predicateName;
-                    baseDef = fact.fhir_class(targetClassName, innerIsBackbone ? "BackboneElement" : "Element")
-                            .addDefinition(targetClassName + ": " + ed.getDefinition())
-                            .addTitle(ed.getShortDefn());
-                    
-                    // Don't add provenance annotation for anywhere PrimitiveTypes are used (too many)
-                    if (!isPrimitive(targetClassName)) {
-                        baseDef.addProvenance(definitionCanonical);
-                    }
-                    targetRestriction = baseDef;
-
-                    processTypes(targetClassName, baseDef, ed, predicateName, innerIsBackbone, definitionCanonical);
-
-                } else {
-                    // Monomorphic, but a "content reference" to another defined type
-                    TypeRef targetType = ed.getTypes().get(0);
-                    String targetName = targetType.getName();
-                    if (targetName.startsWith("@")) {        // Link to earlier definition
-                        ElementDefn targetRef = getElementForPath(targetName.substring(1));
-                        String targetRefName = targetRef.getName();
-                        // Remove @ from start of targetName (example: @ValueSet.compose.include)
-                        String targetClassName = targetName.charAt(0) == '@' ? targetName.substring(1) : targetName;
-                        baseDef = fact.fhir_class(targetClassName, innerIsBackbone ? "BackboneElement" : "Element")
-                                      .addDefinition(ed.getDefinition())
-                                      .addTitle(ed.getShortDefn());
-
-                        // Don't add provenance annotation for anywhere PrimitiveTypes are used (too many)
-                        if (!isPrimitive(targetRefName)) {
-                            baseDef.addProvenance(definitionCanonical);
-                        }
-
-                        targetRestriction = baseDef;
-                        
-                        if (!processing.contains(targetRefName)) {
-                            processing.add(targetRefName);
-                            processTypes(targetClassName, baseDef, targetRef, predicateName, innerIsBackbone, definitionCanonical);
-                            processing.remove(targetRefName);
-                        }
-
-                    } else { // doesn't start with "@"
-                        // A placeholder entry.  The rest of the information will be supplied elsewhere
-                        baseDef = fact.fhir_class(targetName);
-                        targetRestriction = baseDef;
-
-                        // Update property restriction target if type can have a reference OR is not a primitive type ("canonical" is both primitive and referenceable)
-                        if (referenceTypes.contains(targetName) || isPrimitive(targetName)) {
-                            targetRestriction = getPropertyRestriction(targetType, definitionCanonical);
-                        }
-                    }
-                
-                    // XHTML the exception, in that the html doesn't derive from Primitive
-                    if (targetName.equals("xhtml"))
-                        predicateResource = fact.fhir_dataProperty(shortenedPropertyName);
-                    else
-                        predicateResource = fact.fhir_objectProperty(shortenedPropertyName, definitionCanonical);
-                        genPropertyModifierExtensions(shortenedPropertyName, predicateResource, predicateName, definitionCanonical);
-                }
-
-                // Annotate object property
-                predicateResource.addTitle(predicateName + ": " + ed.getShortDefn())
-                        .addDefinition(predicateName + ": " + ed.getDefinition());
-
-                // Add property restrictions
-                if(ed.getName().equals("modifierExtension") && ed.hasModifier()) {
-                    // special case for modifierExtensions on original Resources having a cardinality of zero
-                    baseResource.restriction(fact.fhir_class_cardinality_restriction(predicateResource.resource, baseDef.resource, 0, 0));
-                } else {
-                    baseResource.restriction(
-                        fact.fhir_class_cardinality_restriction(predicateResource.resource, 
-                            targetRestriction.resource, 
-                            ed.getMinCardinality(), 
-                            ed.getMaxCardinality()
-                        )
-                    );
-                }
-                if(!Utilities.noString(ed.getW5()))
-                    predicateResource.addObjectProperty(RDFS.subPropertyOf, RDFNamespace.W5.resourceRef(ed.getW5()));
-            }
+            generateElementClasses(baseResourceName, baseResource, ed, predicateBase, innerIsBackbone, definitionCanonical);
         }
     }
 
-    private Resource processChoiceTypeRef(String shortenedPropertyName, String predicateName, FHIRResource predicateResource, TypeRef typeRef, List<Resource> typeRestrictions, String definitionCanonical) throws Exception {
-        FHIRResource targetRes = getPropertyRestriction(typeRef, definitionCanonical);
+    /**
+     * Generate classes and properties for an element definition
+     * @param baseResourceName Name of base resource
+     * @param baseResource FHIRResource for base resource
+     * @param ed Element definition to process
+     * @param predicateBase Root name for predicate
+     * @param innerIsBackbone True if we're processing a backbone element
+     */
+    private void generateElementClasses(String baseResourceName, FHIRResource baseResource, ElementDefn ed, String predicateBase, boolean innerIsBackbone, String definitionCanonical) throws Exception {
+        // Example: ValueSet.compose + include -> ValueSet.compose.include
+        String targetClassName = predicateBase + "." + (ed.getName().endsWith("[x]")?
+                ed.getName().substring(0, ed.getName().length() - 3) : ed.getName());
+        String shortenedPropertyName = shortenName(targetClassName);
 
-        FHIRResource shortPredicate = fact.fhir_objectProperty(shortenedPropertyName, predicateResource.resource, definitionCanonical)
-            .addDataProperty(RDFS.comment, predicateName);
+        FHIRResource predicateResource = fact.fhir_objectProperty(shortenedPropertyName, definitionCanonical);
+
+        genPropertyModifierExtensions(shortenedPropertyName, predicateResource, targetClassName, definitionCanonical);
+        
+        // Polymorphic / Choice types
+        if (ed.getName().endsWith("[x]")) {
+            baseResource = getChoiceElementRestriction(baseResource, ed, shortenedPropertyName, predicateResource, definitionCanonical);
+            return;
+        }
+
+        // Monomorphic types
+        FHIRResource targetElementClass;
+        String targetTypeName = targetClassName;
+
+        if (ed.getTypes().isEmpty()) {  //subnodes
+            // Monomorphic complex type (no type specified, but has sub-elements)
+            targetElementClass = fact.fhir_class(targetClassName, innerIsBackbone ? "BackboneElement" : "Element");
+
+            // Recursively process sub-elements
+            processTypes(targetClassName, targetElementClass, ed, targetClassName, innerIsBackbone, definitionCanonical);
+
+        } else {
+            // Monomorphic simple type
+            TypeRef targetType = ed.getTypes().get(0);
+            String targetName = targetType.getName();
+            if (targetName.startsWith("@")) {        // Link to earlier definition
+                // "Content reference" to another defined type
+                ElementDefn targetRef = getElementForPath(targetName.substring(1));
+                // Target type name includes @
+                targetTypeName = targetRef.getName();
+                
+                // Remove @ from start of targetName (example: @ValueSet.compose.include)
+                targetClassName = targetName.charAt(0) == '@' ? targetName.substring(1) : targetName;
+                targetElementClass = fact.fhir_class(targetClassName, innerIsBackbone ? "BackboneElement" : "Element");
+
+            } else { // doesn't start with "@"
+                // A placeholder entry.  The rest of the information will be supplied elsewhere
+                targetElementClass = fact.fhir_class(targetName);
+                targetTypeName = targetName;
+
+                // Update property restriction target if type can have a reference OR is not a primitive type ("canonical" is both primitive and referenceable)
+                if (referenceTypes.contains(targetName) || isPrimitive(targetName)) {
+                    targetElementClass = getPropertyRestriction(targetType);
+                }
+            }
+
+            // XHTML the exception, in that the html doesn't derive from Primitive
+            if (targetName.equals("xhtml")) {
+                predicateResource = fact.fhir_dataProperty(shortenedPropertyName);
+            } else {
+                predicateResource = fact.fhir_objectProperty(shortenedPropertyName, definitionCanonical);
+                genPropertyModifierExtensions(shortenedPropertyName, predicateResource, targetClassName, definitionCanonical);
+            }
+        }
+
+        // Add provenance & definition annotations from source StructureDefinition for this element, except if it's a DataType (used in too many places)
+        if (!isDataType(targetTypeName)) {
+            targetElementClass.addProvenance(definitionCanonical);
+            targetElementClass.addDefinition(ed.getDefinition()).addDefinition(ed.getShortDefn());
+        }
+
+        // Annotate object with disambiguating title
+        predicateResource.addTitle(targetClassName + ": " + ed.getShortDefn());
+
+        // Add property restrictions
+        if(ed.getName().equals("modifierExtension") && ed.hasModifier()) {
+            // special case for modifierExtensions on original Resources having a cardinality of zero
+            baseResource.restriction(fact.fhir_class_cardinality_restriction(predicateResource.resource, targetElementClass.resource, 0, 0));
+        } else {
+            baseResource.restriction(
+                fact.fhir_class_cardinality_restriction(predicateResource.resource, 
+                    targetElementClass.resource, 
+                    ed.getMinCardinality(), 
+                    ed.getMaxCardinality()
+                )
+            );
+        }
+        if(!Utilities.noString(ed.getW5()))
+            predicateResource.addObjectProperty(RDFS.subPropertyOf, RDFNamespace.W5.resourceRef(ed.getW5()));
+    }
+
+    /**
+     * Generate restrictions for a choice element (e.g., value[x])
+     * @param baseResource FHIRResource for base resource
+     * @param ed Element definition to process
+     * @param shortenedPropertyName Shortened property name
+     * @param predicateResource FHIRResource for predicate
+     * @param definitionCanonical Canonical URL of the relevant StructureDefinition
+     * @return
+     * @throws Exception
+     */
+    private FHIRResource getChoiceElementRestriction(FHIRResource baseResource, ElementDefn ed, String shortenedPropertyName, FHIRResource predicateResource, String definitionCanonical) throws Exception {
+        // Choice entry
+        if (ed.typeCode().equals("*")) {
+            // Wild card -- any element works (probably should be more restrictive but...)
+            Resource targetResource = RDFNamespace.FHIR.resourceRef("Element");
+            baseResource.restriction(
+                    fact.fhir_class_cardinality_restriction(
+                            predicateResource.resource,
+                            targetResource,
+                            ed.getMinCardinality(),
+                            ed.getMaxCardinality()));
+        } else {
+            // Create a restriction on the union of possible types
+            List<Resource> typeRestrictions = new ArrayList<Resource>();
+            for (TypeRef tr : ed.getTypes()) {
+                Resource typeRestriction = getChoiceTypeRestriction(shortenedPropertyName, predicateResource, tr, definitionCanonical);
+                typeRestrictions.add(typeRestriction);
+            }
+            // Add the type restrictions
+            baseResource.restriction(fact.fhir_union(typeRestrictions));
+            // Add the cardinality restrictions separately here
+            baseResource.restriction(
+                fact.build_cardinality_restrictions(predicateResource.resource, 
+                    ed.getMinCardinality(), 
+                    ed.getMaxCardinality())
+            );
+        }
+        return baseResource;
+    }
+
+    /**
+     * Generate the restriction for one of the choice types
+     * @param shortenedPropertyName Shortened property name
+     * @param predicateResource FHIRResource for predicate
+     * @param typeRef TypeRef for the choice type
+     * @param definitionCanonical Canonical URL of the relevant StructureDefinition
+     * @return
+     * @throws Exception
+     */
+    private Resource getChoiceTypeRestriction(String shortenedPropertyName, FHIRResource predicateResource, TypeRef typeRef, String definitionCanonical) throws Exception {
+        FHIRResource targetRes = getPropertyRestriction(typeRef);
+
+        FHIRResource shortPredicate = fact.fhir_objectProperty(shortenedPropertyName, predicateResource.resource, definitionCanonical);
 
         return fact.create_empty_owl_restriction(shortPredicate.resource)
                     .addObjectProperty(OWL2.allValuesFrom, targetRes.resource)
                     .resource;
     }
 
-    private FHIRResource getPropertyRestriction(TypeRef typeRef, String definitionCanonical) {
-        FHIRResource targetRes;
+    /**
+     * Generate the appropriate restriction for a property
+     * @param typeRef
+     * @param definitionCanonical
+     * @return
+     */
+    private FHIRResource getPropertyRestriction(TypeRef typeRef) {
         String typeRefName = typeRef.getName();
-        if (referenceTypes.contains(typeRefName) && typeRef.hasParams()) {
-            // Build desired shape: intersectionOf( fhir:Reference/canonical , Restriction( onProperty fhir:link allValuesFrom ( Class unionOf ( targets ) ) ) )
-            Resource referenceClass = fact.fhir_class(typeRefName).resource;
-            List<Resource> targetClasses = new ArrayList<>();
-            List<String> typeRefParams = typeRef.getParams();
-            // System.out.println("Processing " + typeRefName + " with target types: " + String.join(", ", typeRefParams));
-            if (typeRefParams.isEmpty()) {
-                // No target types specified, so just return fhir:Reference
+
+        // If not a reference type, or a reference type with no target types specified, just return the base class
+        if (!referenceTypes.contains(typeRefName) || !typeRef.hasParams()) {
+            return fact.fhir_class(typeRefName);
+        }
+
+        // Build desired shape: intersectionOf( fhir:Reference/canonical , Restriction( onProperty fhir:link allValuesFrom ( Class unionOf ( targets ) ) ) )
+        Resource referenceClass = fact.fhir_class(typeRefName).resource;
+        List<Resource> targetClasses = new ArrayList<>();
+        List<String> typeRefParams = typeRef.getParams();
+        if (typeRefParams.isEmpty()) {
+            // No target types specified, so just return fhir:Reference
+            return fact.fhir_class(typeRefName);
+        }
+        for (String typeParam : typeRefParams) {
+            // Map target profile URL to its local name class (e.g., Patient, Group)
+            String tn = getResourceNameFromCanonical(typeParam);
+            
+            if ("Any".equals(tn)) {
+                // Reference can be any type, so skip the rest and just return fhir:Reference
                 return fact.fhir_class(typeRefName);
             }
-            for (String typeParam : typeRefParams) {
-                // Map target profile URL to its local name class (e.g., Patient, Group)
-                String tn = getResourceNameFromCanonical(typeParam);
-                
-                if ("Any".equals(tn)) {
-                    // Reference can be any type, so skip the rest and just return fhir:Reference
-                    return fact.fhir_class(typeRefName);
-                }
 
-                targetClasses.add(fact.fhir_class(tn).resource);
-            }
-            // Create a union class of all allowed target resource types
-            FHIRResource union = fact.owl_class_union(targetClasses);
-            // Build the restriction on fhir:link whose allValuesFrom points at the union class
-            Resource linkProp = RDFNamespace.FHIR.resourceRef(fhirRdfLinkName);
-            Resource linkRestriction = fact.fhir_restriction(linkProp)
-                    .addObjectProperty(OWL2.allValuesFrom, union.resource)
-                    .resource;
-            // Finally intersect fhir:Reference with that restriction
-            List<Resource> members = new ArrayList<>();
-            members.add(referenceClass);
-            // If it's a CodeableReference, the link restriction is on the inner Reference (fhir:reference)
-            if (typeRefName.equals("CodeableReference")) {
-                // Create an intersection class of fhir:Reference and the link restriction
-                Resource innerReference = fact.fhir_class("Reference").resource;
-                FHIRResource innerLinkIntersection = fact.owl_class_intersection(Arrays.asList(innerReference, linkRestriction));
-                // Create a restriction on fhir:reference whose allValuesFrom points at that intersection
-                Resource innerLinkProp = RDFNamespace.FHIR.resourceRef("reference");
-                Resource innerLinkRestriction = fact.fhir_restriction(innerLinkProp)
-                        .addObjectProperty(OWL2.allValuesFrom, innerLinkIntersection.resource)
-                        .resource;
-                members.add(innerLinkRestriction);
-            } else {
-                // Otherwise add directly on the reference type
-                members.add(linkRestriction);
-            }
-            targetRes = fact.owl_class_intersection(members);
-        } else {
-            targetRes = fact.fhir_class(typeRefName);
+            targetClasses.add(fact.fhir_class(tn).resource);
         }
-        return targetRes;
+        // Create a union class of all allowed target resource types
+        FHIRResource union = fact.owl_class_union(targetClasses);
+        // Build the restriction on fhir:link whose allValuesFrom points at the union class
+        Resource linkProp = RDFNamespace.FHIR.resourceRef(fhirRdfLinkName);
+        Resource linkRestriction = fact.fhir_restriction(linkProp)
+                .addObjectProperty(OWL2.allValuesFrom, union.resource)
+                .resource;
+        // Finally intersect fhir:Reference with that restriction
+        List<Resource> members = new ArrayList<>();
+        members.add(referenceClass);
+        // If it's a CodeableReference, the link restriction is on the inner Reference (fhir:reference)
+        if (typeRefName.equals("CodeableReference")) {
+            // Create an intersection class of fhir:Reference and the link restriction
+            Resource innerReference = fact.fhir_class("Reference").resource;
+            FHIRResource innerLinkIntersection = fact.owl_class_intersection(Arrays.asList(innerReference, linkRestriction));
+            // Create a restriction on fhir:reference whose allValuesFrom points at that intersection
+            Resource innerLinkProp = RDFNamespace.FHIR.resourceRef("reference");
+            Resource innerLinkRestriction = fact.fhir_restriction(innerLinkProp)
+                    .addObjectProperty(OWL2.allValuesFrom, innerLinkIntersection.resource)
+                    .resource;
+            members.add(innerLinkRestriction);
+        } else {
+            // Otherwise add directly on the reference type
+            members.add(linkRestriction);
+        }
+        return fact.owl_class_intersection(members);
     }
 
     private ElementDefn getElementForPath(String pathname) throws Exception {
@@ -632,6 +656,10 @@ public class FhirTurtleGenerator {
         return definitions.hasPrimitiveType(name)
                 || (name.endsWith("Type")
                 && definitions.getPrimitives().containsKey(name.substring(0, name.length()-4)));
+    }
+
+    protected boolean isDataType(String name) {
+        return definitions.getTypes().containsKey(name) || isPrimitive(name);
     }
 
     // used for shortening property names
