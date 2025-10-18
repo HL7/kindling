@@ -89,6 +89,27 @@ public class FHIRResource {
         return this;
     }
 
+    public FHIRResource addProvenance(String structureDefinitionCanonicalUrl) {
+        if (!Utilities.noString(structureDefinitionCanonicalUrl)) {
+            resource.addProperty(RDFS.isDefinedBy, ResourceFactory.createResource(structureDefinitionCanonicalUrl));
+        }
+        return this;
+    }
+
+    public FHIRResource addProvenance(Resource provenance) {
+        if (provenance != null) {
+            resource.addProperty(RDFS.isDefinedBy, provenance);
+        }
+        return this;
+    }
+
+    public FHIRResource addProvenance(FHIRResource provenance) {
+        if (provenance != null) {
+            resource.addProperty(RDFS.isDefinedBy, provenance.resource);
+        }
+        return this;
+    }
+
     public FHIRResource domain(FHIRResource d) {
         return addObjectProperty(RDFS.domain, d);
     }
