@@ -140,7 +140,7 @@ public class TurtleSpecGenerator extends OutputStreamWriter {
     }
 
     if (isReference) {
-      write("  fhir:l [ IRI ] ; # 0..1 Direct <span style=\"color: navy\"><a href=\"" + prefix + "rdf.html#reference\">RDF link</a> to the referenced resource</span>\r\n");
+      write("  fhir:l [ <a href=\"https://www.w3.org/TR/rdf11-concepts/#section-IRIs\">IRI</a> ] ; # 0..1 Direct <span style=\"color: navy\"><a href=\"" + prefix + "rdf.html#reference\">RDF link</a> (<a href=\"https://www.w3.org/TR/turtle/#sec-iri-references\">relative</a> or absolute) to the referenced resource</span>\r\n");
     }
 
     for (ElementDefn elem : root.getElements()) {
