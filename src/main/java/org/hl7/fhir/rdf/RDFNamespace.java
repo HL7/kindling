@@ -59,6 +59,7 @@ public class RDFNamespace {
         FHIR_SD.addNsPrefix(model);
         model.setNsPrefix("xsd", XSD.getURI());
         model.setNsPrefix("owl", OWL2.getURI());
+        model.setNsPrefix("dc", DC_11.getURI());
     }
 
     public String getPrefix() {
