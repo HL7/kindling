@@ -677,7 +677,6 @@ public class FhirTurtleGenerator {
             if (ed instanceof TypeDefn) {
                 StructureDefinition sdx = ((TypeDefn) ed).getProfile();
                 if (sdx != null && !Utilities.noString(sdx.getUrl())) {
-                    System.out.println("Found canonical for " + typeName + " via TypeDefn profile: " + sdx.getUrl());
                     url = sdx.getUrl();
                 }
             }

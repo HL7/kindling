@@ -88,7 +88,6 @@ public class TurtleSpecGenerator extends OutputStreamWriter {
     } else {
       rn = root.getName();
     }
-    System.out.println("root.getName() = " + root.getName() + " => rn = " + rn + " (resource = " + resource + ")");
 
     write("@prefix fhir: &lt;http://hl7.org/fhir/&gt; .");
     if (resource)
