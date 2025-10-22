@@ -188,7 +188,6 @@ public class FhirTurtleGenerator {
         Reference.restriction(fact.fhir_class_cardinality_restriction(link.resource, Resource.resource, 0, 1));
 
         // XHTML is an XML Literal -- but it isn't recognized by OWL so we use string
-        FHIRResource NarrativeDiv = fact.fhir_dataProperty("Narrative.div");
         String xhtmlCanonical = "http://hl7.org/fhir/StructureDefinition/xhtml";
         fact.fhir_class_with_provenance("xhtml", "PrimitiveType", xhtmlCanonical)
             .restriction(fact.fhir_class_cardinality_restriction(v, XSD.xstring, 1, 1));
@@ -217,13 +216,14 @@ public class FhirTurtleGenerator {
             }
 
             FHIRResource extensionResource = fact.fhir_class("Extension");
-            FHIRResource modifierExtensionResource = fact.fhir_class("modifierExtension", extensionResource.resource);
+
+            Resource modifierExtensionProperty = RDFNamespace.FHIR.resourceRef("modifierExtension");
 
             FHIRResource cardRestriction = fact.fhir_bnode().addType(OWL2.Restriction).addDataProperty(OWL2.minCardinality, "1", XSDDatatype.XSDinteger)
-                    .addObjectProperty(OWL2.onProperty, modifierExtensionResource);
+                    .addObjectProperty(OWL2.onProperty, modifierExtensionProperty);
             modResource.restriction(cardRestriction.resource);
             FHIRResource extRestriction = fact.fhir_bnode().addType(OWL2.Restriction)
-                    .addObjectProperty(OWL2.onProperty, modifierExtensionResource)
+                    .addObjectProperty(OWL2.onProperty, modifierExtensionProperty)
                     .addObjectProperty(OWL2.allValuesFrom, extensionResource);
             modResource.restriction(extRestriction.resource);
 
