@@ -204,11 +204,13 @@ public class FhirTurtleGenerator {
                 modResource.addObjectProperty(RDFS.subClassOf, parentRes);
             }
 
+            Resource modifierExtensionProperty = RDFNamespace.FHIR.resourceRef(("modifierExtension"));
+
             FHIRResource cardRestriction = fact.fhir_bnode().addType(OWL2.Restriction).addDataProperty(OWL2.minCardinality, "1", XSDDatatype.XSDinteger)
-                    .addObjectProperty(OWL2.onProperty, fact.fhir_class("modifierExtension"));
+                    .addObjectProperty(OWL2.onProperty, modifierExtensionProperty);
             modResource.restriction(cardRestriction.resource);
             FHIRResource extRestriction = fact.fhir_bnode().addType(OWL2.Restriction)
-                    .addObjectProperty(OWL2.onProperty, fact.fhir_class("modifierExtension"))
+                    .addObjectProperty(OWL2.onProperty, modifierExtensionProperty)
                     .addObjectProperty(OWL2.allValuesFrom, fact.fhir_class("Extension"));
             modResource.restriction(extRestriction.resource);
 
