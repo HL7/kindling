@@ -8,7 +8,7 @@
     <version>1.21.0-SNAPSHOT</version>
 
     <properties>
-        <fhirCoreVersion>6.7.2-SNAPSHOT</fhirCoreVersion>
+        <fhirCoreVersion>6.7.4-SNAPSHOT</fhirCoreVersion>
         <apachePoiVersion>5.4.1</apachePoiVersion>
         <jacksonVersion>2.16.0</jacksonVersion>
         <apacheHttpcomponentsVersion>4.5.13</apacheHttpcomponentsVersion>
