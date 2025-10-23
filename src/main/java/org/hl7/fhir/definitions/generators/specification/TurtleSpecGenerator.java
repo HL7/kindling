@@ -21,44 +21,46 @@ import org.hl7.fhir.utilities.Utilities;
 
 public class TurtleSpecGenerator extends OutputStreamWriter {
 
-	private String defPage;
-	private String dtRoot;
-	private Definitions definitions;
+  private String defPage;
+  private String dtRoot;
+  private Definitions definitions;
   private PageProcessor page;
   private String prefix;
   private String version; 
 
-	public TurtleSpecGenerator(OutputStream out, String defPage, String dtRoot, PageProcessor page, String prefix, String version) throws UnsupportedEncodingException {
-		super(out, "UTF-8");
-		this.defPage = defPage;
-		this.dtRoot = dtRoot == null ? "" : dtRoot;
-		this.definitions = page.getDefinitions();
-		this.page = page;
-		this.prefix = prefix;
-		this.version = version;
-	}
+  public TurtleSpecGenerator(OutputStream out, String defPage, String dtRoot, PageProcessor page, String prefix,
+      String version) throws UnsupportedEncodingException {
+    super(out, "UTF-8");
+    this.defPage = defPage;
+    this.dtRoot = dtRoot == null ? "" : dtRoot;
+    this.definitions = page.getDefinitions();
+    this.page = page;
+    this.prefix = prefix;
+    this.version = version;
+  }
 
   protected String getBindingLink(ElementDefn e) throws Exception {
     BindingSpecification bs = e.getBinding();
     if (bs == null)
       return "terminologies.html#unbound";
     if (bs.getValueSet() != null) 
-      return bs.getValueSet().hasUserData("external.url") ? bs.getValueSet().getUserString("external.url") : bs.getValueSet().getWebPath();
+      return bs.getValueSet().hasUserData("external.url") ? bs.getValueSet().getUserString("external.url")
+          : bs.getValueSet().getWebPath();
     else if (!Utilities.noString(bs.getReference()))
       return bs.getReference();      
     else 
       return "terminologies.html#unbound";
   }
 
-	public void generate(ElementDefn root, boolean isAbstract) throws Exception {
-		write("<pre class=\"spec\">\r\n");
+  public void generate(ElementDefn root, boolean isAbstract) throws Exception {
+    write("<pre class=\"spec\">\r\n");
 
-		generateInner(root, definitions.hasResource(root.getName()), isAbstract);
+    generateInner(root, definitions.hasResource(root.getName()), isAbstract);
 
-		write("</pre>\r\n");
-		flush();
-		close();
-	}
+    write("</pre>\r\n");
+    flush();
+    close();
+  }
 
   public void generateExtension(StructureDefinition ed) throws Exception {
     write("<pre class=\"spec\">\r\n");
@@ -71,20 +73,26 @@ public class TurtleSpecGenerator extends OutputStreamWriter {
   }
 
   private void generateInner(ElementDefn root, boolean resource, boolean isAbstract) throws IOException, Exception {
-		String rn;
-		if (root.getName().equals("Extension")) 
-		  rn = "extension|modifierExtension";
-		else if (root.getName().equals("Meta")) 
+    String rn;
+    Boolean isReference = false;
+    if (root.getName().equals("Extension")) {
+      rn = "extension|modifierExtension";
+    } else if (root.getName().equals("Meta")) {
       rn = "meta";
-		else if (root.getTypes().size() > 0 && (root.getTypes().get(0).getName().equals("Type")
-				|| (root.getTypes().get(0).getName().equals("Structure"))) || isAbstract)
-			rn = "[name]";
-		else 
-			rn = root.getName();
+    } else if (root.getTypes().size() > 0 && (root.getTypes().get(0).getName().equals("Type")
+        || (root.getTypes().get(0).getName().equals("Structure"))) || isAbstract) {
+      rn = "[name]";
+    } else if (root.getName().equals("Reference")) {
+      isReference = true;
+      rn = root.getName();
+    } else {
+      rn = root.getName();
+    }
 
     write("@prefix fhir: &lt;http://hl7.org/fhir/&gt; .");
-    if (resource) 
-      write("<span style=\"float: right\"><a title=\"Documentation for this format\" href=\""+prefix+"rdf.html\"><img src=\""+prefix+"help.png\" alt=\"doco\"/></a></span>\r\n");
+    if (resource)
+      write("<span style=\"float: right\"><a title=\"Documentation for this format\" href=\"" + prefix
+          + "rdf.html\"><img src=\"" + prefix + "help.png\" alt=\"doco\"/></a></span>\r\n");
     write("\r\n");
     write("\r\n");
     if (resource) {
@@ -104,23 +112,39 @@ public class TurtleSpecGenerator extends OutputStreamWriter {
       write("\r\n  fhir:nodeRole fhir:treeRoot; # if this is the parser root\r\n");
     } else
       write("[");
-		write("\r\n");
+      
+    write("\r\n");
+
     if (rn.equals(root.getName()) && resource) {
+      // Resources - Not Extension or Meta or "abstract"
       if (!Utilities.noString(root.typeCode())) {
-        write("  # from <a href=\""+prefix+"resource.html\">Resource</a>: <a href=\""+prefix+"resource.html#id\">.id</a>, <a href=\""+prefix+"resource.html#meta\">.meta</a>, <a href=\""+prefix+"resource.html#implicitRules\">.implicitRules</a>, and <a href=\""+prefix+"resource.html#language\">.language</a>\r\n");
-        if (root.typeCode().equals("DomainResource") || Utilities.existsInList(root.typeCode(), definitions.getInterfaceNames())) {
-          write("  # from <a href=\""+prefix+"domainresource.html\">DomainResource</a>: <a href=\""+prefix+"narrative.html#Narrative\">.text</a>, <a href=\""+prefix+"references.html#contained\">.contained</a>, <a href=\""+prefix+"extensibility.html\">.extension</a>, and <a href=\""+prefix+"extensibility.html#modifierExtension\">.modifierExtension</a>\r\n");
+        write("  # from <a href=\"" + prefix + "resource.html\">Resource</a>: <a href=\"" + prefix
+            + "resource.html#id\">fhir:id</a>, <a href=\"" + prefix + "resource.html#meta\">fhir:meta</a>, <a href=\"" + prefix
+            + "resource.html#implicitRules\">fhir:implicitRules</a>, and <a href=\"" + prefix
+            + "resource.html#language\">fhir:language</a>\r\n");
+        if (root.typeCode().equals("DomainResource")
+            || Utilities.existsInList(root.typeCode(), definitions.getInterfaceNames())) {
+          write("  # from <a href=\"" + prefix + "domainresource.html\">DomainResource</a>: <a href=\"" + prefix
+              + "narrative.html#Narrative\">fhir:text</a>, <a href=\"" + prefix
+              + "references.html#contained\">fhir:contained</a>, <a href=\"" + prefix
+              + "extensibility.html\">fhir:extension</a>, and <a href=\"" + prefix
+              + "extensibility.html#modifierExtension\">fhir:modifierExtension</a>\r\n");
         }
       }
     } else {
       if (root.typeCode().equals("BackboneElement"))
-        write(" # from BackboneElement: <a href=\""+prefix+"extensibility.html\">Element.extension</a>, <a href=\""+prefix+"extensibility.html\">BackboneElement.modifierextension</a>\r\n");
+        write(" # from BackboneElement: <a href=\""+prefix+"extensibility.html\">fhir:extension</a>, <a href=\""+prefix+"extensibility.html\">fhir:modifierextension</a>\r\n");
       else
-        write(" # from Element: <a href=\""+prefix+"extensibility.html\">Element.extension</a>\r\n");
+        write(" # from Element: <a href=\"" + prefix + "extensibility.html\">fhir:extension</a>\r\n");
     }
-		for (ElementDefn elem : root.getElements()) {
-		  generateCoreElem(elem, 1, root.getName(), rn.equals(root.getName()) && resource);
-		}
+
+    if (isReference) {
+      write("  fhir:l [ <a href=\"https://www.w3.org/TR/rdf11-concepts/#section-IRIs\">IRI</a> ] ; # 0..1 Direct <span style=\"color: navy\"><a href=\"" + prefix + "rdf.html#reference\">RDF link</a> (<a href=\"https://www.w3.org/TR/turtle/#sec-iri-references\">relative</a> or absolute) to the referenced resource</span>\r\n");
+    }
+
+    for (ElementDefn elem : root.getElements()) {
+      generateCoreElem(elem, 1, root.getName(), rn.equals(root.getName()) && resource);
+    }
 
     write("]\r\n");
 	}
