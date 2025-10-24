@@ -251,7 +251,7 @@ public class TurtleSpecGenerator extends OutputStreamWriter {
 
   private int renderType(int indent, int w, TypeRef t) throws IOException {
     if (t.isXhtml())
-      write("fhir:value \"[escaped xhtml]\"^^xsd:string");
+      write("fhir:v \"[escaped xhtml]\"^^rdf:XMLLiteral");
     else if (t.getName().startsWith("@"))
       write("<a href=\"#ttl-"+t.getName().substring(1)+"\"><span style=\"color: DarkViolet\">See "+t.getName().substring(1)+"</span></a>");     
     else if (definitions.getConstraints().containsKey(t.getName())) {
