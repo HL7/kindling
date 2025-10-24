@@ -239,7 +239,7 @@ public class TurtleSpecGenerator extends OutputStreamWriter {
     writeElementName(elem, path, en);
     if (elem.getMaxCardinality() > 1) write(" ( ");
     write("[ ");
-    if (insertTypeTriple) write(" a fhir:" + t.getName() + " ; ");
+    if (insertTypeTriple) write(" a fhir:" + getClassName(t.getName())+ " ; ");
     renderType(0, 0, t);
     write(" ]");
   }
@@ -310,5 +310,8 @@ public class TurtleSpecGenerator extends OutputStreamWriter {
     return w;
   }
 
+  private String getClassName(String name) {
+    return name.substring(0, 1).toUpperCase() + name.substring(1);
+  }
 
 }
