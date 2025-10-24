@@ -91,9 +91,12 @@ public class FHIRResourceFactory {
      * @return
      */
     public FHIRResource fhir_class(String name) {
+        return fhir_resource(getClassName(name), OWL2.Class, name);
+    }
+
+    public static String getClassName(String name) {
         // Uppercase the first letter of any class, including primitive types, to avoid ambiguity with properties
-        var className = Character.toUpperCase(name.charAt(0)) + name.substring(1);
-        return fhir_resource(className, OWL2.Class, name);
+        return name.substring(0, 1).toUpperCase() + name.substring(1);
     }
 
     /**

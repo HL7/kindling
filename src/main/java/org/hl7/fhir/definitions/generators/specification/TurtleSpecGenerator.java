@@ -16,6 +16,7 @@ import org.hl7.fhir.definitions.model.ProfiledType;
 import org.hl7.fhir.definitions.model.TypeRef;
 import org.hl7.fhir.r5.model.StructureDefinition;
 import org.hl7.fhir.r5.utils.TypesUtilities;
+import org.hl7.fhir.rdf.FHIRResourceFactory;
 import org.hl7.fhir.tools.publisher.PageProcessor;
 import org.hl7.fhir.utilities.Utilities;
 
@@ -239,7 +240,7 @@ public class TurtleSpecGenerator extends OutputStreamWriter {
     writeElementName(elem, path, en);
     if (elem.getMaxCardinality() > 1) write(" ( ");
     write("[ ");
-    if (insertTypeTriple) write(" a fhir:" + getClassName(t.getName())+ " ; ");
+    if (insertTypeTriple) write(" a fhir:" + FHIRResourceFactory.getClassName(t.getName())+ " ; ");
     renderType(0, 0, t);
     write(" ]");
   }
@@ -308,10 +309,6 @@ public class TurtleSpecGenerator extends OutputStreamWriter {
       w++;
     }
     return w;
-  }
-
-  private String getClassName(String name) {
-    return name.substring(0, 1).toUpperCase() + name.substring(1);
   }
 
 }
