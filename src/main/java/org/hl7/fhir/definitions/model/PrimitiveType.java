@@ -114,7 +114,7 @@ public class PrimitiveType extends DefinedCode {
     if (s.equals("integer"))
       return "Integer";
     if (s.equals("integer64"))
-      return "Integer"; // see https://chat.fhir.org/#narrow/stream/179266-fhirpath/topic/Integer64
+      return "Long"; // see https://chat.fhir.org/#narrow/stream/179266-fhirpath/topic/Integer64
     if (s.equals("decimal"))
       return "Decimal";
     
