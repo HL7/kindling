@@ -282,10 +282,10 @@ public class ResourceValidator extends BaseValidator {
         hints++;
     }
     boolean ok = warnings == 0 || "0".equals(rd.getFmmLevel());
-    if (rule(errors, ValidationMessage.NO_RULE_DATE, IssueType.STRUCTURE, rd.getName(), ok, "Resource " + rd.getName() + " (FMM=" + rd.getFmmLevel() + ") cannot have an FMM level > 0 (" + rd.getFmmLevel() + ") if it has warnings"))
-      rule(errors, ValidationMessage.NO_RULE_DATE, IssueType.STRUCTURE, rd.getName(), vsWarnings == 0 || "0".equals(rd.getFmmLevel()), "Resource " + rd.getName() + " (FMM=" + rd.getFmmLevel() + ") cannot have an FMM level >1 (" + rd.getFmmLevel() + ") if it has linked value set warnings (" + vsWarns.toString() + ")");
-    ok = hints == 0 || Integer.parseInt(rd.getFmmLevel()) < 3;
-    rule(errors, ValidationMessage.NO_RULE_DATE, IssueType.STRUCTURE, rd.getName(), ok, "Resource " + rd.getName() + " (FMM=" + rd.getFmmLevel() + ") cannot have an FMM level >2 (" + rd.getFmmLevel() + ") if it has informational hints");
+//    if (rule(errors, ValidationMessage.NO_RULE_DATE, IssueType.STRUCTURE, rd.getName(), ok, "Resource " + rd.getName() + " (FMM=" + rd.getFmmLevel() + ") cannot have an FMM level > 0 (" + rd.getFmmLevel() + ") if it has warnings"))
+//      rule(errors, ValidationMessage.NO_RULE_DATE, IssueType.STRUCTURE, rd.getName(), vsWarnings == 0 || "0".equals(rd.getFmmLevel()), "Resource " + rd.getName() + " (FMM=" + rd.getFmmLevel() + ") cannot have an FMM level >1 (" + rd.getFmmLevel() + ") if it has linked value set warnings (" + vsWarns.toString() + ")");
+//    ok = hints == 0 || Integer.parseInt(rd.getFmmLevel()) < 3;
+//    rule(errors, ValidationMessage.NO_RULE_DATE, IssueType.STRUCTURE, rd.getName(), ok, "Resource " + rd.getName() + " (FMM=" + rd.getFmmLevel() + ") cannot have an FMM level >2 (" + rd.getFmmLevel() + ") if it has informational hints");
 
     //    if (isInterface(rd.getRoot().typeCode())) {
     //      checkInterface(errors, rd, definitions.getBaseResources().get(rd.getRoot().typeCode()));
@@ -456,7 +456,6 @@ public class ResourceValidator extends BaseValidator {
     for (ElementDefn child : ed.getElements()) {
       buildW5Mappings(child, false);
     }
-
   }
 
   private String translateW5(String w5) {
@@ -466,7 +465,7 @@ public class ResourceValidator extends BaseValidator {
     if ("class".equals(w5)) return "FiveWs.class";
     if ("grade".equals(w5)) return "FiveWs.grade";
     if ("what".equals(w5)) return "FiveWs.what[x]";
-    if ("who.focus".equals(w5)) return "FiveWs.subject[x]";
+    if ("who.focus".equals(w5)) return "FiveWs.subject";
     if ("context".equals(w5)) return "FiveWs.context";
     if ("when.init".equals(w5)) return "FiveWs.init";
     if ("when.planned".equals(w5)) return "FiveWs.planned";

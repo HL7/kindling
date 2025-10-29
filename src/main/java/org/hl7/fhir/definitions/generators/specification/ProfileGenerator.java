@@ -1977,7 +1977,7 @@ public class ProfileGenerator {
     W5Entry e = definitions.getW5s().get(w5);
     if (e == null && w5.contains(".")) {
       e = definitions.getW5s().get(w5.substring(0, w5.indexOf("."))); 
-      if (e.getSubClasses().contains(w5.substring(w5.indexOf(".")+1))) {
+      if (e != null && e.getSubClasses().contains(w5.substring(w5.indexOf(".")+1))) {
         return w5;
       }
     }
