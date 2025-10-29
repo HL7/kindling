@@ -150,7 +150,7 @@ public class SearchParameterCleanerUpper {
     case STRING:
       return Utilities.existsInList(t, "string", "Address", "HumanName");
     case TOKEN:
-      return Utilities.existsInList(t, "booolean", "canonical", "code", "id", "Coding", "CodeableConcept", "Quantity", "ContactPoint", "Identifier");
+      return Utilities.existsInList(t, "boolean", "canonical", "code", "id", "Coding", "CodeableConcept", "Quantity", "ContactPoint", "Identifier");
     case URI:
       return Utilities.existsInList(t, "canonical", "oid", "url", "uri", "uuid");
     default:
