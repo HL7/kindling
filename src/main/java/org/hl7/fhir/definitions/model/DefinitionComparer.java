@@ -772,12 +772,7 @@ public class DefinitionComparer {
       res = false;
       System.out.println("Definitions differ @"+path+": svgWidth = "+left.getSvgWidth()+" vs "+right.getSvgWidth());
     }
-    
-    if (left.getStandardsStatus() != right.getStandardsStatus() && left.getStandardsStatus() != null) {
-      res = false;
-      System.out.println("Definitions differ @"+path+": standardsStatus = "+left.getStandardsStatus()+" vs "+right.getStandardsStatus());
-    }
-    
+
     if (!integersMatch(left.getMinCardinality(), right.getMinCardinality())) {
       res = false;
       System.out.println("Definitions differ @"+path+": minCardinality = "+left.getMinCardinality()+" vs "+right.getMinCardinality());

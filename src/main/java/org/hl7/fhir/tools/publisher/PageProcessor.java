@@ -917,7 +917,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
       } else if (com[0].equals("fmm-style")) {
         String fmm = resource == null ? "N/A" :  ExtensionUtilities.readStringExtension((DomainResource) resource, ExtensionDefinitions.EXT_FMM_LEVEL);
         StandardsStatus ss = ExtensionUtilities.getStandardsStatus((DomainResource) resource);
-        src = s1+fmmBarColorStyle(ss, fmm)+s3;
+        src = s1+fmmBarColorStyle(ss)+s3;
       } else if (com[0].equals("fmm")) {
         String fmm = resource == null || !(resource instanceof CanonicalResource) ? getFmm(com[1], false) : ExtensionUtilities.readStringExtension((DomainResource) resource, ExtensionDefinitions.EXT_FMM_LEVEL);
         StandardsStatus ss = ExtensionUtilities.getStandardsStatus((DomainResource) resource);
@@ -974,9 +974,9 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
           st = ExtensionUtilities.getStandardsStatus((DomainResource) resource);
         src = s1+(st == StandardsStatus.NORMATIVE ? getNormativeNote(genlevel(level), p, com[1], wt, file) : "")+s3;
       } else if (com[0].equals("fmmshort")) {
-        String fmm = resource == null || !(resource instanceof CanonicalResource) ? getFmm(com[1], true) : ExtensionUtilities.readStringExtension((DomainResource) resource, ExtensionDefinitions.EXT_FMM_LEVEL);
-        String npr = resource == null || !(resource instanceof CanonicalResource) ? getNormativePackageRef(com[1]) : "";
-        src = s1+fmm+npr+s3;
+//        String fmm = resource == null || !(resource instanceof CanonicalResource) ? getFmm(com[1], true) : ExtensionUtilities.readStringExtension((DomainResource) resource, ExtensionDefinitions.EXT_FMM_LEVEL);
+//        String npr = resource == null || !(resource instanceof CanonicalResource) ? getNormativePackageRef(com[1]) : "";
+        src = s1+s3;
       } else if (com[0].equals("normative-pages")) {
         src = s1+getNormativeList(genlevel(level), com[1])+s3;
       } else if (s2.startsWith("search-additions\r\n")) {
@@ -1576,12 +1576,11 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     if (td == null) {
       throw new Error("not found: "+tn);
     }
-    String clss = fmmBarColorStyle(td.getStandardsStatus(), td.getFmmLevel());
+    String clss = fmmBarColorStyle(StandardsStatus.NORMATIVE);
     String wgref = "http://www.hl7.org/Special/committees/fiwg/index.cfm";
     String wgn = "FHIR Infrastructure";
     return "<table class=\""+clss+"\" style=\"margin-bottom: 0px\"><tr><td><a href=\""+wgref+"\">"+wgn+"</a> Work Group</td>"+
-    "<td><a href=\"versions.html#maturity\">Maturity Level</a>: "+td.getFmmLevel()+"</td>"+
-    "<td><a href=\"versions.html#std-process\">Standards Status</a>: <a href=\"versions.html#std-process\" title=\"Standard Status\">"+td.getStandardsStatus().toDisplay()+"</a></td></tr></table>";
+      "<td><a href=\"versions.html#std-process\">Standards Status</a>: <a href=\"versions.html#std-process\" title=\"Standard Status\">"+StandardsStatus.NORMATIVE.toDisplay()+"</a></td></tr></table>";
   }
 
   private String genJiralink(String file, String rn) {
@@ -2131,10 +2130,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
         if (rn.startsWith(Integer.toString(i))) {
           String r = rn.substring(2);
           ResourceDefn rd = definitions.getResourceByName(r);
-          if (rd.getNormativePackage() != null || rd.getNormativeVersion() != null)
-            b.append("  <li><a title=\"[%resdesc "+r+"%]\" href=\""+r.toLowerCase()+".html\">"+r+"</a> <a href=\"versions.html#std-process\"  title=\"Normative Content\" class=\"normative-flag\">N</a></li>\r\n");
-          else
-            b.append("  <li><a title=\"[%resdesc "+r+"%]\" href=\""+r.toLowerCase()+".html\">"+r+"</a></li>\r\n");
+          b.append("  <li><a title=\"[%resdesc "+r+"%]\" href=\""+r.toLowerCase()+".html\">"+r+"</a></li>\r\n");
         }
       }
       b.append("</ul>\r\n");
@@ -4334,8 +4330,8 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     StringBuilder b = new StringBuilder();
     b.append("<ul class=\"nav nav-tabs\">");
     b.append(makeHeaderTab("Datatypes", "datatypes.html", mode==null || "base".equals(mode)));
-    b.append(makeHeaderTab("Examples", "datatypes-examples.html", mode==null || "examples".equals(mode)));
     b.append(makeHeaderTab("Detailed Descriptions", "datatypes-definitions.html", mode==null || "definitions".equals(mode)));
+    b.append(makeHeaderTab("Examples", "datatypes-examples.html", mode==null || "examples".equals(mode)));
     b.append(makeHeaderTab("Mappings", "datatypes-mappings.html", mode==null || "mappings".equals(mode)));
     b.append(makeHeaderTab("Profiles", "datatypes-profiles.html", mode==null || "profiles".equals(mode)));
     b.append(makeHeaderTab("Extensions", extensionsLocation+"extensions-datatypes.html", mode==null || "extensions".equals(mode)));
@@ -4359,8 +4355,8 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     StringBuilder b = new StringBuilder();
     b.append("<ul class=\"nav nav-tabs\">");
     b.append(makeHeaderTab("MetaDatatypes", "metadatatypes.html", mode==null || "base".equals(mode)));
-    b.append(makeHeaderTab("Examples", "metadatatypes-examples.html", mode==null || "examples".equals(mode)));
     b.append(makeHeaderTab("Detailed Descriptions", "metadatatypes-definitions.html", mode==null || "definitions".equals(mode)));
+    b.append(makeHeaderTab("Examples", "metadatatypes-examples.html", mode==null || "examples".equals(mode)));
     b.append(makeHeaderTab("Mappings", "metadatatypes-mappings.html", mode==null || "mappings".equals(mode)));
     b.append(makeHeaderTab("Profiles", "metadatatypes-profiles.html", mode==null || "profiles".equals(mode)));
     b.append(makeHeaderTab("Extensions", extensionsLocation+"extensions-metadatatypes.html", mode==null || "extensions".equals(mode)));
@@ -4372,8 +4368,8 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     StringBuilder b = new StringBuilder();
     b.append("<ul class=\"nav nav-tabs\">");
     b.append(makeHeaderTab("Module Metadata", "modulemetadata.html", mode==null || "base".equals(mode)));
-    b.append(makeHeaderTab("Examples", "modulemetadata-examples.html", mode==null || "examples".equals(mode)));
     b.append(makeHeaderTab("Detailed Descriptions", "modulemetadata-definitions.html", mode==null || "definitions".equals(mode)));
+    b.append(makeHeaderTab("Examples", "modulemetadata-examples.html", mode==null || "examples".equals(mode)));
     b.append(makeHeaderTab("Mappings", "modulemetadata-mappings.html", mode==null || "mappings".equals(mode)));
     b.append("</ul>\r\n");
     return b.toString();
@@ -4409,8 +4405,8 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     b.append("<ul class=\"nav nav-tabs\">");
     String t = type.toLowerCase();
     b.append(makeHeaderTab(type+" Detail", t+".html", mode==null || "base".equals(mode)));
-    b.append(makeHeaderTab("Examples", t+"-examples.html", mode==null || "examples".equals(mode)));
     b.append(makeHeaderTab("Detailed Descriptions", t+"-definitions.html", mode==null || "definitions".equals(mode)));
+    b.append(makeHeaderTab("Examples", t+"-examples.html", mode==null || "examples".equals(mode)));
     b.append(makeHeaderTab("Mappings", t+"-mappings.html", mode==null || "mappings".equals(mode)));
     b.append(makeHeaderTab("Profiles", t+"-profiles.html", mode==null || "profiles".equals(mode)));
     b.append(makeHeaderTab("Extensions", extensionsLocation+"extensions-"+type+".html", mode==null || "extensions".equals(mode)));
@@ -4423,9 +4419,9 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     StringBuilder b = new StringBuilder();
     b.append("<ul class=\"nav nav-tabs\">");
     b.append(makeHeaderTab("Extensibility", "extensibility.html", mode==null || "base".equals(mode)));
+    b.append(makeHeaderTab("Detailed Descriptions", "extensibility-definitions.html", mode==null || "definitions".equals(mode)));
     b.append(makeHeaderTab("Defining Extensions", "defining-extensions.html", mode==null || "defining".equals(mode)));
     b.append(makeHeaderTab("Examples", "extensibility-examples.html", mode==null || "examples".equals(mode)));
-    b.append(makeHeaderTab("Detailed Descriptions", "extensibility-definitions.html", mode==null || "definitions".equals(mode)));
     b.append(makeHeaderTab("Registry", extensionsLocation+"extension-registry.html", mode==null || "registry".equals(mode)));
     b.append("</ul>\r\n");
     return b.toString();
@@ -4435,8 +4431,8 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     StringBuilder b = new StringBuilder();
     b.append("<ul class=\"nav nav-tabs\">");
     b.append(makeHeaderTab("Narrative", "narrative.html", mode==null || "base".equals(mode)));
-    b.append(makeHeaderTab("Examples", "narrative-examples.html", mode==null || "examples".equals(mode)));
     b.append(makeHeaderTab("Detailed Descriptions", "narrative-definitions.html", mode==null || "definitions".equals(mode)));
+    b.append(makeHeaderTab("Examples", "narrative-examples.html", mode==null || "examples".equals(mode)));
     b.append("</ul>\r\n");
     return b.toString();
   }
@@ -4454,8 +4450,8 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     StringBuilder b = new StringBuilder();
     b.append("<ul class=\"nav nav-tabs\">");
     b.append(makeHeaderTab("Resource Definitions", "resource.html", mode==null || "base".equals(mode)));
-    b.append(makeHeaderTab("Examples", "resources-examples.html", mode==null || "examples".equals(mode)));
     b.append(makeHeaderTab("Detailed Descriptions", "resources-definitions.html", mode==null || "definitions".equals(mode)));
+    b.append(makeHeaderTab("Examples", "resources-examples.html", mode==null || "examples".equals(mode)));
     b.append("</ul>\r\n");
     return b.toString();
   }
@@ -4523,9 +4519,9 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     b.append("<ul class=\"nav nav-tabs\">");
 
     b.append(makeHeaderTab("Content", n+".html", mode==null || "base".equals(mode)));
+    b.append(makeHeaderTab("Detailed Descriptions", n+"-definitions.html", "definitions".equals(mode)));
     if (hasExamples)
       b.append(makeHeaderTab("Examples", n+"-examples.html", mode==null || "examples".equals(mode)));
-    b.append(makeHeaderTab("Detailed Descriptions", n+"-definitions.html", "definitions".equals(mode)));
     b.append(makeHeaderTab("Mappings", n+"-mappings.html", "mappings".equals(mode)));
     //    if (!isDict && !n.equals("elementdefinition-de")) // todo: do this properly
     //      b.append(makeHeaderTab("HTML Form", n+"-questionnaire.html", "questionnaire".equals(mode)));
@@ -4743,13 +4739,13 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     b.append("<ul class=\"nav nav-tabs\">");
 
     b.append(makeHeaderTab("Content", n+".html", mode==null || "content".equals(mode)));
-    if (!isAbstract)
-      b.append(makeHeaderTab("Examples", n+"-examples.html", "examples".equals(mode)));
     b.append(makeHeaderTab("Detailed Descriptions", n+"-definitions.html", "definitions".equals(mode)));
-    if (!isAbstract)
-      b.append(makeHeaderTab("Mappings", n+"-mappings.html", "mappings".equals(mode)));
-    b.append(makeHeaderTab("Operations", n+"-operations.html", "operations".equals(mode)));
     b.append(makeHeaderTab("Search Params", n+"-search.html", "search".equals(mode)));
+    if (!isAbstract) {
+      b.append(makeHeaderTab("Mappings", n + "-mappings.html", "mappings".equals(mode)));
+      b.append(makeHeaderTab("Examples", n + "-examples.html", "examples".equals(mode)));
+    }
+    b.append(makeHeaderTab("Operations", n+"-operations.html", "operations".equals(mode)));
     b.append(makeHeaderTab("Profiles", n+"-profiles.html", "profiles".equals(mode)));
     if (!Utilities.existsInList(n, "devicealert", "insuranceproduct", "personalrelationship", "moleculardefinition", "clinicalassessment")) {
       b.append(makeHeaderTab("Extensions", extensionsLocation+"extensions-"+ ("Resource".equals(res.getName()) ? "resource" : res.getName())+".html", "extensions".equals(mode)));
@@ -4792,9 +4788,9 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
 
     b.append(makeHeaderTab("Content", n+".html", mode==null || "content".equals(mode)));
     b.append(makeHeaderTab("Detailed Descriptions", n+"-definitions.html", "definitions".equals(mode)));
+    b.append(makeHeaderTab("Search Params", n+"-search.html", "search".equals(mode)));
     b.append(makeHeaderTab("Mappings", n+"-mappings.html", "mappings".equals(mode)));
     b.append(makeHeaderTab("Operations", n+"-operations.html", "operations".equals(mode)));
-    b.append(makeHeaderTab("Search Params", n+"-search.html", "search".equals(mode)));
     b.append(makeHeaderTab("Profiles", n+"-profiles.html", "profiles".equals(mode)));
     b.append(makeHeaderTab("Extensions", extensionsLocation+"extensions-"+("Resource".equals(title) ? "resource" : title)+".html", "profiles".equals(mode)));
 
@@ -7698,16 +7694,16 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     if (resource.getNormativePackage() != null || resource.getNormativeVersion() != null)
       return "colsn";
     else {
-      return fmmBarColorStyle(resource.getStatus(), resource.getFmmLevel());
+      return fmmBarColorStyle(StandardsStatus.NORMATIVE);
     }
   }
 
-  public String fmmBarColorStyle(StandardsStatus status, String fmm) {
+  public String fmmBarColorStyle(StandardsStatus status) {
     if (status == null)
-      return "0".equals(fmm) ? "colsd" : "colstu";
+      return "colsti";
     switch (status) {
     case DRAFT: return "colsd";
-    case TRIAL_USE: return "0".equals(fmm) ? "colsd" : "colstu"; 
+    case TRIAL_USE: return "colstu";
     case NORMATIVE: return "colsn";
     case INFORMATIVE: return "colsi";
     case EXTERNAL: return "colse";
@@ -9507,7 +9503,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
       } else if (com[0].equals("fmm-style")) {
         String fmm = ExtensionUtilities.readStringExtension(profile.getResource(), ExtensionDefinitions.EXT_FMM_LEVEL);
         StandardsStatus ss = ExtensionUtilities.getStandardsStatus(profile.getResource());
-        src = s1+fmmBarColorStyle(ss, fmm)+s3;
+        src = s1+fmmBarColorStyle(ss)+s3;
       } else if (com[0].equals("fmm")) {
         String fmm = profile.getFmm();
         if (Utilities.noString(fmm))
@@ -10031,7 +10027,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
       } else if (com[0].equals("fmm-style"))  {
         String fmm = ed == null ? "N/A" :  ExtensionUtilities.readStringExtension(ed, ExtensionDefinitions.EXT_FMM_LEVEL);
         StandardsStatus ss = ExtensionUtilities.getStandardsStatus(ed);
-        src = s1+fmmBarColorStyle(ss, fmm)+s3;
+        src = s1+fmmBarColorStyle(ss)+s3;
       } else if (com[0].equals("fmm")) {
         String fmm = ExtensionUtilities.readStringExtension(ed, ExtensionDefinitions.EXT_FMM_LEVEL);
         StandardsStatus ss = ExtensionUtilities.getStandardsStatus(ed);
@@ -10482,7 +10478,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     breadCrumbManager.setDefinitions(definitions);
     ITerminologyClient client;
     try {
-      client = new TerminologyClientR5("tx-dev.fhir.org", tsServer, "fhir/main-build");
+      client = new TerminologyClientR5("tx.fhir.org", tsServer, "fhir/main-build");
 //      client.setLogger(new TextClientLogger(Utilities.path("[tmp]", "tx-main-build.log")));
       client.setTimeoutFactor(2);
     } catch(Exception e) {
@@ -11093,7 +11089,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
       else if (com[0].equals("fmm-style")) {
         String fmm = pack.getFmmLevel();
         StandardsStatus ss = pack.getStandardsStatus();
-        src = s1+fmmBarColorStyle(ss, fmm)+s3;
+        src = s1+fmmBarColorStyle(ss)+s3;
       } else if (com[0].equals("package.search"))
         src = s1+getSearch(pack)+s3;
       else if (com[0].equals("search-location"))
@@ -11510,6 +11506,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     } else
       return "&nbsp;<a href=\"versions.html#std-process\" title=\"Standard Status\">"+rd.getStatus().toDisplay()+"</a>";
   }
+
   private String getFmm(String resourceName, boolean hideNormative) throws Exception {
     ResourceDefn rd = definitions.getResourceByName(resourceName);
     if (rd == null)
@@ -11534,13 +11531,14 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
   }
 
   private String getFmmShort(String resourceName) throws Exception {
-    ResourceDefn rd = definitions.getResourceByName(resourceName);
-    if (rd == null)
-      throw new Exception("unable to find resource '"+resourceName+"'");
-    if (rd.getNormativePackage() != null || rd.getNormativeVersion() != null)
-      return "<a href=\"versions.html#std-process\" title=\"Normative Content\" class=\"normative-flag\">N</a>";
-    else
-      return "<a href=\"versions.html#std-process\" style=\"color: maroon; opacity: 0.7\" title=\"Maturity Level\">"+rd.getFmmLevel()+"</a>";
+    return "";
+//    ResourceDefn rd = definitions.getResourceByName(resourceName);
+//    if (rd == null)
+//      throw new Exception("unable to find resource '"+resourceName+"'");
+//    if (rd.getStatus() == StandardsStatus.NORMATIVE || rd.getNormativePackage() != null || rd.getNormativeVersion() != null)
+//      return "<a href=\"versions.html#std-process\" title=\"Normative Content\" class=\"normative-flag\">N</a>";
+//    else
+//      return "<a href=\"versions.html#std-process\" style=\"color: maroon; opacity: 0.7\" title=\"Maturity Level\">"+rd.getFmmLevel()+"</a>";
   }
 
   private String getFmmFromlevel(String prefix, String level) throws Exception {
@@ -11548,10 +11546,11 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
   }
 
   private String getFmmShortFromlevel(String prefix, String level) throws Exception {
-    if (level == "n/a")
-      return "";
-    else
-      return "<a href=\""+prefix+"versions.html#std-process\" style=\"color: maroon; opacity: 0.7\" title=\"Maturity Level\">"+(Utilities.noString(level) ? "0" : level)+"</a>";
+    return "";
+//    if (level == "n/a")
+//      return "";
+//    else
+//      return "<a href=\""+prefix+"versions.html#std-process\" style=\"color: maroon; opacity: 0.7\" title=\"Maturity Level\">"+(Utilities.noString(level) ? "0" : level)+"</a>";
   }
 
   private String getXcm(String param) {
@@ -11889,12 +11888,9 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     Collections.sort(list, new SearchParameterListSorter());
     if (list.size() > 0) {
       StandardsStatus bss = definitions.getResourceByName(base).getStatus();
-      b.append("<tr><td colspan=\"5\" style=\"background-color: #dddddd\"><b><a href=\""+base.toLowerCase()+".html\">"+base+"</a><a name=\""+base.toLowerCase()+"\"> </a></b>"+makeStandardsStatusRef(bss)+"</td></tr>\r\n");
+      b.append("<tr><td colspan=\"5\" style=\"background-color: #dddddd\"><b><a href=\""+base.toLowerCase()+".html\">"+base+"</a><a name=\""+base.toLowerCase()+"\"> </a></b></td></tr>\r\n");
       for (SearchParameter sp : list) {
         String ss = "";
-        StandardsStatus spss = ExtensionUtilities.getStandardsStatus(sp);
-        if (spss != null && spss != bss)
-          ss = makeStandardsStatusRef(spss);
         if (sp.getBase().size() > 1) {
           SearchParameterDefn spd = definitions.getResourceByName(base).getSearchParams().get(sp.getCode());
           b.append("<tr><td>"+sp.getCode()+ss+"</td><td><a href=\"search.html#"+sp.getType().toCode()+"\">"+sp.getType().toCode()+"</a></td><td>"+sp.getId()+"</td><td>"+processMarkdown("allsearchparams", spd.getDescription(), "")+"</td><td>"+Utilities.escapeXml(spd.getExpression()).replace(".", ".&#8203;")+"</td></tr>\r\n");

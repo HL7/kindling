@@ -91,8 +91,6 @@ public class TableGenerator extends BaseGenerator {
     }
     if (rootStatus != null)
       gc.addStyledText("Standards Status = "+rootStatus.toDisplay(), rootStatus.getAbbrev(), "black", rootStatus.getColor(), prefix+"versions.html#std-process", true);
-    else if (e.getStandardsStatus() != null)
-      gc.addStyledText("Standards Status = "+e.getStandardsStatus().toDisplay(), e.getStandardsStatus().getAbbrev(), "black", e.getStandardsStatus().getColor(), prefix+"versions.html#std-process", true);
     if (resource) {
       row.getCells().add(gen.new Cell()); 
   

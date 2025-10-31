@@ -505,7 +505,6 @@ public class ResourceParser {
     
     ProfileUtilities pu = new ProfileUtilities(context, null, null);
     r.setRoot(parseTypeDefinition(pu, sd.getDifferential().getElementFirstRep(), sd));
-    r.getRoot().setFmmLevel(r.getFmmLevel());
     r.getRoot().setRequirements(r.getRequirements());
     if (r.isAbstract()) {
       r.getRoot().setAbstractType(true);
@@ -608,14 +607,6 @@ public class ResourceParser {
       ed.setTranslatable(ExtensionUtilities.readBoolExtension(focus, BuildExtensions.EXT_TRANSLATABLE));
     }
     ed.setOrderMeaning(focus.getOrderMeaning());
-    if (ExtensionUtilities.hasExtension(focus, BuildExtensions.EXT_STANDARDS_STATUS)) {
-      Extension sse = ExtensionUtilities.getExtension(focus, BuildExtensions.EXT_STANDARDS_STATUS);
-      ed.setStandardsStatus(StandardsStatus.fromCode(sse.getValue().primitiveValue()));
-      Extension ssr = sse.getValue().getExtensionByUrl(ExtensionDefinitions.EXT_STANDARDS_STATUS_REASON);
-      if (ssr != null) {
-        ed.setStandardsStatusReason(ssr.getValue().primitiveValue());
-      }
-    }
     if (ExtensionUtilities.hasExtension(focus, BuildExtensions.EXT_NORMATIVE_VERSION)) {
       ed.setNormativeVersion(ExtensionUtilities.readStringExtension(focus, BuildExtensions.EXT_NORMATIVE_VERSION));
     }

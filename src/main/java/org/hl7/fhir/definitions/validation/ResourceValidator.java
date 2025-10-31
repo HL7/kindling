@@ -123,11 +123,9 @@ public class ResourceValidator extends BaseValidator {
     ResourceDefn fakeParent = new ResourceDefn();
     fakeParent.setRoot((TypeDefn) structure);
     fakeParent.setWg(definitions.getWorkgroups().get("fhir"));
-    fakeParent.setFmmLevel(fakeParent.getRoot().getFmmLevel());
-    fakeParent.setStatus(fakeParent.getRoot().getStandardsStatus());
     if (fakeParent.getStatus() == StandardsStatus.NORMATIVE)
       fakeParent.setNormativeVersion("4.0.0");
-    checkElement(errors, structure.getName(), structure, fakeParent, null, true, false, hasSummary(structure), new ArrayList<String>(), true, structure.getStandardsStatus(), new HashSet<>());
+    checkElement(errors, structure.getName(), structure, fakeParent, null, true, false, hasSummary(structure), new ArrayList<String>(), true, StandardsStatus.NORMATIVE, new HashSet<>());
   }
 
   private boolean hasSummary(ElementDefn structure) {
@@ -673,18 +671,11 @@ public class ResourceValidator extends BaseValidator {
     if (e.typeCode().startsWith("Reference"))
       patternFinder.registerReference(parent.getRoot(), e);
 
-    if (status == StandardsStatus.NORMATIVE && e.getStandardsStatus() == null && e.getTypes().size() == 1) {
+    if (status == StandardsStatus.NORMATIVE && e.getTypes().size() == 1) {
       if (definitions.hasElementDefn(e.typeCode())) {
         TypeDefn t = definitions.getElementDefn(e.typeCode());
-        if (t != null && t.getStandardsStatus() != StandardsStatus.NORMATIVE) {
-          e.setStandardsStatus(t.getStandardsStatus());
-          e.setStandardsStatusReason(t.getStandardsStatusReason());
-        }
         e.setNormativeVersion(null);
       }
-    }
-    if (e.getStandardsStatus() != null) {
-      status = e.getStandardsStatus();
     }
     if (!hasSummary)
       e.setSummaryItem(true);

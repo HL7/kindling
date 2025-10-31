@@ -819,7 +819,7 @@ public class ProfileGenerator {
     p.setType(t.getName());
     p.setFhirVersion(version);
     p.setVersion(version.toCode());
-    ExtensionUtilities.setStandardsStatus(p, t.getStandardsStatus(), t.getNormativeVersion());
+    ExtensionUtilities.setStandardsStatus(p, StandardsStatus.NORMATIVE, t.getNormativeVersion());
     KindlingUtilities.makeUniversal(p);
     populateCharacteristics(p, t.getCharacteristics());
 
@@ -830,7 +830,7 @@ public class ProfileGenerator {
     p.setDescription(t.getName()+" Type: "+t.getDefinition());
     p.setPurpose(t.getRequirements());
     p.setDate(genDate.getTime());
-    p.setStatus(t.getStandardsStatus() == StandardsStatus.NORMATIVE ?  PublicationStatus.fromCode("active") : PublicationStatus.fromCode("draft")); 
+    p.setStatus(PublicationStatus.fromCode("active"));
 
     CanonicalResourceUtilities.setHl7WG(p, "fhir");
 
@@ -1754,9 +1754,6 @@ public class ProfileGenerator {
     ElementDefinition ce = new ElementDefinition(defaults, ElementDefinition.NOT_MODIFIER, ElementDefinition.NOT_IN_SUMMARY);
     elements.add(ce);
 //    todo ce.setId(path.substring(path.indexOf(".")+1));
-
-    if (e.getStandardsStatus() != null)
-      ExtensionUtilities.setStandardsStatus(ce, e.getStandardsStatus(), e.getNormativeVersion());
 
     ce.setId(path);
     ce.setPath(path);

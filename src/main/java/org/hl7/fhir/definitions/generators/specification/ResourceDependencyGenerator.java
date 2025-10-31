@@ -72,11 +72,7 @@ public class ResourceDependencyGenerator  extends BaseGenerator {
     // 1. Name 
     Cell gc = gen.new Cell(null, dictLinks() ? pageName+"#"+path.replace("[", "_").replace("]", "_") : null, e.getName(), path+" : "+e.getDefinition(), null);
     row.getCells().add(gc);
-    if (e.getStandardsStatus() != null) {
-      gc.addPiece(gen.new Piece(null, " ", null));
-      gc.addStyledText("Publication Status = "+e.getStandardsStatus().toDisplay(), e.getStandardsStatus().getAbbrev(), "black", e.getStandardsStatus().getColor(), prefix+"versions.html#std-process", true);
-    }
-       
+
     Cell dc;
     if (resource) {
       row.getCells().add(gen.new Cell()); // card. 
@@ -134,18 +130,10 @@ public class ResourceDependencyGenerator  extends BaseGenerator {
           }
           c.getPieces().add(gen.new Piece(null, ")", null));
           row.getCells().add(dc = gen.new Cell()); // analysis 
-          for (String rt : e.getTypes().get(0).getParams()) 
-            if (definitions.hasLogicalModel(rt)) {
-              for (String rtn : definitions.getLogicalModel(rt).getImplementations()) {
-                addTypeToAnalysis(gen, row, dc, true, e.getStandardsStatus(), rtn);                
-              }
-            } else
-              addTypeToAnalysis(gen, row, dc, true, e.getStandardsStatus(), rt);
         } else if (definitions.getPrimitives().containsKey(t)) {
           row.setIcon("icon_primitive.png", HierarchicalTableGenerator.TEXT_ICON_PRIMITIVE);
           row.getCells().add(c = gen.new Cell(null, prefix+"datatypes.html#"+t, t, null, null));
           row.getCells().add(dc = gen.new Cell()); // analysis 
-          addTypeToAnalysis(gen, row, dc, false, e.getStandardsStatus(), e.typeCode());
         } else {
           if (t.equals("Extension"))
             row.setIcon("icon_extension_simple.png", HierarchicalTableGenerator.TEXT_ICON_EXTENSION);
@@ -153,7 +141,6 @@ public class ResourceDependencyGenerator  extends BaseGenerator {
             row.setIcon("icon_datatype.gif", HierarchicalTableGenerator.TEXT_ICON_DATATYPE);
           row.getCells().add(c = gen.new Cell(null, prefix+definitions.getSrcFile(t)+".html#"+t.replace("*", "open"), t, null, null));
           row.getCells().add(dc = gen.new Cell()); // analysis 
-          addTypeToAnalysis(gen, row, dc, false, e.getStandardsStatus(), t);
         }
       } else {
         row.getCells().add(gen.new Cell(null, null, e.describeCardinality(), null, null));   
@@ -164,7 +151,7 @@ public class ResourceDependencyGenerator  extends BaseGenerator {
     }
          
     if (e.hasBinding() && e.getBinding() != null && e.getBinding().getBinding() != BindingMethod.Unbound && (e.getBinding().getStrength() == BindingStrength.REQUIRED || e.getBinding().getStrength() == BindingStrength.EXTENSIBLE) ) {
-      addBindingToAnalysis(gen, row, dc, e.getBinding().getStrength() == BindingStrength.REQUIRED, e.getStandardsStatus(), e.getBinding());
+      addBindingToAnalysis(gen, row, dc, e.getBinding().getStrength() == BindingStrength.REQUIRED, StandardsStatus.NORMATIVE, e.getBinding());
       
 //      if (cc.getPieces().size() == 1)
 //        cc.addPiece(gen.new Piece("br"));
@@ -211,15 +198,12 @@ public class ResourceDependencyGenerator  extends BaseGenerator {
             first = false;
           }
           choicerow.getCells().add(dc = gen.new Cell()); // analysis 
-          for (String rt : tt) 
-            addTypeToAnalysis(gen, choicerow, dc, true, e.getStandardsStatus(), rt);          
         } else if (definitions.getPrimitives().containsKey(t)) {
           choicerow.getCells().add(gen.new Cell(null, null, e.getName().replace("[x]",  Utilities.capitalize(t)), definitions.getPrimitives().get(t).getDefinition(), null));
           choicerow.getCells().add(gen.new Cell(null, null, "", null, null));
           choicerow.setIcon("icon_primitive.png", HierarchicalTableGenerator.TEXT_ICON_PRIMITIVE);
           choicerow.getCells().add(gen.new Cell(null, prefix+"datatypes.html#"+t, t, null, null));
           choicerow.getCells().add(dc = gen.new Cell()); // analysis 
-          addTypeToAnalysis(gen, choicerow, dc, false, e.getStandardsStatus(), t);
         } else if (definitions.getConstraints().containsKey(t)) {
           ProfiledType pt = definitions.getConstraints().get(t);
           choicerow.getCells().add(gen.new Cell(null, null, e.getName().replace("[x]", Utilities.capitalize(pt.getBaseType())), definitions.getTypes().containsKey(t) ? definitions.getTypes().get(t).getDefinition() : null, null));
@@ -227,14 +211,12 @@ public class ResourceDependencyGenerator  extends BaseGenerator {
           choicerow.setIcon("icon_datatype.gif", HierarchicalTableGenerator.TEXT_ICON_DATATYPE);
           choicerow.getCells().add(gen.new Cell(null, definitions.getSrcFile(t)+".html#"+t.replace("*", "open"), t, null, null));
           choicerow.getCells().add(dc = gen.new Cell()); // analysis 
-          addTypeToAnalysis(gen, choicerow, dc, false, e.getStandardsStatus(), t);
         } else {
           choicerow.getCells().add(gen.new Cell(null, null, e.getName().replace("[x]",  Utilities.capitalize(t)), definitions.getTypes().containsKey(t) ? definitions.getTypes().get(t).getDefinition() : null, null));
           choicerow.getCells().add(gen.new Cell(null, null, "", null, null));
           choicerow.setIcon("icon_datatype.gif", HierarchicalTableGenerator.TEXT_ICON_DATATYPE);
           choicerow.getCells().add(gen.new Cell(null, definitions.getSrcFile(t)+".html#"+t.replace("*", "open"), t, null, null));
           choicerow.getCells().add(dc = gen.new Cell()); // analysis 
-          addTypeToAnalysis(gen, choicerow, dc, false, e.getStandardsStatus(), t);
         }
         row.getSubRows().add(choicerow);
       }
@@ -271,56 +253,6 @@ public class ResourceDependencyGenerator  extends BaseGenerator {
         ; // addInfo(gen, row, dc, "Binding OK (ValueSet = FMM"+tgtFMM+"-"+tgtSS.toDisplay()+" vs. Element = FMM"+fmm+"-"+elementStatus.toDisplay()+")", null);
       else
         addError(gen, row, dc, "Binding Error: (ValueSet = FMM"+tgtFMM+"-"+(tgtSS == null ? "null" : tgtSS.toDisplay())+" vs. Element = FMM"+fmm+"-"+elementStatus.toDisplay()+")", vs.getWebPath());
-    }      
-  }
-
-  private void addTypeToAnalysis(HierarchicalTableGenerator gen, Row row, Cell dc, boolean ref, StandardsStatus elementStatus, String type) throws Exception {
-    String tgtFMM = null;
-    StandardsStatus tgtSS = null;
-    if (definitions.getConstraints().containsKey(type))
-      type = definitions.getConstraints().get(type).getBaseType();
-    
-    if (definitions.hasResource(type)) {
-      ResourceDefn r = definitions.getResourceByName(type);
-      tgtFMM = r.getFmmLevel();
-      tgtSS = r.getStatus();
-    } else if (definitions.getBaseResources().containsKey(type)) {
-       ResourceDefn r = definitions.getBaseResources().get(type);
-       tgtFMM = r.getFmmLevel();
-       tgtSS = r.getStatus();
-    } else if ("Any".equals(type)) {
-      tgtFMM = "1";
-      tgtSS = StandardsStatus.TRIAL_USE;
-    } else if (definitions.hasPrimitiveType(type)) {
-      tgtFMM = "5";
-      tgtSS = StandardsStatus.NORMATIVE;
-    } else if ("*".equals(type)) {
-      // todo: what...?
-      tgtFMM = "2";
-      tgtSS = StandardsStatus.TRIAL_USE;
-    } else {
-      TypeDefn t = definitions.getElementDefn(type);
-      if (t != null) {
-        tgtFMM = t.getFmmLevel();
-        tgtSS = t.getStandardsStatus();
-      }
-    }
-    if (elementStatus == null)
-      elementStatus = sstatus;
-    
-    if (tgtFMM == null)
-      addError(gen, row, dc, "Error: Unable to resolve type '"+type+"' to check dependencies", null);
-    else {
-      boolean ok = elementStatus.canDependOn(tgtSS);
-      if (ok)
-        ok = fmm.compareTo(tgtFMM) <= 0;
-      if (ok)
-        ; // addInfo(gen, row, dc, "OK ("+type+" = FMM"+tgtFMM+"-"+tgtSS.toDisplay()+" vs. Element = FMM"+fmm+"-"+elementStatus.toDisplay()+")", null);
-      else if (ref)
-        addWarning(gen, row, dc, "Type Warning: ("+type+" = FMM"+tgtFMM+"-"+(tgtSS == null ? "null" : tgtSS.toDisplay())+" vs. Element = FMM"+fmm+"-"+elementStatus.toDisplay()+")", null);
-        
-      else
-        addError(gen, row, dc, "Type Error: ("+type+" = FMM"+tgtFMM+"-"+tgtSS.toDisplay()+" vs. Element = FMM"+fmm+"-"+elementStatus.toDisplay()+")", null);
     }      
   }
 

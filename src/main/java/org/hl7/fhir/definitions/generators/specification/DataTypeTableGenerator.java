@@ -5,6 +5,7 @@ import java.util.Set;
 import org.hl7.fhir.definitions.model.ElementDefn;
 import org.hl7.fhir.r5.model.Enumerations.FHIRVersion;
 import org.hl7.fhir.tools.publisher.PageProcessor;
+import org.hl7.fhir.utilities.StandardsStatus;
 import org.hl7.fhir.utilities.i18n.RenderingI18nContext;
 import org.hl7.fhir.utilities.xhtml.HierarchicalTableGenerator;
 import org.hl7.fhir.utilities.xhtml.HierarchicalTableGenerator.TableGenerationMode;
@@ -20,7 +21,7 @@ public class DataTypeTableGenerator extends TableGenerator {
     HierarchicalTableGenerator gen = new HierarchicalTableGenerator(new RenderingI18nContext(), dest, inlineGraphics, false);
     TableModel model = gen.initNormalTable("", false, true, e.getName(), isActive, isActive ? TableGenerationMode.XHTML : TableGenerationMode.XML);
     
-    model.getRows().add(genElement(e, gen, false, e.getName(), false, "", RenderMode.DATATYPE, true, e.getStandardsStatus(), null, e.isAbstractType(), false));
+    model.getRows().add(genElement(e, gen, false, e.getName(), false, "", RenderMode.DATATYPE, true, StandardsStatus.NORMATIVE, null, e.isAbstractType(), false));
     
     return gen.generate(model, "", 0, outputTracker);
   }

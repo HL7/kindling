@@ -8,16 +8,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.hl7.fhir.definitions.model.BindingSpecification;
+import org.hl7.fhir.definitions.model.*;
 import org.hl7.fhir.definitions.model.BindingSpecification.BindingMethod;
-import org.hl7.fhir.definitions.model.DefinedCode;
-import org.hl7.fhir.definitions.model.DefinedStringPattern;
-import org.hl7.fhir.definitions.model.ElementDefn;
-import org.hl7.fhir.definitions.model.PrimitiveType;
-import org.hl7.fhir.definitions.model.ProfiledType;
-import org.hl7.fhir.definitions.model.ResourceDefn;
 import org.hl7.fhir.definitions.model.ResourceDefn.PointSpec;
-import org.hl7.fhir.definitions.model.TypeRef;
 import org.hl7.fhir.r5.model.Enumerations.BindingStrength;
 import org.hl7.fhir.r5.model.Enumerations.FHIRVersion;
 import org.hl7.fhir.r5.model.StructureDefinition;
@@ -782,11 +775,13 @@ public class SvgGenerator extends BaseGenerator {
           drawClass(xml, fake, false, null, true, null, cd, StandardsStatus.NORMATIVE);//, LinkType.SPECIALIZATION, null, null, PointKind.unknown, null, null));        
         } else if (!onlyElement) {
           ElementDefn e = definitions.getElementDefn(cn);
+          ResourceDefn t = definitions.getResourceByNameOrNull(cn);
+          StandardsStatus ss = t != null && t.isPattern() ? StandardsStatus.INFORMATIVE : StandardsStatus.NORMATIVE;
           ClassItem parent = Utilities.noString(e.typeCode()) ? null : classes.get(definitions.getElementDefn(e.typeCode()));
           if (parent == null) {
-            drawClass(xml, e, false, null, true, cn, null, e.getStandardsStatus());
+            drawClass(xml, e, false, null, true, cn, null, ss);
           } else {
-            links.add(new Link(parent, drawClass(xml, e, false, null, true, cn, null, e.getStandardsStatus()), LinkType.SPECIALIZATION, null, null, PointKind.unknown, null, null));
+            links.add(new Link(parent, drawClass(xml, e, false, null, true, cn, null, ss), LinkType.SPECIALIZATION, null, null, PointKind.unknown, null, null));
           }
         }
       }
@@ -817,11 +812,8 @@ public class SvgGenerator extends BaseGenerator {
     if (r != null) {
       xml.attribute("style", "fill:"+r.getStatus().getColorSvg()+";stroke:black;stroke-width:1");
       status = r.getStatus();
-    } else if (e == null || e.getStandardsStatus() == null )
-      xml.attribute("style", "fill:"+(status == null ? "#ffffff" : status.getColorSvg())+";stroke:black;stroke-width:1");
-    else {
-      xml.attribute("style", "fill:"+e.getStandardsStatus().getColorSvg()+";stroke:black;stroke-width:1");
-      status = e.getStandardsStatus();
+    } else {
+      xml.attribute("style", "fill:" + (status == null ? "#ffffff" : status.getColorSvg()) + ";stroke:black;stroke-width:1");
     }
     if (!makeTargets)
       xml.attribute("id", "n"+(++nc));
@@ -1149,15 +1141,6 @@ public class SvgGenerator extends BaseGenerator {
   }
   
   private void addAttribute(XMLWriter xml, double left, double top, ElementDefn e, String path, LineStatus ls, double height, double width) throws Exception  {
-    if (e.getStandardsStatus() != null) {
-      xml.attribute("x", Double.toString(left+1));
-      xml.attribute("y", Double.toString(top-height+GAP_HEIGHT));
-      xml.attribute("id", "n"+(++nc));
-      xml.attribute("width", Double.toString(width-2));
-      xml.attribute("height", Double.toString(height));
-      xml.attribute("style", "fill:"+e.getStandardsStatus().getColorSvg()+";stroke:black;stroke-width:0");
-      xml.element("rect", null);    
-    }
     xml.attribute("x", Double.toString(left + LEFT_MARGIN + (ls.line == 0 ? 0 : WRAP_INDENT)));
     xml.attribute("y", Double.toString(top + LINE_HEIGHT * ls.line));
     xml.attribute("fill", "black");

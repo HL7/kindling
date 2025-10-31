@@ -2618,7 +2618,7 @@ public class Publisher implements URIResolver, SectionNumberer {
       s.write("<wg code=\""+wg.getCode()+"\" name=\""+wg.getName()+"\" url=\""+wg.getUrl()+"\"/>\r\n");
     }
     for (PageInformation pn : page.getDefinitions().getPageInfo().values()) {
-      s.write("<page name=\""+pn.getName()+"\" wg=\""+pn.getWgCode()+"\" fmm=\""+pn.getFmm()+"\"/>\r\n");
+      s.write("<page name=\""+pn.getName()+"\" wg=\""+pn.getWgCode()+"\" status=\""+pn.getStatus().toCode()+"\"/>\r\n");
     }
     try {
       s.write(new String(XsltUtilities.saxonTransform(page.getFolders().dstDir + "profiles-resources.xml", xslt)));
@@ -5924,12 +5924,9 @@ public class Publisher implements URIResolver, SectionNumberer {
     src = addSectionNumbers(file, logicalName, src, null, 0, doch, null);
 
     if (!page.getDefinitions().getStructuralPages().contains(file)) {
-      XhtmlNode fmm = findId(doch.doc, "fmm");
+      XhtmlNode ballot = findId(doch.doc, "ballot");
       XhtmlNode wg = findId(doch.doc, "wg");
-      if (fmm == null)
-        page.getValidationErrors().add(new   ValidationMessage(Source.Publisher, IssueType.BUSINESSRULE, -1, -1, file, "Page has no fmm level", IssueSeverity.ERROR));
-      else
-        page.getDefinitions().page(file).setFmm(get2ndPart(fmm.allText()));
+      page.getDefinitions().page(file).setStatus(ballot.allText().contains("Informative") ? StandardsStatus.INFORMATIVE : StandardsStatus.NORMATIVE);
       if (wg == null)
         page.getValidationErrors().add(new ValidationMessage(Source.Publisher, IssueType.BUSINESSRULE, -1, -1, file, "Page has no workgroup", IssueSeverity.ERROR));
       else
@@ -6306,8 +6303,7 @@ public class Publisher implements URIResolver, SectionNumberer {
       return new XhtmlComposer(XhtmlComposer.HTML).compose(doc);
     } catch (Exception e) {
       System.out.println(e.getMessage());
-      //FileUtilities.stringToFile(src, Utilities.path("tmp]", "dump.html"));
-      FileUtilities.stringToFile(src, Utilities.appendSlash(System.getProperty("user.dir")) + "fhir-error-dump.html");
+      FileUtilities.stringToFile(src, Utilities.path("[tmp]", "dump.html"));
 
       throw new Exception("Exception inserting section numbers in " + link + ": " + e.getMessage(), e);
     }

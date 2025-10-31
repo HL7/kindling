@@ -617,27 +617,7 @@ public class SourceParser {
         throw new Exception("huh?");
       if (ed == null)
         throw new Exception("not found: "+p);
-      
-      for (ElementDefn t : trace) {
-        if (t.getStandardsStatus() != null && t.getStandardsStatus().isLowerThan(sp.getStandardsStatus()))
-          sp.setStandardsStatus(t.getStandardsStatus(), t.getNormativeVersion(rd));
-        try {
-          if (definitions.hasPrimitiveType(t.typeCodeNoParams())) {
-            sp.setStandardsStatus(StandardsStatus.NORMATIVE, t.getNormativeVersion(rd));
-          } else if (Utilities.noString(t.typeCode())) {
-            // nothing, this is part of the resource.
-          } else if (t.getTypes().size() == 1 && !t.getTypes().get(0).getName().startsWith("@")) {
-            TypeDefn tt = definitions.getElementDefn(t.typeCodeNoParams());
-            if (tt.getStandardsStatus() != null && tt.getStandardsStatus().isLowerThan(sp.getStandardsStatus())) {
-              sp.setStandardsStatus(tt.getStandardsStatus(), t.getNormativeVersion(rd));
-            }
-          }
-        } catch (Exception e) {
-          // nothing
-        }
-        
-      }
-      
+
       if (ed.getName().endsWith("[x]"))
         if (p.endsWith("[x]"))
           bp.append(p.substring(0, p.length()-3));
@@ -1215,9 +1195,6 @@ public class SourceParser {
         }
         OldSpreadsheetParser p = new OldSpreadsheetParser("core", new CSFileInputStream(csv), csv.getName(), csv.getAbsolutePath(), definitions, srcDir, logger, registry, version, context, genDate, isAbstract, page, true, ini, wg(wgc), definitions.getProfileIds(), fpUsages, page.getConceptMaps(), exceptionIfExcelNotNormalised, page.packageInfo(), page.getRc());
         org.hl7.fhir.definitions.model.TypeDefn el = p.parseCompositeType();
-        el.setFmmLevel(fmm);
-        el.setStandardsStatus(status);
-        el.setStandardsStatusReason(ssr);
         el.setNormativeVersion(nv);
         map.put(t.getName(), el);
         genTypeProfile(el);
