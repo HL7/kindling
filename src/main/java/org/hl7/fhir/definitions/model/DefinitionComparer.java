@@ -38,12 +38,7 @@ public class DefinitionComparer {
       res = false;
       System.out.println("Definitions differ @"+left.getName()+": requirements = "+left.getRequirements()+" vs "+right.getRequirements());
     }
-    
-    if (!stringsMatch(left.getNormativePackage(), right.getNormativePackage())) {
-      res = false;
-      System.out.println("Definitions differ @"+left.getName()+": normativePackage = "+left.getNormativePackage()+" vs "+right.getNormativePackage());
-    }
-    
+
     if (!stringsMatch(left.getNormativeVersion(), right.getNormativeVersion())) {
       res = false;
       System.out.println("Definitions differ @"+left.getName()+": normativeVersion = "+left.getNormativeVersion()+" vs "+right.getNormativeVersion());

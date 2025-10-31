@@ -799,16 +799,16 @@ public class ResourceValidator extends BaseValidator {
             rule(errors, ValidationMessage.NO_RULE_DATE, IssueType.STRUCTURE, path, !cd.getValueSet().getExperimental(), "Reference to experimental valueset "+cd.getValueSet().getUrl());
           }
           if (e.getBinding().getStrength() == BindingStrength.EXAMPLE)
-            ValueSetUtilities.markStatus(cd.getValueSet(), parent == null ? "fhir" : parent.getWg().getCode(), StandardsStatus.DRAFT, null, "1", context, null);
+            ValueSetUtilities.markStatus(cd.getValueSet(), parent == null ? "fhir" : parent.getWg().getCode(), StandardsStatus.DRAFT, "1", context, null);
           else if (parent == null)
-            ValueSetUtilities.markStatus(cd.getValueSet(), "fhir", StandardsStatus.DRAFT, null, "0", context, null);
+            ValueSetUtilities.markStatus(cd.getValueSet(), "fhir", StandardsStatus.DRAFT, "0", context, null);
           else if (e.getBinding().getStrength() == BindingStrength.PREFERRED)
-            ValueSetUtilities.markStatus(cd.getValueSet(), parent.getWg().getCode(), null, null, null, context, null);
+            ValueSetUtilities.markStatus(cd.getValueSet(), parent.getWg().getCode(), null, null, context, null);
           else
-            ValueSetUtilities.markStatus(cd.getValueSet(), parent.getWg().getCode(), status, parent.getNormativePackage(), parent.getFmmLevel(), context, parent.getNormativeVersion());
+            ValueSetUtilities.markStatus(cd.getValueSet(), parent.getWg().getCode(), status, parent.getFmmLevel(), context, parent.getNormativeVersion());
           for (AdditionalBinding vsc : cd.getAdditionalBindings()) {
             if (vsc.getValueSet() != null) {
-              ValueSetUtilities.markStatus(vsc.getValueSet(), parent.getWg().getCode(), status, parent.getNormativePackage(), parent.getFmmLevel(), context, parent.getNormativeVersion());
+              ValueSetUtilities.markStatus(vsc.getValueSet(), parent.getWg().getCode(), status, parent.getFmmLevel(), context, parent.getNormativeVersion());
             }
           }
           Integer w = (Integer) cd.getValueSet().getUserData("warnings");

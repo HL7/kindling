@@ -201,7 +201,6 @@ public class SourceParser {
   public void parse(Calendar genDate, List<ValidationMessage> issues) throws Exception {
     logger.log("Loading", LogMessageType.Process);
 
-    loadNormativePackages();
     loadWorkGroups();
     loadW5s();
     loadMappingSpaces();
@@ -483,15 +482,6 @@ public class SourceParser {
     if (!success) 
       throw new Exception("Unable to retrieve "+n);
     return bytes.toByteArray();
-  }
-
-
-
-
-  private void loadNormativePackages() {
-    for (String s : ini.getPropertyNames("normative-packages")) {
-      page.getNormativePackages().put(s, new HashMap<String, PageInfo>());
-    }
   }
 
   private WorkGroup wg(String committee) {
@@ -1308,7 +1298,7 @@ public class SourceParser {
         definitions.getKnownResources().put(root.getName(), new DefinedCode(root.getName(), root.getRoot().getDefinition(), n, null));
         context.getResourceNames().add(root.getName());
       }
-      if (root.getNormativeVersion() != null || root.getNormativePackage() != null) {
+      if (root.getNormativeVersion() != null) {
         root.setStatus(StandardsStatus.NORMATIVE);
       }
       if (f.exists()) { 
@@ -1353,7 +1343,6 @@ public class SourceParser {
   public void setResourceProps(String n, WorkGroup wg, ResourceDefn root) {
     root.setWg(wg);
     root.setFmmLevel(ini.getStringProperty("fmm", n.toLowerCase()));
-    root.setNormativePackage(ini.getStringProperty("normative-package", root.getName()));
     root.setNormativeVersion(ini.getStringProperty("first-normative-version", root.getName()));
     root.setApproval(FMGApproval.fromCode(ini.getStringProperty("fmg-approval", root.getName())));
   }
