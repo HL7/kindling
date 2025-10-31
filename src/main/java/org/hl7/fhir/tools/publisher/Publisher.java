@@ -808,8 +808,9 @@ public class Publisher implements URIResolver, SectionNumberer {
 
       loadValueSets1();
       generateSCMaps();
+      validate1();
       processProfiles();
-      validate();
+      validate2();
       checkAllOk();
       startValidation();
 
@@ -2552,12 +2553,11 @@ public class Publisher implements URIResolver, SectionNumberer {
     return errors.size() == 0;
   }
 
-  private void validate() throws Exception {
-    page.log("Validating", LogMessageType.Process);
-    ResourceValidator val = new ResourceValidator(page.getDefinitions(), page.getTranslations(), page.getCodeSystems(), page.getFolders().srcDir, fpUsages, page.getSuppressedMessages(), page.getWorkerContext(), new ValidatorSettings());
+  private ResourceValidator val = null;
+  private void validate1() throws Exception {
+    page.log("Validating (1)", LogMessageType.Process);
+    val = new ResourceValidator(page.getDefinitions(), page.getTranslations(), page.getCodeSystems(), page.getFolders().srcDir, fpUsages, page.getSuppressedMessages(), page.getWorkerContext(), new ValidatorSettings());
     val.resolvePatterns();
-    ProfileValidator valp = new ProfileValidator(page.getWorkerContext(), new ValidatorSettings(), null, null);
-
     for (String n : page.getDefinitions().getTypes().keySet())
       page.getValidationErrors().addAll(val.checkStucture(n, page.getDefinitions().getTypes().get(n)));
     
@@ -2569,10 +2569,6 @@ public class Publisher implements URIResolver, SectionNumberer {
         page.getValidationErrors().addAll(val.check(n, page.getDefinitions().getResources().get(n)));
     page.getValidationErrors().addAll(val.check("Parameters", page.getDefinitions().getResourceByName("Parameters")));
 
-    for (String rname : page.getDefinitions().sortedResourceNames()) {
-      ResourceDefn r = page.getDefinitions().getResources().get(rname);
-      checkExampleLinks(page.getValidationErrors(), r);
-    }
     for (Compartment cmp : page.getDefinitions().getCompartments())
       page.getValidationErrors().addAll(val.check(cmp));
     
@@ -2586,7 +2582,17 @@ public class Publisher implements URIResolver, SectionNumberer {
         }
       }
     }
-//          E
+  }
+
+  private void validate2() throws Exception {
+    page.log("Validating (2)", LogMessageType.Process);
+    ProfileValidator valp = new ProfileValidator(page.getWorkerContext(), new ValidatorSettings(), null, null);
+
+    for (String rname : page.getDefinitions().sortedResourceNames()) {
+      ResourceDefn r = page.getDefinitions().getResources().get(rname);
+      checkExampleLinks(page.getValidationErrors(), r);
+    }
+
     page.setPatternFinder(val.getPatternFinder());
     val.report();
     val.summariseSearchTypes(page.getSearchTypeUsage());
