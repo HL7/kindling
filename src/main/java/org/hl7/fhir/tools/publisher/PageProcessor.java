@@ -8173,7 +8173,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
 
       String md = stripSimplePara(processMarkdown("SearchParameter.description", p.getDescription(), ""));
 
-      b.append("<tr><td><a name=\"sp-").append(p.getCode()).append("\"> </a><a href=\"").append(resource.getName().toLowerCase()).append("-search.html#").append(p.getResource().getId())
+      b.append("<tr><td style=\"white-space: nowrap;\"><a name=\"sp-").append(p.getCode()).append("\"> </a><a href=\"").append(resource.getName().toLowerCase()).append("-search.html#").append(p.getResource().getId())
       .append("\">").append(p.getCode()).append("</a>").append(sst).append("</td><td><a href=\"search.html#").append(p.getType()).append("\">").append(p.getType()).append("</a></td><td>")
       .append(md).append("</td><td>").append(p.getType() == SearchType.composite ? getCompositeExpression(p) : Utilities.escapeXml(p.getExpression())).append(p.getType() == SearchType.reference ? p.getTargetTypesAsText() : "")
       .append("</td><td>").append(presentOthers(p)).append("</td></tr>\r\n");
