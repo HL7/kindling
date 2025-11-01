@@ -8169,7 +8169,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     for (String name : names)  {
       SearchParameterDefn p = resource.getSearchParams().get(name);
       String pp = presentPaths(p.getPaths());
-      String sst = (p.getStandardsStatus() == null || p.getStandardsStatus() == st) ? "" : makeStandardsStatusRef(p.getStandardsStatus());
+      String sst = ""; // (p.getStandardsStatus() == null || p.getStandardsStatus() == st) ? "" : makeStandardsStatusRef(p.getStandardsStatus());
 
       String md = stripSimplePara(processMarkdown("SearchParameter.description", p.getDescription(), ""));
 
