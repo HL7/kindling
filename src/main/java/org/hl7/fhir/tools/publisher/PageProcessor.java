@@ -82,39 +82,14 @@ import org.hl7.fhir.definitions.generators.specification.TerminologyNotesGenerat
 import org.hl7.fhir.definitions.generators.specification.ToolResourceUtilities;
 import org.hl7.fhir.definitions.generators.specification.TurtleSpecGenerator;
 import org.hl7.fhir.definitions.generators.specification.XmlSpecGenerator;
-import org.hl7.fhir.definitions.model.BindingSpecification;
+import org.hl7.fhir.definitions.model.*;
 import org.hl7.fhir.definitions.model.BindingSpecification.AdditionalBinding;
 import org.hl7.fhir.definitions.model.BindingSpecification.BindingMethod;
-import org.hl7.fhir.definitions.model.CommonSearchParameter;
-import org.hl7.fhir.definitions.model.Compartment;
-import org.hl7.fhir.definitions.model.ConstraintStructure;
-import org.hl7.fhir.definitions.model.DefinedCode;
-import org.hl7.fhir.definitions.model.Definitions;
 import org.hl7.fhir.definitions.model.Definitions.NamespacePair;
-import org.hl7.fhir.definitions.model.Dictionary;
-import org.hl7.fhir.definitions.model.ElementDefn;
-import org.hl7.fhir.definitions.model.EventDefn;
-import org.hl7.fhir.definitions.model.EventUsage;
-import org.hl7.fhir.definitions.model.Example;
-import org.hl7.fhir.definitions.model.ImplementationGuideDefn;
-import org.hl7.fhir.definitions.model.Invariant;
-import org.hl7.fhir.definitions.model.LogicalModel;
-import org.hl7.fhir.definitions.model.MappingSpace;
-import org.hl7.fhir.definitions.model.Operation;
 import org.hl7.fhir.definitions.model.Operation.OperationExample;
-import org.hl7.fhir.definitions.model.OperationParameter;
-import org.hl7.fhir.definitions.model.PrimitiveType;
-import org.hl7.fhir.definitions.model.Profile;
-import org.hl7.fhir.definitions.model.ProfiledType;
-import org.hl7.fhir.definitions.model.ResourceDefn;
 import org.hl7.fhir.definitions.model.ResourceDefn.FMGApproval;
-import org.hl7.fhir.definitions.model.SearchParameterDefn;
 import org.hl7.fhir.definitions.model.SearchParameterDefn.CompositeDefinition;
 import org.hl7.fhir.definitions.model.SearchParameterDefn.SearchType;
-import org.hl7.fhir.definitions.model.TypeDefn;
-import org.hl7.fhir.definitions.model.TypeRef;
-import org.hl7.fhir.definitions.model.W5Entry;
-import org.hl7.fhir.definitions.model.WorkGroup;
 import org.hl7.fhir.definitions.parsers.OIDRegistry;
 import org.hl7.fhir.definitions.parsers.TypeParser;
 import org.hl7.fhir.definitions.uml.UMLModel;
@@ -6603,7 +6578,8 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
       }
       if (code != null) {
         if (hasLogicalMapping(sd, logical, code)) {
-          b.append(" <tr>\r\n");          DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+          b.append(" <tr>\r\n");
+          DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
           DocumentBuilder builder = factory.newDocumentBuilder();
           Document exceptionsDoc = builder.newDocument();
           Document newExceptionsDoc = builder.newDocument();
@@ -7337,8 +7313,18 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     }
     for (TypeRef lt : lTypes) {
       String dtName = lt.getName();
+      CommaSeparatedStringBuilder b = new CommaSeparatedStringBuilder();
       if (lt.hasParams()) {
-        dtName += "(" + String.join(",", lt.getParams()) + ")";
+        for (String p : lt.getParams()) {
+          ParameterisedType pp = new ParameterisedType(p);
+          if (pp.getProfile() != null) {
+            StructureDefinition sd = workerContext.fetchResource(StructureDefinition.class, pp.getProfile());
+            b.append(sd.getName());
+          } else {
+            b.append(pp.getName());
+          }
+        }
+        dtName += "(" + b.toString()+ ")";
       }
       unmappedLogicalType.add(dtName);
     }

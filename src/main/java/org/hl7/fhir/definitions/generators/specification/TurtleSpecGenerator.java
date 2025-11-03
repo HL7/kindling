@@ -271,6 +271,7 @@ public class TurtleSpecGenerator extends OutputStreamWriter {
       boolean firstp = true;
       List<String> ap = new ArrayList<>();
       for (String p : t.getParams()) {
+        if (p.contains("{")) { throw new Error("fix"); }
         if (definitions.hasLogicalModel(p))
           ap.addAll(definitions.getLogicalModel(p).getImplementations());
         else

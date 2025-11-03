@@ -5,13 +5,9 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
-import org.hl7.fhir.definitions.model.BindingSpecification;
+import org.hl7.fhir.definitions.model.*;
 import org.hl7.fhir.definitions.model.BindingSpecification.AdditionalBinding;
 import org.hl7.fhir.definitions.model.BindingSpecification.BindingMethod;
-import org.hl7.fhir.definitions.model.ElementDefn;
-import org.hl7.fhir.definitions.model.Invariant;
-import org.hl7.fhir.definitions.model.ProfiledType;
-import org.hl7.fhir.definitions.model.TypeRef;
 import org.hl7.fhir.r4b.renderers.utils.RenderingContext;
 import org.hl7.fhir.r5.renderers.AdditionalBindingsRenderer;
 import org.hl7.fhir.r5.conformance.profile.ProfileKnowledgeProvider;
@@ -142,12 +138,16 @@ public class TableGenerator extends BaseGenerator {
           }
           boolean first = true;
           for (String rt : e.getTypes().get(0).getParams()) {
+            ParameterisedType pp = new ParameterisedType(rt);
             if (!first)
               c.getPieces().add(gen.new Piece(null, " | ", null));
             if (first && isProfile && e.getTypes().get(0).getProfile() != null)
               c.getPieces().add(gen.new Piece(null, e.getTypes().get(0).getProfile(), null));
-            else
-              c.getPieces().add(gen.new Piece(prefix+findPage(rt)+".html", rt, null));
+            else if (pp.getProfile() != null) {
+              StructureDefinition sdp = page.getWorkerContext().fetchResource(StructureDefinition.class, pp.getProfile());
+              c.getPieces().add(gen.new Piece(prefix + sdp.getWebPath(), sdp.present(), null));
+            } else
+              c.getPieces().add(gen.new Piece(prefix+findPage(pp.getName())+".html", pp.getName(), null));
             first = false;
           }
           if (ADD_REFERENCE_TO_TABLE) 
@@ -325,6 +325,7 @@ public class TableGenerator extends BaseGenerator {
           }
           boolean first = true;
           for (String rt : tr.getParams()) {
+            if (rt.contains("{")) { throw new Error("fix"); }
             if (!first)
               c.getPieces().add(gen.new Piece(null, " | ", null));
             c.getPieces().add(gen.new Piece(prefix+findPage(rt)+".html", rt, null));

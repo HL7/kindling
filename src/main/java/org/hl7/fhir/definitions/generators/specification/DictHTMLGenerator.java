@@ -38,11 +38,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 
-import org.hl7.fhir.definitions.model.BindingSpecification;
-import org.hl7.fhir.definitions.model.Definitions;
-import org.hl7.fhir.definitions.model.ElementDefn;
-import org.hl7.fhir.definitions.model.Invariant;
-import org.hl7.fhir.definitions.model.TypeRef;
+import org.hl7.fhir.definitions.model.*;
 import org.hl7.fhir.exceptions.FHIRException;
 import org.hl7.fhir.r5.conformance.profile.ProfileUtilities;
 import org.hl7.fhir.r5.formats.IParser.OutputStyle;
@@ -762,18 +758,23 @@ public class DictHTMLGenerator  extends OutputStreamWriter {
             if (!firstp)
               b.append(" | ");
             firstp = false;
-		        if (definitions.hasLogicalModel(p)) {
-              b.append("<a href=\""+prefix+typeLink(p)+"\">"+p+"</a>[");
+            ParameterisedType pp = new ParameterisedType(p);
+		        if (definitions.hasLogicalModel(pp.getName())) {
+              b.append("<a href=\""+prefix+typeLink(pp.getName())+"\">"+p+"</a>[");
               boolean firstpn = true;
-              for (String pn : definitions.getLogicalModel(p).getImplementations()) {
+              for (String pn : definitions.getLogicalModel(pp.getName()).getImplementations()) {
                 if (!firstpn)
                   b.append(", ");
                 firstpn = false;
                 b.append("<a href=\""+prefix+typeLink(pn)+"\">"+pn+"</a>");
               }		          
               b.append("]");
-		        } else {
-		          b.append("<a href=\""+prefix+typeLink(p)+"\">"+p+"</a>");
+		        } else if (pp.getProfile() != null) {
+              StructureDefinition sd = page.getWorkerContext().fetchResource(StructureDefinition.class, pp.getProfile());
+              b.append("(<a href=\""+prefix+sd.getWebPath()+"\">"+sd.present()+"</a>)");
+            } else {
+		          b.append("<a href=\""+prefix+typeLink(pp.getName())+"\">"+pp.getName()+"</a>");
+
 		        }
 		      }
 		      b.append(")");

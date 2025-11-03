@@ -41,29 +41,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.hl7.fhir.definitions.model.BindingSpecification;
+import org.hl7.fhir.definitions.model.*;
 import org.hl7.fhir.definitions.model.BindingSpecification.AdditionalBinding;
 import org.hl7.fhir.definitions.model.BindingSpecification.BindingMethod;
-import org.hl7.fhir.definitions.model.CommonSearchParameter;
-import org.hl7.fhir.definitions.model.ConstraintStructure;
-import org.hl7.fhir.definitions.model.DefinedStringPattern;
-import org.hl7.fhir.definitions.model.Definitions;
-import org.hl7.fhir.definitions.model.ElementDefn;
-import org.hl7.fhir.definitions.model.ImplementationGuideDefn;
-import org.hl7.fhir.definitions.model.Invariant;
-import org.hl7.fhir.definitions.model.Operation;
-import org.hl7.fhir.definitions.model.OperationParameter;
-import org.hl7.fhir.definitions.model.PrimitiveType;
-import org.hl7.fhir.definitions.model.Profile;
-import org.hl7.fhir.definitions.model.ProfiledType;
-import org.hl7.fhir.definitions.model.ResourceDefn;
-import org.hl7.fhir.definitions.model.SearchParameterDefn;
 import org.hl7.fhir.definitions.model.SearchParameterDefn.CompositeDefinition;
 import org.hl7.fhir.definitions.model.SearchParameterDefn.SearchType;
-import org.hl7.fhir.definitions.model.TypeDefn;
-import org.hl7.fhir.definitions.model.TypeRef;
-import org.hl7.fhir.definitions.model.W5Entry;
-import org.hl7.fhir.definitions.model.WorkGroup;
 import org.hl7.fhir.definitions.parsers.TypeParser;
 import org.hl7.fhir.definitions.uml.UMLAttribute;
 import org.hl7.fhir.definitions.uml.UMLClass;
@@ -898,6 +880,7 @@ public class ProfileGenerator {
             a = new UMLAttribute(e.getName(), Integer.toString(e.getMinCardinality()), Integer.toString(e.getMaxCardinality()), uml.getClassByNameCreate(tn));
             for (TypeRef tr : t.getTypes()) {
               for (String p : tr.getParams()) {
+                if (p.contains("{")) { throw new Error("fix"); }
                 a.getTargets().add(p);
               }
             }
@@ -916,6 +899,7 @@ public class ProfileGenerator {
             for (TypeRef tr : t.getTypes()) {
               a.getTypes().add(tr.getName());
               for (String p : tr.getParams()) {
+                if (p.contains("{")) { throw new Error("fix"); }
                 a.getTargets().add(p);
               }
             }
@@ -1835,6 +1819,7 @@ public class ProfileGenerator {
               throw new Exception("Cannot declare profile on a resource reference declaring multiple resource types.  Path " + path + " in profile " + p.getName());
             }
             for (String param : t.getParams()) {
+              if (param.contains("{")) { throw new Error("fix"); }
               if (definitions.hasLogicalModel(param)) {
                 for (String pn : definitions.getLogicalModel(param).getImplementations()) {
                   TypeRef childType = new TypeRef(t.getName());
@@ -1878,7 +1863,12 @@ public class ProfileGenerator {
           }
           TypeRefComponent type = ce.getType(tc);
           if (profile == null && t.hasParams()) {
-            profile = t.getParams().get(0);
+            ParameterisedType pp = new ParameterisedType(t.getParams().get(0));
+            if (pp.getProfile() == null) {
+              profile = pp.getName();
+            } else {
+              profile = pp.getProfile();
+            }
           }
           if (t.getPatterns() != null) {
             for (String s : t.getPatterns()) {
@@ -2424,6 +2414,7 @@ public class ProfileGenerator {
     for (TypeRef t : src.getTypes()) {
       if (t.hasParams()) {
         for (String tp : t.getParams()) {
+          if (tp.contains("{")) { throw new Error("fix"); }
           if (definitions.hasLogicalModel(tp)) {
             for (String tpn : definitions.getLogicalModel(tp).getImplementations()) {
               ElementDefinition.TypeRefComponent type = dst.getType(t.getName());
@@ -2679,11 +2670,14 @@ public class ProfileGenerator {
           pp.setType(Enumerations.FHIRTypes.fromCode(pt.getBaseType().equals("*") ? "Type" : pt.getBaseType()));
           pp.addTargetProfile("http://hl7.org/fhir/StructureDefinition/"+pt.getName());
         } else { 
-          if (p.getSearchType() != null)
+          if (p.getSearchType() != null) {
             pp.setSearchType(SearchParamType.fromCode(p.getSearchType()));
+          }
           pp.setType(Enumerations.FHIRTypes.fromCode(tr.getName().equals("*") ? "Type" : tr.getName()));
-          if (tr.getParams().size() == 1 && !tr.getParams().get(0).equals("Any"))
-            pp.addTargetProfile("http://hl7.org/fhir/StructureDefinition/"+tr.getParams().get(0));
+          if (tr.getParams().size() == 1 && !tr.getParams().get(0).equals("Any")) {
+            if (tr.getParams().get(0).contains("{")) { throw new Error("fix"); }
+            pp.addTargetProfile("http://hl7.org/fhir/StructureDefinition/" + tr.getParams().get(0));
+          }
         } 
       }
     }

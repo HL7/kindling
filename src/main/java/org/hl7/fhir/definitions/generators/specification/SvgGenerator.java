@@ -1156,7 +1156,7 @@ public class SvgGenerator extends BaseGenerator {
     
     xml.exit("a");
     xml.text(ls.see(" : "));
-    encodeType(xml, ls, getTypeCodeForElement(e.getTypes()));
+    encodeType(xml, ls, getTypeCodeForElement(e.getTypes()), null);
     xml.text(ls.see(" ["+e.describeCardinality()+"]"));
 
     // now, the stereotypes
@@ -1169,12 +1169,13 @@ public class SvgGenerator extends BaseGenerator {
         if (isReference(e.getTypes().get(0).getName()) && e.getTypes().size() == 1) {
           boolean first = true;
           for (String p : e.getTypes().get(0).getParams()) {
+            ParameterisedType pp = new ParameterisedType(p);
             if (first)
               first = false;
             else 
               xml.text(ls.see("|"));
             ls.check(xml, left, top, p.length(), null);
-            encodeType(xml, ls, p);
+            encodeType(xml, ls, pp.getName(), pp.getProfile());
           }
         } else {
           boolean firstOuter = true;
@@ -1185,17 +1186,18 @@ public class SvgGenerator extends BaseGenerator {
               xml.text(ls.see("|"));
             
             ls.check(xml, left, top, t.getName().length(), null);
-            encodeType(xml, ls, t.getName());
+            encodeType(xml, ls, t.getName(), t.getProfile());
             if (t.getParams().size() > 0) {
               xml.text(ls.see("("));
               boolean first = true;
               for (String p : t.getParams()) {
+                ParameterisedType pp = new ParameterisedType(p);
                 if (first)
                   first = false;
                 else 
                   xml.text(ls.see("|"));
                 ls.check(xml, left, top, p.length(), null);
-                encodeType(xml, ls, p);
+                encodeType(xml, ls, pp.getName(), pp.getProfile());
               }
               xml.text(ls.see(")"));
             }
@@ -1383,7 +1385,7 @@ public class SvgGenerator extends BaseGenerator {
   }
 
    
-  private int encodeType(XMLWriter xml, LineStatus ls, String tc)  throws Exception {
+  private int encodeType(XMLWriter xml, LineStatus ls, String tc, String pUrl)  throws Exception {
     if (tc.equals("*")) {
       xml.attribute("xlink:href", prefix+"datatypes.html#open");
       xml.attribute("id", "n"+(++nc));
@@ -1409,9 +1411,16 @@ public class SvgGenerator extends BaseGenerator {
       xml.element("a", ls.see(tc));
       xml.text(ls.see(")"));
       return tc.length()+2+pt.getBaseType().length();
+    } else if (pUrl != null) {
+      StructureDefinition sd = page.getWorkerContext().fetchResource(StructureDefinition.class, pUrl);
+      xml.text(ls.see("("));
+      xml.attribute("xlink:href", (prefix+sd.getWebPath()));
+      xml.element("a", ls.see(sd.getName()));
+      xml.text(ls.see(")"));
+      return tc.length();
     } else {
-      xml.attribute("xlink:href", (prefix+makeLink(tc)));
-      xml.attribute("id", "n"+(++nc));
+      xml.attribute("xlink:href", (prefix + makeLink(tc)));
+      xml.attribute("id", "n" + (++nc));
       xml.element("a", ls.see(tc));
       return tc.length();
     }
