@@ -249,10 +249,10 @@ public class ResourceValidator extends BaseValidator {
 
     for (Compartment c : definitions.getCompartments()) {
       if (rule(errors, ValidationMessage.NO_RULE_DATE, IssueType.STRUCTURE, rd.getName(), name.equals("Parameters") || c.getResources().containsKey(rd), "Resource not entered in resource map for compartment '" + c.getTitle() + "' (compartments.xml)")) {
-        String param = c.getResources().get(rd);
-        if (!Utilities.noString(param)) {
+        Compartment.StringTriple param = c.getResources().get(rd);
+        if (param != null) {
           //          rule(errors, ValidationMessage.NO_RULE_DATE, IssueType.STRUCTURE, parent.getName(), param.equals("{def}") || parent.getSearchParams().containsKey(c.getName()), "Resource "+parent.getName()+" in compartment " +c.getName()+" must have a search parameter named "+c.getName().toLowerCase()+")");
-          for (String p : param.split("\\|")) {
+          for (String p : param.getParameter().split("\\|")) {
             String pn = p.trim();
             if (pn.contains("."))
               pn = pn.substring(0, pn.indexOf("."));
@@ -1388,7 +1388,7 @@ public class ResourceValidator extends BaseValidator {
   }
 
   public void checkResCmp(Compartment cmp, List<ValidationMessage> errors, ResourceDefn rd) {
-    String[] links = cmp.getResources().get(rd).split("\\|");
+    String[] links = cmp.getResources().get(rd).getParameter().split("\\|");
     for (String l : links) {
       String s = l.trim();
       if (!Utilities.noString(s) && !s.equals("{def}")) {

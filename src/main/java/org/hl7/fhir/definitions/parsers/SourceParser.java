@@ -890,10 +890,26 @@ public class SourceParser {
       if (!Utilities.noString(mn) && !mn.startsWith("!")) {
         ResourceDefn r = definitions.getResourceByName(mn);
         for (Compartment c : definitions.getCompartments()) {
-          c.getResources().put(r,  sheet.getColumn(row, c.getName()));
+          c.getResources().put(r, c.new StringTriple(sheet.getColumn(row, c.getName()), startDate(sheet, row), endDate(sheet, row)));
         }
       }
     }
+  }
+
+  private String endDate(Sheet sheet, int row) {
+    String value = sheet.getColumn(row,"date");
+    if (!Utilities.noString(value)) {
+      return value;
+    }
+    return sheet.getColumn(row,"startDate");
+  }
+
+  private String startDate(Sheet sheet,int row) {
+    String value = sheet.getColumn(row,"date");
+    if (!Utilities.noString(value)) {
+      return value;
+    }
+    return sheet.getColumn(row,"startDate");
   }
 
   private void loadCodeSystem(String n) throws FileNotFoundException, Exception {

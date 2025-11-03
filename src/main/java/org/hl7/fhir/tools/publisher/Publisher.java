@@ -2218,11 +2218,14 @@ public class Publisher implements URIResolver, SectionNumberer {
     cpd.setSearch(true);
     for (String rn : page.getDefinitions().sortedResourceNames()) {
       ResourceDefn rd = page.getDefinitions().getResourceByName(rn);
-      String rules = c.getResources().get(rd);
+      Compartment.StringTriple rules = c.getResources().get(rd);
       CompartmentDefinitionResourceComponent cc = cpd.addResource().setCode(rd.getName());
-      if (!Utilities.noString(rules)) {
-        for (String p : rules.split("\\|"))
+      if (rules != null) {
+        for (String p : rules.getParameter().split("\\|")) {
           cc.addParam(p.trim());
+        }
+        cc.setStartParam(rules.getStart());
+        cc.setEndParam(rules.getEnd());
       }
     }
     cpd.setWebPath("compartmentdefinition-"+c.getName()+".html");

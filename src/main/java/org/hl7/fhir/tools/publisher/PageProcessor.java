@@ -3294,23 +3294,28 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     String n = name.split("\\-")[1];
     StringBuilder in = new StringBuilder();
     StringBuilder out = new StringBuilder();
-    Map<ResourceDefn, String> map = definitions.getCompartmentByName(n).getResources();
+    Map<ResourceDefn, Compartment.StringTriple> map = definitions.getCompartmentByName(n).getResources();
     for (String rn : definitions.sortedResourceNames()) {
       ResourceDefn rd = definitions.getResourceByName(rn);
-      String rules = map.get(rd);
-      if (Utilities.noString(rules)) {
+      Compartment.StringTriple rules = map.get(rd);
+      if (rules == null) {
         out.append(" <li><a href=\"").append(rd.getName().toLowerCase()).append(".html\">").append(rd.getName()).append("</a></li>\r\n");
       } else { // if (!rules.equals("{def}")) {
         in.append(" <tr><td><a href=\"").append(rd.getName().toLowerCase()).append(".html\">").append(rd.getName()).append("</a></td><td>")
-        .append(rules.replace("|", "or").replace("{def}", "<span style=\"color: maroon\"><b>[base]</b></span>")).append("</td></tr>\r\n");
+            .append(rules.getParameter().replace("|", "or").replace("{def}", "<span style=\"color: maroon\"><b>[base]</b></span>"))
+            .append("</td><td><b>").append(nn(rules.getStart())).append("</b></td><td><b>").append(nn(rules.getEnd())).append("</b></td></tr>\r\n");
       }
     }
-    return "<p>\r\nThe following resources may be in this compartment:\r\n</p>\r\n" +
+    return "<p>\r\nThe following resources are in this compartment:\r\n</p>\r\n" +
     "<table class=\"grid\">\r\n"+
-    " <tr><td><b>Resource</b></td><td><b>Inclusion Criteria</b></td></tr>\r\n"+
+    " <tr><td><b>Resource</b></td><td><b>Inclusion Criteria</b></td><td><b>Start Date Parameter</b></td><td><b>End Date Parameter Criteria</b></td></tr>\r\n"+
     in.toString()+
     "</table>\r\n"+
     "<p>\r\nA resource is in this compartment if the nominated search parameter (or chain) refers to the "+name+" resource that defines the compartment.\r\n</p>\r\n";
+  }
+
+  private String nn(String s) {
+    return s == null ? "" : s;
   }
 
   private String compartmentlist() {
@@ -7541,7 +7546,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
   private String getCompLinks(ResourceDefn resource, String param) {
     List<String> names = new ArrayList<String>();
     for (Compartment comp : definitions.getCompartments()) {
-      if (comp.getResources().containsKey(resource) && !Utilities.noString(comp.getResources().get(resource)))
+      if (comp.getResources().containsKey(resource) && !Utilities.noString(comp.getResources().get(resource).getParameter()))
         names.add(comp.getName());
     }
     StringBuilder b = new StringBuilder();
