@@ -89,10 +89,7 @@ import org.hl7.fhir.r5.utils.BuildExtensions;
 import org.hl7.fhir.r5.utils.CanonicalResourceUtilities;
 import org.hl7.fhir.r5.extensions.ExtensionDefinitions;
 import org.hl7.fhir.tools.publisher.BuildWorkerContext;
-import org.hl7.fhir.utilities.PathBuilder;
-import org.hl7.fhir.utilities.StandardsStatus;
-import org.hl7.fhir.utilities.FileUtilities;
-import org.hl7.fhir.utilities.Utilities;
+import org.hl7.fhir.utilities.*;
 import org.hl7.fhir.utilities.filesystem.CSFile;
 import org.hl7.fhir.utilities.filesystem.CSFileInputStream;
 
@@ -798,7 +795,10 @@ public class ResourceParser {
     }
 
     if (definitions.getValuesets().has(reference)) {
-      return definitions.getValuesets().get(reference);
+      ValueSet vs = definitions.getValuesets().get(reference);
+      if (vs.getSourcePackage() == null || !vs.getSourcePackage().isExtensionsPack()) {
+        return vs;
+      }
     }
     if (definitions.getExtraValuesets().containsKey(reference)) {
       return definitions.getExtraValuesets().get(reference);
@@ -973,6 +973,13 @@ public class ResourceParser {
       
       return vs;
     }
+
+
+    if (definitions.getValuesets().has(reference)) {
+      ValueSet vs = definitions.getValuesets().get(reference);
+      return vs;
+    }
+
     return null; /// try again later
   }
 

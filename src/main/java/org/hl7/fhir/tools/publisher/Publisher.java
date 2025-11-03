@@ -1016,7 +1016,7 @@ public class Publisher implements URIResolver, SectionNumberer {
       boolean sok = testSearchParameter(spd.getResource(), rd.getProfile());
       if (!sok) {
         ok = false;
-        ids.add(spd.getCode());
+        ids.add(spd.getResource()+"/"+spd.getCode());
       }
     }
     return ok;
