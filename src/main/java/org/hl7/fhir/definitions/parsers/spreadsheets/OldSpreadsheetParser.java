@@ -1767,8 +1767,6 @@ public class OldSpreadsheetParser {
 			}
 		}
 
-    e.setStandardsStatus(StandardsStatus.fromCode(sheet.getColumn(row, "Standards-Status")));
-    e.setStandardsStatusReason(sheet.getColumn(row, "Standards-Status-Reason"));
     e.setNormativeVersion(sheet.getColumn(row, "Normative-Version"));
 
 		if (e.getName().startsWith("@")) {

@@ -122,17 +122,14 @@ public class TypeParser {
         t.setVersioning(org.hl7.fhir.r5.model.ElementDefinition.ReferenceVersionRules.fromCode(v));
       }
 
-      if (typeString.contains("{")) {
-        if (!inProfile) {
-          throw new Exception(exceptionPrefix + "Can't specify profile for types unless defining a profile");
-        }
+      if (typeString.contains("{") && !typeString.contains("(")) {
         int startPos = typeString.indexOf("{");
         int endPos = typeString.indexOf("}");
         if (endPos < startPos) {
           throw new Exception(exceptionPrefix + "Missing '}' in datatype definition: " + typeList[i]);
         }
         String pt = typeString.substring(startPos + 1, endPos).trim();
-        typeString = typeString.substring(0, startPos);
+        typeString = typeString.substring(0, startPos)+typeString.substring(endPos+1);
         if (pt.startsWith("#")) {
           // what to do here depends on what it refers to 
           if (typeString.trim().equals("Extension"))

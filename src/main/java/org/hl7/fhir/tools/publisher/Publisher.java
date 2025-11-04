@@ -808,8 +808,9 @@ public class Publisher implements URIResolver, SectionNumberer {
 
       loadValueSets1();
       generateSCMaps();
+      validate1();
       processProfiles();
-      validate();
+      validate2();
       checkAllOk();
       startValidation();
 
@@ -1015,7 +1016,7 @@ public class Publisher implements URIResolver, SectionNumberer {
       boolean sok = testSearchParameter(spd.getResource(), rd.getProfile());
       if (!sok) {
         ok = false;
-        ids.add(spd.getCode());
+        ids.add(spd.getResource()+"/"+spd.getCode());
       }
     }
     return ok;
@@ -2217,11 +2218,14 @@ public class Publisher implements URIResolver, SectionNumberer {
     cpd.setSearch(true);
     for (String rn : page.getDefinitions().sortedResourceNames()) {
       ResourceDefn rd = page.getDefinitions().getResourceByName(rn);
-      String rules = c.getResources().get(rd);
+      Compartment.StringTriple rules = c.getResources().get(rd);
       CompartmentDefinitionResourceComponent cc = cpd.addResource().setCode(rd.getName());
-      if (!Utilities.noString(rules)) {
-        for (String p : rules.split("\\|"))
+      if (rules != null) {
+        for (String p : rules.getParameter().split("\\|")) {
           cc.addParam(p.trim());
+        }
+        cc.setStartParam(rules.getStart());
+        cc.setEndParam(rules.getEnd());
       }
     }
     cpd.setWebPath("compartmentdefinition-"+c.getName()+".html");
@@ -2552,12 +2556,11 @@ public class Publisher implements URIResolver, SectionNumberer {
     return errors.size() == 0;
   }
 
-  private void validate() throws Exception {
-    page.log("Validating", LogMessageType.Process);
-    ResourceValidator val = new ResourceValidator(page.getDefinitions(), page.getTranslations(), page.getCodeSystems(), page.getFolders().srcDir, fpUsages, page.getSuppressedMessages(), page.getWorkerContext(), new ValidatorSettings());
+  private ResourceValidator val = null;
+  private void validate1() throws Exception {
+    page.log("Validating (1)", LogMessageType.Process);
+    val = new ResourceValidator(page.getDefinitions(), page.getTranslations(), page.getCodeSystems(), page.getFolders().srcDir, fpUsages, page.getSuppressedMessages(), page.getWorkerContext(), new ValidatorSettings());
     val.resolvePatterns();
-    ProfileValidator valp = new ProfileValidator(page.getWorkerContext(), new ValidatorSettings(), null, null);
-
     for (String n : page.getDefinitions().getTypes().keySet())
       page.getValidationErrors().addAll(val.checkStucture(n, page.getDefinitions().getTypes().get(n)));
     
@@ -2569,10 +2572,6 @@ public class Publisher implements URIResolver, SectionNumberer {
         page.getValidationErrors().addAll(val.check(n, page.getDefinitions().getResources().get(n)));
     page.getValidationErrors().addAll(val.check("Parameters", page.getDefinitions().getResourceByName("Parameters")));
 
-    for (String rname : page.getDefinitions().sortedResourceNames()) {
-      ResourceDefn r = page.getDefinitions().getResources().get(rname);
-      checkExampleLinks(page.getValidationErrors(), r);
-    }
     for (Compartment cmp : page.getDefinitions().getCompartments())
       page.getValidationErrors().addAll(val.check(cmp));
     
@@ -2586,7 +2585,17 @@ public class Publisher implements URIResolver, SectionNumberer {
         }
       }
     }
-//          E
+  }
+
+  private void validate2() throws Exception {
+    page.log("Validating (2)", LogMessageType.Process);
+    ProfileValidator valp = new ProfileValidator(page.getWorkerContext(), new ValidatorSettings(), null, null);
+
+    for (String rname : page.getDefinitions().sortedResourceNames()) {
+      ResourceDefn r = page.getDefinitions().getResources().get(rname);
+      checkExampleLinks(page.getValidationErrors(), r);
+    }
+
     page.setPatternFinder(val.getPatternFinder());
     val.report();
     val.summariseSearchTypes(page.getSearchTypeUsage());
@@ -2618,7 +2627,7 @@ public class Publisher implements URIResolver, SectionNumberer {
       s.write("<wg code=\""+wg.getCode()+"\" name=\""+wg.getName()+"\" url=\""+wg.getUrl()+"\"/>\r\n");
     }
     for (PageInformation pn : page.getDefinitions().getPageInfo().values()) {
-      s.write("<page name=\""+pn.getName()+"\" wg=\""+pn.getWgCode()+"\" fmm=\""+pn.getFmm()+"\"/>\r\n");
+      s.write("<page name=\""+pn.getName()+"\" wg=\""+pn.getWgCode()+"\" status=\""+pn.getStatus().toCode()+"\"/>\r\n");
     }
     try {
       s.write(new String(XsltUtilities.saxonTransform(page.getFolders().dstDir + "profiles-resources.xml", xslt)));
@@ -5929,12 +5938,9 @@ public class Publisher implements URIResolver, SectionNumberer {
     src = addSectionNumbers(file, logicalName, src, null, 0, doch, null);
 
     if (!page.getDefinitions().getStructuralPages().contains(file)) {
-      XhtmlNode fmm = findId(doch.doc, "fmm");
+      XhtmlNode ballot = findId(doch.doc, "ballot");
       XhtmlNode wg = findId(doch.doc, "wg");
-      if (fmm == null)
-        page.getValidationErrors().add(new   ValidationMessage(Source.Publisher, IssueType.BUSINESSRULE, -1, -1, file, "Page has no fmm level", IssueSeverity.ERROR));
-      else
-        page.getDefinitions().page(file).setFmm(get2ndPart(fmm.allText()));
+      page.getDefinitions().page(file).setStatus(ballot.allText().contains("Informative") ? StandardsStatus.INFORMATIVE : StandardsStatus.NORMATIVE);
       if (wg == null)
         page.getValidationErrors().add(new ValidationMessage(Source.Publisher, IssueType.BUSINESSRULE, -1, -1, file, "Page has no workgroup", IssueSeverity.ERROR));
       else
@@ -6311,8 +6317,7 @@ public class Publisher implements URIResolver, SectionNumberer {
       return new XhtmlComposer(XhtmlComposer.HTML).compose(doc);
     } catch (Exception e) {
       System.out.println(e.getMessage());
-      //FileUtilities.stringToFile(src, Utilities.path("tmp]", "dump.html"));
-      FileUtilities.stringToFile(src, Utilities.appendSlash(System.getProperty("user.dir")) + "fhir-error-dump.html");
+      FileUtilities.stringToFile(src, Utilities.path("[tmp]", "dump.html"));
 
       throw new Exception("Exception inserting section numbers in " + link + ": " + e.getMessage(), e);
     }

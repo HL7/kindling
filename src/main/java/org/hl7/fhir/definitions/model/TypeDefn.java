@@ -8,7 +8,6 @@ import org.hl7.fhir.utilities.Utilities;
 
 public class TypeDefn extends ElementDefn {
   private StructureDefinition profile;
-  private String fmmLevel = "1";
   private List<String> characteristics = new ArrayList<>();
   
   public TypeDefn(String charList) {
@@ -31,14 +30,6 @@ public class TypeDefn extends ElementDefn {
 
   public void setProfile(StructureDefinition profile) {
     this.profile = profile;
-  }
-
-  public String getFmmLevel() {
-    return fmmLevel;
-  }
-
-  public void setFmmLevel(String fmmLevel) {
-    this.fmmLevel = fmmLevel;
   }
 
   public List<String> getCharacteristics() {

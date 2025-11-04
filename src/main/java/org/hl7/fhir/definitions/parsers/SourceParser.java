@@ -201,7 +201,6 @@ public class SourceParser {
   public void parse(Calendar genDate, List<ValidationMessage> issues) throws Exception {
     logger.log("Loading", LogMessageType.Process);
 
-    loadNormativePackages();
     loadWorkGroups();
     loadW5s();
     loadMappingSpaces();
@@ -485,15 +484,6 @@ public class SourceParser {
     return bytes.toByteArray();
   }
 
-
-
-
-  private void loadNormativePackages() {
-    for (String s : ini.getPropertyNames("normative-packages")) {
-      page.getNormativePackages().put(s, new HashMap<String, PageInfo>());
-    }
-  }
-
   private WorkGroup wg(String committee) {
     return definitions.getWorkgroups().get(committee);
   }
@@ -617,27 +607,7 @@ public class SourceParser {
         throw new Exception("huh?");
       if (ed == null)
         throw new Exception("not found: "+p);
-      
-      for (ElementDefn t : trace) {
-        if (t.getStandardsStatus() != null && t.getStandardsStatus().isLowerThan(sp.getStandardsStatus()))
-          sp.setStandardsStatus(t.getStandardsStatus(), t.getNormativeVersion(rd));
-        try {
-          if (definitions.hasPrimitiveType(t.typeCodeNoParams())) {
-            sp.setStandardsStatus(StandardsStatus.NORMATIVE, t.getNormativeVersion(rd));
-          } else if (Utilities.noString(t.typeCode())) {
-            // nothing, this is part of the resource.
-          } else if (t.getTypes().size() == 1 && !t.getTypes().get(0).getName().startsWith("@")) {
-            TypeDefn tt = definitions.getElementDefn(t.typeCodeNoParams());
-            if (tt.getStandardsStatus() != null && tt.getStandardsStatus().isLowerThan(sp.getStandardsStatus())) {
-              sp.setStandardsStatus(tt.getStandardsStatus(), t.getNormativeVersion(rd));
-            }
-          }
-        } catch (Exception e) {
-          // nothing
-        }
-        
-      }
-      
+
       if (ed.getName().endsWith("[x]"))
         if (p.endsWith("[x]"))
           bp.append(p.substring(0, p.length()-3));
@@ -920,10 +890,26 @@ public class SourceParser {
       if (!Utilities.noString(mn) && !mn.startsWith("!")) {
         ResourceDefn r = definitions.getResourceByName(mn);
         for (Compartment c : definitions.getCompartments()) {
-          c.getResources().put(r,  sheet.getColumn(row, c.getName()));
+          c.getResources().put(r, c.new StringTriple(sheet.getColumn(row, c.getName()), startDate(sheet, row), endDate(sheet, row)));
         }
       }
     }
+  }
+
+  private String endDate(Sheet sheet, int row) {
+    String value = sheet.getColumn(row,"date");
+    if (!Utilities.noString(value)) {
+      return value;
+    }
+    return sheet.getColumn(row,"startDate");
+  }
+
+  private String startDate(Sheet sheet,int row) {
+    String value = sheet.getColumn(row,"date");
+    if (!Utilities.noString(value)) {
+      return value;
+    }
+    return sheet.getColumn(row,"startDate");
   }
 
   private void loadCodeSystem(String n) throws FileNotFoundException, Exception {
@@ -1215,9 +1201,6 @@ public class SourceParser {
         }
         OldSpreadsheetParser p = new OldSpreadsheetParser("core", new CSFileInputStream(csv), csv.getName(), csv.getAbsolutePath(), definitions, srcDir, logger, registry, version, context, genDate, isAbstract, page, true, ini, wg(wgc), definitions.getProfileIds(), fpUsages, page.getConceptMaps(), exceptionIfExcelNotNormalised, page.packageInfo(), page.getRc());
         org.hl7.fhir.definitions.model.TypeDefn el = p.parseCompositeType();
-        el.setFmmLevel(fmm);
-        el.setStandardsStatus(status);
-        el.setStandardsStatusReason(ssr);
         el.setNormativeVersion(nv);
         map.put(t.getName(), el);
         genTypeProfile(el);
@@ -1331,7 +1314,7 @@ public class SourceParser {
         definitions.getKnownResources().put(root.getName(), new DefinedCode(root.getName(), root.getRoot().getDefinition(), n, null));
         context.getResourceNames().add(root.getName());
       }
-      if (root.getNormativeVersion() != null || root.getNormativePackage() != null) {
+      if (root.getNormativeVersion() != null) {
         root.setStatus(StandardsStatus.NORMATIVE);
       }
       if (f.exists()) { 
@@ -1376,7 +1359,6 @@ public class SourceParser {
   public void setResourceProps(String n, WorkGroup wg, ResourceDefn root) {
     root.setWg(wg);
     root.setFmmLevel(ini.getStringProperty("fmm", n.toLowerCase()));
-    root.setNormativePackage(ini.getStringProperty("normative-package", root.getName()));
     root.setNormativeVersion(ini.getStringProperty("first-normative-version", root.getName()));
     root.setApproval(FMGApproval.fromCode(ini.getStringProperty("fmg-approval", root.getName())));
   }

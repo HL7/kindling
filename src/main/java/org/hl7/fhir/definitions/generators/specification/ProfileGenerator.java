@@ -41,29 +41,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.hl7.fhir.definitions.model.BindingSpecification;
+import org.hl7.fhir.definitions.model.*;
 import org.hl7.fhir.definitions.model.BindingSpecification.AdditionalBinding;
 import org.hl7.fhir.definitions.model.BindingSpecification.BindingMethod;
-import org.hl7.fhir.definitions.model.CommonSearchParameter;
-import org.hl7.fhir.definitions.model.ConstraintStructure;
-import org.hl7.fhir.definitions.model.DefinedStringPattern;
-import org.hl7.fhir.definitions.model.Definitions;
-import org.hl7.fhir.definitions.model.ElementDefn;
-import org.hl7.fhir.definitions.model.ImplementationGuideDefn;
-import org.hl7.fhir.definitions.model.Invariant;
-import org.hl7.fhir.definitions.model.Operation;
-import org.hl7.fhir.definitions.model.OperationParameter;
-import org.hl7.fhir.definitions.model.PrimitiveType;
-import org.hl7.fhir.definitions.model.Profile;
-import org.hl7.fhir.definitions.model.ProfiledType;
-import org.hl7.fhir.definitions.model.ResourceDefn;
-import org.hl7.fhir.definitions.model.SearchParameterDefn;
 import org.hl7.fhir.definitions.model.SearchParameterDefn.CompositeDefinition;
 import org.hl7.fhir.definitions.model.SearchParameterDefn.SearchType;
-import org.hl7.fhir.definitions.model.TypeDefn;
-import org.hl7.fhir.definitions.model.TypeRef;
-import org.hl7.fhir.definitions.model.W5Entry;
-import org.hl7.fhir.definitions.model.WorkGroup;
 import org.hl7.fhir.definitions.parsers.TypeParser;
 import org.hl7.fhir.definitions.uml.UMLAttribute;
 import org.hl7.fhir.definitions.uml.UMLClass;
@@ -819,7 +801,7 @@ public class ProfileGenerator {
     p.setType(t.getName());
     p.setFhirVersion(version);
     p.setVersion(version.toCode());
-    ExtensionUtilities.setStandardsStatus(p, t.getStandardsStatus(), t.getNormativeVersion());
+    ExtensionUtilities.setStandardsStatus(p, StandardsStatus.NORMATIVE, t.getNormativeVersion());
     KindlingUtilities.makeUniversal(p);
     populateCharacteristics(p, t.getCharacteristics());
 
@@ -830,7 +812,7 @@ public class ProfileGenerator {
     p.setDescription(t.getName()+" Type: "+t.getDefinition());
     p.setPurpose(t.getRequirements());
     p.setDate(genDate.getTime());
-    p.setStatus(t.getStandardsStatus() == StandardsStatus.NORMATIVE ?  PublicationStatus.fromCode("active") : PublicationStatus.fromCode("draft")); 
+    p.setStatus(PublicationStatus.fromCode("active"));
 
     CanonicalResourceUtilities.setHl7WG(p, "fhir");
 
@@ -838,13 +820,13 @@ public class ProfileGenerator {
 
     // first, the differential
     p.setDifferential(new StructureDefinitionDifferentialComponent());
-    defineElement(null, p, p.getDifferential().getElement(), t, t.getName(), containedSlices, new ArrayList<ProfileGenerator.SliceHandle>(), SnapShotMode.None, true, "Element", b, false);
+    defineElement(null, p, p.getDifferential().getElement(), t, t.getName(), containedSlices, new ArrayList<ProfileGenerator.SliceHandle>(), SnapShotMode.None, true, "Element", b, false, false);
     p.getDifferential().getElement().get(0).setIsSummaryElement(null);
     
     reset();
     // now. the snapshot
     p.setSnapshot(new StructureDefinitionSnapshotComponent());
-    defineElement(null, p, p.getSnapshot().getElement(), t, t.getName(), containedSlices, new ArrayList<ProfileGenerator.SliceHandle>(), SnapShotMode.DataType, true, "Element", b, true);
+    defineElement(null, p, p.getSnapshot().getElement(), t, t.getName(), containedSlices, new ArrayList<ProfileGenerator.SliceHandle>(), SnapShotMode.DataType, true, "Element", b, true, false);
     for (ElementDefinition ed : p.getSnapshot().getElement())
       if (ed.getBase().getPath().equals(ed.getPath()) && ed.getPath().contains("."))
         generateElementDefinition(p, ed, getParent(ed, p.getSnapshot().getElement()));
@@ -898,6 +880,7 @@ public class ProfileGenerator {
             a = new UMLAttribute(e.getName(), Integer.toString(e.getMinCardinality()), Integer.toString(e.getMaxCardinality()), uml.getClassByNameCreate(tn));
             for (TypeRef tr : t.getTypes()) {
               for (String p : tr.getParams()) {
+                if (p.contains("{")) { throw new Error("fix"); }
                 a.getTargets().add(p);
               }
             }
@@ -916,6 +899,7 @@ public class ProfileGenerator {
             for (TypeRef tr : t.getTypes()) {
               a.getTypes().add(tr.getName());
               for (String p : tr.getParams()) {
+                if (p.contains("{")) { throw new Error("fix"); }
                 a.getTargets().add(p);
               }
             }
@@ -1136,12 +1120,12 @@ public class ProfileGenerator {
 
     // first, the differential
     p.setDifferential(new StructureDefinitionDifferentialComponent());
-    defineElement(null, p, p.getDifferential().getElement(), r.getRoot(), r.getRoot().getName(), containedSlices, new ArrayList<ProfileGenerator.SliceHandle>(), SnapShotMode.None, true, "BackboneElement", r.getRoot().typeCode(), false);
+    defineElement(null, p, p.getDifferential().getElement(), r.getRoot(), r.getRoot().getName(), containedSlices, new ArrayList<ProfileGenerator.SliceHandle>(), SnapShotMode.None, true, "BackboneElement", r.getRoot().typeCode(), false, true);
 
     reset();
     // now. the snapshot'
     p.setSnapshot(new StructureDefinitionSnapshotComponent());
-    defineElement(null, p, p.getSnapshot().getElement(), r.getRoot(), r.getRoot().getName(), containedSlices, new ArrayList<ProfileGenerator.SliceHandle>(), SnapShotMode.Resource, true, "BackboneElement", r.getRoot().typeCode(), true);
+    defineElement(null, p, p.getSnapshot().getElement(), r.getRoot(), r.getRoot().getName(), containedSlices, new ArrayList<ProfileGenerator.SliceHandle>(), SnapShotMode.Resource, true, "BackboneElement", r.getRoot().typeCode(), true, true);
     for (ElementDefinition ed : p.getSnapshot().getElement())
       if (!ed.hasBase() && !logical)
         generateElementDefinition(p, ed, getParent(ed, p.getSnapshot().getElement()));
@@ -1284,7 +1268,7 @@ public class ProfileGenerator {
     Set<String> containedSlices = new HashSet<String>();
 
     p.setDifferential(new StructureDefinitionDifferentialComponent());
-    defineElement(pack, p, p.getDifferential().getElement(), resource.getRoot(), resource.getName(), containedSlices, new ArrayList<ProfileGenerator.SliceHandle>(), SnapShotMode.None, true, null, null, false);
+    defineElement(pack, p, p.getDifferential().getElement(), resource.getRoot(), resource.getName(), containedSlices, new ArrayList<ProfileGenerator.SliceHandle>(), SnapShotMode.None, true, null, null, false, true);
     List<String> names = new ArrayList<String>();
     names.addAll(resource.getSearchParams().keySet());
     Collections.sort(names);
@@ -1720,7 +1704,7 @@ public class ProfileGenerator {
    * note: snapshot implies that we are generating a resource or a datatype; for other profiles, the snapshot is generated elsewhere
    * @param isInterface 
    */
-  private ElementDefinition defineElement(Profile ap, StructureDefinition p, List<ElementDefinition> elements, ElementDefn e, String path, Set<String> slices, List<SliceHandle> parentSlices, SnapShotMode snapshot, boolean root, String defType, String inheritedType, boolean defaults) throws Exception 
+  private ElementDefinition defineElement(Profile ap, StructureDefinition p, List<ElementDefinition> elements, ElementDefn e, String path, Set<String> slices, List<SliceHandle> parentSlices, SnapShotMode snapshot, boolean root, String defType, String inheritedType, boolean defaults, boolean isResource) throws Exception
   {
     boolean handleDiscriminator = true;
     if (!Utilities.noString(e.getProfileName()) && !e.getDiscriminator().isEmpty() && !slices.contains(path)) {
@@ -1754,9 +1738,6 @@ public class ProfileGenerator {
     ElementDefinition ce = new ElementDefinition(defaults, ElementDefinition.NOT_MODIFIER, ElementDefinition.NOT_IN_SUMMARY);
     elements.add(ce);
 //    todo ce.setId(path.substring(path.indexOf(".")+1));
-
-    if (e.getStandardsStatus() != null)
-      ExtensionUtilities.setStandardsStatus(ce, e.getStandardsStatus(), e.getNormativeVersion());
 
     ce.setId(path);
     ce.setPath(path);
@@ -1820,7 +1801,7 @@ public class ProfileGenerator {
 //        } else if (p.getKind() == StructureDefinitionKind.RESOURCE && !path.substring(0, path.length()-3).contains(".")) {
         } else if ("Element.id".equals(path)) {
           ExtensionUtilities.addUrlExtension(tr, ExtensionDefinitions.EXT_FHIR_TYPE, "string");
-        } else if (Utilities.charCount(path, '.') < 2) {
+        } else if (isResource && Utilities.charCount(path, '.') < 2) {
           ExtensionUtilities.addUrlExtension(tr, ExtensionDefinitions.EXT_FHIR_TYPE, "id");
         } else {
           ExtensionUtilities.addUrlExtension(tr, ExtensionDefinitions.EXT_FHIR_TYPE, "string");
@@ -1838,6 +1819,7 @@ public class ProfileGenerator {
               throw new Exception("Cannot declare profile on a resource reference declaring multiple resource types.  Path " + path + " in profile " + p.getName());
             }
             for (String param : t.getParams()) {
+              if (param.contains("{")) { throw new Error("fix"); }
               if (definitions.hasLogicalModel(param)) {
                 for (String pn : definitions.getLogicalModel(param).getImplementations()) {
                   TypeRef childType = new TypeRef(t.getName());
@@ -1881,7 +1863,12 @@ public class ProfileGenerator {
           }
           TypeRefComponent type = ce.getType(tc);
           if (profile == null && t.hasParams()) {
-            profile = t.getParams().get(0);
+            ParameterisedType pp = new ParameterisedType(t.getParams().get(0));
+            if (pp.getProfile() == null) {
+              profile = pp.getName();
+            } else {
+              profile = pp.getProfile();
+            }
           }
           if (t.getPatterns() != null) {
             for (String s : t.getPatterns()) {
@@ -1966,7 +1953,7 @@ public class ProfileGenerator {
     }
     
     for (ElementDefn child : e.getElements()) 
-      defineElement(ap, p, elements, child, path+"."+child.getName(), containedSlices, myParents, snapshot, false, defType, null, defaults);
+      defineElement(ap, p, elements, child, path+"."+child.getName(), containedSlices, myParents, snapshot, false, defType, null, defaults, isResource);
 
     return ce;
   }
@@ -1977,7 +1964,7 @@ public class ProfileGenerator {
     W5Entry e = definitions.getW5s().get(w5);
     if (e == null && w5.contains(".")) {
       e = definitions.getW5s().get(w5.substring(0, w5.indexOf("."))); 
-      if (e.getSubClasses().contains(w5.substring(w5.indexOf(".")+1))) {
+      if (e != null && e.getSubClasses().contains(w5.substring(w5.indexOf(".")+1))) {
         return w5;
       }
     }
@@ -2158,7 +2145,7 @@ public class ProfileGenerator {
 
     if (!definitions.getBaseResources().containsKey(e.getName()) || isInterface || !definitions.getBaseResources().get(e.getName()).isInterface()) {
       for (ElementDefn child : e.getElements()) {
-        ElementDefinition ed = defineElement(null, p, elements, child, path+"."+child.getName(), containedSlices, new ArrayList<ProfileGenerator.SliceHandle>(), snapshot, false, dt, null, defaults);
+        ElementDefinition ed = defineElement(null, p, elements, child, path+"."+child.getName(), containedSlices, new ArrayList<ProfileGenerator.SliceHandle>(), snapshot, false, dt, null, defaults, false);
         if (!ed.hasBase())
           ed.setBase(new ElementDefinitionBaseComponent());
         ed.getBase().setPath(e.getName()+"."+child.getName());
@@ -2427,6 +2414,7 @@ public class ProfileGenerator {
     for (TypeRef t : src.getTypes()) {
       if (t.hasParams()) {
         for (String tp : t.getParams()) {
+          if (tp.contains("{")) { throw new Error("fix"); }
           if (definitions.hasLogicalModel(tp)) {
             for (String tpn : definitions.getLogicalModel(tp).getImplementations()) {
               ElementDefinition.TypeRefComponent type = dst.getType(t.getName());
@@ -2682,11 +2670,14 @@ public class ProfileGenerator {
           pp.setType(Enumerations.FHIRTypes.fromCode(pt.getBaseType().equals("*") ? "Type" : pt.getBaseType()));
           pp.addTargetProfile("http://hl7.org/fhir/StructureDefinition/"+pt.getName());
         } else { 
-          if (p.getSearchType() != null)
+          if (p.getSearchType() != null) {
             pp.setSearchType(SearchParamType.fromCode(p.getSearchType()));
+          }
           pp.setType(Enumerations.FHIRTypes.fromCode(tr.getName().equals("*") ? "Type" : tr.getName()));
-          if (tr.getParams().size() == 1 && !tr.getParams().get(0).equals("Any"))
-            pp.addTargetProfile("http://hl7.org/fhir/StructureDefinition/"+tr.getParams().get(0));
+          if (tr.getParams().size() == 1 && !tr.getParams().get(0).equals("Any")) {
+            if (tr.getParams().get(0).contains("{")) { throw new Error("fix"); }
+            pp.addTargetProfile("http://hl7.org/fhir/StructureDefinition/" + tr.getParams().get(0));
+          }
         } 
       }
     }
@@ -2743,7 +2734,7 @@ public class ProfileGenerator {
 
     // first, the differential
     p.setSnapshot(new StructureDefinitionSnapshotComponent());
-    defineElement(null, p, p.getSnapshot().getElement(), r.getRoot(), r.getRoot().getName(), containedSlices, new ArrayList<ProfileGenerator.SliceHandle>(), SnapShotMode.None, true, "Element", "Element", true);
+    defineElement(null, p, p.getSnapshot().getElement(), r.getRoot(), r.getRoot().getName(), containedSlices, new ArrayList<ProfileGenerator.SliceHandle>(), SnapShotMode.None, true, "Element", "Element", true, false);
     addElementConstraintToSnapshot(p, false);
 
     XhtmlNode div = new XhtmlNode(NodeType.Element, "div");

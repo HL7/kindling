@@ -123,11 +123,9 @@ public class ResourceValidator extends BaseValidator {
     ResourceDefn fakeParent = new ResourceDefn();
     fakeParent.setRoot((TypeDefn) structure);
     fakeParent.setWg(definitions.getWorkgroups().get("fhir"));
-    fakeParent.setFmmLevel(fakeParent.getRoot().getFmmLevel());
-    fakeParent.setStatus(fakeParent.getRoot().getStandardsStatus());
     if (fakeParent.getStatus() == StandardsStatus.NORMATIVE)
       fakeParent.setNormativeVersion("4.0.0");
-    checkElement(errors, structure.getName(), structure, fakeParent, null, true, false, hasSummary(structure), new ArrayList<String>(), true, structure.getStandardsStatus(), new HashSet<>());
+    checkElement(errors, structure.getName(), structure, fakeParent, null, true, false, hasSummary(structure), new ArrayList<String>(), true, StandardsStatus.NORMATIVE, new HashSet<>());
   }
 
   private boolean hasSummary(ElementDefn structure) {
@@ -251,10 +249,10 @@ public class ResourceValidator extends BaseValidator {
 
     for (Compartment c : definitions.getCompartments()) {
       if (rule(errors, ValidationMessage.NO_RULE_DATE, IssueType.STRUCTURE, rd.getName(), name.equals("Parameters") || c.getResources().containsKey(rd), "Resource not entered in resource map for compartment '" + c.getTitle() + "' (compartments.xml)")) {
-        String param = c.getResources().get(rd);
-        if (!Utilities.noString(param)) {
+        Compartment.StringTriple param = c.getResources().get(rd);
+        if (param != null) {
           //          rule(errors, ValidationMessage.NO_RULE_DATE, IssueType.STRUCTURE, parent.getName(), param.equals("{def}") || parent.getSearchParams().containsKey(c.getName()), "Resource "+parent.getName()+" in compartment " +c.getName()+" must have a search parameter named "+c.getName().toLowerCase()+")");
-          for (String p : param.split("\\|")) {
+          for (String p : param.getParameter().split("\\|")) {
             String pn = p.trim();
             if (pn.contains("."))
               pn = pn.substring(0, pn.indexOf("."));
@@ -282,10 +280,10 @@ public class ResourceValidator extends BaseValidator {
         hints++;
     }
     boolean ok = warnings == 0 || "0".equals(rd.getFmmLevel());
-    if (rule(errors, ValidationMessage.NO_RULE_DATE, IssueType.STRUCTURE, rd.getName(), ok, "Resource " + rd.getName() + " (FMM=" + rd.getFmmLevel() + ") cannot have an FMM level > 0 (" + rd.getFmmLevel() + ") if it has warnings"))
-      rule(errors, ValidationMessage.NO_RULE_DATE, IssueType.STRUCTURE, rd.getName(), vsWarnings == 0 || "0".equals(rd.getFmmLevel()), "Resource " + rd.getName() + " (FMM=" + rd.getFmmLevel() + ") cannot have an FMM level >1 (" + rd.getFmmLevel() + ") if it has linked value set warnings (" + vsWarns.toString() + ")");
-    ok = hints == 0 || Integer.parseInt(rd.getFmmLevel()) < 3;
-    rule(errors, ValidationMessage.NO_RULE_DATE, IssueType.STRUCTURE, rd.getName(), ok, "Resource " + rd.getName() + " (FMM=" + rd.getFmmLevel() + ") cannot have an FMM level >2 (" + rd.getFmmLevel() + ") if it has informational hints");
+//    if (rule(errors, ValidationMessage.NO_RULE_DATE, IssueType.STRUCTURE, rd.getName(), ok, "Resource " + rd.getName() + " (FMM=" + rd.getFmmLevel() + ") cannot have an FMM level > 0 (" + rd.getFmmLevel() + ") if it has warnings"))
+//      rule(errors, ValidationMessage.NO_RULE_DATE, IssueType.STRUCTURE, rd.getName(), vsWarnings == 0 || "0".equals(rd.getFmmLevel()), "Resource " + rd.getName() + " (FMM=" + rd.getFmmLevel() + ") cannot have an FMM level >1 (" + rd.getFmmLevel() + ") if it has linked value set warnings (" + vsWarns.toString() + ")");
+//    ok = hints == 0 || Integer.parseInt(rd.getFmmLevel()) < 3;
+//    rule(errors, ValidationMessage.NO_RULE_DATE, IssueType.STRUCTURE, rd.getName(), ok, "Resource " + rd.getName() + " (FMM=" + rd.getFmmLevel() + ") cannot have an FMM level >2 (" + rd.getFmmLevel() + ") if it has informational hints");
 
     //    if (isInterface(rd.getRoot().typeCode())) {
     //      checkInterface(errors, rd, definitions.getBaseResources().get(rd.getRoot().typeCode()));
@@ -456,7 +454,6 @@ public class ResourceValidator extends BaseValidator {
     for (ElementDefn child : ed.getElements()) {
       buildW5Mappings(child, false);
     }
-
   }
 
   private String translateW5(String w5) {
@@ -466,7 +463,7 @@ public class ResourceValidator extends BaseValidator {
     if ("class".equals(w5)) return "FiveWs.class";
     if ("grade".equals(w5)) return "FiveWs.grade";
     if ("what".equals(w5)) return "FiveWs.what[x]";
-    if ("who.focus".equals(w5)) return "FiveWs.subject[x]";
+    if ("who.focus".equals(w5)) return "FiveWs.subject";
     if ("context".equals(w5)) return "FiveWs.context";
     if ("when.init".equals(w5)) return "FiveWs.init";
     if ("when.planned".equals(w5)) return "FiveWs.planned";
@@ -674,18 +671,11 @@ public class ResourceValidator extends BaseValidator {
     if (e.typeCode().startsWith("Reference"))
       patternFinder.registerReference(parent.getRoot(), e);
 
-    if (status == StandardsStatus.NORMATIVE && e.getStandardsStatus() == null && e.getTypes().size() == 1) {
+    if (status == StandardsStatus.NORMATIVE && e.getTypes().size() == 1) {
       if (definitions.hasElementDefn(e.typeCode())) {
         TypeDefn t = definitions.getElementDefn(e.typeCode());
-        if (t != null && t.getStandardsStatus() != StandardsStatus.NORMATIVE) {
-          e.setStandardsStatus(t.getStandardsStatus());
-          e.setStandardsStatusReason(t.getStandardsStatusReason());
-        }
         e.setNormativeVersion(null);
       }
-    }
-    if (e.getStandardsStatus() != null) {
-      status = e.getStandardsStatus();
     }
     if (!hasSummary)
       e.setSummaryItem(true);
@@ -809,16 +799,16 @@ public class ResourceValidator extends BaseValidator {
             rule(errors, ValidationMessage.NO_RULE_DATE, IssueType.STRUCTURE, path, !cd.getValueSet().getExperimental(), "Reference to experimental valueset "+cd.getValueSet().getUrl());
           }
           if (e.getBinding().getStrength() == BindingStrength.EXAMPLE)
-            ValueSetUtilities.markStatus(cd.getValueSet(), parent == null ? "fhir" : parent.getWg().getCode(), StandardsStatus.DRAFT, null, "1", context, null);
+            ValueSetUtilities.markStatus(cd.getValueSet(), parent == null ? "fhir" : parent.getWg().getCode(), StandardsStatus.DRAFT, "1", context, null);
           else if (parent == null)
-            ValueSetUtilities.markStatus(cd.getValueSet(), "fhir", StandardsStatus.DRAFT, null, "0", context, null);
+            ValueSetUtilities.markStatus(cd.getValueSet(), "fhir", StandardsStatus.DRAFT, "0", context, null);
           else if (e.getBinding().getStrength() == BindingStrength.PREFERRED)
-            ValueSetUtilities.markStatus(cd.getValueSet(), parent.getWg().getCode(), null, null, null, context, null);
+            ValueSetUtilities.markStatus(cd.getValueSet(), parent.getWg().getCode(), null, null, context, null);
           else
-            ValueSetUtilities.markStatus(cd.getValueSet(), parent.getWg().getCode(), status, parent.getNormativePackage(), parent.getFmmLevel(), context, parent.getNormativeVersion());
+            ValueSetUtilities.markStatus(cd.getValueSet(), parent.getWg().getCode(), status, parent.getFmmLevel(), context, parent.getNormativeVersion());
           for (AdditionalBinding vsc : cd.getAdditionalBindings()) {
             if (vsc.getValueSet() != null) {
-              ValueSetUtilities.markStatus(vsc.getValueSet(), parent.getWg().getCode(), status, parent.getNormativePackage(), parent.getFmmLevel(), context, parent.getNormativeVersion());
+              ValueSetUtilities.markStatus(vsc.getValueSet(), parent.getWg().getCode(), status, parent.getFmmLevel(), context, parent.getNormativeVersion());
             }
           }
           Integer w = (Integer) cd.getValueSet().getUserData("warnings");
@@ -1398,7 +1388,7 @@ public class ResourceValidator extends BaseValidator {
   }
 
   public void checkResCmp(Compartment cmp, List<ValidationMessage> errors, ResourceDefn rd) {
-    String[] links = cmp.getResources().get(rd).split("\\|");
+    String[] links = cmp.getResources().get(rd).getParameter().split("\\|");
     for (String l : links) {
       String s = l.trim();
       if (!Utilities.noString(s) && !s.equals("{def}")) {

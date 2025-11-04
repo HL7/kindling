@@ -38,12 +38,7 @@ public class DefinitionComparer {
       res = false;
       System.out.println("Definitions differ @"+left.getName()+": requirements = "+left.getRequirements()+" vs "+right.getRequirements());
     }
-    
-    if (!stringsMatch(left.getNormativePackage(), right.getNormativePackage())) {
-      res = false;
-      System.out.println("Definitions differ @"+left.getName()+": normativePackage = "+left.getNormativePackage()+" vs "+right.getNormativePackage());
-    }
-    
+
     if (!stringsMatch(left.getNormativeVersion(), right.getNormativeVersion())) {
       res = false;
       System.out.println("Definitions differ @"+left.getName()+": normativeVersion = "+left.getNormativeVersion()+" vs "+right.getNormativeVersion());
@@ -772,12 +767,7 @@ public class DefinitionComparer {
       res = false;
       System.out.println("Definitions differ @"+path+": svgWidth = "+left.getSvgWidth()+" vs "+right.getSvgWidth());
     }
-    
-    if (left.getStandardsStatus() != right.getStandardsStatus() && left.getStandardsStatus() != null) {
-      res = false;
-      System.out.println("Definitions differ @"+path+": standardsStatus = "+left.getStandardsStatus()+" vs "+right.getStandardsStatus());
-    }
-    
+
     if (!integersMatch(left.getMinCardinality(), right.getMinCardinality())) {
       res = false;
       System.out.println("Definitions differ @"+path+": minCardinality = "+left.getMinCardinality()+" vs "+right.getMinCardinality());

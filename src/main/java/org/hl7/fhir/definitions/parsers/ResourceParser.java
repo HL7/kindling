@@ -89,10 +89,7 @@ import org.hl7.fhir.r5.utils.BuildExtensions;
 import org.hl7.fhir.r5.utils.CanonicalResourceUtilities;
 import org.hl7.fhir.r5.extensions.ExtensionDefinitions;
 import org.hl7.fhir.tools.publisher.BuildWorkerContext;
-import org.hl7.fhir.utilities.PathBuilder;
-import org.hl7.fhir.utilities.StandardsStatus;
-import org.hl7.fhir.utilities.FileUtilities;
-import org.hl7.fhir.utilities.Utilities;
+import org.hl7.fhir.utilities.*;
 import org.hl7.fhir.utilities.filesystem.CSFile;
 import org.hl7.fhir.utilities.filesystem.CSFileInputStream;
 
@@ -505,7 +502,6 @@ public class ResourceParser {
     
     ProfileUtilities pu = new ProfileUtilities(context, null, null);
     r.setRoot(parseTypeDefinition(pu, sd.getDifferential().getElementFirstRep(), sd));
-    r.getRoot().setFmmLevel(r.getFmmLevel());
     r.getRoot().setRequirements(r.getRequirements());
     if (r.isAbstract()) {
       r.getRoot().setAbstractType(true);
@@ -608,14 +604,6 @@ public class ResourceParser {
       ed.setTranslatable(ExtensionUtilities.readBoolExtension(focus, BuildExtensions.EXT_TRANSLATABLE));
     }
     ed.setOrderMeaning(focus.getOrderMeaning());
-    if (ExtensionUtilities.hasExtension(focus, BuildExtensions.EXT_STANDARDS_STATUS)) {
-      Extension sse = ExtensionUtilities.getExtension(focus, BuildExtensions.EXT_STANDARDS_STATUS);
-      ed.setStandardsStatus(StandardsStatus.fromCode(sse.getValue().primitiveValue()));
-      Extension ssr = sse.getValue().getExtensionByUrl(ExtensionDefinitions.EXT_STANDARDS_STATUS_REASON);
-      if (ssr != null) {
-        ed.setStandardsStatusReason(ssr.getValue().primitiveValue());
-      }
-    }
     if (ExtensionUtilities.hasExtension(focus, BuildExtensions.EXT_NORMATIVE_VERSION)) {
       ed.setNormativeVersion(ExtensionUtilities.readStringExtension(focus, BuildExtensions.EXT_NORMATIVE_VERSION));
     }
@@ -807,7 +795,10 @@ public class ResourceParser {
     }
 
     if (definitions.getValuesets().has(reference)) {
-      return definitions.getValuesets().get(reference);
+      ValueSet vs = definitions.getValuesets().get(reference);
+      if (vs.getSourcePackage() == null || !vs.getSourcePackage().isExtensionsPack()) {
+        return vs;
+      }
     }
     if (definitions.getExtraValuesets().containsKey(reference)) {
       return definitions.getExtraValuesets().get(reference);
@@ -982,6 +973,13 @@ public class ResourceParser {
       
       return vs;
     }
+
+
+    if (definitions.getValuesets().has(reference)) {
+      ValueSet vs = definitions.getValuesets().get(reference);
+      return vs;
+    }
+
     return null; /// try again later
   }
 

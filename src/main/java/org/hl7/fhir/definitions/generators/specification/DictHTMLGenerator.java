@@ -38,11 +38,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 
-import org.hl7.fhir.definitions.model.BindingSpecification;
-import org.hl7.fhir.definitions.model.Definitions;
-import org.hl7.fhir.definitions.model.ElementDefn;
-import org.hl7.fhir.definitions.model.Invariant;
-import org.hl7.fhir.definitions.model.TypeRef;
+import org.hl7.fhir.definitions.model.*;
 import org.hl7.fhir.exceptions.FHIRException;
 import org.hl7.fhir.r5.conformance.profile.ProfileUtilities;
 import org.hl7.fhir.r5.formats.IParser.OutputStyle;
@@ -493,10 +489,6 @@ public class DictHTMLGenerator  extends OutputStreamWriter {
 	  String name = path.replace("[", "_").replace("]", "_");
 		write("  <tr><td colspan=\"2\" class=\"structure self-link-parent\"><a name=\""+name+"\"> </a><b>"+path+"</b>"+
 	    "<a href=\"#"+name+"\" title=\"link to here\" class=\"self-link\"><svg viewBox=\"0 0 1792 1792\" width=\"16\" class=\"self-link\" height=\"16\"><path d=\"M1520 1216q0-40-28-68l-208-208q-28-28-68-28-42 0-72 32 3 3 19 18.5t21.5 21.5 15 19 13 25.5 3.5 27.5q0 40-28 68t-68 28q-15 0-27.5-3.5t-25.5-13-19-15-21.5-21.5-18.5-19q-33 31-33 73 0 40 28 68l206 207q27 27 68 27 40 0 68-26l147-146q28-28 28-67zm-703-705q0-40-28-68l-206-207q-28-28-68-28-39 0-68 27l-147 146q-28 28-28 67 0 40 28 68l208 208q27 27 68 27 42 0 72-31-3-3-19-18.5t-21.5-21.5-15-19-13-25.5-3.5-27.5q0-40 28-68t68-28q15 0 27.5 3.5t25.5 13 19 15 21.5 21.5 18.5 19q33-31 33-73zm895 705q0 120-85 203l-147 146q-83 83-203 83-121 0-204-85l-206-207q-83-83-83-203 0-123 88-209l-88-88q-86 88-208 88-120 0-204-84l-208-208q-84-84-84-204t85-203l147-146q83-83 203-83 121 0 204 85l206 207q83 83 83 203 0 123-88 209l88 88q86-88 208-88 120 0 204 84l208 208q84 84 84 204z\" fill=\"navy\"></path></svg></a></td></tr>\r\n");
-		if (e.getStandardsStatus() != null && !path.contains("."))
-      tableRowStyled("Standards Status", "versions.html#std-process", getStandardsStatusNote(e.getStandardsStatus(), e.getStandardsStatusReason(), root), getStandardsStatusStyle(e.getStandardsStatus()));
-    if (e.getStandardsStatus() == StandardsStatus.DEPRECATED && path.contains("."))
-      tableRowStyled("Standards Status", "versions.html#std-process", getStandardsStatusNote(e.getStandardsStatus(), e.getStandardsStatusReason(), root), getStandardsStatusStyle(e.getStandardsStatus()));
     tableRow("Element Id", null, e.getPath());
     tableRowNE("Definition", null, page.processMarkdown(path, e.getDefinition(), prefix));
     tableRow("Short Display", null, e.getShortDefn());
@@ -766,18 +758,23 @@ public class DictHTMLGenerator  extends OutputStreamWriter {
             if (!firstp)
               b.append(" | ");
             firstp = false;
-		        if (definitions.hasLogicalModel(p)) {
-              b.append("<a href=\""+prefix+typeLink(p)+"\">"+p+"</a>[");
+            ParameterisedType pp = new ParameterisedType(p);
+		        if (definitions.hasLogicalModel(pp.getName())) {
+              b.append("<a href=\""+prefix+typeLink(pp.getName())+"\">"+p+"</a>[");
               boolean firstpn = true;
-              for (String pn : definitions.getLogicalModel(p).getImplementations()) {
+              for (String pn : definitions.getLogicalModel(pp.getName()).getImplementations()) {
                 if (!firstpn)
                   b.append(", ");
                 firstpn = false;
                 b.append("<a href=\""+prefix+typeLink(pn)+"\">"+pn+"</a>");
               }		          
               b.append("]");
-		        } else {
-		          b.append("<a href=\""+prefix+typeLink(p)+"\">"+p+"</a>");
+		        } else if (pp.getProfile() != null) {
+              StructureDefinition sd = page.getWorkerContext().fetchResource(StructureDefinition.class, pp.getProfile());
+              b.append("(<a href=\""+prefix+sd.getWebPath()+"\">"+sd.present()+"</a>)");
+            } else {
+		          b.append("<a href=\""+prefix+typeLink(pp.getName())+"\">"+pp.getName()+"</a>");
+
 		        }
 		      }
 		      b.append(")");
