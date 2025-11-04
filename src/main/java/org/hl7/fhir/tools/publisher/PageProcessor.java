@@ -3298,12 +3298,13 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     for (String rn : definitions.sortedResourceNames()) {
       ResourceDefn rd = definitions.getResourceByName(rn);
       Compartment.StringTriple rules = map.get(rd);
-      if (rules == null) {
+      if (rules == null || Utilities.noString(rules.getParameter())) {
         out.append(" <li><a href=\"").append(rd.getName().toLowerCase()).append(".html\">").append(rd.getName()).append("</a></li>\r\n");
       } else { // if (!rules.equals("{def}")) {
         in.append(" <tr><td><a href=\"").append(rd.getName().toLowerCase()).append(".html\">").append(rd.getName()).append("</a></td><td>")
-            .append(rules.getParameter().replace("|", "or").replace("{def}", "<span style=\"color: maroon\"><b>[base]</b></span>"))
-            .append("</td><td><b>").append(nn(rules.getStart())).append("</b></td><td><b>").append(nn(rules.getEnd())).append("</b></td></tr>\r\n");
+            .append(rules.getParameter().replace("|", "or").replace("{def}", "<span style=\"color: maroon\"><b>[base]</b></span>"));
+        in.append("</td><td>").append(nn(rules.getStart())).append("</td><td>").append(nn(rules.getEnd()));
+        in.append("</td></tr>\r\n");
       }
     }
     return "<p>\r\nThe following resources are in this compartment:\r\n</p>\r\n" +
