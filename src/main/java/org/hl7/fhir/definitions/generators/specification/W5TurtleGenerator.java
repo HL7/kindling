@@ -59,11 +59,13 @@ public class W5TurtleGenerator {
         model.setNsPrefix(RDFNamespace.W5.getPrefix(), RDFNamespace.W5.getURI());
         model.setNsPrefix(RDFNamespace.FHIR.getPrefix(), RDFNamespace.FHIR.getURI());
 
+        String definitionCanonical = "http://hl7.org/fhir/w5";
         Ontology w5 = model.createOntology("http://hl7.org/fhir/w5.ttl");
         w5.addProperty(RDFS.label, "W5 Categorization");
         w5.addProperty(RDFS.comment, "FHIR W5 categorization is a preliminary classification of the fhir property");
         w5.addVersionInfo("FHIR W5 categorization (Preliminary)");
         w5.addProperty(OWL2.versionIRI, ResourceFactory.createResource(getOntologyVersionIRI()+"w5.ttl"));
+        w5.addProperty(RDFS.isDefinedBy, definitionCanonical);
 
         // The only way to differentiate predicates from classes is the existence of subclasses -- if something
         // has subclasses or is a subclass then it is a class.  Otherwise it is a predicate...
@@ -90,16 +92,19 @@ public class W5TurtleGenerator {
                 OntClass ec = model.createClass(RDFNamespace.W5.uriFor(es));
                 ec.addLabel(es, null);
                 ec.addComment(e.getDescription(), null);
+                ec.addProperty(RDFS.isDefinedBy, definitionCanonical);
                 for (String s : e.getSubClasses()) {
                     String s_uri = RDFNamespace.W5.uriFor(s.contains(".")? s : e.getCode() + "." + s);
                     OntClass c = model.createClass(s_uri);
                     c.addSuperClass(ec);
                     c.addLabel(s, null);
+                    c.addProperty(RDFS.isDefinedBy, definitionCanonical);
                 }
             } else {
                 OntProperty ep = model.createObjectProperty(RDFNamespace.W5.uriFor(es));
                 ep.addLabel(es, null);
                 ep.addComment(e.getDescription(), null);
+                ep.addProperty(RDFS.isDefinedBy, definitionCanonical);
                 String esroot = es;
                 while(esroot.contains(".")) {
                     esroot = esroot.substring(0, esroot.lastIndexOf('.'));

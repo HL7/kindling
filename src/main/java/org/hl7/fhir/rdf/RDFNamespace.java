@@ -22,14 +22,14 @@ public class RDFNamespace {
      *  FHIR specific namespaces
      */
     public static final RDFNamespace FHIR = new RDFNamespace("fhir", "http://hl7.org/fhir/");
-    public static final RDFNamespace FHIR_VS = new RDFNamespace("fhir-vs", "http://hl7.org/fhir/ValueSet/");
-    public static final RDFNamespace EX = new RDFNamespace("ex", "http://hl7.org/fhir/StructureDefinition/");
+    public static final RDFNamespace FHIR_VS = new RDFNamespace("fhirvs", "http://hl7.org/fhir/ValueSet/");
+    public static final RDFNamespace FHIR_SD = new RDFNamespace("fhirsd", "http://hl7.org/fhir/StructureDefinition/");
     public static final RDFNamespace RIM = new RDFNamespace("rim", "http://hl7.org/owl/rim/");
     public static final RDFNamespace CS = new RDFNamespace("cs", "http://hl7.org/orim/codesystem/");
     public static final RDFNamespace VS = new RDFNamespace("vs", "http://hl7.org/orim/valueset/");
     public static final RDFNamespace DT = new RDFNamespace("dt", "http://hl7.org/orim/datatype/");
     public static final RDFNamespace LOINC = new RDFNamespace("loinc", "http://loinc.org/rdf#");
-    public static final RDFNamespace W5 = new RDFNamespace("w5", "http://hl7.org/fhir/w5#");
+    public static final RDFNamespace W5 = new RDFNamespace("fhirw5", "http://hl7.org/fhir/w5#");
     // For some reason these aren't included in the XSD and RDF namespaces -- do we need to update Jena library?
     public static final Property XSDpattern;
     public static final Resource RDFXMLLiteral;
@@ -51,22 +51,15 @@ public class RDFNamespace {
      *
      * @param model model to add namespaces to
      */
-    public static void addFHIRNamespaces(Model model) {
+    public static void addOntologyNamespaces(Model model) {
         model.setNsPrefix("rdf", RDF.getURI());
         model.setNsPrefix("rdfs", RDFS.getURI());
         FHIR.addNsPrefix(model);
         W5.addNsPrefix(model);
-        FHIR_VS.addNsPrefix(model);
-        EX.addNsPrefix(model);
+        FHIR_SD.addNsPrefix(model);
         model.setNsPrefix("xsd", XSD.getURI());
         model.setNsPrefix("owl", OWL2.getURI());
         model.setNsPrefix("dc", DC_11.getURI());
-        model.setNsPrefix("dcterms", DCTerms.getURI());
-        RIM.addNsPrefix(model);
-        CS.addNsPrefix(model);
-        VS.addNsPrefix(model);
-        DT.addNsPrefix(model);
-        LOINC.addNsPrefix(model);
     }
 
     public String getPrefix() {
