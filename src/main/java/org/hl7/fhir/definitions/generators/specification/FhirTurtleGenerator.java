@@ -163,17 +163,20 @@ public class FhirTurtleGenerator {
 
 
         // A resource can have an optional nodeRole
-        FHIRResource treeRoot = fact.fhir_class_with_provenance("treeRoot", fhirRdfPageUrl)
-                .addTitle("Class of FHIR base documents")
+        FHIRResource treeRoot = fact.fhir_individual("treeRoot")
+                .addTitle("Root resource of FHIR RDF document")
                 .addDataProperty(RDFS.comment, "Some resources can contain other resources. Given that the relationships can appear in any order in RDF, it cannot be assumed that the first encountered element represents the resource of interest that is being represented by the set of Turtle statements. The focal resource -- where to start when parsing -- is the resource with the relationship fhir:nodeRole to fhir:treeRoot. If there is more than one node labeled as a 'treeRoot' in a set of Turtle statements, it cannot be determined how to parse them as a single resource.");
 
         FHIRResource nodeRole = fact.fhir_objectProperty("nodeRole", fhirRdfPageUrl)
                 .addTitle("Identifies role of subject in context of a given document")
                 .domain(Resource)
-                .range(treeRoot.resource);
-        Resource.restriction(fact.fhir_class_cardinality_restriction(nodeRole.resource, treeRoot.resource, 0, 1));
+                .rangeIndividual(treeRoot.resource);
 
-
+        // Resource can have max 1 nodeRole
+        Resource.restriction(fact.create_empty_owl_restriction(nodeRole.resource).addDataProperty(OWL2.maxCardinality, "1", XSDDatatype.XSDinteger).resource);
+        // Resource nodeRole can only the individual treeRoot
+        Resource.restriction(fact.create_empty_owl_restriction(nodeRole.resource).addObjectProperty(OWL2.allValuesFrom, treeRoot.oneOfIndividual(treeRoot.resource)).resource);
+        
         // Any element can have an index to assign order in a list
 //        FHIRResource index = fact.fhir_dataProperty("index")
 //                .addTitle("Ordering value for list")

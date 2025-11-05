@@ -94,6 +94,11 @@ public class FHIRResourceFactory {
         return fhir_resource(name, OWL2.Class, name);
     }
 
+    public FHIRResource fhir_individual(String name) {
+        return fhir_resource(name, OWL2.NamedIndividual, name);
+    }
+
+
     /**
      * Create a new Class in the FHIR namespace
      *
