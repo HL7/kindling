@@ -99,6 +99,11 @@ public class FHIRResourceFactory {
         return name.substring(0, 1).toUpperCase() + name.substring(1);
     }
 
+    public FHIRResource fhir_individual(String name) {
+        return fhir_resource(name, OWL2.NamedIndividual, name);
+    }
+
+
     /**
      * Create a new Class in the FHIR namespace
      *
