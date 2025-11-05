@@ -284,7 +284,7 @@ public class BindingsParser {
   }
 
   private void touchVS(ValueSet vs) throws FHIRFormatError, URISyntaxException {
-    ValueSetUtilities.makeShareable(vs);
+    ValueSetUtilities.makeShareable(vs, false);
     if (!ValueSetUtilities.hasOID(vs)) {
       String oid = registry.getOID(vs.getUrl());
       if (oid != null) {
@@ -319,7 +319,8 @@ public class BindingsParser {
     FileInputStream input = new FileInputStream(srcName);
 
     try {
-      ValueSet result = ValueSetUtilities.makeShareable((ValueSet) p.parse(input));
+      ValueSet result = (ValueSet) p.parse(input);
+      ValueSetUtilities.makeShareable(result, false);
       if ((strength == BindingStrength.REQUIRED || strength == BindingStrength.EXTENSIBLE) && result.getExperimental()) {
         result.setExperimental(false);
         new XmlParser().setOutputStyle(OutputStyle.PRETTY).compose(new FileOutputStream(srcName), result);

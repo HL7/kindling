@@ -362,7 +362,7 @@ public class ValueSetGenerator {
   }
 
   public void updateHeader(BindingSpecification bs, ValueSet vs) throws Exception {
-    ValueSetUtilities.checkShareable(vs);
+    //ValueSetUtilities.checkShareable(vs);
     if (!vs.hasId())
       throw new Exception("no id");
     if (!vs.hasUrl())

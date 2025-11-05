@@ -68,7 +68,8 @@ public class BindingsFixer {
         File cf = new File(cfn);
         if (!vf.exists()) {
           System.out.println("Produce "+vfn);
-          ValueSet vs = ValueSetUtilities.makeShareable(new ValueSet());
+          ValueSet vs = new ValueSet();
+          ValueSetUtilities.makeShareable(vs, false);
           vs.setVersion(Constants.VERSION);
           vs.setId(sfx+ref.substring(1));
           vs.setUrl("http://hl7.org/fhir/ValueSet/"+sfx+ref.substring(1));
@@ -83,7 +84,8 @@ public class BindingsFixer {
             throw new Exception("Error parsing binding "+bindingName+": code list reference '"+ref+"' not resolved");
           }
 
-          CodeSystem cs = CodeSystemUtilities.makeShareable(new CodeSystem());
+          CodeSystem cs = new CodeSystem();
+          CodeSystemUtilities.makeShareable(cs, false);
           cs.setVersion(Constants.VERSION);
           cs.setId(sfx+ref.substring(1));
           cs.setUrl("http://hl7.org/fhir/"+sfx+ref.substring(1));          

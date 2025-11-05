@@ -2225,6 +2225,52 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     return null;
   }
 
+  private boolean hasUrl(Example e, String url) throws Exception {
+    if (e.getElement() != null) {
+      String u = e.getElement().getNamedChildValue("url");
+      if (url.equals(u)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private Example findCanonical(String url) throws Exception {
+    for (ResourceDefn rd : definitions.getResources().values()) {
+      for (Example e: rd.getExamples()) {
+        if (hasUrl(e, url)) {
+          return e;
+        }
+      }
+      for (Profile p : rd.getConformancePackages()) {
+        for (Example e : p.getExamples()) {
+          if (hasUrl(e, url)) {
+            return e;
+          }
+        }
+      }
+    }
+    for (Profile p : definitions.getPackList()) {
+      ImplementationGuideDefn ig = definitions.getIgs().get(p.getCategory());
+      for (Example e: p.getExamples()) {
+        if (hasUrl(e, url)) {
+          return e;
+        }
+      }
+    }
+    for (ImplementationGuideDefn ig : definitions.getSortedIgs()) {
+      if (ig.getIg() != null) {
+        for (ImplementationGuideDefinitionResourceComponent res : ig.getIg().getDefinition().getResource()) {
+          Example e = (Example) res.getUserData(ToolResourceUtilities.NAME_RES_EXAMPLE);
+          if (e != null && hasUrl(e, url)) {
+            return e;
+          }
+        }
+      }
+    }
+    return null;
+  }
+
   private String genMappingsTable() throws IOException {
     StringBuilder b = new  StringBuilder();
     b.append("<table class=\"rows\">\r\n");
@@ -12167,6 +12213,21 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
   public ResourceWithReference resolve(RenderingContext context, String url, String version) {
     String[] parts = url.split("\\/");
 
+    if (Utilities.isAbsoluteUrl(url)) {
+      Example ex = null;
+      try {
+        ex = findCanonical(url);
+      } catch (Exception e) {
+      }
+      if (ex != null) {
+        try {
+          return new ResourceWithReference(ResourceReferenceKind.EXTERNAL, url, ex.getTitle()+".html",
+                  ResourceWrapper.forResource(rc.getContextUtilities(), ex.getElement()));
+        } catch (Exception e) {
+          e.printStackTrace();
+        }
+      }
+    }
     if (parts.length == 2 && definitions.hasResource(parts[0]) && parts[1].matches(FormatUtilities.ID_REGEX)) {
       Example ex = null;
       try {
@@ -12178,6 +12239,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
           return new ResourceWithReference(ResourceReferenceKind.EXTERNAL, url, ex.getTitle()+".html", 
               ResourceWrapper.forResource(rc.getContextUtilities(), ex.getElement()));
         } catch (Exception e) {
+          e.printStackTrace();
         }
       }
     }

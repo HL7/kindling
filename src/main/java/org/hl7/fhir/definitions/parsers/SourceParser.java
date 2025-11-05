@@ -952,7 +952,7 @@ public class SourceParser {
         ValueSetUtilities.setOID(vs, "urn:oid:"+oid);
       }
     }
-    ValueSetUtilities.makeShareable(vs);
+    ValueSetUtilities.makeShareable(vs, false);
     
     CodeSystem cs= new CodeSystemConvertor(definitions.getCodeSystems(), registry).convert(xml, vs, srcDir+ini.getStringProperty("valuesets", n).replace('\\', File.separatorChar), page.packageInfo());
     if (cs != null) {

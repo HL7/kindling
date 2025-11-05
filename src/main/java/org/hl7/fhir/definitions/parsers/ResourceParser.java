@@ -821,7 +821,7 @@ public class ResourceParser {
       if (!id.equals(cs.getId())) {
         throw new FHIRException("Error loading "+csfn+": id mismatch. Expected "+id+" but found "+cs.getId());        
       }
-      boolean save = CodeSystemUtilities.checkMakeShareable(cs);
+      boolean save = false; // CodeSystemUtilities.checkMakeShareable(cs);
       if (!cs.hasUrl()) {
         cs.setUrl("http://hl7.org/fhir/"+cs.getId());
         save = true;
@@ -867,7 +867,7 @@ public class ResourceParser {
           CodeSystemUtilities.setOID(cs, "urn:oid:"+oid);
         }
       }
-      CodeSystemUtilities.makeShareable(cs);
+      CodeSystemUtilities.makeShareable(cs, false);
       if (save) {
         saveXml(cs, "codesystem-"+id+".xml");
       }
@@ -899,7 +899,7 @@ public class ResourceParser {
         cm.setUserData("filename", cmid);
         cm.setWebPath(cmid+".html");
         cm.setUserData("generate", "true");
-        ConceptMapUtilities.makeShareable(cm);
+        ConceptMapUtilities.makeShareable(cm, false);
         if (!ConceptMapUtilities.hasOID(cm)) {
           String oid = registry.getOID(cm.getUrl());
           if (oid != null) {
@@ -933,7 +933,7 @@ public class ResourceParser {
       if (!reference.equals(vs.getUrl())) {
         throw new FHIRException("Error loading "+vsfn+": URL mismatch. Expected "+reference+" but found "+vs.getUrl());
       }
-      boolean save = ValueSetUtilities.makeVSShareable(vs);
+      boolean save = false; // ValueSetUtilities.makeVSShareable(vs);
       vs.setUserData("filename", "valueset-"+vs.getId());
       vs.setWebPath("valueset-"+vs.getId()+".html");
       vs.setExperimental(false);
@@ -955,7 +955,7 @@ public class ResourceParser {
       if (!vs.hasPublisher()) {
         vs.setPublisher("HL7 International");
       }
-      ValueSetUtilities.makeShareable(vs);
+      ValueSetUtilities.makeShareable(vs, false);
 
       vs.setWebPath("valueset-"+vs.getId()+".html");
       if (!ValueSetUtilities.hasOID(vs)) {

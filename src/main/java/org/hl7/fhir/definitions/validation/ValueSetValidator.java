@@ -21,6 +21,7 @@ import org.hl7.fhir.r5.model.ValueSet.ConceptSetComponent;
 import org.hl7.fhir.r5.terminologies.CodeSystemUtilities;
 import org.hl7.fhir.r5.extensions.ExtensionDefinitions;
 import org.hl7.fhir.tools.publisher.BuildWorkerContext;
+import org.hl7.fhir.utilities.DebugUtilities;
 import org.hl7.fhir.utilities.FhirPublication;
 import org.hl7.fhir.utilities.SIDUtilities;
 import org.hl7.fhir.utilities.Utilities;
@@ -284,8 +285,13 @@ public class ValueSetValidator extends BaseValidator {
 
   private String getOid(ValueSet vs) {
     for (org.hl7.fhir.r5.model.Identifier id : vs.getIdentifier()) {
-      if (id.getSystem().equals("urn:ietf:rfc:3986") && id.getValue().startsWith("urn:oid:")) {
-        return id.getValue().substring(8);
+      if (id.getSystem().equals("urn:ietf:rfc:3986")) {
+        if (id.getValue() == null) {
+          DebugUtilities.breakpoint();;;
+        }
+        if (id.getValue().startsWith("urn:oid:")) {
+          return id.getValue().substring(8);
+        }
       }
     }
     return null;

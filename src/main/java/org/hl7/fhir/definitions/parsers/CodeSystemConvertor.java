@@ -59,7 +59,8 @@ public class CodeSystemConvertor {
       FileInputStream input;
       try {
         input = new FileInputStream(nname);
-        CodeSystem cs = CodeSystemUtilities.makeShareable((CodeSystem) p.parse(input));
+        CodeSystem cs = (CodeSystem) p.parse(input);
+        CodeSystemUtilities.makeShareable(cs, false);
         if (!cs.hasTitle())
           cs.setTitle(Utilities.capitalize(Utilities.unCamelCase(cs.getName())));
 
