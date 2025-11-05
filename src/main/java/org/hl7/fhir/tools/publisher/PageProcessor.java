@@ -213,16 +213,8 @@ import org.hl7.fhir.r5.utils.structuremap.StructureMapUtilities;
 import org.hl7.fhir.r5.utils.validation.IResourceValidator;
 import org.hl7.fhir.tools.converters.MarkDownPreProcessor;
 import org.hl7.fhir.tools.publisher.ReferenceTracker.RefType;
-import org.hl7.fhir.utilities.CommaSeparatedStringBuilder;
-import org.hl7.fhir.utilities.FileUtilities;
-import org.hl7.fhir.utilities.IniFile;
-import org.hl7.fhir.utilities.Logger;
-import org.hl7.fhir.utilities.MarkDownProcessor;
+import org.hl7.fhir.utilities.*;
 import org.hl7.fhir.utilities.MarkDownProcessor.Dialect;
-import org.hl7.fhir.utilities.OIDUtilities;
-import org.hl7.fhir.utilities.StandardsStatus;
-import org.hl7.fhir.utilities.Utilities;
-import org.hl7.fhir.utilities.VersionUtilities;
 import org.hl7.fhir.utilities.fhirpath.FHIRPathConstantEvaluationMode;
 import org.hl7.fhir.utilities.filesystem.CSFile;
 import org.hl7.fhir.utilities.filesystem.CSFileInputStream;
@@ -7965,6 +7957,9 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
   }
 
   private String getReferences(String name) throws Exception {
+    if ("Task".equals(name) || "ServiceRequest".equals(name)) {
+      DebugUtilities.breakpoint();
+    }
     ReferenceTracker refs = new ReferenceTracker();
     if (definitions.hasLogicalModel(name)) {
       ElementDefn r = definitions.getLogicalModel(name).getResource().getRoot();
@@ -8025,8 +8020,16 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
 
   private void checkPatternUsage(String name, ReferenceTracker refs, TypeDefn e, String url) {
     String p = e.getMapping(url);
-    if (name.equals(p))
-      refs.link(RefType.RESOURCE_IMPL, name, definitions.getSrcFile(name)+".html#"+name, name);
+    if (p != null && p.contains(",")) {
+      for (String pp : p.split("\\,")) {
+        String s = pp.trim();
+        if (name.equals(s))
+          refs.link(RefType.RESOURCE_IMPL, name, definitions.getSrcFile(name) + ".html#" + name, name);
+      }
+    } else {
+      if (name.equals(p))
+        refs.link(RefType.RESOURCE_IMPL, name, definitions.getSrcFile(name) + ".html#" + name, name);
+    }
   }
 
   public void checkPatternReferences(List<String> names, ReferenceTracker refs, String rn, ElementDefn r, String url) throws FHIRException {
