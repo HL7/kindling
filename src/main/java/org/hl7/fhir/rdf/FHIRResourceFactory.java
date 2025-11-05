@@ -91,8 +91,18 @@ public class FHIRResourceFactory {
      * @return
      */
     public FHIRResource fhir_class(String name) {
-        return fhir_resource(name, OWL2.Class, name);
+        return fhir_resource(getClassName(name), OWL2.Class, name);
     }
+
+    public static String getClassName(String name) {
+        // Uppercase the first letter of any class, including primitive types, to avoid ambiguity with properties
+        return name.substring(0, 1).toUpperCase() + name.substring(1);
+    }
+
+    public FHIRResource fhir_individual(String name) {
+        return fhir_resource(name, OWL2.NamedIndividual, name);
+    }
+
 
     /**
      * Create a new Class in the FHIR namespace
@@ -118,7 +128,7 @@ public class FHIRResourceFactory {
 
     
     public FHIRResource fhir_class_with_provenance(String name, String definitionCanonical) {
-        return fhir_resource(name, OWL2.Class, name)
+        return fhir_resource(getClassName(name), OWL2.Class, name)
                 .addProvenance(definitionCanonical);
     }
 

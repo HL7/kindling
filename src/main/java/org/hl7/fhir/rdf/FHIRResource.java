@@ -1,5 +1,6 @@
 package org.hl7.fhir.rdf;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -9,6 +10,7 @@ import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.ResourceFactory;
 import org.apache.jena.vocabulary.DC;
+import org.apache.jena.vocabulary.OWL2;
 import org.apache.jena.vocabulary.RDF;
 import org.apache.jena.vocabulary.RDFS;
 import org.hl7.fhir.utilities.Utilities;
@@ -116,6 +118,20 @@ public class FHIRResource {
 
     public FHIRResource range(Resource r) {
         return addObjectProperty(RDFS.range, r);
+    }
+
+    public FHIRResource rangeIndividual(Resource r) {
+        Resource blankNode = oneOfIndividual(r);
+        resource.addProperty(RDFS.range, blankNode);
+        return this;
+    }
+
+    public Resource oneOfIndividual(Resource r) {
+        Resource blankNode = resource.getModel().createResource();
+        blankNode.addProperty(RDF.type, OWL2.Class);
+        Resource individuals = resource.getModel().createList(new ArrayList<Resource>() {{ add(r); } }.iterator());
+        blankNode.addProperty(OWL2.oneOf, individuals);
+        return blankNode;
     }
 
     public FHIRResource restriction(Resource restriction) {

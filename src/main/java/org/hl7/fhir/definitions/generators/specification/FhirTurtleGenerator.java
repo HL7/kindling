@@ -1,12 +1,15 @@
 package org.hl7.fhir.definitions.generators.specification;
 
 import java.io.OutputStream;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.TimeZone;
 
 import org.apache.jena.datatypes.xsd.XSDDatatype;
 import org.apache.jena.rdf.model.Model;
@@ -15,6 +18,7 @@ import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.ResourceFactory;
 import org.apache.jena.vocabulary.OWL2;
+import org.apache.jena.vocabulary.RDF;
 import org.apache.jena.vocabulary.RDFS;
 import org.apache.jena.vocabulary.XSD;
 import org.hl7.fhir.definitions.model.DefinedCode;
@@ -92,11 +96,13 @@ public class FhirTurtleGenerator {
         genOntologyDefinition();
         genBaseMetadata();
 
+        // Primitive types: string, code, etc.
         for (String pn : sorted(definitions.getPrimitives().keySet())) {
             if(isPrimitive(pn))
                 genPrimitiveType(definitions.getPrimitives().get(pn));
         }
 
+        // "Base, abstract types": Base, Element, BackboneElement, BackboneType, PrimitiveType, etc.
         for (String infn : sorted(definitions.getInfrastructure().keySet())) {
             TypeDefn defn = definitions.getInfrastructure().get(infn);
             if (defn.enablesModifierExtensions()) {
@@ -107,13 +113,16 @@ public class FhirTurtleGenerator {
             genElementDefn(definitions.getInfrastructure().get(infn));
         }
 
+        // Complex types: Address, HumanName, Coding, Quantity, etc.
         for (String n : sorted(definitions.getTypes().keySet()))
             genElementDefn(definitions.getTypes().get(n));
 
+        // Specializations: MoneyQuantity, SimpleQuantity, etc.
         for (String n : sorted(definitions.getConstraints().keySet())) {
             genProfiledType(definitions.getConstraints().get(n));
         }
 
+        // Other grouping: CanonicalResource, DomainResource, MetadataResource, etc.
         for (String n : sorted(definitions.getBaseResources().keySet())) {
             ResourceDefn defn = definitions.getBaseResources().get(n);
             StructureDefinition profile = defn.getProfile();
@@ -122,6 +131,7 @@ public class FhirTurtleGenerator {
             }
             genResourceDefn(defn);
         }
+        // Resources: Patient, Observation, Encounter, etc.
         for (String n : sorted(definitions.getResources().keySet()))
             genResourceDefn(definitions.getResources().get(n));
 
@@ -137,9 +147,13 @@ public class FhirTurtleGenerator {
     * Emit an ontology definition for the file
     */
     private void genOntologyDefinition() {
+        SimpleDateFormat createdTimestamp = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
+        createdTimestamp.setTimeZone(TimeZone.getTimeZone("UTC"));
+
         fact.fhir_ontology("fhir.ttl", "FHIR Model Ontology")
                 .addDataProperty(RDFS.comment, "Formal model of FHIR Resources")
                 .addObjectProperty(OWL2.versionIRI, ResourceFactory.createResource(getOntologyVersionIRI() +"fhir.ttl"))
+                .addDataProperty(OWL2.versionInfo, createdTimestamp.format(new Date()), XSDDatatype.XSDdateTime)
                 .addObjectProperty(OWL2.imports, ResourceFactory.createResource("http://hl7.org/fhir/w5.ttl"));
     }
 
@@ -163,17 +177,20 @@ public class FhirTurtleGenerator {
 
 
         // A resource can have an optional nodeRole
-        FHIRResource treeRoot = fact.fhir_class_with_provenance("treeRoot", fhirRdfPageUrl)
-                .addTitle("Class of FHIR base documents")
+        FHIRResource treeRoot = fact.fhir_individual("treeRoot")
+                .addTitle("Root resource of FHIR RDF document")
                 .addDataProperty(RDFS.comment, "Some resources can contain other resources. Given that the relationships can appear in any order in RDF, it cannot be assumed that the first encountered element represents the resource of interest that is being represented by the set of Turtle statements. The focal resource -- where to start when parsing -- is the resource with the relationship fhir:nodeRole to fhir:treeRoot. If there is more than one node labeled as a 'treeRoot' in a set of Turtle statements, it cannot be determined how to parse them as a single resource.");
 
         FHIRResource nodeRole = fact.fhir_objectProperty("nodeRole", fhirRdfPageUrl)
                 .addTitle("Identifies role of subject in context of a given document")
                 .domain(Resource)
-                .range(treeRoot.resource);
-        Resource.restriction(fact.fhir_class_cardinality_restriction(nodeRole.resource, treeRoot.resource, 0, 1));
+                .rangeIndividual(treeRoot.resource);
 
-
+        // Resource can have max 1 nodeRole
+        Resource.restriction(fact.create_empty_owl_restriction(nodeRole.resource).addDataProperty(OWL2.maxCardinality, "1", XSDDatatype.XSDinteger).resource);
+        // Resource nodeRole can only the individual treeRoot
+        Resource.restriction(fact.create_empty_owl_restriction(nodeRole.resource).addObjectProperty(OWL2.allValuesFrom, treeRoot.oneOfIndividual(treeRoot.resource)).resource);
+        
         // Any element can have an index to assign order in a list
 //        FHIRResource index = fact.fhir_dataProperty("index")
 //                .addTitle("Ordering value for list")
@@ -187,10 +204,11 @@ public class FhirTurtleGenerator {
                                 .addTitle("IRI of a reference");
         Reference.restriction(fact.fhir_class_cardinality_restriction(link.resource, Resource.resource, 0, 1));
 
-        // XHTML is an XML Literal -- but it isn't recognized by OWL so we use string
+        // XHTML is an XML Literal. Not available in Definitions.java, but see https://hl7.org/fhir/xhtml.profile.html
         String xhtmlCanonical = "http://hl7.org/fhir/StructureDefinition/xhtml";
-        fact.fhir_class_with_provenance("xhtml", "PrimitiveType", xhtmlCanonical)
-            .restriction(fact.fhir_class_cardinality_restriction(v, XSD.xstring, 1, 1));
+        fact.fhir_class_with_provenance("xhtml", "Element", xhtmlCanonical)
+            .restriction(fact.fhir_class_cardinality_restriction(v, RDF.xmlLiteral, 1, 1));
+
         addProvenanceForTypeName(fact.fhir_class("PrimitiveType"), "PrimitiveType");
     }
 
@@ -467,7 +485,7 @@ public class FhirTurtleGenerator {
 
             // XHTML the exception, in that the html doesn't derive from Primitive
             if (targetName.equals("xhtml")) {
-                predicateResource = fact.fhir_dataProperty(shortenedPropertyName);
+                predicateResource = fact.fhir_objectProperty(shortenedPropertyName, definitionCanonical);
             } else {
                 predicateResource = fact.fhir_objectProperty(shortenedPropertyName, definitionCanonical);
                 genPropertyModifierExtensions(shortenedPropertyName, predicateResource, targetClassName, definitionCanonical);

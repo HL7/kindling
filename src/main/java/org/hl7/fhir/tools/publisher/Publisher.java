@@ -2930,8 +2930,13 @@ public class Publisher implements URIResolver, SectionNumberer {
 
     List<StructureDefinition> list = new ArrayList<StructureDefinition>();
     for (StructureDefinition sd : new ContextUtilities(page.getWorkerContext()).allStructures()) {
-      if (sd.getDerivation() == TypeDerivationRule.SPECIALIZATION)
-        list.add(sd);
+        if (sd.getKind() == StructureDefinition.StructureDefinitionKind.LOGICAL)
+          // Skip logical models
+          continue;
+       // Include <Base> which has no derivation
+        if (sd.getDerivation() == null || sd.getDerivation() == TypeDerivationRule.SPECIALIZATION) {
+          list.add(sd);
+        }
     }
     ShExGenerator shgen = new ShExGenerator(page.getWorkerContext());
     shgen.completeModel = true;
