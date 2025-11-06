@@ -285,12 +285,11 @@ public class ValueSetValidator extends BaseValidator {
 
   private String getOid(ValueSet vs) {
     for (org.hl7.fhir.r5.model.Identifier id : vs.getIdentifier()) {
-      if (id.getSystem().equals("urn:ietf:rfc:3986")) {
-        if (id.getValue() == null) {
-          DebugUtilities.breakpoint();;;
-        }
-        if (id.getValue().startsWith("urn:oid:")) {
-          return id.getValue().substring(8);
+      if (id.hasSystem() && id.hasValue()) {
+        if (id.getSystem().equals("urn:ietf:rfc:3986")) {
+          if (id.getValue().startsWith("urn:oid:")) {
+            return id.getValue().substring(8);
+          }
         }
       }
     }
