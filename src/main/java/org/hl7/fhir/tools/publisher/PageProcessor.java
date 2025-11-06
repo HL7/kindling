@@ -8003,9 +8003,6 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
   }
 
   private String getReferences(String name) throws Exception {
-    if ("Task".equals(name) || "ServiceRequest".equals(name)) {
-      DebugUtilities.breakpoint();
-    }
     ReferenceTracker refs = new ReferenceTracker();
     if (definitions.hasLogicalModel(name)) {
       ElementDefn r = definitions.getLogicalModel(name).getResource().getRoot();
