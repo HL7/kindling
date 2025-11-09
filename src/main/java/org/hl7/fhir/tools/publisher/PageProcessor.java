@@ -4846,8 +4846,8 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
         if (wantPublish(vs)) {
           String path = ae.hasUserData("external.url") ? ae.getUserString("external.url") : pathTail(FileUtilities.changeFileExt(ae.getWebPath(), ".html"));
           s.append(" <tr><td><a href=\""+path+"\">"+n+"</a>");
-          if (StandardsStatus.NORMATIVE == ExtensionUtilities.getStandardsStatus(vs))
-            s.append(" <a href=\"versions.html#std-process\" title=\"Normative Content\" class=\"normative-flag\">N</a>");
+          if (StandardsStatus.INFORMATIVE == ExtensionUtilities.getStandardsStatus(vs))
+            s.append(" <a href=\"versions.html#std-process\" title=\"Informative Content\" class=\"informative-flag\">I</a>");
           s.append("</td><td>"+Utilities.escapeXml(vs.getDescription())+"</td><td>"+sourceSummary(vs)+"</td>");
           s.append("</tr>\r\n");
         }
@@ -7650,13 +7650,6 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
       b.append("<p>This resource has "+oplist.size()+" operations associated with it:</p>\r\n<table class=\"list\">\r\n");
       for (Operation op : oplist) {
         b.append("<tr><td><a href=\""+resource.getName().toLowerCase()+"-operation-"+ op.getName()+".html\">$"+Utilities.escapeXml(op.getName())+"</a></td><td>"+Utilities.escapeXml(op.getTitle())+"</td>");
-        if (resource.getStatus() == StandardsStatus.NORMATIVE) {
-          if (op.getStandardsStatus() == null)
-            b.append("<td><a class=\""+resource.getStatus().toCode()+"-flag\" href=\"versions.html#std-process\">"+resource.getStatus().toDisplay()+"</a></td>");
-          else
-            b.append("<td><a class=\""+op.getStandardsStatus().toCode()+"-flag\" href=\"versions.html#std-process\">"+op.getStandardsStatus().toDisplay()+"</a></td>");
-        }
-
         b.append("</tr>\r\n");
       }
       b.append("</table>\r\n");
@@ -7668,13 +7661,6 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
       b.append("<table class=\"list\">\r\n");
       for (Operation op : definitions.genOpList()) {
         b.append("<tr><td><a href=\"resource-operation-"+ op.getName()+".html\">$"+Utilities.escapeXml(op.getName())+"</a></td><td>"+Utilities.escapeXml(op.getTitle())+"</td>");
-        if (resource.getStatus() == StandardsStatus.NORMATIVE) {
-          if (op.getStandardsStatus() == null)
-            b.append("<td><a class=\""+resource.getStatus().toCode()+"-flag\" href=\"versions.html#std-process\">"+resource.getStatus().toDisplay()+"</a></td>");
-          else
-            b.append("<td><a class=\""+op.getStandardsStatus().toCode()+"-flag\" href=\"versions.html#std-process\">"+op.getStandardsStatus().toDisplay()+"</a></td>");
-        }
-
         b.append("</tr>\r\n");
       }
       b.append("</table>\r\n");
@@ -11431,8 +11417,8 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
             urls.add(cs.getUrl());
             b.append("  <tr>\r\n");
             b.append("    <td><a href=\""+cs.getWebPath()+"\">"+cs.getId()+"</a>");
-            if (StandardsStatus.NORMATIVE == ExtensionUtilities.getStandardsStatus(cs))
-              b.append(" <a href=\"versions.html#std-process\" title=\"Normative Content\" class=\"normative-flag\">N</a>");
+            if (StandardsStatus.INFORMATIVE == ExtensionUtilities.getStandardsStatus(cs))
+              b.append(" <a href=\"versions.html#std-process\" title=\"Informative Content\" class=\"informative-flag\">I</a>");
             b.append("</td>\r\n");
             b.append("    <td>"+Utilities.escapeXml(cs.present())+"</td>\r\n");
             b.append("    <td>"+(cs.hasTitle() ? cs.getTitle()+": " : "")+Utilities.escapeXml(cs.getDescription())+"</td>\r\n");
@@ -11457,8 +11443,8 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
         if (cs.getUrl().startsWith("http://terminology.hl7.org/CodeSystem") && !cs.getUrl().startsWith("http://terminology.hl7.org/CodeSystem/v2-") && !cs.getUrl().startsWith("http://terminology.hl7.org/CodeSystem/v3-")) {
           b.append("  <tr>\r\n");
           b.append("    <td><a href=\""+cs.getWebPath()+"\">"+cs.getName()+"</a>");
-          if (StandardsStatus.NORMATIVE == ExtensionUtilities.getStandardsStatus(cs))
-            b.append(" <a href=\"versions.html#std-process\" title=\"Normative Content\" class=\"normative-flag\">N</a>");
+          if (StandardsStatus.INFORMATIVE == ExtensionUtilities.getStandardsStatus(cs))
+            b.append(" <a href=\"versions.html#std-process\" title=\"Informative Content\" class=\"informative-flag\">I</a>");
           b.append("</td>\r\n");
           b.append("    <td>"+(cs.hasTitle() ? cs.getTitle()+": " : "")+Utilities.escapeXml(cs.getDescription())+"</td>\r\n");
           String oid = CodeSystemUtilities.getOID(cs);
@@ -12123,6 +12109,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     rc.setQuestionnaireMode(QuestionnaireRendererMode.TREE);
     rc.setRules(GenerationRules.VALID_RESOURCE);
     rc.setDesignationMode(DesignationMode.LANGUAGES);
+    rc.setShowStandardsStatus(false);
   }
 
   @Override
