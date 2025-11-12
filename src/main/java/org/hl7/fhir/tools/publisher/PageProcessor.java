@@ -2850,7 +2850,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     b.append("\r\n");
     b.append(" <div id=\"tabs-"+name+"-diff\">\r\n");
     b.append("  <div id=\"diff\">\r\n");
-    b.append("   <p><b>Changes since Release 3</b></p>\r\n");
+    b.append("   <p><b>Changes since Release 4</b></p>\r\n");
     b.append("   <div id=\"diff-inner\">\r\n");
     b.append("    "+diff+"\r\n");
     b.append("   </div>\r\n");
@@ -2898,7 +2898,6 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     b.append("  </div>\r\n");
     b.append("  <div id=\"diffa\">\r\n");
     b.append("   <a name=\"diff-"+name+"\"> </a>\r\n");
-    b.append("   <p><b>Changes since Release 3</b></p>\r\n");
     b.append("   <div id=\"diff-inner\">\r\n");
     b.append("     "+diff+"\r\n");
     b.append("   </div>\r\n");
@@ -3775,7 +3774,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     if (b.length() == 0)
       return "<p>\r\nThis Code system is not currently used\r\n</p>\r\n";
     else
-      return "<p>\r\n\"This Code system is used in the following FHIR core-defined or referenced value sets:\r\n</p>\r\n<ul>\r\n"+b.toString()+"</ul>\r\n";
+      return "<p>\r\nThis Code system is used in the following FHIR core-defined or referenced value sets:\r\n</p>\r\n<ul>\r\n"+b.toString()+"</ul>\r\n";
   }
 
   private String generateValueSetUsage(ValueSet vs, String prefix, boolean addTitle) throws Exception {
