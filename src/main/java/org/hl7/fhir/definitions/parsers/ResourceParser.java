@@ -858,7 +858,7 @@ public class ResourceParser {
         save = true;
       }
       if (!cs.hasStatus()) {
-        cs.setStatus(PublicationStatus.DRAFT);
+        cs.setStatus(PublicationStatus.ACTIVE);
       }
       if (!CodeSystemUtilities.hasOID(cs)) {
         String oid = registry.getOID(cs.getUrl());

@@ -799,7 +799,7 @@ public class ResourceValidator extends BaseValidator {
             rule(errors, ValidationMessage.NO_RULE_DATE, IssueType.STRUCTURE, path, !cd.getValueSet().getExperimental(), "Reference to experimental valueset "+cd.getValueSet().getUrl());
           }
           if (e.getBinding().getStrength() == BindingStrength.EXAMPLE)
-            ValueSetUtilities.markStatus(cd.getValueSet(), parent == null ? "fhir" : parent.getWg().getCode(), StandardsStatus.DRAFT, "1", context, null);
+            ValueSetUtilities.markStatus(cd.getValueSet(), parent == null ? "fhir" : parent.getWg().getCode(), StandardsStatus.INFORMATIVE, "1", context, null);
           else if (parent == null)
             ValueSetUtilities.markStatus(cd.getValueSet(), "fhir", StandardsStatus.DRAFT, "0", context, null);
           else if (e.getBinding().getStrength() == BindingStrength.PREFERRED)
