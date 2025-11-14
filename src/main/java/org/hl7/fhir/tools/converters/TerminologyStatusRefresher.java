@@ -5,7 +5,6 @@ import org.hl7.fhir.r5.formats.IParser;
 import org.hl7.fhir.r5.formats.JsonParser;
 import org.hl7.fhir.r5.formats.XmlParser;
 import org.hl7.fhir.r5.model.*;
-import org.hl7.fhir.utilities.DebugUtilities;
 import org.hl7.fhir.utilities.StandardsStatus;
 import org.hl7.fhir.utilities.Utilities;
 
