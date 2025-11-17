@@ -13,9 +13,11 @@ Please maintain this README.md as a linkable document, as other documentation ma
 
 # kindling
 
-| CI Status (master) | Latest SNAPSHOT |
-| :---: | :---: |
-| [![Build Status][Badge-BuildPipeline]][Link-AzureMainPipeline] | [![Snapshot Artifact][Badge-SonatypeSnapshots]][Link-SonatypeSnapshots] |
+[![CodeQL](https://github.com/HL7/kindling/actions/workflows/codeql.yml/badge.svg)](https://github.com/HL7/kindling/actions/workflows/codeql.yml) [![OWASP Security Scans](https://github.com/HL7/kindling/actions/workflows/owasp.yml/badge.svg)](https://github.com/HL7/kindling/actions/workflows/owasp.yml) [![Trivy Security Scans](https://github.com/HL7/kindling/actions/workflows/trivy.yml/badge.svg)](https://github.com/HL7/kindling/actions/workflows/trivy.yml)
+
+|                       CI Status (master)                       |      Latest SNAPSHOT       |
+|:--------------------------------------------------------------:|:--------------------------:|
+| [![Build Status][Badge-BuildPipeline]][Link-AzureMainPipeline] | ![Badge-SonatypeSnapshots] |
 
 This is the core publishing code for the HL7 FHIR specification itself. The jar produced from this repository is used within the publisher [here][Link-PublisherProject].
 
@@ -55,7 +57,6 @@ This project is maintained by [Grahame Grieve][Link-grahameGithub], [David Otase
 [Link-AzureProject]: https://dev.azure.com/fhir-pipelines/kindling
 [Link-AzureMainPipeline]: https://dev.azure.com/fhir-pipelines/kindling/_build/latest?definitionId=41&branchName=main
 [Link-AzurePullRequestPipeline]: https://dev.azure.com/fhir-pipelines/kindling/_build?definitionId=43
-[Link-SonatypeSnapshots]: https://oss.sonatype.org/service/local/artifact/maven/redirect?r=snapshots&g=org.hl7.fhir&a=kindling&v=LATEST "Sonatype Snapshots"
 [Link-PublisherProject]: https://github.com/HL7/fhir
 
 [Link-GithubIssues]: https://github.com/HL7/kindling/issues
@@ -67,8 +68,7 @@ This project is maintained by [Grahame Grieve][Link-grahameGithub], [David Otase
 [Link-Maven]: http://maven.apache.org
 
 [Badge-BuildPipeline]: https://dev.azure.com/fhir-pipelines/kindling/_apis/build/status/Main%20Branch%20Pipeline?branchName=main
-[Badge-SonatypeSnapshots]: https://img.shields.io/nexus/s/https/oss.sonatype.org/org.hl7.fhir/kindling.svg "Sonatype Snapshots"
-
+[Badge-SonatypeSnapshots]: https://img.shields.io/maven-metadata/v?metadataUrl=https%3A%2F%2Fcentral.sonatype.com%2Frepository%2Fmaven-snapshots%2Forg%2Fhl7%2Ffhir%2Fkindling%2Fmaven-metadata.xml "Sonatype Snapshots"
 ## Extensions
 
 The FHIR IG 'fhir-extensions' is tightly integrated into the core spec that this project builds.
