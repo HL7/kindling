@@ -363,7 +363,7 @@ public class ValueSetValidator extends BaseValidator {
         "urn:iso:std:iso:4217",  "urn:iso:std:iso:11073:10101",  "urn:iso-astm:E1762-95:2013", 
         "urn:iso:std:iso:3166",  "urn:iso:std:iso:3166:-2",  "urn:iso:std:iso:3166:-3",  "http://nucc.org/provider-taxonomy", 
         "http://example.com",  "http://example.org", "https://precision.fda.gov/files/", "http://www.ebi.ac.uk/ipd/imgt/hla", 
-        "https://www.iana.org/time-zones", "https://precision.fda.gov/jobs/"))
+        "https://www.iana.org/time-zones", "https://precision.fda.gov/jobs/", "https://fevir.net/sevco", "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl"))
       return true;
     
     if (Utilities.existsInList(system, "http://hl7.org/fhir/tools/CodeSystem/additional-resources")) {

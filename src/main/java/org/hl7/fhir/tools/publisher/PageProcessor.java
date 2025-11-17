@@ -4822,7 +4822,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
   }
 
   public boolean isLocalResource(CanonicalResource cr) {
-    return !cr.hasUserData("external.url"); // && (!cr.hasUrl() || !(cr.getUrl().startsWith("http://terminology.hl7.org") || cr.getUrl().contains("dicom.nema.org")));
+    return !cr.hasUserData("external.url") && !Utilities.isAbsoluteUrl(cr.getWebPath()); // && (!cr.hasUrl() || !(cr.getUrl().startsWith("http://terminology.hl7.org") || cr.getUrl().contains("dicom.nema.org")));
   }
 
   private void generateVSforNS(StringBuilder s, String ns, CanonicalResourceManager<ValueSet> vslist, ImplementationGuideDefn ig) throws FHIRException {
