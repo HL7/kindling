@@ -13,6 +13,8 @@ Please maintain this README.md as a linkable document, as other documentation ma
 
 # kindling
 
+[![CodeQL](https://github.com/HL7/kindling/actions/workflows/codeql.yml/badge.svg)](https://github.com/HL7/kindling/actions/workflows/codeql.yml) [![OWASP Security Scans](https://github.com/HL7/kindling/actions/workflows/owasp.yml/badge.svg)](https://github.com/HL7/kindling/actions/workflows/owasp.yml) [![Trivy Security Scans](https://github.com/HL7/kindling/actions/workflows/trivy.yml/badge.svg)](https://github.com/HL7/kindling/actions/workflows/trivy.yml)
+
 |                       CI Status (master)                       |      Latest SNAPSHOT       |
 |:--------------------------------------------------------------:|:--------------------------:|
 | [![Build Status][Badge-BuildPipeline]][Link-AzureMainPipeline] | ![Badge-SonatypeSnapshots] |

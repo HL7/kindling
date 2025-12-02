@@ -5,7 +5,7 @@
 
     <groupId>org.hl7.fhir</groupId>
     <artifactId>kindling</artifactId>
-    <version>1.25.1-SNAPSHOT</version>
+    <version>1.25.2-SNAPSHOT</version>
 
     <properties>
         <fhirCoreVersion>6.7.8-SNAPSHOT</fhirCoreVersion>
