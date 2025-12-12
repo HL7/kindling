@@ -67,6 +67,7 @@ import org.apache.commons.lang3.NotImplementedException;
 import org.fhir.ucum.UcumException;
 import org.hl7.fhir.convertors.SpecDifferenceEvaluator;
 import org.hl7.fhir.convertors.TypeLinkProvider;
+import org.hl7.fhir.convertors.SpecDifferenceEvaluator.CompareFhirVersion;
 import org.hl7.fhir.convertors.loaders.loaderR5.R4ToR5Loader;
 import org.hl7.fhir.convertors.loaders.loaderR5.R5ToR5Loader;
 import org.hl7.fhir.definitions.Config;
@@ -954,6 +955,15 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
             throw new Exception("diff-analysis not found: "+com[1]);
           src = s1+diffEngine.getDiffAsHtml(this, sd)+s3;
         }
+      } else if (com[0].equals("diff-analysis-r4")) {
+        updateDiffEngineDefinitions();
+        src = s1+diffEngine.getDiffAsHtml(this, CompareFhirVersion.R4)+s3;
+      } else if (com[0].equals("diff-analysis-r4b")) {
+        updateDiffEngineDefinitions();
+        src = s1+diffEngine.getDiffAsHtml(this, CompareFhirVersion.R4B)+s3;
+      } else if (com[0].equals("diff-analysis-r5")) {
+        updateDiffEngineDefinitions();
+        src = s1+diffEngine.getDiffAsHtml(this, CompareFhirVersion.R5)+s3;
       } else if (com.length != 1)
         throw new Exception("Instruction <%"+s2+"%> not understood parsing page "+file);
       else if (com[0].equals("pageheader"))
@@ -2856,7 +2866,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     b.append("\r\n");
     b.append(" <div id=\"tabs-"+name+"-diff\">\r\n");
     b.append("  <div id=\"diff\">\r\n");
-    b.append("   <p><b>Changes since Release 4</b></p>\r\n");
+    // b.append("   <p><b>Changes since Release 4</b></p>\r\n"); // this is already in the diff content
     b.append("   <div id=\"diff-inner\">\r\n");
     b.append("    "+diff+"\r\n");
     b.append("   </div>\r\n");
@@ -5653,6 +5663,15 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
             throw new Exception("diff-analysis not found: "+com[1]);
           src = s1+diffEngine.getDiffAsHtml(this, sd)+s3;
         }
+      } else if (com[0].equals("diff-analysis-r4")) {
+        updateDiffEngineDefinitions();
+        src = s1+diffEngine.getDiffAsHtml(this, CompareFhirVersion.R4)+s3;
+      } else if (com[0].equals("diff-analysis-r4b")) {
+        updateDiffEngineDefinitions();
+        src = s1+diffEngine.getDiffAsHtml(this, CompareFhirVersion.R4B)+s3;
+      } else if (com[0].equals("diff-analysis-r5")) {
+        updateDiffEngineDefinitions();
+        src = s1+diffEngine.getDiffAsHtml(this, CompareFhirVersion.R5)+s3;
       } else if (com.length != 1)
         throw new Exception("Instruction <%"+s2+"%> not understood parsing page "+file);
       else if (com[0].equals("header"))
@@ -6484,6 +6503,12 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
         src = s1+searchHeader(level)+s3;
       else if (com[0].equals("diff-analysis"))
         src = s1+diffEngine.getDiffAsHtml(this, resource.getProfile())+s3;
+      else if (com[0].equals("diff-analysis-r4"))
+        src = s1+diffEngine.getDiffAsHtml(this, resource.getProfile(), CompareFhirVersion.R4)+s3;
+      else if (com[0].equals("diff-analysis-r4b"))
+        src = s1+diffEngine.getDiffAsHtml(this, resource.getProfile(), CompareFhirVersion.R4B)+s3;
+      else if (com[0].equals("diff-analysis-r5"))
+        src = s1+diffEngine.getDiffAsHtml(this, resource.getProfile(), CompareFhirVersion.R5)+s3;
       else if (com[0].equals("r4r5transforms"))
         src = s1+getR3r4transformNote(resource.getName())+s3;
       else if (com[0].equals("fmm-style"))
