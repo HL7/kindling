@@ -134,6 +134,11 @@ public class ExampleInspector implements IValidatorResourceFetcher, IValidationP
     }
 
     @Override
+    public Base findContainingResource(Object appContext, Base item) {
+      return null;
+    }
+
+    @Override
     public boolean conformsToProfile(FHIRPathEngine engine, Object appContext, Base item, String url) throws FHIRException {
       IResourceValidator val = context.newValidator();
       List<ValidationMessage> valerrors = new ArrayList<ValidationMessage>();
@@ -815,6 +820,11 @@ public class ExampleInspector implements IValidatorResourceFetcher, IValidationP
   }
 
   @Override
+  public Base findContainingResource(Object appContext, Base item) {
+    return null;
+  }
+
+  @Override
   public boolean conformsToProfile(FHIRPathEngine engine, Object appContext, Base item, String url) throws FHIRException {
     throw new NotImplementedException();
   }
@@ -850,6 +860,11 @@ public class ExampleInspector implements IValidatorResourceFetcher, IValidationP
   @Override
   public ReferenceValidationPolicy getReferencePolicy() {
     return ReferenceValidationPolicy.IGNORE;
+  }
+
+  @Override
+  public Set<String> getCheckReferencesTo() {
+    return Set.of();
   }
 
   @Override

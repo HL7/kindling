@@ -343,6 +343,11 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     }
 
     @Override
+    public Base findContainingResource(Object appContext, Base item) {
+      return null;
+    }
+
+    @Override
     public boolean conformsToProfile(FHIRPathEngine engine, Object appContext, Base item, String url) throws FHIRException {
       IResourceValidator val = workerContext.newValidator();
       List<ValidationMessage> valerrors = new ArrayList<ValidationMessage>();
