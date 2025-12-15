@@ -162,11 +162,6 @@ public class ExampleInspector implements IValidatorResourceFetcher, IValidationP
       return false;
     }
 
-    @Override
-    public Base findContainingResource(Object arg0, Base arg1) {
-      // TODO Auto-generated method stub
-      throw new UnsupportedOperationException("Unimplemented method 'findContainingResource'");
-    }
   }
   
   private static final boolean VALIDATE_CONFORMANCE_REFERENCES = true;
@@ -875,18 +870,6 @@ public class ExampleInspector implements IValidatorResourceFetcher, IValidationP
   @Override
   public IValidationPolicyAdvisor setPolicyAdvisor(IValidationPolicyAdvisor policyAdvisor) {
     return null;
-  }
-
-  @Override
-  public Base findContainingResource(Object arg0, Base arg1) {
-    // TODO Auto-generated method stub
-    throw new UnsupportedOperationException("Unimplemented method 'findContainingResource'");
-  }
-
-  @Override
-  public Set<String> getCheckReferencesTo() {
-    // TODO Auto-generated method stub
-    throw new UnsupportedOperationException("Unimplemented method 'getCheckReferencesTo'");
   }
 
 }

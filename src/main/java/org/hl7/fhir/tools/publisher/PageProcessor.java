@@ -371,12 +371,6 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
       return false;
     }
 
-    @Override
-    public Base findContainingResource(Object arg0, Base arg1) {
-      // TODO Auto-generated method stub
-      throw new UnsupportedOperationException("Unimplemented method 'findContainingResource'");
-    }
-
   }
 
   public class SectionSorter implements Comparator<String> {

@@ -3620,18 +3620,18 @@ public class Publisher implements URIResolver, SectionNumberer {
 
       page.log("....r4 in r5 format", LogMessageType.Process);
       zip = new ZipGenerator(page.getFolders().dstDir + "definitions-r4asr5.xml.zip");
-      page.getDiffEngine().saveR4AsR5(zip, FhirFormat.XML, true);
+      page.getDiffEngine().saveR4AsR5(zip, FhirFormat.XML, SpecDifferenceEvaluator.CompareFhirVersion.R4);
       zip.close();
       zip = new ZipGenerator(page.getFolders().dstDir + "definitions-r4asr5.json.zip");
-      page.getDiffEngine().saveR4AsR5(zip, FhirFormat.JSON, true);
+      page.getDiffEngine().saveR4AsR5(zip, FhirFormat.JSON, SpecDifferenceEvaluator.CompareFhirVersion.R4);
       zip.close();
             
       page.log("....r4b in r5 format", LogMessageType.Process);
       zip = new ZipGenerator(page.getFolders().dstDir + "definitions-r4basr5.xml.zip");
-      page.getDiffEngine().saveR4AsR5(zip, FhirFormat.XML, false);
+      page.getDiffEngine().saveR4AsR5(zip, FhirFormat.XML, SpecDifferenceEvaluator.CompareFhirVersion.R4B);
       zip.close();
       zip = new ZipGenerator(page.getFolders().dstDir + "definitions-r4basr5.json.zip");
-      page.getDiffEngine().saveR4AsR5(zip, FhirFormat.JSON, false);
+      page.getDiffEngine().saveR4AsR5(zip, FhirFormat.JSON, SpecDifferenceEvaluator.CompareFhirVersion.R4B);
       zip.close();
             
       zip = new ZipGenerator(page.getFolders().dstDir + "all-valuesets.zip");
