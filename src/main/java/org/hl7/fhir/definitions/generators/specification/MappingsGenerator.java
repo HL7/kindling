@@ -305,7 +305,7 @@ public class MappingsGenerator {
 		  if (!definitions.getMapTypes().containsKey(s)) {
 		    System.out.println("map not found: "+s);
 		  }
-			if (!maps.contains(s) && definitions.getMapTypes().get(s).isPublish()) {
+			if (!maps.contains(s) && definitions.getMapTypes().containsKey(s) && definitions.getMapTypes().get(s).isPublish()) {
 				maps.add(s);
 			}
 		}
