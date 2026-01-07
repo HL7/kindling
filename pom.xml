@@ -13,11 +13,11 @@
         <jacksonVersion>2.16.0</jacksonVersion>
         <apacheHttpcomponentsVersion>4.5.13</apacheHttpcomponentsVersion>
         <apacheHttpcomponents5Version>5.0.4</apacheHttpcomponents5Version>
-        <apacheJenaVersion>4.10.0</apacheJenaVersion>
+        <apacheJenaVersion>5.6.0</apacheJenaVersion>
         <log4jVersion>2.17.1</log4jVersion>
         <lombok_version>1.18.38</lombok_version>
         <slf4jVersion>1.7.36</slf4jVersion>
-        <jettyVersion>12.0.12</jettyVersion>
+        <jettyVersion>12.0.29</jettyVersion>
         <logbackVersion>1.5.20</logbackVersion>
         <nettyConstrainedVersion>4.1.118.Final</nettyConstrainedVersion>
         <maven.compiler.release>17</maven.compiler.release>
@@ -100,6 +100,11 @@
                 <version>2.18.0</version>
             </dependency>
             <dependency>
+                <groupId>org.apache.commons</groupId>
+                <artifactId>commons-text</artifactId>
+                <version>1.15.0</version>
+            </dependency>
+            <dependency>
                 <groupId>org.apache.xmlbeans</groupId>
                 <artifactId>xmlbeans</artifactId>
                 <version>5.3.0</version>
@@ -135,7 +140,7 @@
         <dependency>
             <groupId>ca.uhn.hapi.fhir</groupId>
             <artifactId>hapi-fhir-base</artifactId>
-            <version>6.4.1</version>
+            <version>8.4.0</version>
         </dependency>
         <dependency>
             <groupId>ca.uhn.hapi.fhir</groupId>
@@ -233,7 +238,7 @@
         <dependency>
             <groupId>com.google.code.gson</groupId>
             <artifactId>gson</artifactId>
-            <version>2.8.9</version>
+            <version>2.13.2</version>
         </dependency>
         <dependency>
             <groupId>com.google.code.javaparser</groupId>
@@ -457,7 +462,7 @@
         <dependency>
             <groupId>org.eclipse.jgit</groupId>
             <artifactId>org.eclipse.jgit</artifactId>
-            <version>6.10.1.202505221210-r</version>
+            <version>7.4.0.202509020913-r</version>
         </dependency>
         <dependency>
             <groupId>org.fhir</groupId>
@@ -483,7 +488,7 @@
         <dependency>
             <groupId>org.mozilla</groupId>
             <artifactId>rhino</artifactId>
-            <version>1.7R4</version>
+            <version>1.9.0</version>
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>
