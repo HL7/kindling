@@ -14,7 +14,7 @@
         <apacheHttpcomponentsVersion>4.5.13</apacheHttpcomponentsVersion>
         <apacheHttpcomponents5Version>5.0.4</apacheHttpcomponents5Version>
         <apacheJenaVersion>5.6.0</apacheJenaVersion>
-        <log4jVersion>2.17.1</log4jVersion>
+        <log4jVersion>2.25.3</log4jVersion>
         <lombok_version>1.18.38</lombok_version>
         <slf4jVersion>1.7.36</slf4jVersion>
         <jettyVersion>12.0.29</jettyVersion>
@@ -133,6 +133,11 @@
                 <groupId>ch.qos.logback</groupId>
                 <artifactId>logback-core</artifactId>
                 <version>${logbackVersion}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.logging.log4j</groupId>
+                <artifactId>log4j-api</artifactId>
+                <version>${log4jVersion}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
