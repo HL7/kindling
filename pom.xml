@@ -18,7 +18,7 @@
         <lombok_version>1.18.38</lombok_version>
         <slf4jVersion>1.7.36</slf4jVersion>
         <jettyVersion>12.0.29</jettyVersion>
-        <logbackVersion>1.5.20</logbackVersion>
+        <logbackVersion>1.5.25</logbackVersion>
         <nettyConstrainedVersion>4.1.118.Final</nettyConstrainedVersion>
         <maven.compiler.release>17</maven.compiler.release>
         <maven.compiler.source>17</maven.compiler.source>
