@@ -202,14 +202,18 @@ public class FhirTurtleGenerator {
         FHIRResource link = fact.fhir_resource(fhirRdfLinkName, OWL2.ObjectProperty, "fhir:" + fhirRdfLinkName)
                                 .addProvenance(fhirRdfPageUrl)
                                 .addTitle("IRI of a reference");
-        Reference.restriction(fact.fhir_class_cardinality_restriction(link.resource, Resource.resource, 0, 1));
+        Reference.restriction(fact.fhir_cardinality_restriction(link.resource, 0, 1));
 
         // XHTML is an XML Literal. Not available in Definitions.java, but see https://hl7.org/fhir/xhtml.profile.html
         String xhtmlCanonical = "http://hl7.org/fhir/StructureDefinition/xhtml";
-        fact.fhir_class_with_provenance("xhtml", "Element", xhtmlCanonical)
-            .restriction(fact.fhir_class_cardinality_restriction(v, RDF.xmlLiteral, 1, 1));
-
-        addProvenanceForTypeName(fact.fhir_class("PrimitiveType"), "PrimitiveType");
+        var xhtmlClass = fact.fhir_class_with_provenance("xhtml", "Element", xhtmlCanonical);
+        // xhtml.value min 1, max 1
+        xhtmlClass.restriction(fact.fhir_class_cardinality_restriction(v, RDF.xmlLiteral, 1, 1));
+        // xhtml.extension max 0
+        var extensionCardinality = fact.create_empty_owl_restriction(RDFNamespace.FHIR.resourceRef("extension"))
+                                        .addDataProperty(OWL2.maxCardinality, "0", XSDDatatype.XSDinteger)
+                                        .resource;
+        xhtmlClass.restriction(extensionCardinality);
     }
 
     private String getResourceNameFromCanonical(String canonicalUrl) {
@@ -451,15 +455,16 @@ public class FhirTurtleGenerator {
         FHIRResource targetElementClass;
         String targetTypeName = targetClassName;
 
-        if (ed.getTypes().isEmpty()) {  //subnodes
-            // Monomorphic complex type (no type specified, but has sub-elements)
+        boolean isComplexElement = isComplexElement(ed);
+        if (isComplexElement) {  //subnodes
+            // Monomorphic complex type (no type specified, but has sub-elements) -- example: Patient.contact
             targetElementClass = fact.fhir_class(targetClassName, innerIsBackbone ? "BackboneElement" : "Element");
 
             // Recursively process sub-elements
             processTypes(targetClassName, targetElementClass, ed, targetClassName, innerIsBackbone, definitionCanonical);
 
         } else {
-            // Monomorphic simple type
+            // Monomorphic simple type -- example: Patient.active
             TypeRef targetType = ed.getTypes().get(0);
             String targetName = targetType.getName();
             if (targetName.startsWith("@")) {        // Link to earlier definition
@@ -492,8 +497,9 @@ public class FhirTurtleGenerator {
             }
         }
 
-        // Add provenance & definition annotations from source StructureDefinition for this element, except if it's a DataType (used in too many places)
-        if (!isDataType(targetTypeName)) {
+        // BackboneElements only: Add provenance & definition annotations from source StructureDefinition (example: Patient.contact class annotated from ElementDefinition)
+        // Don't do this for other kinds of Elements like DataTypes (used in too many places)
+        if (isComplexElement) {
             targetElementClass.addProvenance(definitionCanonical);
             targetElementClass.addDefinition(ed.getDefinition()).addDefinition(ed.getShortDefn());
         }
@@ -678,6 +684,10 @@ public class FhirTurtleGenerator {
 
     protected boolean isDataType(String name) {
         return definitions.getTypes().containsKey(name) || isPrimitive(name);
+    }
+
+    protected boolean isComplexElement(ElementDefn ed) {
+        return ed.getTypes().isEmpty();
     }
 
     // used for shortening property names
