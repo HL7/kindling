@@ -2,25 +2,19 @@ package org.hl7.fhir.rdf;
 
 import java.io.OutputStream;
 import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
-import org.apache.jena.graph.Graph;
+import org.hl7.fhir.rdf.TurtleSorter.OrderedClassExpressionOrder;
+import org.hl7.fhir.rdf.TurtleSorter.SubjectSortedGraph;
 import org.apache.jena.graph.Node;
-import org.apache.jena.graph.Triple;
 import org.apache.jena.datatypes.xsd.XSDDatatype;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.riot.RDFFormat;
 import org.apache.jena.riot.RDFWriter;
-import org.apache.jena.sparql.graph.GraphWrapper;
-import org.apache.jena.sparql.util.NodeCmp;
-import org.apache.jena.util.iterator.ExtendedIterator;
-import org.apache.jena.util.iterator.WrappedIterator;
 import org.apache.jena.vocabulary.OWL2;
 import org.apache.jena.vocabulary.RDF;
 import org.apache.jena.vocabulary.RDFS;
@@ -28,10 +22,28 @@ import org.apache.jena.vocabulary.RDFS;
 
 public class FHIRResourceFactory {
     private final Model model;
+    private final Map<Node, OrderedClassExpressionOrder> orderedClassExpressionIndex;
+    private long nextOrderedClassExpressionSequence;
 
     public FHIRResourceFactory() {
         model = ModelFactory.createDefaultModel();
+        orderedClassExpressionIndex = new HashMap<>();
+        nextOrderedClassExpressionSequence = 0;
         RDFNamespace.addOntologyNamespaces(model);
+    }
+
+    public void registerOrderedClassExpression(Resource classExpression, int elementIndex) {
+        if (classExpression != null) {
+            orderedClassExpressionIndex.put(
+                    classExpression.asNode(),
+                    new OrderedClassExpressionOrder(elementIndex, nextOrderedClassExpressionSequence++));
+        }
+    }
+
+    public void registerOrderedClassExpressions(List<Resource> classExpressions, int elementIndex) {
+        for (Resource classExpression : classExpressions) {
+            registerOrderedClassExpression(classExpression, elementIndex);
+        }
     }
 
     /**
@@ -40,7 +52,7 @@ public class FHIRResourceFactory {
      * @param writer
      */
     public void serialize(OutputStream writer) {
-        RDFWriter.source(new SubjectSortedGraph(model.getGraph()))
+        RDFWriter.source(new SubjectSortedGraph(model.getGraph(), orderedClassExpressionIndex))
                 .format(RDFFormat.TURTLE_PRETTY)
                 .output(writer);
     }
@@ -424,69 +436,6 @@ public class FHIRResourceFactory {
     public Resource fhir_pattern(String pattern) {
         return fhir_bnode()
                 .addDataProperty(RDFNamespace.XSDpattern, pattern).resource;
-    }
-
-    private static final class SubjectSortedGraph extends GraphWrapper {
-        private SubjectSortedGraph(Graph graph) {
-            super(graph);
-        }
-
-        @Override
-        public ExtendedIterator<Triple> find(Node subject, Node predicate, Node object) {
-            ExtendedIterator<Triple> triples = super.find(subject, predicate, object);
-            if (subject != Node.ANY || predicate != Node.ANY || object != Node.ANY) {
-                return triples;
-            }
-
-            List<Triple> collectedTriples;
-            try {
-                collectedTriples = triples.toList();
-            } finally {
-                triples.close();
-            }
-
-            Node ontologySubject = null;
-            Set<Node> allDisjointClassSubjects = new HashSet<>();
-            Map<Node, List<Triple>> triplesBySubject = new LinkedHashMap<>();
-            for (Triple triple : collectedTriples) {
-                Node tripleSubject = triple.getSubject();
-                triplesBySubject.computeIfAbsent(tripleSubject, ignored -> new ArrayList<>()).add(triple);
-
-                if (RDF.type.asNode().equals(triple.getPredicate()) && OWL2.Ontology.asNode().equals(triple.getObject())) {
-                    ontologySubject = tripleSubject;
-                }
-                if (RDF.type.asNode().equals(triple.getPredicate()) && OWL2.AllDisjointClasses.asNode().equals(triple.getObject())) {
-                    allDisjointClassSubjects.add(tripleSubject);
-                }
-            }
-
-            final Node orderedOntologySubject = ontologySubject;
-            List<Node> orderedSubjects = new ArrayList<>(triplesBySubject.keySet());
-            orderedSubjects.sort((left, right) -> {
-                // Move ontology declaration to top
-                boolean leftIsOntology = orderedOntologySubject != null && orderedOntologySubject.equals(left);
-                boolean rightIsOntology = orderedOntologySubject != null && orderedOntologySubject.equals(right);
-                if (leftIsOntology != rightIsOntology) {
-                    return leftIsOntology ? -1 : 1;
-                }
-
-                // Move disjoint axioms to bottom
-                boolean leftIsAllDisjoint = allDisjointClassSubjects.contains(left);
-                boolean rightIsAllDisjoint = allDisjointClassSubjects.contains(right);
-                if (leftIsAllDisjoint != rightIsAllDisjoint) {
-                    return leftIsAllDisjoint ? 1 : -1;
-                }
-
-                return NodeCmp.compareRDFTerms(left, right);
-            });
-
-            List<Triple> reorderedTriples = new ArrayList<>(collectedTriples.size());
-            for (Node orderedSubject : orderedSubjects) {
-                reorderedTriples.addAll(triplesBySubject.get(orderedSubject));
-            }
-
-            return WrappedIterator.create(reorderedTriples.iterator());
-        }
     }
     
 }
