@@ -418,9 +418,23 @@ public class FhirTurtleGenerator {
      * @param innerIsBackbone True if we're processing a backbone element
      */
     private void processTypes(String baseResourceName, FHIRResource baseResource, ElementDefn td, String predicateBase, boolean innerIsBackbone, String definitionCanonical) throws Exception {
-        for (ElementDefn ed : td.getElements()) {
-            generateElementClasses(baseResourceName, baseResource, ed, predicateBase, innerIsBackbone, definitionCanonical);
+        List<ElementDefn> elements = td.getElements();
+        System.out.println(baseResourceName);
+        for (int index = 0; index < elements.size(); index++) {
+            ElementDefn ed = elements.get(index);
+            System.out.println("  " + ed.getName());
+            generateElementClasses(index, baseResourceName, baseResource, ed, predicateBase, innerIsBackbone, definitionCanonical);
         }
+    }
+
+    private void addElementOrderedRestriction(FHIRResource baseResource, Resource classExpression, int elementIndex) {
+        fact.registerOrderedClassExpression(classExpression, elementIndex);
+        baseResource.restriction(classExpression);
+    }
+
+    private void addElementOrderedRestrictions(FHIRResource baseResource, List<Resource> classExpressions, int elementIndex) {
+        fact.registerOrderedClassExpressions(classExpressions, elementIndex);
+        baseResource.restriction(classExpressions);
     }
 
     /**
@@ -431,7 +445,7 @@ public class FhirTurtleGenerator {
      * @param predicateBase Root name for predicate
      * @param innerIsBackbone True if we're processing a backbone element
      */
-    private void generateElementClasses(String baseResourceName, FHIRResource baseResource, ElementDefn ed, String predicateBase, boolean innerIsBackbone, String definitionCanonical) throws Exception {
+    private void generateElementClasses(int index, String baseResourceName, FHIRResource baseResource, ElementDefn ed, String predicateBase, boolean innerIsBackbone, String definitionCanonical) throws Exception {
         // Example: ValueSet.compose + include -> ValueSet.compose.include
         String targetClassName = predicateBase + "." + (ed.getName().endsWith("[x]")?
                 ed.getName().substring(0, ed.getName().length() - 3) : ed.getName());
@@ -443,7 +457,7 @@ public class FhirTurtleGenerator {
         
         // Polymorphic / Choice types
         if (ed.getName().endsWith("[x]")) {
-            baseResource = getChoiceElementRestriction(baseResource, ed, shortenedPropertyName, predicateResource, definitionCanonical);
+            baseResource = getChoiceElementRestriction(baseResource, ed, shortenedPropertyName, predicateResource, definitionCanonical, index);
             return;
         }
 
@@ -504,16 +518,18 @@ public class FhirTurtleGenerator {
         // Add property restrictions
         if(ed.getName().equals("modifierExtension") && ed.hasModifier()) {
             // special case for modifierExtensions on original Resources having a cardinality of zero
-            baseResource.restriction(fact.fhir_class_cardinality_restriction(predicateResource.resource, targetElementClass.resource, 0, 0));
+            List<Resource> restrictions = fact.fhir_class_cardinality_restriction(predicateResource.resource, targetElementClass.resource, 0, 0);
+            addElementOrderedRestrictions(baseResource, restrictions, index);
         } else {
-            baseResource.restriction(
-                fact.fhir_class_cardinality_restriction(predicateResource.resource, 
-                    targetElementClass.resource, 
-                    ed.getMinCardinality(), 
+            List<Resource> restrictions = fact.fhir_class_cardinality_restriction(
+                    predicateResource.resource,
+                    targetElementClass.resource,
+                    ed.getMinCardinality(),
                     ed.getMaxCardinality()
-                )
             );
+            addElementOrderedRestrictions(baseResource, restrictions, index);
         }
+
         if(!Utilities.noString(ed.getW5()))
             predicateResource.addObjectProperty(RDFS.subPropertyOf, RDFNamespace.W5.resourceRef(ed.getW5()));
     }
@@ -528,17 +544,17 @@ public class FhirTurtleGenerator {
      * @return
      * @throws Exception
      */
-    private FHIRResource getChoiceElementRestriction(FHIRResource baseResource, ElementDefn ed, String shortenedPropertyName, FHIRResource predicateResource, String definitionCanonical) throws Exception {
+    private FHIRResource getChoiceElementRestriction(FHIRResource baseResource, ElementDefn ed, String shortenedPropertyName, FHIRResource predicateResource, String definitionCanonical, int index) throws Exception {
         // Choice entry
         if (ed.typeCode().equals("*")) {
             // Wild card -- any element works (probably should be more restrictive but...)
             Resource targetResource = RDFNamespace.FHIR.resourceRef("Element");
-            baseResource.restriction(
-                    fact.fhir_class_cardinality_restriction(
-                            predicateResource.resource,
-                            targetResource,
-                            ed.getMinCardinality(),
-                            ed.getMaxCardinality()));
+            List<Resource> restrictions = fact.fhir_class_cardinality_restriction(
+                    predicateResource.resource,
+                    targetResource,
+                    ed.getMinCardinality(),
+                    ed.getMaxCardinality());
+            addElementOrderedRestrictions(baseResource, restrictions, index);
         } else {
             // Create a restriction on the union of possible types
             List<Resource> typeRestrictions = new ArrayList<Resource>();
@@ -547,13 +563,14 @@ public class FhirTurtleGenerator {
                 typeRestrictions.add(typeRestriction);
             }
             // Add the type restrictions
-            baseResource.restriction(fact.fhir_union(typeRestrictions));
+            Resource union = fact.fhir_union(typeRestrictions);
+            addElementOrderedRestriction(baseResource, union, index);
             // Add the cardinality restrictions separately here
-            baseResource.restriction(
-                fact.build_cardinality_restrictions(predicateResource.resource, 
-                    ed.getMinCardinality(), 
-                    ed.getMaxCardinality())
-            );
+            List<Resource> cardinalityRestrictions = fact.build_cardinality_restrictions(
+                    predicateResource.resource,
+                    ed.getMinCardinality(),
+                    ed.getMaxCardinality());
+            addElementOrderedRestrictions(baseResource, cardinalityRestrictions, index);
         }
         return baseResource;
     }
