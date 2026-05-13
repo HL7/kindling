@@ -15,7 +15,7 @@
         <apacheHttpcomponentsVersion>4.5.13</apacheHttpcomponentsVersion>
         <apacheHttpcomponents5Version>5.0.4</apacheHttpcomponents5Version>
         <apacheJenaVersion>5.6.0</apacheJenaVersion>
-        <log4jVersion>2.25.4</log4jVersion>
+        <log4jVersion>2.26.0</log4jVersion>
         <lombok_version>1.18.38</lombok_version>
         <slf4jVersion>1.7.36</slf4jVersion>
         <jettyVersion>12.0.33</jettyVersion>
