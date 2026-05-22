@@ -450,6 +450,7 @@ public class FhirTurtleGenerator {
         // Monomorphic types
         FHIRResource targetElementClass;
         String targetTypeName = targetClassName;
+        boolean isContentReference = false;
 
         if (ed.getTypes().isEmpty()) {  //subnodes
             // Monomorphic complex type (no type specified, but has sub-elements)
@@ -462,7 +463,8 @@ public class FhirTurtleGenerator {
             // Monomorphic simple type
             TypeRef targetType = ed.getTypes().get(0);
             String targetName = targetType.getName();
-            if (targetName.startsWith("@")) {        // Link to earlier definition
+            isContentReference = targetName.startsWith("@");
+            if (isContentReference) {        // Link to earlier definition
                 // "Content reference" to another defined type
                 ElementDefn targetRef = getElementForPath(targetName.substring(1));
                 // Target type name includes @
@@ -494,8 +496,12 @@ public class FhirTurtleGenerator {
 
         // Add provenance & definition annotations from source StructureDefinition for this element, except if it's a DataType (used in too many places)
         if (!isDataType(targetTypeName)) {
-            targetElementClass.addProvenance(definitionCanonical);
-            targetElementClass.addDefinition(ed.getDefinition()).addDefinition(ed.getShortDefn());
+            String elementPath = ed.getPath();
+            if (!isContentReference && elementPath != null) {
+                String elementDefinitionCanonical = definitionCanonical + "#" + elementPath;
+                targetElementClass.addProvenance(elementDefinitionCanonical);
+                targetElementClass.addDefinition(ed.getDefinition()).addDefinition(ed.getShortDefn());
+            }
         }
 
         // Annotate object with disambiguating title
