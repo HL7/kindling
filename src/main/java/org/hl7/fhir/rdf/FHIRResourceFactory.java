@@ -123,7 +123,7 @@ public class FHIRResourceFactory {
      * @return
      */
     public FHIRResource fhir_class(String name, String superClass) {
-        return fhir_class(name, RDFNamespace.FHIR.resourceRef(superClass));
+        return fhir_class(name, RDFNamespace.FHIR.resourceRef(getClassName(superClass)));
     }
 
     
