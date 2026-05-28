@@ -721,15 +721,17 @@ public class ExampleInspector implements IValidatorResourceFetcher, IValidationP
       validator.setAllowXsiLocation(true);
       validator.validate(null, errs, new FileInputStream(f), fmt);
 
-      boolean fail = false;
-      for (ValidationMessage vm : errs) {
-        if (vm.getMessage().contains(inv+":")) {
-          fail = true;
+      List<ValidationMessage> unexpectedErrors = findUnexpectedInvariantFixtureErrors(inv, errs);
+      if (!unexpectedErrors.isEmpty()) {
+        System.out.println("Test case '"+f.getName()+"' has unrelated validation errors:");
+        for (ValidationMessage vm : unexpectedErrors) {
+          System.out.println("  -- "+vm.summary());
         }
       }
-      con.setTestOutcome(f.getName().contains(".pass") ? !fail : fail);
+
+      con.setTestOutcome(isInvariantTestSuccessful(f.getName(), inv, errs));
       if (!con.getTestOutcome()) {
-        System.out.println("Test case '"+f.getName()+"' Invariant failed: "+con.getId());
+        System.out.println("Test case '"+f.getName()+"' invariant test failed: "+con.getId());
         for (ValidationMessage vm : errs) {
           System.out.println("  -- "+vm.summary());
         }
@@ -739,6 +741,41 @@ public class ExampleInspector implements IValidatorResourceFetcher, IValidationP
       System.out.println("Didn't find invariant for "+f.getName());
       return false;
     }
+  }
+
+  static boolean isInvariantTestSuccessful(String fileName, String invariantId, List<ValidationMessage> messages) {
+    boolean expectedPass = fileName.contains(".pass");
+    boolean foundExpectedInvariantMessage = false;
+
+    for (ValidationMessage message : messages) {
+      if (isInvariantMessage(message, invariantId)) {
+        foundExpectedInvariantMessage = true;
+      }
+    }
+
+    if (expectedPass) {
+      return !foundExpectedInvariantMessage;
+    } else {
+      return foundExpectedInvariantMessage;
+    }
+  }
+
+  static List<ValidationMessage> findUnexpectedInvariantFixtureErrors(String invariantId, List<ValidationMessage> messages) {
+    List<ValidationMessage> result = new ArrayList<>();
+    for (ValidationMessage message : messages) {
+      if (isError(message) && !isInvariantMessage(message, invariantId)) {
+        result.add(message);
+      }
+    }
+    return result;
+  }
+
+  private static boolean isInvariantMessage(ValidationMessage message, String invariantId) {
+    return message.getMessage() != null && message.getMessage().contains(invariantId+":");
+  }
+
+  private static boolean isError(ValidationMessage message) {
+    return message.getLevel() == IssueSeverity.ERROR || message.getLevel() == IssueSeverity.FATAL;
   }
 
   private Invariant findInvInAnyDefinition(String inv) {
@@ -873,5 +910,3 @@ public class ExampleInspector implements IValidatorResourceFetcher, IValidationP
   }
 
 }
-
-
