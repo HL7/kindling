@@ -729,7 +729,7 @@ public class ExampleInspector implements IValidatorResourceFetcher, IValidationP
         }
       }
 
-      con.setTestOutcome(isInvariantTestSuccessful(f.getName(), inv, errs));
+      con.setTestOutcome(isInvariantTestSuccessful(f.getName(), inv, errs) && unexpectedErrors.isEmpty());
       if (!con.getTestOutcome()) {
         System.out.println("Test case '"+f.getName()+"' invariant test failed: "+con.getId());
         for (ValidationMessage vm : errs) {
@@ -754,17 +754,28 @@ public class ExampleInspector implements IValidatorResourceFetcher, IValidationP
     }
 
     if (expectedPass) {
-      return !foundExpectedInvariantMessage;
+      return !foundExpectedInvariantMessage && findUnexpectedInvariantFixtureErrors(fileName, invariantId, messages).isEmpty();
     } else {
-      return foundExpectedInvariantMessage;
+      return foundExpectedInvariantMessage && findUnexpectedInvariantFixtureErrors(fileName, invariantId, messages).isEmpty();
     }
   }
 
   static List<ValidationMessage> findUnexpectedInvariantFixtureErrors(String fileName, String invariantId, List<ValidationMessage> messages) {
     List<ValidationMessage> result = new ArrayList<>();
     boolean expectedPass = fileName.contains(".pass");
+    List<ValidationMessage> invariantMessages = findInvariantMessages(messages);
     for (ValidationMessage message : messages) {
-      if (isError(message) && (expectedPass || !isInvariantMessage(message))) {
+      if (isError(message) && (expectedPass || !isInvariantMessage(message) && !isCorrelatedWithInvariantMessage(message, invariantMessages))) {
+        result.add(message);
+      }
+    }
+    return result;
+  }
+
+  private static List<ValidationMessage> findInvariantMessages(List<ValidationMessage> messages) {
+    List<ValidationMessage> result = new ArrayList<>();
+    for (ValidationMessage message : messages) {
+      if (isInvariantMessage(message)) {
         result.add(message);
       }
     }
@@ -777,6 +788,31 @@ public class ExampleInspector implements IValidatorResourceFetcher, IValidationP
 
   private static boolean isInvariantMessage(ValidationMessage message) {
     return message.getMessage() != null && message.getMessage().startsWith("Constraint failed:");
+  }
+
+  private static boolean isCorrelatedWithInvariantMessage(ValidationMessage message, List<ValidationMessage> invariantMessages) {
+    String location = normaliseLocation(message.getLocation());
+    if (Utilities.noString(location)) {
+      return false;
+    }
+    for (ValidationMessage invariantMessage : invariantMessages) {
+      String invariantLocation = normaliseLocation(invariantMessage.getLocation());
+      if (pathsOverlap(location, invariantLocation)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private static String normaliseLocation(String location) {
+    if (location == null) {
+      return "";
+    }
+    return location.replaceAll("\\[[^\\]]*\\]", "");
+  }
+
+  private static boolean pathsOverlap(String left, String right) {
+    return left.equals(right) || left.startsWith(right+".") || right.startsWith(left+".");
   }
 
   private static boolean isError(ValidationMessage message) {
