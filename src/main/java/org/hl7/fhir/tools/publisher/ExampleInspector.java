@@ -721,7 +721,7 @@ public class ExampleInspector implements IValidatorResourceFetcher, IValidationP
       validator.setAllowXsiLocation(true);
       validator.validate(null, errs, new FileInputStream(f), fmt);
 
-      List<ValidationMessage> unexpectedErrors = findUnexpectedInvariantFixtureErrors(inv, errs);
+      List<ValidationMessage> unexpectedErrors = findUnexpectedInvariantFixtureErrors(f.getName(), inv, errs);
       if (!unexpectedErrors.isEmpty()) {
         System.out.println("Test case '"+f.getName()+"' has unrelated validation errors:");
         for (ValidationMessage vm : unexpectedErrors) {
@@ -760,10 +760,11 @@ public class ExampleInspector implements IValidatorResourceFetcher, IValidationP
     }
   }
 
-  static List<ValidationMessage> findUnexpectedInvariantFixtureErrors(String invariantId, List<ValidationMessage> messages) {
+  static List<ValidationMessage> findUnexpectedInvariantFixtureErrors(String fileName, String invariantId, List<ValidationMessage> messages) {
     List<ValidationMessage> result = new ArrayList<>();
+    boolean expectedPass = fileName.contains(".pass");
     for (ValidationMessage message : messages) {
-      if (isError(message) && !isInvariantMessage(message, invariantId)) {
+      if (isError(message) && (expectedPass || !isInvariantMessage(message))) {
         result.add(message);
       }
     }
@@ -772,6 +773,10 @@ public class ExampleInspector implements IValidatorResourceFetcher, IValidationP
 
   private static boolean isInvariantMessage(ValidationMessage message, String invariantId) {
     return message.getMessage() != null && message.getMessage().contains(invariantId+":");
+  }
+
+  private static boolean isInvariantMessage(ValidationMessage message) {
+    return message.getMessage() != null && message.getMessage().startsWith("Constraint failed:");
   }
 
   private static boolean isError(ValidationMessage message) {

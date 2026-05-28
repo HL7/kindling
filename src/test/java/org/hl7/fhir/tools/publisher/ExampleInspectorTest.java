@@ -56,16 +56,29 @@ public class ExampleInspectorTest {
   }
 
   @Test
-  public void unexpectedFixtureErrorsExcludeNamedInvariantMessages() {
+  public void failFixtureUnexpectedErrorsExcludeInvariantMessages() {
     List<ValidationMessage> messages = List.of(
         message("Constraint failed: cmp-1: A section must contain at least one of text, entries, or sub-sections", IssueSeverity.ERROR),
+        message("Constraint failed: cmp-3: Sections containing section.text SHALL NOT contain emptyReason", IssueSeverity.ERROR),
         message("Undefined element 'type' at /Composition/relatesTo/type", IssueSeverity.ERROR),
         message("Search parameter did not find examples", IssueSeverity.WARNING));
 
-    List<ValidationMessage> unexpectedErrors = ExampleInspector.findUnexpectedInvariantFixtureErrors("cmp-1", messages);
+    List<ValidationMessage> unexpectedErrors = ExampleInspector.findUnexpectedInvariantFixtureErrors("cmp-1.f1.fail.xml", "cmp-1", messages);
 
     assertEquals(1, unexpectedErrors.size());
     assertEquals("Undefined element 'type' at /Composition/relatesTo/type", unexpectedErrors.get(0).getMessage());
+  }
+
+  @Test
+  public void passFixtureUnexpectedErrorsIncludeInvariantMessages() {
+    List<ValidationMessage> messages = List.of(
+        message("Constraint failed: cmp-3: Sections containing section.text SHALL NOT contain emptyReason", IssueSeverity.ERROR),
+        message("Search parameter did not find examples", IssueSeverity.WARNING));
+
+    List<ValidationMessage> unexpectedErrors = ExampleInspector.findUnexpectedInvariantFixtureErrors("cmp-1.p1.pass.xml", "cmp-1", messages);
+
+    assertEquals(1, unexpectedErrors.size());
+    assertEquals("Constraint failed: cmp-3: Sections containing section.text SHALL NOT contain emptyReason", unexpectedErrors.get(0).getMessage());
   }
 
   private ValidationMessage message(String message, IssueSeverity severity) {
