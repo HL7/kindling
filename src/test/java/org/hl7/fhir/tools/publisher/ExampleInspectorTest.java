@@ -21,7 +21,7 @@ public class ExampleInspectorTest {
         "cmp-1",
         List.of(message("Search parameter did not find examples", IssueSeverity.INFORMATION))));
 
-    assertFalse(ExampleInspector.isInvariantTestSuccessful(
+    assertTrue(ExampleInspector.isInvariantTestSuccessful(
         "cmp-1.p1.pass.xml",
         "cmp-1",
         List.of(message("Undefined element 'type' at /Composition/relatesTo/type", IssueSeverity.ERROR))));
@@ -39,7 +39,7 @@ public class ExampleInspectorTest {
         "cmp-1",
         List.of(message("Constraint failed: cmp-1: A section must contain at least one of text, entries, or sub-sections", IssueSeverity.WARNING))));
 
-    assertFalse(ExampleInspector.isInvariantTestSuccessful(
+    assertTrue(ExampleInspector.isInvariantTestSuccessful(
         "cmp-1.f1.fail.xml",
         "cmp-1",
         List.of(

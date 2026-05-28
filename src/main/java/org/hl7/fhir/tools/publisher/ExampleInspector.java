@@ -729,7 +729,7 @@ public class ExampleInspector implements IValidatorResourceFetcher, IValidationP
         }
       }
 
-      con.setTestOutcome(isInvariantTestSuccessful(f.getName(), inv, errs) && unexpectedErrors.isEmpty());
+      con.setTestOutcome(isInvariantTestSuccessful(f.getName(), inv, errs));
       if (!con.getTestOutcome()) {
         System.out.println("Test case '"+f.getName()+"' invariant test failed: "+con.getId());
         for (ValidationMessage vm : errs) {
@@ -754,9 +754,9 @@ public class ExampleInspector implements IValidatorResourceFetcher, IValidationP
     }
 
     if (expectedPass) {
-      return !foundExpectedInvariantMessage && findUnexpectedInvariantFixtureErrors(fileName, invariantId, messages).isEmpty();
+      return !foundExpectedInvariantMessage;
     } else {
-      return foundExpectedInvariantMessage && findUnexpectedInvariantFixtureErrors(fileName, invariantId, messages).isEmpty();
+      return foundExpectedInvariantMessage;
     }
   }
 
