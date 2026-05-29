@@ -138,6 +138,17 @@ public class ResourceValidator extends BaseValidator {
     return false;
   }
 
+  private boolean resourceDescriptionMatchesRootDefinition(ResourceDefn rd) {
+    return normalizeDefinitionText(rd.getDefinition()).equals(normalizeDefinitionText(rd.getRoot().getDefinition()));
+  }
+
+  private String normalizeDefinitionText(String value) {
+    if (value == null) {
+      return "";
+    }
+    return value.trim().replaceAll("\\s+", " ");
+  }
+
   public List<ValidationMessage> checkStucture(String name, ElementDefn structure) throws Exception {
     List<ValidationMessage> errors = new ArrayList<ValidationMessage>();
     checkStucture(errors, name, structure);
@@ -166,6 +177,9 @@ public class ResourceValidator extends BaseValidator {
     rule(errors, ValidationMessage.NO_RULE_DATE, IssueType.REQUIRED, rd.getName(), rd.getRoot().getElements().size() > 0, "A resource must have at least one element in it before the build can proceed"); // too many downstream issues in the parsers, and it would only happen as a transient thing when designing the resources
     rule(errors, ValidationMessage.NO_RULE_DATE, IssueType.REQUIRED, rd.getName(), rd.getWg() != null, "A resource must have a designated owner"); // too many downstream issues in the parsers, and it would only happen as a transient thing when designing the resources
     rule(errors, ValidationMessage.NO_RULE_DATE, IssueType.REQUIRED, rd.getName(), !Utilities.noString(rd.getRoot().getW5()), "A resource must have a W5 category");
+    warning(errors, ValidationMessage.NO_RULE_DATE, IssueType.STRUCTURE, rd.getName(), resourceDescriptionMatchesRootDefinition(rd),
+        "Resource description must match root element definition. Description = '" + rd.getDefinition()
+            + "'; root definition = '" + rd.getRoot().getDefinition() + "'");
     rd.getRoot().setMinCardinality(0);
     rd.getRoot().setMaxCardinality(Integer.MAX_VALUE);
     // pattern related rules
