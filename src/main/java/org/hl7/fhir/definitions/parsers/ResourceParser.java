@@ -502,6 +502,7 @@ public class ResourceParser {
     
     ProfileUtilities pu = new ProfileUtilities(context, null, null);
     r.setRoot(parseTypeDefinition(pu, sd.getDifferential().getElementFirstRep(), sd));
+    r.getRoot().setDefinition(r.getDefinition());
     r.getRoot().setRequirements(r.getRequirements());
     if (r.isAbstract()) {
       r.getRoot().setAbstractType(true);
