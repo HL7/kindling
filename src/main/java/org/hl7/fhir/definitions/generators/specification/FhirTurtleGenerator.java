@@ -610,12 +610,15 @@ public class FhirTurtleGenerator {
 
             targetClasses.add(fact.fhir_class(tn).resource);
         }
-        // Create a union class of all allowed target resource types
-        FHIRResource union = fact.owl_class_union(targetClasses);
+        // Create a union node only when more than one target type is allowed.
+        Resource allowedTargetResource = targetClasses.size() == 1
+            ? targetClasses.get(0)
+            : fact.owl_class_union(targetClasses).resource;
+
         // Build the restriction on fhir:link whose allValuesFrom points at the union class
         Resource linkProp = RDFNamespace.FHIR.resourceRef(fhirRdfLinkName);
         Resource linkRestriction = fact.fhir_restriction(linkProp)
-                .addObjectProperty(OWL2.allValuesFrom, union.resource)
+                .addObjectProperty(OWL2.allValuesFrom, allowedTargetResource)
                 .resource;
         // Finally intersect fhir:Reference with that restriction
         List<Resource> members = new ArrayList<>();
