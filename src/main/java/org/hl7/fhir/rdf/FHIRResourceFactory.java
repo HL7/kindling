@@ -7,14 +7,11 @@ import java.util.List;
 import java.util.Map;
 
 import org.hl7.fhir.rdf.TurtleSorter.OrderedClassExpressionOrder;
-import org.hl7.fhir.rdf.TurtleSorter.SubjectSortedGraph;
 import org.apache.jena.graph.Node;
 import org.apache.jena.datatypes.xsd.XSDDatatype;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.Resource;
-import org.apache.jena.riot.RDFFormat;
-import org.apache.jena.riot.RDFWriter;
 import org.apache.jena.vocabulary.OWL2;
 import org.apache.jena.vocabulary.RDF;
 import org.apache.jena.vocabulary.RDFS;
@@ -52,9 +49,7 @@ public class FHIRResourceFactory {
      * @param writer
      */
     public void serialize(OutputStream writer) {
-        RDFWriter.source(new SubjectSortedGraph(model.getGraph(), orderedClassExpressionIndex))
-                .format(RDFFormat.TURTLE_PRETTY)
-                .output(writer);
+        TurtleSorter.serialize(model.getGraph(), writer, orderedClassExpressionIndex);
     }
 
     /**

@@ -1,5 +1,6 @@
 package org.hl7.fhir.rdf;
 
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
@@ -13,6 +14,8 @@ import java.util.Set;
 import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
+import org.apache.jena.riot.RDFFormat;
+import org.apache.jena.riot.RDFWriter;
 import org.apache.jena.sparql.graph.GraphWrapper;
 import org.apache.jena.sparql.util.NodeCmp;
 import org.apache.jena.util.iterator.ExtendedIterator;
@@ -28,6 +31,28 @@ import org.apache.jena.vocabulary.RDFS;
  * @see org.apache.jena.sparql.graph.GraphWrapper
  */
 public class TurtleSorter {
+
+    /**
+     * Serialize the given graph as pretty Turtle with deterministic subject ordering
+     * and element-axiom ordering driven by the supplied index.
+     */
+    public static void serialize(
+            Graph graph,
+            OutputStream destination,
+            Map<Node, OrderedClassExpressionOrder> orderedClassExpressionIndex) {
+        RDFWriter.source(new SubjectSortedGraph(graph, orderedClassExpressionIndex))
+                .format(RDFFormat.TURTLE_PRETTY)
+                .output(destination);
+    }
+
+    /**
+     * Serialize the given graph as pretty Turtle with deterministic subject ordering only.
+     * Use this overload when there are no FHIR element-derived axioms to order
+     * (for example, the W5 vocabulary).
+     */
+    public static void serialize(Graph graph, OutputStream destination) {
+        serialize(graph, destination, Collections.emptyMap());
+    }
     
     /**
      * Used for per-subject ordering of element-derived {@code rdfs:subClassOf} axioms,
