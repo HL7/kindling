@@ -1770,7 +1770,7 @@ public class ProfileGenerator {
       ce.addExtension(ExtensionDefinitions.EXT_TRANSLATABLE, new BooleanType(true));
     }
 
-    if (Utilities.existsInList(ce.getPath(), "Element.extension", "DomainResource.extension", "DomainResource.modifierExtension") && !ce.hasSlicing() && !ce.hasSliceName()) {
+    if ((ce.getPath().endsWith(".extension") || ce.getPath().endsWith(".modifierExtension")) && !ce.hasSlicing() && !ce.hasSliceName()) {
       ce.getSlicing().setDescription("Extensions are always sliced by (at least) url").setRules(SlicingRules.OPEN).addDiscriminator().setType(DiscriminatorType.VALUE).setPath("url");
     }
     if (!Utilities.noString(inheritedType) && snapshot != SnapShotMode.None) {
@@ -2153,7 +2153,7 @@ public class ProfileGenerator {
           ed.getBase().setMin(child.getMinCardinality());
         if (child.getMaxCardinality() != null)
           ed.getBase().setMax(child.getMaxCardinality() == Integer.MAX_VALUE ? "*" : child.getMaxCardinality().toString());
-        if (snapshot == SnapShotMode.DataType && ed.getPath().endsWith(".extension") && !ed.hasSlicing())
+        if (ed.getPath().endsWith(".extension") && !ed.hasSlicing())
           ed.getSlicing().setDescription("Extensions are always sliced by (at least) url").setRules(SlicingRules.OPEN).addDiscriminator().setType(DiscriminatorType.VALUE).setPath("url");
       }
     }
