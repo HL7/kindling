@@ -527,7 +527,7 @@ public class ProfileGenerator {
     p.setAbstract(false);
     p.setUserData("filename", "xhtml");
     p.setWebPath("narrative.html#xhtml");
-    p.setBaseDefinition("http://hl7.org/fhir/StructureDefinition/Element");
+    p.setBaseDefinition("http://hl7.org/fhir/StructureDefinition/PrimitiveType");
     p.setType("xhtml");
     p.setDerivation(TypeDerivationRule.SPECIALIZATION);
     p.setFhirVersion(version);
@@ -558,6 +558,11 @@ public class ProfileGenerator {
     ec.setDefinition("XHTML");
     ec.setMin(0);
     ec.setMax("*");
+    ec = new ElementDefinition();
+    p.getDifferential().getElement().add(ec);
+    ec.setId("xhtml"+".id");
+    ec.setPath("xhtml"+".id");
+    ec.setMax("0");
     ec = new ElementDefinition();
     p.getDifferential().getElement().add(ec);
     ec.setId("xhtml"+".extension");
@@ -600,7 +605,7 @@ public class ProfileGenerator {
     ec2.addRepresentation(PropertyRepresentation.XMLATTR);
     ec2.setDefinition("unique id for the element within a resource (for internal references)");
     ec2.setMin(0);
-    ec2.setMax("1");
+    ec2.setMax("0");
     ec2.setShort("xml:id (or equivalent in JSON)");
     TypeRefComponent tr = ec2.addType();
     t.getFormatCommentsPre().add("Note: special primitive values have a FHIRPath system type. e.g. this is compiler magic (e)");
