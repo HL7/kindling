@@ -1068,6 +1068,9 @@ public class ProfileGenerator {
     if (r.isInterface()) {
       ExtensionUtilities.addBooleanExtension(p, ExtensionDefinitions.EXT_RESOURCE_INTERFACE, true);       
     }
+    for (String tc : r.getTypeCharacteristics()) {
+      p.addExtension(ExtensionDefinitions.EXT_TYPE_CHARACTERISTICS, new CodeType(tc));
+    }
     IniFile cini = new IniFile(Utilities.path(rootFolder, "temp", "categories.ini"));
     String cat = cini.getStringProperty("category", r.getName());
     if (!Utilities.noString(cat))
