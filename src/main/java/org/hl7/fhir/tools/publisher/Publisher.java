@@ -146,7 +146,7 @@ import org.hl7.fhir.definitions.validation.XmlValidator;
 import org.hl7.fhir.exceptions.FHIRException;
 import org.hl7.fhir.exceptions.FHIRFormatError;
 import org.hl7.fhir.r5.conformance.ShExGenerator;
-import org.hl7.fhir.r5.conformance.ShExGenerator.HTMLLinkPolicy;
+import org.hl7.fhir.r5.conformance.ShExGeneratorBase.HTMLLinkPolicy;
 import org.hl7.fhir.r5.conformance.profile.ProfileUtilities;
 import org.hl7.fhir.r5.context.ContextUtilities;
 import org.hl7.fhir.r5.elementmodel.Manager;
@@ -245,6 +245,7 @@ import org.hl7.fhir.r5.renderers.utils.ResourceWrapper;
 import org.hl7.fhir.r5.terminologies.CodeSystemUtilities;
 import org.hl7.fhir.r5.terminologies.ValueSetUtilities;
 import org.hl7.fhir.r5.terminologies.client.TerminologyClientContext;
+import org.hl7.fhir.r5.terminologies.client.TerminologyClientManager;
 import org.hl7.fhir.r5.terminologies.expansion.ValueSetExpansionOutcome;
 import org.hl7.fhir.r5.utils.BuildExtensions;
 import org.hl7.fhir.r5.utils.CanonicalResourceUtilities;
@@ -513,6 +514,10 @@ public class Publisher implements URIResolver, SectionNumberer {
   private Map<String, String> jsons = new HashMap<String, String>();
   private Map<String, String> ttls = new HashMap<String, String>();
   private Map<String, Long> dates = new HashMap<String, Long>();
+  // Per category (lower-cased), the file whose mtime is currently the newest -
+  // i.e. the one driving the rebuild decision - recorded so a partial build can
+  // report what each resource is being rebuilt for.
+  private Map<String, String> dateSources = new HashMap<String, String>();
   private Map<String, Boolean> buildFlags = new HashMap<String, Boolean>();
   private IniFile cache;
   private String singleResource;
@@ -683,7 +688,8 @@ public class Publisher implements URIResolver, SectionNumberer {
    * @throws IOException 
    */
   public void execute(String folder, String[] args) throws IOException {
-    TerminologyClientContext.setCanUseCacheId(false);
+    TerminologyClientContext.setCanUseCacheId(true);
+
     tester = new PublisherTestSuites();
     sdm = new SDUsageMapper();
 
@@ -758,11 +764,15 @@ public class Publisher implements URIResolver, SectionNumberer {
           AudioUtilities.tone(1800, 10);
         }
         page.log("Partial Build (if you want a full build, just run the build again)", LogMessageType.Process);
-        CommaSeparatedStringBuilder b = new CommaSeparatedStringBuilder();
+        List<String> bnames = new ArrayList<String>();
         for (String n : buildFlags.keySet())
           if (buildFlags.get(n))
-            b.append(n);
-        page.log("  Build: "+b.toString(), LogMessageType.Process);
+            bnames.add(n);
+        Collections.sort(bnames);
+        for (String n : bnames) {
+          String src = dateSources.get(n);
+          page.log("  build "+n+(src == null ? "" : "  <- changed: "+src), LogMessageType.Process);
+        }
       } else {
         if (!noSound) 
           AudioUtilities.tone(1200, 30);
@@ -837,11 +847,15 @@ public class Publisher implements URIResolver, SectionNumberer {
       page.log("Max Memory Used = "+Utilities.describeSize(page.getMaxMemory()), LogMessageType.Process);
       if (!buildFlags.get("all")) {
         page.log("This was a Partial Build", LogMessageType.Process);
-        CommaSeparatedStringBuilder b = new CommaSeparatedStringBuilder();
+        List<String> bnames = new ArrayList<String>();
         for (String n : buildFlags.keySet())
           if (buildFlags.get(n))
-            b.append(n);
-        page.log("  Build: "+b.toString(), LogMessageType.Process);
+            bnames.add(n);
+        Collections.sort(bnames);
+        for (String n : bnames) {
+          String src = dateSources.get(n);
+          page.log("  build "+n+(src == null ? "" : "  <- changed: "+src), LogMessageType.Process);
+        }
       } else
         page.log("This was a Full Build", LogMessageType.Process);
       if (!noSound) {
@@ -865,11 +879,15 @@ public class Publisher implements URIResolver, SectionNumberer {
       }
       if (buildFlags.containsKey("all") && !buildFlags.get("all")) {
         page.log("This was a Partial Build", LogMessageType.Process);
-        CommaSeparatedStringBuilder b = new CommaSeparatedStringBuilder();
+        List<String> bnames = new ArrayList<String>();
         for (String n : buildFlags.keySet())
           if (buildFlags.get(n))
-            b.append(n);
-        page.log("  Build: "+b.toString(), LogMessageType.Process);
+            bnames.add(n);
+        Collections.sort(bnames);
+        for (String n : bnames) {
+          String src = dateSources.get(n);
+          page.log("  build "+n+(src == null ? "" : "  <- changed: "+src), LogMessageType.Process);
+        }
       } else
         page.log("This was a Full Build", LogMessageType.Process);
       if (!noSound) {
@@ -2469,8 +2487,10 @@ public class Publisher implements URIResolver, SectionNumberer {
       return false;
     } else if (category != null) {
       long d = f.lastModified();
-      if ((!dates.containsKey(category) || d > dates.get(category)) && !f.getAbsolutePath().endsWith(".gen.svg"))
+      if ((!dates.containsKey(category) || d > dates.get(category)) && !f.getAbsolutePath().endsWith(".gen.svg") && !f.getName().endsWith("-mapping-exceptions.xml")) {
         dates.put(category, d);
+        dateSources.put(category.toLowerCase(), f.getName()+" @ "+new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new java.util.Date(d)));
+      }
       return true;
     } else
       return true;
@@ -2498,7 +2518,7 @@ public class Publisher implements URIResolver, SectionNumberer {
       }
 
       prsr = new SourceParser(page, folder, page.getDefinitions(), web, page.getVersion(), page.getWorkerContext(), page.getGenDate(), page, fpUsages, isCIBuild);
-      prsr.checkConditions(errors, dates);
+      prsr.checkConditions(errors, dates, dateSources);
       page.setRegistry(prsr.getRegistry());
       page.getDiffEngine().loadFromIni(prsr.getIni(), "r4-r6-changes", "4", "6");
       page.getDiffEngine().loadFromIni(prsr.getIni(), "r5-r6-changes", "5", "6");
@@ -3879,13 +3899,13 @@ public class Publisher implements URIResolver, SectionNumberer {
     SpecMapManager spm = new SpecMapManager("hl7.fhir.core", page.getVersion().toCode(), page.getVersion().toCode(), page.getBuildId(), page.getGenDate(), page.getWebLocation());
         
     for (StructureDefinition sd : new ContextUtilities(page.getWorkerContext()).allStructures()) {
-      if (sd.hasWebPath()) {
+      if (sd.hasWebPath() && !page.isExtensionPack(sd)) {
         spm.path(sd.getUrl(), sd.getWebPath().replace("\\", "/"));
         spm.target(sd.getWebPath().replace("\\", "/"));
       }
     }
     for (StructureDefinition sd : page.getWorkerContext().getExtensionDefinitions()) {
-      if (sd.hasWebPath()) {
+      if (sd.hasWebPath() && !page.isExtensionPack(sd)) {
         spm.path(sd.getUrl(), sd.getWebPath().replace("\\", "/"));
         spm.target(sd.getWebPath().replace("\\", "/"));
       }

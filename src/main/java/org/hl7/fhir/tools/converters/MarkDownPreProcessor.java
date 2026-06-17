@@ -2,20 +2,22 @@ package org.hl7.fhir.tools.converters;
 
 import java.util.List;
 
+import org.apache.jena.base.Sys;
 import org.hl7.fhir.definitions.model.Definitions;
 import org.hl7.fhir.r5.conformance.profile.ProfileUtilities;
+import org.hl7.fhir.r5.model.*;
 import org.hl7.fhir.r5.model.CodeSystem.ConceptDefinitionComponent;
-import org.hl7.fhir.r5.model.StructureDefinition;
-import org.hl7.fhir.r5.model.UriType;
-import org.hl7.fhir.r5.model.ValueSet;
 import org.hl7.fhir.r5.model.ValueSet.ValueSetExpansionContainsComponent;
+import org.hl7.fhir.r5.terminologies.CodeSystemUtilities;
 import org.hl7.fhir.r5.terminologies.expansion.ValueSetExpansionOutcome;
 import org.hl7.fhir.tools.publisher.BuildWorkerContext;
+import org.hl7.fhir.utilities.DebugUtilities;
 import org.hl7.fhir.utilities.Utilities;
 import org.hl7.fhir.utilities.validation.ValidationMessage;
 import org.hl7.fhir.utilities.validation.ValidationMessage.IssueSeverity;
 import org.hl7.fhir.utilities.validation.ValidationMessage.IssueType;
 import org.hl7.fhir.utilities.validation.ValidationMessage.Source;
+import org.sqlite.core.Codes;
 
 public class MarkDownPreProcessor {
 
@@ -40,7 +42,10 @@ public class MarkDownPreProcessor {
           text = left+"["+vs.getName()+"]("+vs.getWebPath()+")"+right;
       } else {
         String url = "";
+        String target = null;
+        String htmlText = linkText;
         String[] parts = linkText.split("\\#");
+
         if (parts[0].contains("/StructureDefinition/")) {
           StructureDefinition ed = workerContext.getExtensionStructure(null, parts[0]);
           if (ed == null)
@@ -52,8 +57,39 @@ public class MarkDownPreProcessor {
           if (url == null) {
             System.out.println("Broken link for "+ed.getUrl());
           }
-        } 
-        if (Utilities.noString(url)) { 
+          htmlText = ed.present();
+        }
+        if (Utilities.noString(url)) {
+          try {
+            Resource cr = workerContext.fetchResourceWithException(Resource.class, parts[0]);
+            if (cr != null) {
+              url = cr.getWebPath();
+              if (cr instanceof CanonicalResource) {
+                htmlText = ((CanonicalResource) cr).present();
+              }
+              if (parts.length > 1) {
+                if (cr instanceof CodeSystem) {
+                  CodeSystem cs = (CodeSystem) cr;
+                  ConceptDefinitionComponent cd = CodeSystemUtilities.findCode(cs.getConcept(), parts[1]);
+                  if (cd != null) {
+                    htmlText = cd.getCode();
+                    if (!cd.getCode().equalsIgnoreCase(cd.getDisplay())) {
+                      htmlText += " (" + cd.getDisplay() + ")";
+                    }
+                    target = cs.getId() + "-" + cd.getCode();
+                  } else {
+                    target = cr.getId() + "-" + parts[1];
+                  }
+                } else {
+                  target = parts[1];
+                }
+              }
+            }
+          } catch (Exception e) {
+            System.out.println("Broken link for "+parts[0]);
+          }
+        }
+        if (Utilities.noString(url)) {
           String[] paths = parts[0].split("\\.");
           StructureDefinition p = new ProfileUtilities(workerContext, null, null).getProfile(null, new UriType(paths[0]));
           if (p != null) {
@@ -81,7 +117,11 @@ public class MarkDownPreProcessor {
           } else 
             url = "??";
         }
-        text = left+"["+linkText+"]("+url+")"+right;
+        if (target != null) {
+          text = left + "[" + htmlText + "](" + url+ "#"+target+ ")" + right;
+        } else {
+          text = left + "[" + htmlText + "](" + url + ")" + right;
+        }
       }
     }
     // 1. if prefix <> "", then check whether we need to insert the prefix

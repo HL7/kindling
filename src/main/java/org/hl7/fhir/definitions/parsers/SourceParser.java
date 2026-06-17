@@ -124,6 +124,7 @@ import org.hl7.fhir.utilities.filesystem.CSFileInputStream;
 import org.hl7.fhir.utilities.StandardsStatus;
 import org.hl7.fhir.utilities.FileUtilities;
 import org.hl7.fhir.utilities.Utilities;
+import org.hl7.fhir.utilities.regex.RegexConstants;
 import org.hl7.fhir.utilities.validation.ValidationMessage;
 import org.hl7.fhir.utilities.xhtml.NodeType;
 import org.hl7.fhir.utilities.xhtml.XhtmlComposer;
@@ -262,7 +263,6 @@ public class SourceParser {
         definitions.getIgs().get("core").getLogicalModels().add(loadLogicalModel(n));
       }
     }
-
 
     // basic infrastructure
     for (String n : ini.getPropertyNames("resource-infrastructure")) {
@@ -683,7 +683,7 @@ public class SourceParser {
       if (Utilities.noString(id))
         throw new Exception("Contained Resource has no id");
       String nid = rootId + "-"+id;
-      if (!nid.matches(FormatUtilities.ID_REGEX))
+      if (!nid.matches(RegexConstants.ID_REGEX))
         throw new Exception("Contained Resource combination is illegal");
       replaceReferences(doc.getDocumentElement(), id, r.getNodeName()+"/"+nid);
       XMLUtil.setNamedChildValue(r, "id", nid);
@@ -1454,19 +1454,24 @@ public class SourceParser {
       return false;
     } else  {
       long d = f.lastModified();
-      if (!f.getAbsolutePath().endsWith(".gen.svg") && !f.getAbsolutePath().endsWith(".datestamp") && !f.getName().contains("please-close-this-in-excel-and-return-the-build-prior-to-committing") && (!dates.containsKey(category) || d > dates.get(category)))
+      if (!f.getAbsolutePath().endsWith(".gen.svg") && !f.getAbsolutePath().endsWith(".datestamp") && !f.getName().endsWith("-mapping-exceptions.xml") && !f.getName().contains("please-close-this-in-excel-and-return-the-build-prior-to-committing") && (!dates.containsKey(category) || d > dates.get(category))) {
         dates.put(category, d);
+        if (dateSources != null)
+          dateSources.put(category.toLowerCase(), f.getName()+" @ "+new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new java.util.Date(d)));
+      }
       return true;
     }
       }
   private Map<String, Long> dates;
+  private Map<String, String> dateSources;
   private ValueSetGenerator vsGen;
 
-  public void checkConditions(List<String> errors, Map<String, Long> dates) throws Exception {
+  public void checkConditions(List<String> errors, Map<String, Long> dates, Map<String, String> dateSources) throws Exception {
     FileUtilities.checkFolderExists(srcDir, errors);
     FileUtilities.checkFolderExists(termDir, errors);
     FileUtilities.checkFolderExists(imgDir, errors);
     this.dates = dates;
+    this.dateSources = dateSources;
     checkFile("required", termDir, "bindings.xml", errors, "all");
     checkFile("required", dtDir, "primitives.xml", errors, "all");
 

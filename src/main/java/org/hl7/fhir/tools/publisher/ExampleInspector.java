@@ -356,7 +356,6 @@ public class ExampleInspector implements IValidatorResourceFetcher, IValidationP
       else
         errorCount++;
     }
-    Runtime.getRuntime().gc();
   }
  
   private long fileSize(String n) {
@@ -848,8 +847,8 @@ public class ExampleInspector implements IValidatorResourceFetcher, IValidationP
   }
 
   @Override
-  public boolean isSuppressMessageId(String path, String messageId) {
-    return false;
+  public String relativeDatePlaceHolder() {
+    throw new Error("not done yet");
   }
 
   @Override
@@ -860,6 +859,11 @@ public class ExampleInspector implements IValidatorResourceFetcher, IValidationP
   @Override
   public Set<String> getCheckReferencesTo() {
     return Set.of();
+  }
+
+  @Override
+  public boolean isSuppressMessageId(String s, String s1, Object... objects) {
+    return false;
   }
 
   @Override
