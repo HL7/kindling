@@ -117,7 +117,7 @@ public class BuildWorkerContext extends BaseWorkerContext implements IWorkerCont
     super(codeSystems, valueSets, maps, profiles, guides);
     initTxCache(terminologyCachePath);
     this.definitions = definitions;
-    this.terminologyClientManager.setMasterClient(client, false);
+    this.terminologyClientManager.setMasterClient(client, true);
     this.terminologyClientManager.setUsage("publication");
     this.txLog = new HTMLClientLogger(null);
     setExpansionParameters(buildExpansionProfile());
@@ -500,7 +500,7 @@ public class BuildWorkerContext extends BaseWorkerContext implements IWorkerCont
         triedServer = true;
         // for this, we use the FHIR client
         if (terminologyClientManager.getMasterClient() == null) {
-          terminologyClientManager.setMasterClient(new TerminologyClientR5("local.fhir.org:3001", "?", "fhir/main-build"), true);
+          terminologyClientManager.setMasterClient(new TerminologyClientR5("tx.fhir.org", "?", "fhir/main-build"), true);
           this.txLog = new HTMLClientLogger(null);
         }
         Map<String, String> params = new HashMap<String, String>();

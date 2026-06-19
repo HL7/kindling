@@ -10351,7 +10351,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     breadCrumbManager.setDefinitions(definitions);
     ITerminologyClient client;
     try {
-      client = new TerminologyClientR5("lcoal.fhir.org:3001", tsServer, "fhir/main-build");
+      client = new TerminologyClientR5("tx.fhir.org", tsServer, "fhir/main-build");
 //      client.setLogger(new TextClientLogger(Utilities.path("[tmp]", "tx-main-build.log")));
       client.setTimeoutFactor(2);
     } catch(Exception e) {
