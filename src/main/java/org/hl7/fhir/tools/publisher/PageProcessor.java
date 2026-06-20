@@ -222,6 +222,7 @@ import org.hl7.fhir.utilities.filesystem.CSFileInputStream;
 import org.hl7.fhir.utilities.i18n.RenderingI18nContext;
 import org.hl7.fhir.utilities.npm.FilesystemPackageCacheManager;
 import org.hl7.fhir.utilities.npm.NpmPackage;
+import org.hl7.fhir.utilities.regex.RegexConstants;
 import org.hl7.fhir.utilities.validation.ValidationMessage;
 import org.hl7.fhir.utilities.validation.ValidationMessage.IssueSeverity;
 import org.hl7.fhir.utilities.validation.ValidationMessage.IssueType;
@@ -6723,17 +6724,23 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
               addMappingIssue(logicalPath, unmapped, "unmappedElement", rootException, newExceptionsDoc);
           }
 
-          if (!exceptionsFile.exists())
-            exceptionsFile.createNewFile();
-
-          java.io.Writer writer = new java.io.FileWriter(exceptionsFile);
           final LSSerializer xmlWriter = impl.createLSSerializer();
           xmlWriter.setNewLine("\r\n");
           xmlWriter.getDomConfig().setParameter("format-pretty-print", true);
           xmlWriter.getDomConfig().setParameter("xml-declaration", false);
           String xml = xmlWriter.writeToString(newExceptionsDoc);
-          writer.write(xml);
-          writer.close();
+          // These files live in source/ and their mtime drives the partial-build
+          // change detection. Only write when the content actually changes; an
+          // unconditional rewrite every build bumped the mtime and made every
+          // resource look modified (perpetual partial build).
+          String existingExceptions = exceptionsFile.exists() ? FileUtilities.fileToString(exceptionsFile) : null;
+          if (!xml.equals(existingExceptions)) {
+            if (!exceptionsFile.exists())
+              exceptionsFile.createNewFile();
+            try (java.io.Writer writer = new java.io.FileWriter(exceptionsFile)) {
+              writer.write(xml);
+            }
+          }
         }
       }
     }
@@ -11570,7 +11577,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
       if (cm.getUrl().startsWith("http://hl7.org/fhir"))
         definitions.addNs(cm.getUrl(), "Concept Map"+cm.getName(), cm.getWebPath());
     for (StructureDefinition sd : profiles.getList())
-      if (sd.getUrl().startsWith("http://hl7.org/fhir") && !definitions.getResourceTemplates().containsKey(sd.getName()))
+      if (sd.getUrl().startsWith("http://hl7.org/fhir") && !definitions.getResourceTemplates().containsKey(sd.getName()) && !isExtensionPack(sd))
         definitions.addNs(sd.getUrl(), "Profile "+sd.getName(), sd.getWebPath());
     //    for (StructureDefinition sd : workerContext.getExtensionDefinitions())
     //      if (sd.getUrl().startsWith("http://hl7.org/fhir"))
@@ -11609,6 +11616,10 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     b.append("</table>\r\n");
     b.append("<p>"+Integer.toString(list.size())+" Entries</p>\r\n");
     return b.toString();
+  }
+
+  public boolean isExtensionPack(StructureDefinition sd) {
+    return sd.getSourcePackage() != null && "hl7.fhir.uv.extensions".equals(sd.getSourcePackage().getId());
   }
 
   private String hsplt(String s) {
@@ -12241,7 +12252,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
         }
       }
     }
-    if (parts.length == 2 && definitions.hasResource(parts[0]) && parts[1].matches(FormatUtilities.ID_REGEX)) {
+    if (parts.length == 2 && definitions.hasResource(parts[0]) && parts[1].matches(RegexConstants.ID_REGEX)) {
       Example ex = null;
       try {
         ex = findExample(parts[0], parts[1]);
