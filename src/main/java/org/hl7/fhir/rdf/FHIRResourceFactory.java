@@ -7,6 +7,7 @@ import java.util.List;
 import org.apache.jena.datatypes.xsd.XSDDatatype;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
+import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.RDFFormat;
@@ -411,6 +412,6 @@ public class FHIRResourceFactory {
      */
     public Resource fhir_pattern(String pattern) {
         return fhir_bnode()
-                .addDataProperty(RDFNamespace.XSDpattern, pattern).resource;
+                .addLiteral(RDFNamespace.XSDpattern, pattern).resource;
     }
 }
