@@ -419,22 +419,11 @@ public class FhirTurtleGenerator {
      */
     private void processTypes(String baseResourceName, FHIRResource baseResource, ElementDefn td, String predicateBase, boolean innerIsBackbone, String definitionCanonical) throws Exception {
         List<ElementDefn> elements = td.getElements();
-        System.out.println(baseResourceName);
         for (int index = 0; index < elements.size(); index++) {
+            // Track element index for sorting later
             ElementDefn ed = elements.get(index);
-            System.out.println("  " + ed.getName());
             generateElementClasses(index, baseResourceName, baseResource, ed, predicateBase, innerIsBackbone, definitionCanonical);
         }
-    }
-
-    private void addElementOrderedRestriction(FHIRResource baseResource, Resource classExpression, int elementIndex) {
-        fact.registerOrderedClassExpression(classExpression, elementIndex);
-        baseResource.restriction(classExpression);
-    }
-
-    private void addElementOrderedRestrictions(FHIRResource baseResource, List<Resource> classExpressions, int elementIndex) {
-        fact.registerOrderedClassExpressions(classExpressions, elementIndex);
-        baseResource.restriction(classExpressions);
     }
 
     /**
@@ -535,6 +524,14 @@ public class FhirTurtleGenerator {
     }
 
     /**
+     * Add set of restrictions to a class and track their order for sorting later during serialization
+     */
+    private void addElementOrderedRestrictions(FHIRResource baseResource, List<Resource> classExpressions, int elementIndex) {
+        fact.registerOrderedClassExpressions(classExpressions, elementIndex);
+        baseResource.restriction(classExpressions);
+    }
+
+    /**
      * Generate restrictions for a choice element (e.g., value[x])
      * @param baseResource FHIRResource for base resource
      * @param ed Element definition to process
@@ -546,15 +543,15 @@ public class FhirTurtleGenerator {
      */
     private FHIRResource getChoiceElementRestriction(FHIRResource baseResource, ElementDefn ed, String shortenedPropertyName, FHIRResource predicateResource, String definitionCanonical, int index) throws Exception {
         // Choice entry
+        List<Resource> restrictions;
         if (ed.typeCode().equals("*")) {
             // Wild card -- any element works (probably should be more restrictive but...)
             Resource targetResource = RDFNamespace.FHIR.resourceRef("Element");
-            List<Resource> restrictions = fact.fhir_class_cardinality_restriction(
+            restrictions = fact.fhir_class_cardinality_restriction(
                     predicateResource.resource,
                     targetResource,
                     ed.getMinCardinality(),
                     ed.getMaxCardinality());
-            addElementOrderedRestrictions(baseResource, restrictions, index);
         } else {
             // Create a restriction on the union of possible types
             List<Resource> typeRestrictions = new ArrayList<Resource>();
@@ -562,16 +559,14 @@ public class FhirTurtleGenerator {
                 Resource typeRestriction = getChoiceTypeRestriction(shortenedPropertyName, predicateResource, tr, definitionCanonical);
                 typeRestrictions.add(typeRestriction);
             }
-            // Add the type restrictions
-            Resource union = fact.fhir_union(typeRestrictions);
-            addElementOrderedRestriction(baseResource, union, index);
-            // Add the cardinality restrictions separately here
-            List<Resource> cardinalityRestrictions = fact.build_cardinality_restrictions(
+            restrictions = new ArrayList<Resource>();
+            restrictions.add(fact.fhir_union(typeRestrictions));
+            restrictions.addAll(fact.build_cardinality_restrictions(
                     predicateResource.resource,
                     ed.getMinCardinality(),
-                    ed.getMaxCardinality());
-            addElementOrderedRestrictions(baseResource, cardinalityRestrictions, index);
+                    ed.getMaxCardinality()));
         }
+        addElementOrderedRestrictions(baseResource, restrictions, index);
         return baseResource;
     }
 

@@ -29,17 +29,16 @@ public class FHIRResourceFactory {
         RDFNamespace.addOntologyNamespaces(model);
     }
 
-    public void registerOrderedClassExpression(Resource classExpression, int elementIndex) {
-        if (classExpression != null) {
-            orderedClassExpressionIndex.put(
-                    classExpression.asNode(),
-                    new OrderedClassExpressionOrder(elementIndex, nextOrderedClassExpressionSequence++));
-        }
-    }
-
+    /**
+     * For tracking order of elements represented with class axioms for sorting later during serialization
+     */
     public void registerOrderedClassExpressions(List<Resource> classExpressions, int elementIndex) {
         for (Resource classExpression : classExpressions) {
-            registerOrderedClassExpression(classExpression, elementIndex);
+            if (classExpression != null) {
+                orderedClassExpressionIndex.put(
+                        classExpression.asNode(),
+                        new OrderedClassExpressionOrder(elementIndex, nextOrderedClassExpressionSequence++));
+            }
         }
     }
 
