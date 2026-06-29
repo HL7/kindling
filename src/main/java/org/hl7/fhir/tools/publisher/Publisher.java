@@ -45,6 +45,7 @@ import java.io.StringReader;
 import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
 import java.io.Writer;
+import java.net.URI;
 import java.net.URL;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
@@ -7109,7 +7110,7 @@ private String csCounter() {
     if (!href.startsWith("http://fhir.healthintersections.com.au/open/ValueSet/$expand"))
       return null;
     try {
-      Map<String, String> params = splitQuery(new URL(href));
+      Map<String, String> params = splitQuery(URI.create(href).toURL());
       ValueSet vs = page.getValueSets().get(params.get("identifier"));
       if (vs == null) {
         page.log("unable to resolve "+params.get("identifier"), LogMessageType.Process);
