@@ -2,14 +2,16 @@ package org.hl7.fhir.rdf;
 
 import java.io.OutputStream;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
+import org.hl7.fhir.rdf.TurtleSorter.OrderedClassExpressionOrder;
+import org.apache.jena.graph.Node;
 import org.apache.jena.datatypes.xsd.XSDDatatype;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.Resource;
-import org.apache.jena.riot.RDFDataMgr;
-import org.apache.jena.riot.RDFFormat;
 import org.apache.jena.vocabulary.OWL2;
 import org.apache.jena.vocabulary.RDF;
 import org.apache.jena.vocabulary.RDFS;
@@ -17,10 +19,27 @@ import org.apache.jena.vocabulary.RDFS;
 
 public class FHIRResourceFactory {
     private final Model model;
+    private final Map<Node, OrderedClassExpressionOrder> orderedClassExpressionIndex;
+    private long nextOrderedClassExpressionSequence;
 
     public FHIRResourceFactory() {
         model = ModelFactory.createDefaultModel();
+        orderedClassExpressionIndex = new HashMap<>();
+        nextOrderedClassExpressionSequence = 0;
         RDFNamespace.addOntologyNamespaces(model);
+    }
+
+    /**
+     * For tracking order of elements represented with class axioms for sorting later during serialization
+     */
+    public void registerOrderedClassExpressions(List<Resource> classExpressions, int elementIndex) {
+        for (Resource classExpression : classExpressions) {
+            if (classExpression != null) {
+                orderedClassExpressionIndex.put(
+                        classExpression.asNode(),
+                        new OrderedClassExpressionOrder(elementIndex, nextOrderedClassExpressionSequence++));
+            }
+        }
     }
 
     /**
@@ -29,9 +48,8 @@ public class FHIRResourceFactory {
      * @param writer
      */
     public void serialize(OutputStream writer) {
-        RDFDataMgr.write(writer, model, RDFFormat.TURTLE_PRETTY);
+        TurtleSorter.serialize(model.getGraph(), writer, orderedClassExpressionIndex);
     }
-
 
     /**
      * Add a new datatype to the model
@@ -413,4 +431,5 @@ public class FHIRResourceFactory {
         return fhir_bnode()
                 .addDataProperty(RDFNamespace.XSDpattern, pattern).resource;
     }
+    
 }
