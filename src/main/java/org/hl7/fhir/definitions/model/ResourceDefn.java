@@ -30,11 +30,9 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 POSSIBILITY OF SUCH DAMAGE.
 
  */
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
+import lombok.Getter;
 import org.hl7.fhir.exceptions.FHIRException;
 import org.hl7.fhir.r5.elementmodel.Element;
 import org.hl7.fhir.r5.model.StructureDefinition;
@@ -191,6 +189,7 @@ public class ResourceDefn  {
   private String liquid;
   private String liquidNotes;
   private boolean notes;
+  @Getter private Set<String> typeCharacteristics = new HashSet<String>();
 
   private long timestamp;
   

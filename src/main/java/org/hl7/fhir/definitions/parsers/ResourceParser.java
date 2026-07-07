@@ -476,9 +476,11 @@ public class ResourceParser {
     sdList.put(sd.getUrl(), sd);
     sd.setVersion(version);
     sd.setFhirVersion(FHIRVersion.fromCode(version));
-
     ResourceDefn r = new ResourceDefn();
     r.setName(sd.getName());
+    for (Extension tc : sd.getExtensionsByUrl(ExtensionDefinitions.EXT_TYPE_CHARACTERISTICS)) {
+      r.getTypeCharacteristics().add(tc.getValue().primitiveValue());
+    }
     r.setEnteredInErrorStatus(ExtensionUtilities.readStringExtension(sd, BuildExtensions.EXT_ENTERED_IN_ERROR_STATUS));
     r.setStatus(StandardsStatus.fromCode(ExtensionUtilities.readStringExtension(sd, ExtensionDefinitions.EXT_STANDARDS_STATUS)));
     r.setAbstract(sd.getAbstract());
