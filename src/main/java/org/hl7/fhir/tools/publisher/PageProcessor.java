@@ -7129,9 +7129,11 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
       sj.add(resource.getPath()+" : "+resource.typeSummary()+" ["+resource.getMin()+".."+resource.getMax()+"]");
     else 
       sj.add("<li>"+resource.getPath()+" : "+resource.typeSummary()+" ["+resource.getMin()+".."+resource.getMax()+"]</li>");
-    if (!logical.getName().equals(edPathTail(resource.getPath()))) {
+/* 
+ * Don't yell about name reasons because there are too many situations where names are legitimately different
+ *    if (!logical.getName().equals(edPathTail(resource.getPath()))) {
       info.nameReason = REASON_UNKNOWN;
-    }
+    }*/
     checkCardinality(logical, light, resource, info, exception, newException, doc, sj);
     if (!light)
       checkType(logical, light, resource, cm, info, exception, newException, doc, sj);
