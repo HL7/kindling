@@ -63,6 +63,9 @@ public class TableGenerator extends BaseGenerator {
     row.setAnchor(linkPrefix+path);
     boolean isProfiledExtension = isProfile && (e.getName().equals("extension") || e.getName().equals("modifierExtension"));
     row.getCells().add(gen.new Cell(null, dictLinks() ? pageName+"#"+path.replace("[", "_").replace("]", "_") : null, e.getName(), path+" : "+e.getDefinition(), null));
+    if (e.getStatus() != null) {
+      row.setColor(e.getStatus().getColor());
+    }
     Cell gc = gen.new Cell();
     row.getCells().add(gc);
     if (e.hasMustSupport() && e.isMustSupport()) {
@@ -212,6 +215,14 @@ public class TableGenerator extends BaseGenerator {
         }
         abr.render(gen, cc);
       }
+    }
+    if (e.getStatus() != null) {
+      if (cc.getPieces().size() > 0)
+        cc.addPiece(gen.new Piece("br"));
+      cc.getPieces().add(gen.new Piece(null, e.getStatus().toDisplay(), null).addStyle("font-weight:bold"));
+      cc.getPieces().add(gen.new Piece(null, ": ", null));
+      cc.getPieces().add(gen.new Piece(null, e.getStatusReason(), null));
+
     }
     List<String> invs = new ArrayList<String>(e.getInvariants().keySet());
     Collections.sort(invs, new ConstraintsSorter());

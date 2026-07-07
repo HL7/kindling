@@ -2095,7 +2095,7 @@ public class ProfileGenerator {
         con.setSeverity(ConstraintSeverity.WARNING);
         ExtensionUtilities.addBooleanExtension(con, ExtensionDefinitions.EXT_BEST_PRACTICE, true);
         if (Utilities.noString(inv.getExplanation()))
-          throw new FHIRException("Best Practice Invariants need to have an explanation");
+          throw new FHIRException("Best Practice Invariants need to have an explanation: "+ce.getPath()+" / "+inv.getId());
         con.addExtension().setUrl(ExtensionDefinitions.EXT_BEST_PRACTICE_EXPLANATION).setValue(new MarkdownType(inv.getExplanation()));
       } else
         con.setSeverity(ConstraintSeverity.fromCode(inv.getSeverity()));

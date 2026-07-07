@@ -4061,7 +4061,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
 
   private String genResourceTable(ResourceDefn res, String prefix, String linkPrefix) throws Exception {
     ResourceTableGenerator gen = new ResourceTableGenerator(folders.dstDir, this, res.getName()+"-definitions.html", false, version, linkPrefix);
-    return new XhtmlComposer(XhtmlComposer.HTML).compose(gen.generate(res, prefix, true))+(!res.isAbstract() && !res.isPattern() ? "<p><a href=\""+res.getName().toLowerCase()+"-profiles.html#extensions\">See the Extensions</a> for this resource</p>" : "");
+    return new XhtmlComposer(XhtmlComposer.HTML).compose(gen.generate(res, prefix, true));
   }
 
   private String genResourceConstraints(ResourceDefn res, String prefix) throws Exception {
