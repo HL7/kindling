@@ -75,7 +75,7 @@ public class FhirTurtleGenerator {
 
         this.fact = new FHIRResourceFactory();
         this.v = fact.fhir_resource("v", OWL2.DatatypeProperty, "fhir:v")
-                .addComment("Terminal data value for primitive FHIR datatypes that can be represented as a RDF literal")
+                .addComment("Terminal data value for primitive FHIR datatypes that can be represented as an RDF literal")
                 .addProvenance(fhirRdfPageUrl)
                 .resource;
 
