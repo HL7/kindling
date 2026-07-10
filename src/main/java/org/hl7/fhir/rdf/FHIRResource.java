@@ -112,10 +112,6 @@ public class FHIRResource {
         return this;
     }
 
-    public Property asProperty() {
-        return resource.as(Property.class);
-    }
-
     public FHIRResource domain(FHIRResource d) {
         return addObjectProperty(RDFS.domain, d);
     }

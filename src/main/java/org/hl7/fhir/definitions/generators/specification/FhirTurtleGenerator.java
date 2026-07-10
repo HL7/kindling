@@ -280,7 +280,7 @@ public class FhirTurtleGenerator {
                 (td.getTypes().isEmpty() ? fact.fhir_class(typeName) : fact.fhir_class(typeName, parentName));
 
         // Add provenance directly from the TypeDefn's StructureDefinition if available
-        if (typeSd != null && !Utilities.noString(typeSd.getUrl())) {
+        if (!Utilities.noString(typeSd.getUrl())) {
             typeRes.addProvenance(typeSd.getUrl());
         }
 
@@ -295,7 +295,7 @@ public class FhirTurtleGenerator {
     /**
      * ProfiledType generator
      */
-    private void genProfiledType(ProfiledType pt) throws Exception {
+    private void genProfiledType(ProfiledType pt) {
         fact.fhir_class_with_provenance(pt.getName(), pt.getBaseType(), pt.getProfile().getUrl())
                               .addComment(pt.getDescription());
         if (!Utilities.noString(pt.getInvariant().getTurtle())) {
@@ -429,7 +429,7 @@ public class FhirTurtleGenerator {
 
         // Add provenance & definition annotations from source StructureDefinition for this element, except if it's a DataType (used in too many places)
         if (!isDataType(targetTypeName)) {
-            if (!isContentReference && elementPath != null) {
+            if (!isContentReference) {
                 targetElementClass.addProvenance(elementDefinitionCanonical);
                 targetElementClass.addLiteral(this.edDefinition, ed.getDefinition());
             }
