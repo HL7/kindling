@@ -65,6 +65,7 @@ import org.hl7.fhir.utilities.npm.BasePackageCacheManager;
 import org.hl7.fhir.utilities.npm.IPackageCacheManager;
 import org.hl7.fhir.utilities.npm.NpmPackage;
 import org.hl7.fhir.utilities.npm.NpmPackage.PackageResourceInformation;
+import org.hl7.fhir.utilities.npm.PackageLoadController;
 import org.hl7.fhir.utilities.validation.ValidationMessage;
 import org.hl7.fhir.utilities.validation.ValidationMessage.IssueSeverity;
 import org.hl7.fhir.utilities.validation.ValidationMessage.IssueType;
@@ -98,7 +99,6 @@ import org.xml.sax.SAXException;
 
  */
 public class BuildWorkerContext extends BaseWorkerContext implements IWorkerContext, ProfileKnowledgeProvider {
-
 
   private static final String SNOMED_EDITION = "900000000000207008"; // international
 //  private static final String SNOMED_EDITION = "731000124108"; // us edition
@@ -794,6 +794,11 @@ public class BuildWorkerContext extends BaseWorkerContext implements IWorkerCont
   }
 
   @Override
+  public PackageLoadController getPackageLoadController() {
+    return null;
+  }
+
+  @Override
   public void cachePackage(PackageInformation packageInfo) {    
   }
 
@@ -826,6 +831,20 @@ public class BuildWorkerContext extends BaseWorkerContext implements IWorkerCont
   @Override
   public String getDefinitionsName(Resource resource) {
     return "http://hl7.org/fhir/definitions";
+  }
+
+  public List<String> getLoadedPackages() {
+    return this.loadedPackages;
+  }
+
+  public int loadPackage(String idAndVer, boolean isMaster) throws IOException, FHIRException {
+    throw new Error("Not done yet");
+  }
+  public int loadPackage(NpmPackage npm, boolean isMaster) throws IOException, FHIRException {
+    throw new Error("Not done yet");
+  }
+  public int loadFromPackage(NpmPackage npm, IContextResourceLoader loader, boolean isMaster) throws IOException, FHIRException {
+    throw new Error("Not done yet");
   }
 
 }

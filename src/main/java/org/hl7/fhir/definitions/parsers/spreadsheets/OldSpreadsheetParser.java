@@ -147,6 +147,7 @@ import org.hl7.fhir.utilities.FileUtilities;
 import org.hl7.fhir.utilities.Utilities;
 import org.hl7.fhir.utilities.filesystem.CSFile;
 import org.hl7.fhir.utilities.filesystem.CSFileInputStream;
+import org.hl7.fhir.utilities.regex.RegexConstants;
 import org.hl7.fhir.utilities.validation.ValidationMessage;
 import org.hl7.fhir.utilities.xls.XLSXmlNormaliser;
 import org.hl7.fhir.utilities.xls.XLSXmlParser;
@@ -1443,7 +1444,7 @@ public class OldSpreadsheetParser {
         ap.setNotes(Utilities.path(folder, ap.metadata("notes")));
       if (!ap.hasMetadata("id"))
         throw new Exception("Error parsing "+ap.getId()+"/"+ap.getTitle()+" no 'id' found in metadata");
-      if (!ap.metadata("id").matches(FormatUtilities.ID_REGEX))
+      if (!ap.metadata("id").matches(RegexConstants.ID_REGEX))
         throw new Exception("Error parsing "+ap.getId()+"/"+ap.getTitle()+" 'id' is not a valid id");
 
       if (wg == null)

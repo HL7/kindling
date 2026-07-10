@@ -5,16 +5,19 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
+import com.sun.jna.Structure;
 import org.hl7.fhir.definitions.model.*;
 import org.hl7.fhir.definitions.model.BindingSpecification.AdditionalBinding;
 import org.hl7.fhir.definitions.model.BindingSpecification.BindingMethod;
-import org.hl7.fhir.r4b.renderers.utils.RenderingContext;
+import org.hl7.fhir.r5.extensions.ExtensionDefinitions;
+import org.hl7.fhir.r5.model.Extension;
 import org.hl7.fhir.r5.renderers.AdditionalBindingsRenderer;
 import org.hl7.fhir.r5.conformance.profile.ProfileKnowledgeProvider;
 import org.hl7.fhir.r5.conformance.profile.ProfileUtilities;
 import org.hl7.fhir.r5.model.Enumerations.FHIRVersion;
 import org.hl7.fhir.r5.model.StructureDefinition;
 import org.hl7.fhir.r5.renderers.StructureDefinitionRenderer;
+import org.hl7.fhir.r5.renderers.utils.RenderingContext;
 import org.hl7.fhir.tools.publisher.PageProcessor;
 import org.hl7.fhir.utilities.StandardsStatus;
 import org.hl7.fhir.utilities.Utilities;
@@ -243,24 +246,48 @@ public class TableGenerator extends BaseGenerator {
         hasIntf = hasIntf || definitions.isInterface(fi);
       }
 
-      cc.getPieces().add(gen.new Piece("br"));
-      cc.getPieces().add(gen.new Piece(null, isIntf || hasIntf ? "Elements defined in Ancestor Resources: " : "Elements defined in Ancestors: ", null));
-      boolean first = true;
-      for (ElementDefn fi : ancestors) { 
-        if (!definitions.isInterface(fi)) {
-          for (ElementDefn fc : fi.getElements()) {
-            if (first)
-              first = false;
-            else
-              cc.getPieces().add(gen.new Piece(null, ", ", null));
-            cc.getPieces().add(gen.new Piece(definitions.getSrcFile(fi.getName())+".html#"+fi.getName(), fc.getName(), fc.getDefinition()));
+      if (sd != null) {
+        for (Extension ext : sd.getExtensionsByUrl(ExtensionDefinitions.EXT_TYPE_CHARACTERISTICS)) {
+          StructureDefinition sdtc = page.getWorkerContext().fetchResource(StructureDefinition.class, ExtensionDefinitions.EXT_TYPE_CHARACTERISTICS);
+          String msg = null;
+          switch (ext.getValue().primitiveValue()) {
+            case "can-be-target" : msg = RenderingContext.STRUC_DEF_CAN_TARGET;
+          }
+          if (msg != null) {
+            cc.getPieces().add(gen.new Piece("br"));
+            cc.addPiece(gen.new Piece(sdtc.getWebPath(), page.getRc().formatPhrase(msg), null).addStyle("font-weight:bold"));
           }
         }
-      }      
+      }
+      boolean hasAncestorElements = false;
+      for (ElementDefn fi : ancestors) {
+        if (!definitions.isInterface(fi)) {
+          for (ElementDefn fc : fi.getElements()) {
+            hasAncestorElements = true;
+            break;
+          }
+        }
+      }
+      if (hasAncestorElements) {
+        cc.getPieces().add(gen.new Piece("br"));
+        cc.getPieces().add(gen.new Piece(null, isIntf || hasIntf ? "Elements defined in Ancestor Resources: " : "Elements defined in Ancestors: ", null));
+        boolean first = true;
+        for (ElementDefn fi : ancestors) {
+          if (!definitions.isInterface(fi)) {
+            for (ElementDefn fc : fi.getElements()) {
+              if (first)
+                first = false;
+              else
+                cc.getPieces().add(gen.new Piece(null, ", ", null));
+              cc.getPieces().add(gen.new Piece(definitions.getSrcFile(fi.getName()) + ".html#" + fi.getName(), fc.getName(), fc.getDefinition()));
+            }
+          }
+        }
+      }
       if (hasIntf) {
         cc.getPieces().add(gen.new Piece("br"));
         cc.getPieces().add(gen.new Piece(null, "Elements defined in Ancestor interfaces: ", null));
-        first = true;
+        boolean first = true;
         for (ElementDefn fi : ancestors) { 
           if (definitions.isInterface(fi)) {
             for (ElementDefn fc : fi.getElements()) {
