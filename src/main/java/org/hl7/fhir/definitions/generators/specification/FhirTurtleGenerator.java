@@ -323,7 +323,7 @@ public class FhirTurtleGenerator {
             typeRes.addProvenance(typeSd.getUrl());
         }
         String definitionCanonical = typeSd != null ? typeSd.getUrl() : null;
-        processTypes(typeName, typeRes, td, typeName, false, definitionCanonical);
+        processTypes(typeRes, td, typeName, false, definitionCanonical);
         if(classHasModifierExtensions.contains(parentName)) {
             genModifierExtensions(typeName, typeRes, parentName, definitionCanonical);
         }
@@ -366,7 +366,7 @@ public class FhirTurtleGenerator {
         FHIRResource rdRes = fact.fhir_class_with_provenance(resourceName, superClass, definitionCanonical)
                         .addDefinition(rd.getDefinition());
 
-        processTypes(resourceName, rdRes, resourceType, resourceName, true, definitionCanonical);
+        processTypes(rdRes, resourceType, resourceName, true, definitionCanonical);
 
         if(!Utilities.noString(resourceType.getW5()))
             rdRes.addObjectProperty(RDFS.subClassOf, RDFNamespace.W5.resourceRef(resourceType.getW5()));
@@ -417,12 +417,12 @@ public class FhirTurtleGenerator {
      * @param predicateBase Root name for predicate
      * @param innerIsBackbone True if we're processing a backbone element
      */
-    private void processTypes(String baseResourceName, FHIRResource baseResource, ElementDefn td, String predicateBase, boolean innerIsBackbone, String definitionCanonical) throws Exception {
+    private void processTypes(FHIRResource baseResource, ElementDefn td, String predicateBase, boolean innerIsBackbone, String definitionCanonical) throws Exception {
         List<ElementDefn> elements = td.getElements();
         for (int index = 0; index < elements.size(); index++) {
             // Track element index for sorting later
             ElementDefn ed = elements.get(index);
-            generateElementClasses(index, baseResourceName, baseResource, ed, predicateBase, innerIsBackbone, definitionCanonical);
+            generateElementClasses(index, baseResource, ed, predicateBase, innerIsBackbone, definitionCanonical);
         }
     }
 
@@ -434,7 +434,7 @@ public class FhirTurtleGenerator {
      * @param predicateBase Root name for predicate
      * @param innerIsBackbone True if we're processing a backbone element
      */
-    private void generateElementClasses(int index, String baseResourceName, FHIRResource baseResource, ElementDefn ed, String predicateBase, boolean innerIsBackbone, String definitionCanonical) throws Exception {
+    private void generateElementClasses(int index, FHIRResource baseResource, ElementDefn ed, String predicateBase, boolean innerIsBackbone, String definitionCanonical) throws Exception {
         // Example: ValueSet.compose + include -> ValueSet.compose.include
         String targetClassName = predicateBase + "." + (ed.getName().endsWith("[x]")?
                 ed.getName().substring(0, ed.getName().length() - 3) : ed.getName());
@@ -459,7 +459,7 @@ public class FhirTurtleGenerator {
             targetElementClass = fact.fhir_class(targetClassName, innerIsBackbone ? "BackboneElement" : "Element");
 
             // Recursively process sub-elements
-            processTypes(targetClassName, targetElementClass, ed, targetClassName, innerIsBackbone, definitionCanonical);
+            processTypes(targetElementClass, ed, targetClassName, innerIsBackbone, definitionCanonical);
 
         } else {
             // Monomorphic simple type

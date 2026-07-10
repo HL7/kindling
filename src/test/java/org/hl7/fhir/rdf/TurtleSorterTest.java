@@ -83,7 +83,6 @@ public class TurtleSorterTest {
     /**
      * Tests sorting axioms corresponding to ElementDefinitions
      */
-    @Disabled("not critical — run manually")
     @Test
     public void findBySubject_reordersIndexedElementRestrictionsDeterministically() {
         Model model = ModelFactory.createDefaultModel();
