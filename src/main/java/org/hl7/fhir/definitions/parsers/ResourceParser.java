@@ -694,7 +694,11 @@ public class ResourceParser {
       ed.getElements().add(c);
       parseED(pu, c, child, sd, name);
     }
-    
+    if (focus.hasExtension(BuildExtensions.EXT_STANDARDS_STATUS)) {
+      Extension ext = focus.getExtensionByUrl(BuildExtensions.EXT_STANDARDS_STATUS);
+      ed.setStatus(StandardsStatus.fromCode(focus.getExtensionString(BuildExtensions.EXT_STANDARDS_STATUS)));
+      ed.setStatusReason(ext.getValue().getExtensionString(BuildExtensions.EXT_STANDARDS_STATUS_REASON));
+    }
     // todo:
     //   private ElementDefinition derivation;
   }

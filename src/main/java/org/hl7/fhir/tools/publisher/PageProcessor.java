@@ -115,7 +115,6 @@ import org.hl7.fhir.r5.fhirpath.FHIRPathEngine;
 import org.hl7.fhir.r5.fhirpath.IHostApplicationServices;
 import org.hl7.fhir.r5.fhirpath.FHIRPathUtilityClasses.FunctionDetails;
 import org.hl7.fhir.r5.fhirpath.TypeDetails;
-import org.hl7.fhir.r5.formats.FormatUtilities;
 import org.hl7.fhir.r5.formats.IParser;
 import org.hl7.fhir.r5.formats.IParser.OutputStyle;
 import org.hl7.fhir.r5.formats.JsonParser;
@@ -4061,7 +4060,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
 
   private String genResourceTable(ResourceDefn res, String prefix, String linkPrefix) throws Exception {
     ResourceTableGenerator gen = new ResourceTableGenerator(folders.dstDir, this, res.getName()+"-definitions.html", false, version, linkPrefix);
-    return new XhtmlComposer(XhtmlComposer.HTML).compose(gen.generate(res, prefix, true))+(!res.isAbstract() && !res.isPattern() ? "<p><a href=\""+res.getName().toLowerCase()+"-profiles.html#extensions\">See the Extensions</a> for this resource</p>" : "");
+    return new XhtmlComposer(XhtmlComposer.HTML).compose(gen.generate(res, prefix, true));
   }
 
   private String genResourceConstraints(ResourceDefn res, String prefix) throws Exception {
@@ -10361,9 +10360,9 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
       client = null;
     }
 
-    tcm = new TerminologyCacheManager(client.getServerVersion(), folders.rootDir, folders.ghOrg, folders.ghRepo, folders.ciDir);
+    tcm = new TerminologyCacheManager(client.getServerVersion(), folders.rootDir, folders.ghOrg, folders.ghRepo, folders.ciDir, true);
     log("Load Terminology Cache from "+tcm.getFolder(), LogMessageType.Process);
-    tcm.initialize();
+    tcm.initializeForKindling();
 
     workerContext = new BuildWorkerContext(definitions, tcm.getFolder(), client, definitions.getCodeSystems(), definitions.getValuesets(), conceptMaps, profiles, guides, folders.rootDir);
     workerContext.setDefinitions(definitions);
@@ -11307,7 +11306,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
         throw new Exception("Expansion cannot be the same instance");
       exp.setCompose(null);
       exp.setText(null);
-      exp.setDescription("Value Set Contents (Expansion) for "+vs.present()+" at "+Config.DATE_FORMAT().format(new Date()));
+      exp.setDescription("Value Set Contents (Expansion) for "+vs.present());
 
       int i = countContains(exp.getExpansion().getContains());
       IniFile sini = new IniFile(Utilities.path(folders.rootDir, "temp", "stats.ini"));
