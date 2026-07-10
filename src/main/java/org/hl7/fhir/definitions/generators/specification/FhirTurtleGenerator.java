@@ -51,12 +51,11 @@ public class FhirTurtleGenerator {
     private BuildWorkerContext context;
     private List<ValidationMessage> issues;
     private FHIRResourceFactory fact;
+    private Resource value;
     private Resource v;
-    private Property sdDescription;
-    private Property edDefinition;
     private String host;
-    private String fhirRdfPageUrl;
-
+    private List<String> classHasModifierExtensions = new ArrayList<>();
+    private static String fhirRdfPageUrl = "https://www.hl7.org/fhir/rdf.html";
     private static String fhirRdfLinkName = "l";
     private static List<String> referenceTypes = Arrays.asList("Reference", "canonical", "CodeableReference");
 
@@ -71,16 +70,11 @@ public class FhirTurtleGenerator {
         this.context = context;
         this.issues = issues;
         this.host = host;
-        this.fhirRdfPageUrl = getOntologyVersionIRI() + "rdf.html";
-
         this.fact = new FHIRResourceFactory();
         this.v = fact.fhir_resource("v", OWL2.DatatypeProperty, "fhir:v")
-                .addComment("Terminal data value for primitive FHIR datatypes that can be represented as an RDF literal")
+                .addTitle("Terminal data value for primitive FHIR datatypes that can be represented as a RDF literal")
                 .addProvenance(fhirRdfPageUrl)
                 .resource;
-
-        this.sdDescription = RDFS.comment;
-        this.edDefinition = RDFS.comment;
     }
 
     /**
@@ -111,6 +105,11 @@ public class FhirTurtleGenerator {
         // "Base, abstract types": Base, Element, BackboneElement, BackboneType, PrimitiveType, etc.
         for (String infn : sorted(definitions.getInfrastructure().keySet())) {
             TypeDefn defn = definitions.getInfrastructure().get(infn);
+            if (defn.enablesModifierExtensions()) {
+                //if original defn is a superclass that enables modifierExtensions, then generate fhir:_"defn"
+                StructureDefinition profile = defn.getProfile();
+                genBaseModifierExtensionCode(infn, profile.getBaseDefinitionElement().getValue(), profile.getUrl());
+            }
             genElementDefn(definitions.getInfrastructure().get(infn));
         }
 
@@ -127,6 +126,9 @@ public class FhirTurtleGenerator {
         for (String n : sorted(definitions.getBaseResources().keySet())) {
             ResourceDefn defn = definitions.getBaseResources().get(n);
             StructureDefinition profile = defn.getProfile();
+            if(defn.getRoot().enablesModifierExtensions()) {
+                genBaseModifierExtensionCode(n, profile.getBaseDefinitionElement().getValue(), profile.getUrl());
+            }
             genResourceDefn(defn);
         }
         // Resources: Patient, Observation, Encounter, etc.
@@ -148,16 +150,11 @@ public class FhirTurtleGenerator {
         SimpleDateFormat createdTimestamp = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
         createdTimestamp.setTimeZone(TimeZone.getTimeZone("UTC"));
 
-        String versionedBase = getOntologyVersionIRI();
-        String versionedIri = versionedBase + "fhir.ttl";
-        String versionedW5 = versionedBase + "w5.ttl";
-
-        fact.fhir_ontology("fhir.ttl", "FHIR Ontology")
-                .addLiteral(RDFS.comment, "Formal model of FHIR resources. Classes are mapped from StructureDefinitions and complex ElementDefinitions. Object properties are mapped from ElementDefinitions and reused across different types of FHIR RDF resources for more terse serialization; these may be disambiguated within each context of usage.")
-                .addObjectProperty(OWL2.versionIRI, ResourceFactory.createResource(versionedIri))
+        fact.fhir_ontology("fhir.ttl", "FHIR Model Ontology")
+                .addDataProperty(RDFS.comment, "Formal model of FHIR Resources")
+                .addObjectProperty(OWL2.versionIRI, ResourceFactory.createResource(getOntologyVersionIRI() +"fhir.ttl"))
                 .addDataProperty(OWL2.versionInfo, createdTimestamp.format(new Date()), XSDDatatype.XSDdateTime)
-                .addObjectProperty(OWL2.imports, ResourceFactory.createResource(versionedW5))
-                .addProvenance(fhirRdfPageUrl);
+                .addObjectProperty(OWL2.imports, ResourceFactory.createResource("http://hl7.org/fhir/w5.ttl"));
     }
 
     private String getOntologyVersionIRI() {
@@ -180,11 +177,20 @@ public class FhirTurtleGenerator {
 
 
         // A resource can have an optional nodeRole
+        FHIRResource treeRoot = fact.fhir_individual("treeRoot")
+                .addTitle("Root resource of FHIR RDF document")
+                .addDataProperty(RDFS.comment, "Some resources can contain other resources. Given that the relationships can appear in any order in RDF, it cannot be assumed that the first encountered element represents the resource of interest that is being represented by the set of Turtle statements. The focal resource -- where to start when parsing -- is the resource with the relationship fhir:nodeRole to fhir:treeRoot. If there is more than one node labeled as a 'treeRoot' in a set of Turtle statements, it cannot be determined how to parse them as a single resource.");
+
         FHIRResource nodeRole = fact.fhir_objectProperty("nodeRole", fhirRdfPageUrl)
-                .addComment("Role of resource in FHIR RDF document. Example: fhir:treeRoot for top-level resource which may contain other resources.");
+                .addTitle("Identifies role of subject in context of a given document")
+                .domain(Resource)
+                .rangeIndividual(treeRoot.resource);
 
         // Resource can have max 1 nodeRole
         Resource.restriction(fact.create_empty_owl_restriction(nodeRole.resource).addDataProperty(OWL2.maxCardinality, "1", XSDDatatype.XSDinteger).resource);
+        // Resource nodeRole can only the individual treeRoot
+        Resource.restriction(fact.create_empty_owl_restriction(nodeRole.resource).addObjectProperty(OWL2.allValuesFrom, treeRoot.oneOfIndividual(treeRoot.resource)).resource);
+        
         // Any element can have an index to assign order in a list
 //        FHIRResource index = fact.fhir_dataProperty("index")
 //                .addTitle("Ordering value for list")
@@ -195,7 +201,7 @@ public class FhirTurtleGenerator {
         // References have an optional link
         FHIRResource link = fact.fhir_resource(fhirRdfLinkName, OWL2.ObjectProperty, "fhir:" + fhirRdfLinkName)
                                 .addProvenance(fhirRdfPageUrl)
-                                .addComment("RDF IRI corresponding to a FHIR reference or URI");
+                                .addTitle("IRI of a reference");
         Reference.restriction(fact.fhir_class_cardinality_restriction(link.resource, Resource.resource, 0, 1));
 
         // XHTML is an XML Literal. Not available in Definitions.java, but see https://hl7.org/fhir/xhtml.profile.html
@@ -210,6 +216,40 @@ public class FhirTurtleGenerator {
         return canonicalUrl.substring(canonicalUrl.lastIndexOf("/")+1);
     }
 
+    /**
+     * Generates Modifier Extension Code for superclass
+     * At current time these superclasses are: DomainResource, BackboneElement, BackboneType
+     */
+    private void genBaseModifierExtensionCode(String className, String baseDefinitionUrl, String definitionCanonical) throws Exception {
+            classHasModifierExtensions.add(className);  // keep track of which classes enable Modifier extensions
+
+            FHIRResource originalResource = fact.fhir_class(className);
+
+            FHIRResource modResource = fact.fhir_class_with_provenance("_"+className, definitionCanonical);
+
+            if(baseDefinitionUrl != null) {
+                String baseName = getResourceNameFromCanonical(baseDefinitionUrl);
+                Resource baseRes = RDFNamespace.FHIR.resourceRef(baseName);
+                modResource.addObjectProperty(RDFS.subClassOf, baseRes);
+            }
+
+            FHIRResource extensionResource = fact.fhir_class("Extension");
+
+            Resource modifierExtensionProperty = RDFNamespace.FHIR.resourceRef("modifierExtension");
+
+            FHIRResource cardRestriction = fact.fhir_bnode().addType(OWL2.Restriction).addDataProperty(OWL2.minCardinality, "1", XSDDatatype.XSDinteger)
+                    .addObjectProperty(OWL2.onProperty, modifierExtensionProperty);
+            modResource.restriction(cardRestriction.resource);
+            FHIRResource extRestriction = fact.fhir_bnode().addType(OWL2.Restriction)
+                    .addObjectProperty(OWL2.onProperty, modifierExtensionProperty)
+                    .addObjectProperty(OWL2.allValuesFrom, extensionResource);
+            modResource.restriction(extRestriction.resource);
+
+            FHIRResource floatingBNode = fact.fhir_bnode().addType(OWL2.AllDisjointClasses);
+            List<Resource> disjointedList = new ArrayList<>(Arrays.asList(originalResource.resource, modResource.resource));
+            floatingBNode.addObjectProperty(OWL2.members, fact.fhir_list(disjointedList));
+    }
+
   /* ==============================================
      Generators for various FHIR types
    * ============================================== */
@@ -222,9 +262,8 @@ public class FhirTurtleGenerator {
     // Note: For unknown reasons, getPrimitives returns DefinedCodes, not PrimitiveTypes...
     private void genPrimitiveType(DefinedCode pt) {
         String ptName = pt.getCode();
-        // `org.hl7.fhir.definitions.model.DefinedCode.definition` actually comes from StructureDefinition.description (roughly same as root ElementDefinition.definition)
         FHIRResource ptRes = fact.fhir_class_with_provenance(ptName, "PrimitiveType", pt.getProfile().getUrl())
-                .addLiteral(this.sdDescription, pt.getDefinition());
+                .addDefinition(pt.getDefinition());
         Resource simpleRdfType = RDFTypeMap.xsd_type_for(ptName, owlTarget);
             if(RDFTypeMap.unionTypesMap.containsKey(ptName)) {  // complex types like dateTime that are a union of types
                 ptRes.restriction(fact.fhir_cardinality_restriction(v, RDFTypeMap.unionTypesMap.get(ptName), 1, 1));
@@ -246,7 +285,7 @@ public class FhirTurtleGenerator {
         Resource dspTypeRes = RDFTypeMap.xsd_type_for(dspTypeName, owlTarget);
 
         FHIRResource dspRes = fact.fhir_class(dsp.getCode(), dsp.getBase())
-                .addComment(dsp.getDefinition());
+                .addDefinition(dsp.getDefinition());
 
         if(dspRes != null) {
             if (dspType.endsWith("+")) {
@@ -275,29 +314,28 @@ public class FhirTurtleGenerator {
         // TODO: Figure out how to do this properly
         if (parentURL != null)
             parentName = getResourceNameFromCanonical(parentURL);
-
         FHIRResource typeRes =
-                (td.getTypes().isEmpty() ? fact.fhir_class(typeName) : fact.fhir_class(typeName, parentName));
-
+                (td.getTypes().isEmpty() ? fact.fhir_class(typeName) : fact.fhir_class(typeName, parentName))
+                        .addTitle(td.getShortDefn())
+                        .addDefinition(td.getDefinition());
         // Add provenance directly from the TypeDefn's StructureDefinition if available
-        if (!Utilities.noString(typeSd.getUrl())) {
+        if (typeSd != null && !Utilities.noString(typeSd.getUrl())) {
             typeRes.addProvenance(typeSd.getUrl());
         }
-
-        // `org.hl7.fhir.definitions.model.TypeDefn.definition` actually comes from StructureDefinition.description (roughly same as root ElementDefinition.definition)
-        var structureDefinitionDescription = td.getDefinition();
-        typeRes.addLiteral(this.sdDescription, structureDefinitionDescription);
-
         String definitionCanonical = typeSd != null ? typeSd.getUrl() : null;
         processTypes(typeName, typeRes, td, typeName, false, definitionCanonical);
+        if(classHasModifierExtensions.contains(parentName)) {
+            genModifierExtensions(typeName, typeRes, parentName, definitionCanonical);
+        }
     }
 
     /**
      * ProfiledType generator
      */
-    private void genProfiledType(ProfiledType pt) {
+    private void genProfiledType(ProfiledType pt) throws Exception {
         fact.fhir_class_with_provenance(pt.getName(), pt.getBaseType(), pt.getProfile().getUrl())
-                              .addComment(pt.getDescription());
+                              .addTitle(pt.getDefinition())
+                              .addDefinition(pt.getDescription());
         if (!Utilities.noString(pt.getInvariant().getTurtle())) {
             Model model = ModelFactory.createDefaultModel();
             model.read(pt.getInvariant().getTurtle());
@@ -325,23 +363,51 @@ public class FhirTurtleGenerator {
 
         Resource superClass = resourceType.getTypes().isEmpty() ? OWL2.Thing : RDFNamespace.FHIR.resourceRef(superClassName);
         
-        // `org.hl7.fhir.definitions.model.ResourceDefn.definition` actually comes from StructureDefinition.description (roughly same as root ElementDefinition.definition)
-        var structureDefinitionDescription = rd.getDefinition();
         FHIRResource rdRes = fact.fhir_class_with_provenance(resourceName, superClass, definitionCanonical)
-                        .addLiteral(this.sdDescription, structureDefinitionDescription);
+                        .addDefinition(rd.getDefinition());
 
         processTypes(resourceName, rdRes, resourceType, resourceName, true, definitionCanonical);
 
-        addW5Mapping(resourceType.getW5(), rdRes, RDFS.subClassOf);
-    }
-
-    private void addW5Mapping(String w5mapping, FHIRResource fhirResource, Property property ) {
-        if(!Utilities.noString(w5mapping)) {
-            for (String w5 : w5mapping.split(",\\s*")) {
-                fhirResource.addObjectProperty(property, RDFNamespace.W5.resourceRef(w5));
-            }
+        if(!Utilities.noString(resourceType.getW5()))
+            rdRes.addObjectProperty(RDFS.subClassOf, RDFNamespace.W5.resourceRef(resourceType.getW5()));
+        if(definitions.getResources().containsKey(resourceName)  && classHasModifierExtensions.contains(superClass.getLocalName())) { 
+            //Bundle, Binary, Parameters, DomainResource should be excluded from this clause and not get modifier extensions here 
+            // since they are under fhir:Resource instead of fhir:DomainResource
+            genModifierExtensions(resourceName, rdRes, superClass.getLocalName(), definitionCanonical);
         }
     }
+
+    /**
+     * Generates corresponding ontology for Modifier Extensions of fhir:OriginalClass as fhir:_OriginalClass
+     */
+    private void genModifierExtensions(String baseName, FHIRResource baseFR, String parentName, String definitionCanonical) throws Exception {
+
+            // could change to instantiate only once
+            FHIRResource modifierExtensionClass = fact.fhir_resource("modifierExtensionClass", OWL2.AnnotationProperty, "modifierExtensionClass").addDataProperty(RDFS.comment, "has modifier extension class");
+            Property modifierExtensionClassProperty = ResourceFactory.createProperty(modifierExtensionClass.resource.toString());
+
+            FHIRResource modRes = fact.fhir_class_with_provenance("_" + baseName, definitionCanonical)
+                    .addObjectProperty(RDFS.subClassOf, RDFNamespace.FHIR.resourceRef("_" + parentName));
+            modRes.addDataProperty(RDFS.comment, "(Modified) " + baseName);
+            baseFR.addObjectProperty(modifierExtensionClassProperty, modRes);
+
+    }
+
+    /**
+     * Generates corresponding ontology for Modifier Extensions of fhir:OriginalProperty as fhir:_OriginalProperty
+     */
+    private void genPropertyModifierExtensions(String baseName, FHIRResource baseFR, String label, String definitionCanonical) throws Exception {
+        if(baseName.equals("modifierExtension")) return; //skip the special case of fhir:modifierExtension
+
+        // could change to instantiate only once
+        FHIRResource hasExt = fact.fhir_resource("modifierExtensionProperty", OWL2.AnnotationProperty,"modifierExtensionProperty").addDataProperty(RDFS.comment, "has modifier extension property");
+        Property extProp = ResourceFactory.createProperty(hasExt.resource.toString());  
+
+        FHIRResource modRes = fact.fhir_objectProperty("_" + baseName, definitionCanonical);
+        modRes.addDataProperty(RDFS.comment, "(Modified) " + label);
+        baseFR.addObjectProperty(extProp, modRes);
+    }
+
 
     /**
      * Iterate over the Element Definitions in baseResource generating restrictions and properties
@@ -371,9 +437,9 @@ public class FhirTurtleGenerator {
                 ed.getName().substring(0, ed.getName().length() - 3) : ed.getName());
         String shortenedPropertyName = shortenName(targetClassName);
 
-        String elementPath = targetClassName;
-        String elementDefinitionCanonical = definitionCanonical + "#" + elementPath;
-        FHIRResource predicateResource = fact.fhir_objectProperty(shortenedPropertyName, elementDefinitionCanonical);
+        FHIRResource predicateResource = fact.fhir_objectProperty(shortenedPropertyName, definitionCanonical);
+
+        genPropertyModifierExtensions(shortenedPropertyName, predicateResource, targetClassName, definitionCanonical);
         
         // Polymorphic / Choice types
         if (ed.getName().endsWith("[x]")) {
@@ -384,7 +450,6 @@ public class FhirTurtleGenerator {
         // Monomorphic types
         FHIRResource targetElementClass;
         String targetTypeName = targetClassName;
-        boolean isContentReference = false;
 
         if (ed.getTypes().isEmpty()) {  //subnodes
             // Monomorphic complex type (no type specified, but has sub-elements)
@@ -397,8 +462,7 @@ public class FhirTurtleGenerator {
             // Monomorphic simple type
             TypeRef targetType = ed.getTypes().get(0);
             String targetName = targetType.getName();
-            isContentReference = targetName.startsWith("@");
-            if (isContentReference) {        // Link to earlier definition
+            if (targetName.startsWith("@")) {        // Link to earlier definition
                 // "Content reference" to another defined type
                 ElementDefn targetRef = getElementForPath(targetName.substring(1));
                 // Target type name includes @
@@ -421,33 +485,37 @@ public class FhirTurtleGenerator {
 
             // XHTML the exception, in that the html doesn't derive from Primitive
             if (targetName.equals("xhtml")) {
-                predicateResource = fact.fhir_objectProperty(shortenedPropertyName, elementDefinitionCanonical);
+                predicateResource = fact.fhir_objectProperty(shortenedPropertyName, definitionCanonical);
             } else {
-                predicateResource = fact.fhir_objectProperty(shortenedPropertyName, elementDefinitionCanonical);
+                predicateResource = fact.fhir_objectProperty(shortenedPropertyName, definitionCanonical);
+                genPropertyModifierExtensions(shortenedPropertyName, predicateResource, targetClassName, definitionCanonical);
             }
         }
 
         // Add provenance & definition annotations from source StructureDefinition for this element, except if it's a DataType (used in too many places)
         if (!isDataType(targetTypeName)) {
-            if (!isContentReference) {
-                targetElementClass.addProvenance(elementDefinitionCanonical);
-                targetElementClass.addLiteral(this.edDefinition, ed.getDefinition());
-            }
+            targetElementClass.addProvenance(definitionCanonical);
+            targetElementClass.addDefinition(ed.getDefinition()).addDefinition(ed.getShortDefn());
         }
 
         // Annotate object with disambiguating title
-        predicateResource.addComment(targetClassName + ": " + ed.getShortDefn());
+        predicateResource.addTitle(targetClassName + ": " + ed.getShortDefn());
 
         // Add property restrictions
-        baseResource.restriction(
-            fact.fhir_class_cardinality_restriction(predicateResource.resource, 
-                targetElementClass.resource, 
-                ed.getMinCardinality(), 
-                ed.getMaxCardinality()
-            )
-        );
-
-        addW5Mapping(ed.getW5(), predicateResource, RDFS.subPropertyOf);
+        if(ed.getName().equals("modifierExtension") && ed.hasModifier()) {
+            // special case for modifierExtensions on original Resources having a cardinality of zero
+            baseResource.restriction(fact.fhir_class_cardinality_restriction(predicateResource.resource, targetElementClass.resource, 0, 0));
+        } else {
+            baseResource.restriction(
+                fact.fhir_class_cardinality_restriction(predicateResource.resource, 
+                    targetElementClass.resource, 
+                    ed.getMinCardinality(), 
+                    ed.getMaxCardinality()
+                )
+            );
+        }
+        if(!Utilities.noString(ed.getW5()))
+            predicateResource.addObjectProperty(RDFS.subPropertyOf, RDFNamespace.W5.resourceRef(ed.getW5()));
     }
 
     /**
@@ -542,15 +610,12 @@ public class FhirTurtleGenerator {
 
             targetClasses.add(fact.fhir_class(tn).resource);
         }
-        // Create a union node only when more than one target type is allowed.
-        Resource allowedTargetResource = targetClasses.size() == 1
-            ? targetClasses.get(0)
-            : fact.owl_class_union(targetClasses).resource;
-
+        // Create a union class of all allowed target resource types
+        FHIRResource union = fact.owl_class_union(targetClasses);
         // Build the restriction on fhir:link whose allValuesFrom points at the union class
         Resource linkProp = RDFNamespace.FHIR.resourceRef(fhirRdfLinkName);
         Resource linkRestriction = fact.fhir_restriction(linkProp)
-                .addObjectProperty(OWL2.allValuesFrom, allowedTargetResource)
+                .addObjectProperty(OWL2.allValuesFrom, union.resource)
                 .resource;
         // Finally intersect fhir:Reference with that restriction
         List<Resource> members = new ArrayList<>();

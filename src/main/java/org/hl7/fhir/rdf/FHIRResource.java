@@ -59,7 +59,7 @@ public class FHIRResource {
         return addObjectProperty(p, o.resource);
     }
 
-    public FHIRResource addLiteral(Property p, String o) {
+    public FHIRResource addDataProperty(Property p, String o) {
         resource.addLiteral(p, o);
         return this;
     }
@@ -74,19 +74,19 @@ public class FHIRResource {
     }
 
     private FHIRResource addLabel(String name) {
-        return addLiteral(RDFS.label, name);
+        return addDataProperty(RDFS.label, name);
     }
 
     public FHIRResource addTitle(String title) {
         if (!Utilities.noString(title))
-            addLiteral(DC.title, title);
+            addDataProperty(DC.title, title);
         return this;
     }
 
-    public FHIRResource addComment(String definition) {
+    public FHIRResource addDefinition(String definition) {
         if (!Utilities.noString(definition) && (!resource.hasProperty(DC.title) ||
                 !resource.getProperty(DC.title).toString().equals(definition))) {
-            addLiteral(RDFS.comment, definition);
+            addDataProperty(RDFS.comment, definition);
         }
         return this;
     }
