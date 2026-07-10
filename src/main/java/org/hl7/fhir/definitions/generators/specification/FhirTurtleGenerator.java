@@ -200,7 +200,7 @@ public class FhirTurtleGenerator {
 
         // XHTML is an XML Literal. Not available in Definitions.java, but see https://hl7.org/fhir/xhtml.profile.html
         String xhtmlCanonical = "http://hl7.org/fhir/StructureDefinition/xhtml";
-        var xhtmlClass = fact.fhir_class_with_provenance("xhtml", "Element", xhtmlCanonical);
+        var xhtmlClass = fact.fhir_class_with_provenance("xhtml", "PrimitiveType", xhtmlCanonical);
         // xhtml.value min 1, max 1
         xhtmlClass.restriction(fact.fhir_class_cardinality_restriction(v, RDF.xmlLiteral, 1, 1));
         // xhtml.extension max 0
