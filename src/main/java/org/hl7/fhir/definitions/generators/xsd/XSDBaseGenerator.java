@@ -812,7 +812,7 @@ public class XSDBaseGenerator  extends XSDRootGenerator {
     //      return "xs:"
     //          + ((PrimitiveType) definitions.getPrimitives().get(
     //              type.getName())).getSchemaType();
-    else if (type.getName().equals("code")) {
+    if (type.getName().equals("code")) {
       String en = null;
       if (e.hasBinding()) {
         BindingSpecification cd = e.getBinding();
@@ -835,14 +835,19 @@ public class XSDBaseGenerator  extends XSDRootGenerator {
       else if (definitions.getConstraints().containsKey(type.getName())) {
         ProfiledType pt = definitions.getConstraints().get(type.getName());
         return pt.getBaseType();
-      } else
+      } else {
         return type.getName();
-    } else if (type.getParams().size() > 1)
+      }
+    } else if (type.getParams().size() > 1) {
       throw new Exception(
-          "multiple type parameters are only supported on resource ("
-              + type.summary() + ")");
-    else
+              "multiple type parameters are only supported on resource ("
+                      + type.summary() + ")");
+    } else if ("CodeableReference".equals(type.getName())) {
+      return type.getName();
+
+    } else {
       return type.getName() + "_" + upFirst(type.getParams().get(0));
+    }
   }
 
   public void setDefinitions(Definitions definitions) {
