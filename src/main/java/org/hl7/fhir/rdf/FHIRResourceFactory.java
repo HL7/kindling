@@ -11,6 +11,7 @@ import org.apache.jena.graph.Node;
 import org.apache.jena.datatypes.xsd.XSDDatatype;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
+import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.vocabulary.OWL2;
 import org.apache.jena.vocabulary.RDF;
@@ -141,7 +142,7 @@ public class FHIRResourceFactory {
      * @return
      */
     public FHIRResource fhir_class(String name, String superClass) {
-        return fhir_class(name, RDFNamespace.FHIR.resourceRef(superClass));
+        return fhir_class(name, RDFNamespace.FHIR.resourceRef(getClassName(superClass)));
     }
 
     
@@ -429,7 +430,7 @@ public class FHIRResourceFactory {
      */
     public Resource fhir_pattern(String pattern) {
         return fhir_bnode()
-                .addDataProperty(RDFNamespace.XSDpattern, pattern).resource;
+                .addLiteral(RDFNamespace.XSDpattern, pattern).resource;
     }
     
 }
