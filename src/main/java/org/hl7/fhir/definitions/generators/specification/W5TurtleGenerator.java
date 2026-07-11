@@ -17,8 +17,6 @@ import org.apache.jena.ontology.OntProperty;
 import org.apache.jena.ontology.Ontology;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.ResourceFactory;
-import org.apache.jena.riot.RDFDataMgr;
-import org.apache.jena.riot.RDFFormat;
 import org.apache.jena.vocabulary.OWL2;
 import org.apache.jena.vocabulary.RDFS;
 import org.hl7.fhir.definitions.model.Definitions;
@@ -26,6 +24,7 @@ import org.hl7.fhir.definitions.model.W5Entry;
 import org.hl7.fhir.r5.model.CodeSystem;
 import org.hl7.fhir.r5.model.ValueSet;
 import org.hl7.fhir.rdf.RDFNamespace;
+import org.hl7.fhir.rdf.TurtleSorter;
 import org.hl7.fhir.tools.publisher.BuildWorkerContext;
 import org.hl7.fhir.tools.publisher.PageProcessor;
 import org.hl7.fhir.utilities.validation.ValidationMessage;
@@ -144,7 +143,8 @@ public class W5TurtleGenerator {
                 PageProcessor.CI_LOCATION : host;
     }
     public void commit(OntModel model, boolean header) throws Exception {
-        RDFDataMgr.write(destination, model, RDFFormat.TURTLE_PRETTY);
+        TurtleSorter.serialize(model.getGraph(), destination);
+
         destination.flush();
         destination.close();
     }

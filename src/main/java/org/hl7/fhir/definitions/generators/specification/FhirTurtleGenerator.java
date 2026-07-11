@@ -293,7 +293,7 @@ public class FhirTurtleGenerator {
         typeRes.addLiteral(this.sdDescription, structureDefinitionDescription);
 
         String definitionCanonical = typeSd != null ? typeSd.getUrl() : null;
-        processTypes(typeName, typeRes, td, typeName, false, definitionCanonical);
+        processTypes(typeRes, td, typeName, false, definitionCanonical);
     }
 
     /**
@@ -334,7 +334,7 @@ public class FhirTurtleGenerator {
         FHIRResource rdRes = fact.fhir_class_with_provenance(resourceName, superClass, definitionCanonical)
                         .addLiteral(this.sdDescription, structureDefinitionDescription);
 
-        processTypes(resourceName, rdRes, resourceType, resourceName, true, definitionCanonical);
+        processTypes(rdRes, resourceType, resourceName, true, definitionCanonical);
 
         addW5Mapping(resourceType.getW5(), rdRes, RDFS.subClassOf);
     }
@@ -355,9 +355,12 @@ public class FhirTurtleGenerator {
      * @param predicateBase Root name for predicate
      * @param innerIsBackbone True if we're processing a backbone element
      */
-    private void processTypes(String baseResourceName, FHIRResource baseResource, ElementDefn td, String predicateBase, boolean innerIsBackbone, String definitionCanonical) throws Exception {
-        for (ElementDefn ed : td.getElements()) {
-            generateElementClasses(baseResourceName, baseResource, ed, predicateBase, innerIsBackbone, definitionCanonical);
+    private void processTypes(FHIRResource baseResource, ElementDefn td, String predicateBase, boolean innerIsBackbone, String definitionCanonical) throws Exception {
+        List<ElementDefn> elements = td.getElements();
+        for (int index = 0; index < elements.size(); index++) {
+            // Track element index for sorting later
+            ElementDefn ed = elements.get(index);
+            generateElementClasses(index, baseResource, ed, predicateBase, innerIsBackbone, definitionCanonical);
         }
     }
 
@@ -369,7 +372,7 @@ public class FhirTurtleGenerator {
      * @param predicateBase Root name for predicate
      * @param innerIsBackbone True if we're processing a backbone element
      */
-    private void generateElementClasses(String baseResourceName, FHIRResource baseResource, ElementDefn ed, String predicateBase, boolean innerIsBackbone, String definitionCanonical) throws Exception {
+    private void generateElementClasses(int index, FHIRResource baseResource, ElementDefn ed, String predicateBase, boolean innerIsBackbone, String definitionCanonical) throws Exception {
         // Example: ValueSet.compose + include -> ValueSet.compose.include
         String targetClassName = predicateBase + "." + (ed.getName().endsWith("[x]")?
                 ed.getName().substring(0, ed.getName().length() - 3) : ed.getName());
@@ -381,7 +384,7 @@ public class FhirTurtleGenerator {
         
         // Polymorphic / Choice types
         if (ed.getName().endsWith("[x]")) {
-            baseResource = getChoiceElementRestriction(baseResource, ed, shortenedPropertyName, predicateResource, definitionCanonical);
+            baseResource = getChoiceElementRestriction(baseResource, ed, shortenedPropertyName, predicateResource, definitionCanonical, index);
             return;
         }
 
@@ -396,7 +399,7 @@ public class FhirTurtleGenerator {
             targetElementClass = fact.fhir_class(targetClassName, innerIsBackbone ? "BackboneElement" : "Element");
 
             // Recursively process sub-elements
-            processTypes(targetClassName, targetElementClass, ed, targetClassName, innerIsBackbone, definitionCanonical);
+            processTypes(targetElementClass, ed, targetClassName, innerIsBackbone, definitionCanonical);
 
         } else {
             // Monomorphic simple type -- example: Patient.active
@@ -445,15 +448,23 @@ public class FhirTurtleGenerator {
         predicateResource.addComment(targetClassName + ": " + ed.getShortDefn());
 
         // Add property restrictions
-        baseResource.restriction(
-            fact.fhir_class_cardinality_restriction(predicateResource.resource, 
-                targetElementClass.resource, 
-                ed.getMinCardinality(), 
+        List<Resource> restrictions = fact.fhir_class_cardinality_restriction(
+                predicateResource.resource,
+                targetElementClass.resource,
+                ed.getMinCardinality(),
                 ed.getMaxCardinality()
-            )
         );
+        addElementOrderedRestrictions(baseResource, restrictions, index);
 
         addW5Mapping(ed.getW5(), predicateResource, RDFS.subPropertyOf);
+    }
+
+    /**
+     * Add set of restrictions to a class and track their order for sorting later during serialization
+     */
+    private void addElementOrderedRestrictions(FHIRResource baseResource, List<Resource> classExpressions, int elementIndex) {
+        fact.registerOrderedClassExpressions(classExpressions, elementIndex);
+        baseResource.restriction(classExpressions);
     }
 
     /**
@@ -466,17 +477,17 @@ public class FhirTurtleGenerator {
      * @return
      * @throws Exception
      */
-    private FHIRResource getChoiceElementRestriction(FHIRResource baseResource, ElementDefn ed, String shortenedPropertyName, FHIRResource predicateResource, String definitionCanonical) throws Exception {
+    private FHIRResource getChoiceElementRestriction(FHIRResource baseResource, ElementDefn ed, String shortenedPropertyName, FHIRResource predicateResource, String definitionCanonical, int index) throws Exception {
         // Choice entry
+        List<Resource> restrictions;
         if (ed.typeCode().equals("*")) {
             // Wild card -- any element works (probably should be more restrictive but...)
             Resource targetResource = RDFNamespace.FHIR.resourceRef("Element");
-            baseResource.restriction(
-                    fact.fhir_class_cardinality_restriction(
-                            predicateResource.resource,
-                            targetResource,
-                            ed.getMinCardinality(),
-                            ed.getMaxCardinality()));
+            restrictions = fact.fhir_class_cardinality_restriction(
+                    predicateResource.resource,
+                    targetResource,
+                    ed.getMinCardinality(),
+                    ed.getMaxCardinality());
         } else {
             // Create a restriction on the union of possible types
             List<Resource> typeRestrictions = new ArrayList<Resource>();
@@ -484,15 +495,14 @@ public class FhirTurtleGenerator {
                 Resource typeRestriction = getChoiceTypeRestriction(shortenedPropertyName, predicateResource, tr, definitionCanonical);
                 typeRestrictions.add(typeRestriction);
             }
-            // Add the type restrictions
-            baseResource.restriction(fact.fhir_union(typeRestrictions));
-            // Add the cardinality restrictions separately here
-            baseResource.restriction(
-                fact.build_cardinality_restrictions(predicateResource.resource, 
-                    ed.getMinCardinality(), 
-                    ed.getMaxCardinality())
-            );
+            restrictions = new ArrayList<Resource>();
+            restrictions.add(fact.fhir_union(typeRestrictions));
+            restrictions.addAll(fact.build_cardinality_restrictions(
+                    predicateResource.resource,
+                    ed.getMinCardinality(),
+                    ed.getMaxCardinality()));
         }
+        addElementOrderedRestrictions(baseResource, restrictions, index);
         return baseResource;
     }
 
