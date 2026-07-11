@@ -448,13 +448,6 @@ public class FhirTurtleGenerator {
         predicateResource.addComment(targetClassName + ": " + ed.getShortDefn());
 
         // Add property restrictions
-        // baseResource.restriction(
-        //     fact.fhir_class_cardinality_restriction(predicateResource.resource, 
-        //         targetElementClass.resource, 
-        //         ed.getMinCardinality(), 
-        //         ed.getMaxCardinality()
-        //     )
-        // );
         List<Resource> restrictions = fact.fhir_class_cardinality_restriction(
                 predicateResource.resource,
                 targetElementClass.resource,
