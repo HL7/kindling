@@ -15,11 +15,11 @@
         <apacheHttpcomponentsVersion>4.5.13</apacheHttpcomponentsVersion>
         <apacheHttpcomponents5Version>5.0.4</apacheHttpcomponents5Version>
         <apacheJenaVersion>5.6.0</apacheJenaVersion>
-        <log4jVersion>2.26.0</log4jVersion>
+        <log4jVersion>2.26.1</log4jVersion>
         <lombok_version>1.18.38</lombok_version>
         <slf4jVersion>1.7.36</slf4jVersion>
         <jettyVersion>12.0.33</jettyVersion>
-        <logbackVersion>1.5.25</logbackVersion>
+        <logbackVersion>1.5.37</logbackVersion>
         <nettyConstrainedVersion>4.1.118.Final</nettyConstrainedVersion>
         <maven.compiler.release>17</maven.compiler.release>
         <maven.compiler.source>17</maven.compiler.source>
@@ -56,7 +56,7 @@
             <id>github-releases</id>
             <url>https://maven.pkg.github.com/hapifhir/org.hl7.fhir.core/</url>
         </repository>
-<repository>
+        <repository>
             <id>jitpack.io</id>
             <url>https://jitpack.io</url>
             <snapshots>
@@ -146,6 +146,34 @@
                 <groupId>org.apache.logging.log4j</groupId>
                 <artifactId>log4j-api</artifactId>
                 <version>${log4jVersion}</version>
+            </dependency>
+            <!-- We are not using opentelemetry in this project; this is here to override inherited dependencies that
+                contain vulnerabilities
+            -->
+            <dependency>
+                <groupId>io.opentelemetry.javaagent</groupId>
+                <artifactId>opentelemetry-testing-common</artifactId>
+                <version>2.27.0-alpha</version>
+            </dependency>
+            <dependency>
+                <groupId>io.opentelemetry.javaagent</groupId>
+                <artifactId>opentelemetry-agent-for-testing</artifactId>
+                <version>2.27.0-alpha</version>
+            </dependency>
+            <dependency>
+                <groupId>io.opentelemetry.instrumentation</groupId>
+                <artifactId>opentelemetry-instrumentation-annotations</artifactId>
+                <version>2.27.0</version>
+            </dependency>
+            <dependency>
+                <groupId>io.opentelemetry</groupId>
+                <artifactId>opentelemetry-api</artifactId>
+                <version>1.62.0</version>
+            </dependency>
+            <dependency>
+                <groupId>io.opentelemetry</groupId>
+                <artifactId>opentelemetry-context</artifactId>
+                <version>1.62.0</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
@@ -339,7 +367,7 @@
         <dependency>
             <groupId>net.sf.saxon</groupId>
             <artifactId>Saxon-HE</artifactId>
-            <version>10.3</version>
+            <version>13.0</version>
         </dependency>
         <dependency>
             <groupId>org.antlr</groupId>
