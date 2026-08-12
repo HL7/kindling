@@ -69,7 +69,7 @@ public class TerminologyStatusRefresher {
     }
     for (LoadedResource resource : resources.values()) {
       if (resource.example && !resource.real) {
-        ExtensionUtilities.setStandardsStatus((DomainResource) resource.resource, StandardsStatus.INFORMATIVE, null);
+        ExtensionUtilities.setStandardsStatus((DomainResource) resource.resource, StandardsStatus.INFORMATIVE, null, null);
 //        resource.resource.setExperimental(true);
         resource.resource.setStatus(Enumerations.PublicationStatus.ACTIVE);
         if (resource.json) {
@@ -79,7 +79,7 @@ public class TerminologyStatusRefresher {
         }
       }
       if (resource.real) {
-        ExtensionUtilities.setStandardsStatus((DomainResource) resource.resource, StandardsStatus.NORMATIVE, null);
+        ExtensionUtilities.setStandardsStatus((DomainResource) resource.resource, StandardsStatus.NORMATIVE, null, null);
 //        resource.resource.setExperimental(false);
         resource.resource.setStatus(Enumerations.PublicationStatus.ACTIVE);
         if (resource.json) {

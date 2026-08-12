@@ -143,6 +143,8 @@ import org.hl7.fhir.utilities.xhtml.XhtmlNode;
 
 public class ProfileGenerator {
 
+  private static final boolean SUPPRESS_FMM = true;
+
   public enum SnapShotMode {
     None, 
     Resource,
@@ -292,7 +294,7 @@ public class ProfileGenerator {
     p.setDerivation(TypeDerivationRule.SPECIALIZATION);
     p.setFhirVersion(version);
     p.setVersion(version.toCode());
-    ExtensionUtilities.setStandardsStatus(p, StandardsStatus.NORMATIVE, "4.0.0");
+    ExtensionUtilities.setStandardsStatus(p, StandardsStatus.NORMATIVE, "4.0.0", context.getVersion());
     KindlingUtilities.makeUniversal(p);
     populateCharacteristics(p, type.getCharacteristics());
     
@@ -532,7 +534,7 @@ public class ProfileGenerator {
     p.setDerivation(TypeDerivationRule.SPECIALIZATION);
     p.setFhirVersion(version);
     p.setVersion(version.toCode());
-    ExtensionUtilities.setStandardsStatus(p, StandardsStatus.NORMATIVE, "4.0.0");
+    ExtensionUtilities.setStandardsStatus(p, StandardsStatus.NORMATIVE, "4.0.0", context.getVersion());
     KindlingUtilities.makeUniversal(p);
     populateCharacteristic(p, "has-size");
 
@@ -673,7 +675,7 @@ public class ProfileGenerator {
     p.setVersion(version.toCode());
     p.setFhirVersion(version);
 
-    ExtensionUtilities.setStandardsStatus(p, StandardsStatus.NORMATIVE, "4.0.0");
+    ExtensionUtilities.setStandardsStatus(p, StandardsStatus.NORMATIVE, "4.0.0", context.getVersion());
     KindlingUtilities.makeUniversal(p);
     populateCharacteristics(p, type.getCharacteristics());
 
@@ -806,7 +808,7 @@ public class ProfileGenerator {
     p.setType(t.getName());
     p.setFhirVersion(version);
     p.setVersion(version.toCode());
-    ExtensionUtilities.setStandardsStatus(p, StandardsStatus.NORMATIVE, t.getNormativeVersion());
+    ExtensionUtilities.setStandardsStatus(p, StandardsStatus.NORMATIVE, t.getNormativeVersion(), context.getVersion());
     KindlingUtilities.makeUniversal(p);
     populateCharacteristics(p, t.getCharacteristics());
 
@@ -932,7 +934,7 @@ public class ProfileGenerator {
     p.setWebPath("datatypes.html#"+pt.getName());
     p.setFhirVersion(version);
     p.setVersion(version.toCode());
-    ExtensionUtilities.setStandardsStatus(p, StandardsStatus.NORMATIVE, "4.0.0");
+    ExtensionUtilities.setStandardsStatus(p, StandardsStatus.NORMATIVE, "4.0.0", context.getVersion());
     p.setStatus(PublicationStatus.fromCode("active")); 
     KindlingUtilities.makeUniversal(p);
     populateCharacteristics(p, pt.getCharacteristics());
@@ -1100,11 +1102,11 @@ public class ProfileGenerator {
     p.setTitle(pack.metadata("display"));
     p.setFhirVersion(version);
     p.setVersion(version.toCode());
-    ExtensionUtilities.setStandardsStatus(p, r.getStatus(), r.getNormativeVersion());
+    ExtensionUtilities.setStandardsStatus(p, r.getStatus(), r.getNormativeVersion(), context.getVersion());
     KindlingUtilities.makeUniversal(p);
 
     CanonicalResourceUtilities.setHl7WG(p, "fhir");
-    if (r.getFmmLevel() != null) {
+    if (r.getFmmLevel() != null && !SUPPRESS_FMM) {
       int fmm = Integer.parseInt(r.getFmmLevel());
       ExtensionUtilities.addIntegerExtension(p, ExtensionDefinitions.EXT_FMM_LEVEL, fmm);
     }
@@ -1235,17 +1237,18 @@ public class ProfileGenerator {
     else
       p.setDate(genDate.getTime());
 
-    if (profile.getFmm() != null) {
-      ExtensionUtilities.addIntegerExtension(p, ExtensionDefinitions.EXT_FMM_LEVEL, Integer.parseInt(profile.getFmm()));      
-    } else if (pack.hasMetadata("fmm-level"))
-      ExtensionUtilities.addIntegerExtension(p, ExtensionDefinitions.EXT_FMM_LEVEL, Integer.parseInt(pack.getFmmLevel()));
-    else if (pack.hasMetadata("fmm"))
-      ExtensionUtilities.addIntegerExtension(p, ExtensionDefinitions.EXT_FMM_LEVEL, Integer.parseInt(pack.metadata("fmm")));
-    else if (!Utilities.noString(resource.getFmmLevel()))
-      ExtensionUtilities.addIntegerExtension(p, ExtensionDefinitions.EXT_FMM_LEVEL, Integer.parseInt(resource.getFmmLevel()));
-    else if (baseResource != null && !Utilities.noString(baseResource.getFmmLevel()))
-      ExtensionUtilities.addIntegerExtension(p, ExtensionDefinitions.EXT_FMM_LEVEL, Integer.parseInt(baseResource.getFmmLevel()));
-
+    if (!SUPPRESS_FMM) {
+      if (profile.getFmm() != null) {
+        ExtensionUtilities.addIntegerExtension(p, ExtensionDefinitions.EXT_FMM_LEVEL, Integer.parseInt(profile.getFmm()));
+      } else if (pack.hasMetadata("fmm-level"))
+        ExtensionUtilities.addIntegerExtension(p, ExtensionDefinitions.EXT_FMM_LEVEL, Integer.parseInt(pack.getFmmLevel()));
+      else if (pack.hasMetadata("fmm"))
+        ExtensionUtilities.addIntegerExtension(p, ExtensionDefinitions.EXT_FMM_LEVEL, Integer.parseInt(pack.metadata("fmm")));
+      else if (!Utilities.noString(resource.getFmmLevel()))
+        ExtensionUtilities.addIntegerExtension(p, ExtensionDefinitions.EXT_FMM_LEVEL, Integer.parseInt(resource.getFmmLevel()));
+      else if (baseResource != null && !Utilities.noString(baseResource.getFmmLevel()))
+        ExtensionUtilities.addIntegerExtension(p, ExtensionDefinitions.EXT_FMM_LEVEL, Integer.parseInt(baseResource.getFmmLevel()));
+    }
     if (profile.getWg() != null) {
       ExtensionUtilities.setCodeExtension(p, ExtensionDefinitions.EXT_WORKGROUP, profile.getWg().getCode());      
     } else if (pack.hasMetadata("workgroup"))
@@ -1259,9 +1262,9 @@ public class ProfileGenerator {
     CanonicalResourceUtilities.setHl7WG(p);
 
     if (pack.hasMetadata("Standards-Status")) 
-      ExtensionUtilities.setStandardsStatus(p, StandardsStatus.fromCode(pack.metadata("Standards-Status")), null);
+      ExtensionUtilities.setStandardsStatus(p, StandardsStatus.fromCode(pack.metadata("Standards-Status")), null, context.getVersion());
     else
-      ExtensionUtilities.setStandardsStatus(p, resource.getStatus(), null);
+      ExtensionUtilities.setStandardsStatus(p, resource.getStatus(), null, context.getVersion());
     
     if (pack.hasMetadata("status")) 
       p.setStatus(PublicationStatus.fromCode(pack.metadata("status")));
@@ -1388,9 +1391,9 @@ public class ProfileGenerator {
       definitions.addNs(sp.getUrl(), "Search Parameter: "+sp.getName(), rn.toLowerCase()+".html#search");
       sp.setStatus(spd.getStandardsStatus() == StandardsStatus.NORMATIVE ? PublicationStatus.fromCode("active") : PublicationStatus.fromCode("draft"));
       if (spd.getStandardsStatus() == null) {
-        ExtensionUtilities.setStandardsStatus(sp, StandardsStatus.TRIAL_USE, null);
+        ExtensionUtilities.setStandardsStatus(sp, StandardsStatus.TRIAL_USE, null, context.getVersion());
       } else {
-        ExtensionUtilities.setStandardsStatus(sp, spd.getStandardsStatus(), spd.getNormativeVersion());
+        ExtensionUtilities.setStandardsStatus(sp, spd.getStandardsStatus(), spd.getNormativeVersion(), context.getVersion());
       }
       sp.setExperimental(p.getExperimental());
       sp.setName(spd.getCode());
@@ -1450,7 +1453,7 @@ public class ProfileGenerator {
         if (ss == StandardsStatus.NORMATIVE && ts != StandardsStatus.NORMATIVE) {
           Enumeration<Enumerations.VersionIndependentResourceTypesAll> t = new Enumeration(new Enumerations.VersionIndependentResourceTypesAllEnumFactory());
           t.setValue(VersionIndependentResourceTypesAll.fromCode(p.getType()));
-          t.setStandardsStatus(ts);
+          t.setStandardsStatus(ts, context.getVersion());
           sp.getBase().add(t);
         } else {
           sp.addBase(VersionIndependentResourceTypesAll.fromCode(p.getType()));
@@ -1481,10 +1484,10 @@ public class ProfileGenerator {
       if (sst == null || (spd.getStandardsStatus() == null && spd.getStandardsStatus().isLowerThan(sst))) {
         for (Enumeration<VersionIndependentResourceTypesAll> ct : sp.getBase()) {
           if (!ExtensionUtilities.hasExtension(ct, ExtensionDefinitions.EXT_STANDARDS_STATUS)) {
-            ExtensionUtilities.setStandardsStatus(ct, sst, null);
+            ExtensionUtilities.setStandardsStatus(ct, sst, null, context.getVersion());
           }
         }
-        ExtensionUtilities.setStandardsStatus(sp, spd.getStandardsStatus(), spd.getNormativeVersion());
+        ExtensionUtilities.setStandardsStatus(sp, spd.getStandardsStatus(), spd.getNormativeVersion(), context.getVersion());
       }
       sst = ExtensionUtilities.getStandardsStatus(sp);
       
@@ -1495,7 +1498,7 @@ public class ProfileGenerator {
       if (!found) {
         CodeType ct = new CodeType(p.getType());
         if (sst != spd.getStandardsStatus()) {          
-          ExtensionUtilities.setStandardsStatus(ct, spd.getStandardsStatus(), null);
+          ExtensionUtilities.setStandardsStatus(ct, spd.getStandardsStatus(), null, context.getVersion());
         }
         sp.getBase().add(new VersionIndependentResourceTypesAllEnumFactory().fromType(ct));
       }
@@ -2561,11 +2564,13 @@ public class ProfileGenerator {
   public OperationDefinition generate(String name, String id, String resourceName, Operation op, ResourceDefn rd) throws Exception {
     OperationDefinition opd = new OperationDefinition();
     op.setResource(opd);
-    if (Utilities.noString(op.getFmm()))
-      ExtensionUtilities.addIntegerExtension(opd, ExtensionDefinitions.EXT_FMM_LEVEL, Integer.parseInt(rd.getFmmLevel()));
-    else
-      ExtensionUtilities.addIntegerExtension(opd, ExtensionDefinitions.EXT_FMM_LEVEL, Integer.parseInt(op.getFmm()));
-    ExtensionUtilities.setStandardsStatus(opd, op.getStandardsStatus() == null ? rd.getStatus() : op.getStandardsStatus(), op.getNormativeVersion());
+    if (!SUPPRESS_FMM) {
+      if (Utilities.noString(op.getFmm()))
+        ExtensionUtilities.addIntegerExtension(opd, ExtensionDefinitions.EXT_FMM_LEVEL, Integer.parseInt(rd.getFmmLevel()));
+      else
+        ExtensionUtilities.addIntegerExtension(opd, ExtensionDefinitions.EXT_FMM_LEVEL, Integer.parseInt(op.getFmm()));
+    }
+    ExtensionUtilities.setStandardsStatus(opd, op.getStandardsStatus() == null ? rd.getStatus() : op.getStandardsStatus(), op.getNormativeVersion(), context.getVersion());
     opd.setId(FormatUtilities.makeId(id));
     opd.setUrl("http://hl7.org/fhir/OperationDefinition/"+id);
     opd.setName(fixName(op.getName()));
@@ -2639,7 +2644,7 @@ public class ProfileGenerator {
     pp.setMin(p.getMin());
     pp.setMax(p.getMax());
     if (p.getStatus() != null) {
-      ExtensionUtilities.setStandardsStatus(pp, p.getStatus(), null);
+      ExtensionUtilities.setStandardsStatus(pp, p.getStatus(), null, context.getVersion());
     }
     for (String s : p.getScopes()) {
       pp.addScope(OperationParameterScope.fromCode(s));
@@ -2715,7 +2720,7 @@ public class ProfileGenerator {
     p.setFhirVersion(version);
     p.setVersion(version.toCode());
     p.setType(r.getRoot().getName());
-    ExtensionUtilities.setStandardsStatus(p, r.getStatus(), null);
+    ExtensionUtilities.setStandardsStatus(p, r.getStatus(), null, context.getVersion());
     KindlingUtilities.makeUniversal(p);
 
     p.setBaseDefinition("http://hl7.org/fhir/StructureDefinition/Base");

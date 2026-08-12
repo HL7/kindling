@@ -43,7 +43,7 @@ public class HTMLLinkChecker implements FileNotifier {
   public static final String JS_TYPE = "application/javascript";
   public static final String EOT_TYPE = "application/vnd.ms-fontobject";
   public static final String BIN_TYPE = "application/octet-stream";
-  public static final String SVG_TYPE = "application/avg";
+  public static final String SVG_TYPE = "application/svg";
   public static final boolean WANT_CHECK = true;
   private static final Object NORMATIVE_MARKER_TEXT = "!ns!";
 

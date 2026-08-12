@@ -89,9 +89,10 @@ public class ResourceValidator extends BaseValidator {
   private IWorkerContext context;
   private Set<String> txurls = new HashSet<String>();
   private Set<String> allowedPluralNames = new HashSet<>();
+  private String version;
 
 
-  public ResourceValidator(Definitions definitions, Translations translations, CanonicalResourceManager<CodeSystem> map, String srcFolder, List<FHIRPathUsage> fpUsages, List<String> suppressedMessages, IWorkerContext context, ValidatorSettings settings) throws IOException {
+  public ResourceValidator(Definitions definitions, Translations translations, CanonicalResourceManager<CodeSystem> map, String srcFolder, List<FHIRPathUsage> fpUsages, List<String> suppressedMessages, IWorkerContext context, ValidatorSettings settings, String version) throws IOException {
     super(context, settings, null, null);
     settings.setSource(Source.ResourceValidator);
     this.definitions = definitions;
@@ -102,6 +103,7 @@ public class ResourceValidator extends BaseValidator {
     patternFinder = new PatternFinder(definitions);
     speller = new SpellChecker(srcFolder, definitions);
     this.suppressedMessages = suppressedMessages;
+    this.version = version;
     loadAllowedPluralNames(srcFolder);
 //    System.out.println("\n###########################\nDumping Resource Validator ::\n" + this.toString() + "\n\n###########################\n\n");
   }
@@ -173,7 +175,7 @@ public class ResourceValidator extends BaseValidator {
     if ((isWorkflowPattern(rd, "Event") || isWorkflowPattern(rd, "Request")) && hasPatient(rd)) {
       rule(errors, ValidationMessage.NO_RULE_DATE, IssueType.STRUCTURE, rd.getName(), rd.getSearchParams().containsKey("patient"), "An 'event' or 'request' resource must have a search parameter 'patient'");
     }
-    rule(errors, ValidationMessage.NO_RULE_DATE, IssueType.STRUCTURE, rd.getName(), !rd.hasLiquid() || !RendererFactory.hasSpecificRenderer(rd.getName()), "Cannot provide a liquid template for "+rd.getName());
+    rule(errors, ValidationMessage.NO_RULE_DATE, IssueType.STRUCTURE, rd.getName(), !rd.hasLiquid() || !new RendererFactory().hasSpecificRenderer(rd.getName()), "Cannot provide a liquid template for "+rd.getName());
     
     if (suppressedwarning(errors, ValidationMessage.NO_RULE_DATE, IssueType.REQUIRED, rd.getName(), hasW5Mappings(rd) || rd.getName().equals("Binary") || rd.getName().equals("OperationOutcome") || rd.getName().equals("Parameters"), "A resource must have w5 mappings")) {
       String w5Order = listW5Elements(rd);
@@ -799,16 +801,16 @@ public class ResourceValidator extends BaseValidator {
             rule(errors, ValidationMessage.NO_RULE_DATE, IssueType.STRUCTURE, path, !cd.getValueSet().getExperimental(), "Reference to experimental valueset "+cd.getValueSet().getUrl());
           }
           if (e.getBinding().getStrength() == BindingStrength.EXAMPLE)
-            ValueSetUtilities.markStatus(cd.getValueSet(), parent == null ? "fhir" : parent.getWg().getCode(), StandardsStatus.INFORMATIVE, "1", context, null);
+            ValueSetUtilities.markStatus(cd.getValueSet(), parent == null ? "fhir" : parent.getWg().getCode(), StandardsStatus.INFORMATIVE, "1", context, null, version);
           else if (parent == null)
-            ValueSetUtilities.markStatus(cd.getValueSet(), "fhir", StandardsStatus.DRAFT, "0", context, null);
+            ValueSetUtilities.markStatus(cd.getValueSet(), "fhir", StandardsStatus.DRAFT, "0", context, null, version);
           else if (e.getBinding().getStrength() == BindingStrength.PREFERRED)
-            ValueSetUtilities.markStatus(cd.getValueSet(), parent.getWg().getCode(), null, null, context, null);
+            ValueSetUtilities.markStatus(cd.getValueSet(), parent.getWg().getCode(), null, null, context, null, version);
           else
-            ValueSetUtilities.markStatus(cd.getValueSet(), parent.getWg().getCode(), status, parent.getFmmLevel(), context, parent.getNormativeVersion());
+            ValueSetUtilities.markStatus(cd.getValueSet(), parent.getWg().getCode(), status, parent.getFmmLevel(), context, parent.getNormativeVersion(), version);
           for (AdditionalBinding vsc : cd.getAdditionalBindings()) {
             if (vsc.getValueSet() != null) {
-              ValueSetUtilities.markStatus(vsc.getValueSet(), parent.getWg().getCode(), status, parent.getFmmLevel(), context, parent.getNormativeVersion());
+              ValueSetUtilities.markStatus(vsc.getValueSet(), parent.getWg().getCode(), status, parent.getFmmLevel(), context, parent.getNormativeVersion(), version);
             }
           }
           Integer w = (Integer) cd.getValueSet().getUserData("warnings");
