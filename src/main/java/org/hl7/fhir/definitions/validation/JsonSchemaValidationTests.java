@@ -2,18 +2,23 @@ package org.hl7.fhir.definitions.validation;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.Set;
 
-import org.everit.json.schema.ValidationException;
-import org.everit.json.schema.loader.SchemaLoader;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.networknt.schema.JsonSchema;
+import com.networknt.schema.JsonSchemaFactory;
+import com.networknt.schema.SpecVersion;
+import com.networknt.schema.ValidationMessage;
 import org.hl7.fhir.utilities.FileUtilities;
 import org.hl7.fhir.utilities.Utilities;
 import org.hl7.fhir.utilities.filesystem.CSFileInputStream;
-import org.json.JSONObject;
-import org.json.JSONTokener;
 import org.junit.Test;
 
 public class JsonSchemaValidationTests {
-  static private org.everit.json.schema.Schema jschema;
+  private static final ObjectMapper MAPPER = new ObjectMapper();
+
+  static private JsonSchema jschema;
 
   @Test
   public void testBundle() throws FileNotFoundException, IOException {
@@ -220,19 +225,15 @@ public class JsonSchemaValidationTests {
   public void testFile(String name) throws FileNotFoundException, IOException {
     if (jschema == null) {
       String source = FileUtilities.fileToString(Utilities.path("C:\\work\\org.hl7.fhir\\build\\publish", "fhir.schema.json"));
-      JSONObject rawSchema = new JSONObject(new JSONTokener(source));
-      jschema = SchemaLoader.load(rawSchema);
+      JsonNode rawSchema = MAPPER.readTree(source);
+      jschema = JsonSchemaFactory.getInstance(SpecVersion.VersionFlag.V6).getSchema(rawSchema);
     }
-    
-    JSONObject jo = new JSONObject(new JSONTokener(new CSFileInputStream(Utilities.path("C:\\work\\org.hl7.fhir\\build\\publish", name+".json"))));
-    try {
-      jschema.validate(jo);
-    } catch (ValidationException e) {
-      System.out.println(e.getMessage());
-//      e.getCausingExceptions().stream()
-//          .map(ValidationException::getMessage)
-//          .forEach(System.out::println);
-      throw e;
+
+    JsonNode node = MAPPER.readTree(new CSFileInputStream(Utilities.path("C:\\work\\org.hl7.fhir\\build\\publish", name+".json")));
+    Set<ValidationMessage> messages = jschema.validate(node);
+    if (!messages.isEmpty()) {
+      messages.forEach(m -> System.out.println(m.getMessage()));
+      throw new RuntimeException(messages.iterator().next().getMessage());
     }
   }
 
