@@ -170,7 +170,7 @@ public class SearchParameterCleanerUpper {
         nstatus = nstatus == null ? rstatus : nstatus;
         if (nstatus != null && nstatus != spstatus) {
           c++;
-          ExtensionUtilities.setStandardsStatus(sp, nstatus, null);          
+          ExtensionUtilities.setStandardsStatus(sp, nstatus, null, null);
         }
       }
     }
@@ -208,7 +208,7 @@ public class SearchParameterCleanerUpper {
            }
            if (inlist) {
             c++;
-            ExtensionUtilities.setStandardsStatus(sp, value, null);
+            ExtensionUtilities.setStandardsStatus(sp, value, null, null);
            }
          }
        }

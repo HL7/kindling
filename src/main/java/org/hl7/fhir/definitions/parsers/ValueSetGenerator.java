@@ -140,7 +140,7 @@ public class ValueSetGenerator {
   private void markSpecialStatus(ValueSet vs, CodeSystem cs, boolean isNormative) {
     ExtensionUtilities.setStringExtension(vs, "http://hl7.org/fhir/StructureDefinition/valueset-special-status", SPECIAL_STATUS_NOTE.replaceAll("\\{name\\}", "Value Set"));
     if (isNormative) {
-    ExtensionUtilities.setStandardsStatus(vs, StandardsStatus.NORMATIVE, "4.0.0");
+    ExtensionUtilities.setStandardsStatus(vs, StandardsStatus.NORMATIVE, "4.0.0", version);
     ExtensionUtilities.addIntegerExtension(vs, ExtensionDefinitions.EXT_FMM_LEVEL, 5);
     }
     ExtensionUtilities.setCodeExtension(vs, ExtensionDefinitions.EXT_WORKGROUP, "fhir");
@@ -149,7 +149,7 @@ public class ValueSetGenerator {
     if (cs != null) {
       ExtensionUtilities.setStringExtension(cs, "http://hl7.org/fhir/StructureDefinition/valueset-special-status", SPECIAL_STATUS_NOTE.replaceAll("\\{name\\}", "Code System"));
       if (isNormative) {
-      ExtensionUtilities.setStandardsStatus(cs, StandardsStatus.NORMATIVE, "4.0.0");
+      ExtensionUtilities.setStandardsStatus(cs, StandardsStatus.NORMATIVE, "4.0.0", version);
       ExtensionUtilities.addIntegerExtension(cs, ExtensionDefinitions.EXT_FMM_LEVEL, 5);
       }
       ExtensionUtilities.setCodeExtension(cs, ExtensionDefinitions.EXT_WORKGROUP, "fhir");

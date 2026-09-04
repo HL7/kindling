@@ -531,8 +531,6 @@ public class Publisher implements URIResolver, SectionNumberer {
   private ProfileGenerator pgen;
   private boolean noSound;
   private boolean doValidate;
-  private boolean isCIBuild;
-  private boolean isPostPR;
   private String validateId;
 
   private Validator mappingExceptionsValidator;
@@ -557,7 +555,7 @@ public class Publisher implements URIResolver, SectionNumberer {
     if (hasParam(args, "-validation-mode")) {
       pub.validationMode = ValidationMode.fromCode(getNamedParam(args, "-validation-mode"));
     }
-    pub.isPostPR = (args.length >= 1 && hasParam(args, "-post-pr"));
+    pub.page.setPostPR(args.length >= 1 && hasParam(args, "-post-pr"));
     if (hasParam(args, "-resource"))
       pub.singleResource = getNamedParam(args, "-resource");
     if (hasParam(args, "-page"))
@@ -571,8 +569,8 @@ public class Publisher implements URIResolver, SectionNumberer {
     pub.validateId = getNamedParam(args, "-validate");
     String dir = hasParam(args, "-folder") ? getNamedParam(args, "-folder") : System.getProperty("user.dir");
     pub.outputdir = hasParam(args, "-output") ? getNamedParam(args, "-output") : null; 
-    pub.isCIBuild = dir.contains("/ubuntu/agents/") || dir.contains("azure-pipelines");
-    if (pub.isCIBuild) {
+    pub.page.setCIBuild(dir.contains("/ubuntu/agents/") || dir.contains("azure-pipelines"));
+    if (pub.page.isCIBuild()) {
       pub.page.setWebLocation(PageProcessor.CI_LOCATION);
       pub.page.setSearchLocation(PageProcessor.CI_SEARCH);
       pub.page.setPublicationType(PageProcessor.CI_PUB_NAME);
@@ -1109,14 +1107,14 @@ public class Publisher implements URIResolver, SectionNumberer {
         StandardsStatus ssStated = sp.getStandardsStatus();
         if (ssStated == null) {
           ssStated = ssCeiling;
-          sp.setStandardsStatus(ssStated); 
+          sp.setStandardsStatus(ssStated, page.getWorkerContext().getVersion());
         }
         if (ssCeiling.isLowerThan(ssStated)) {
           if (sp.getBase().size() > 1) {
             StandardsStatus high = null;
             for (Enumeration<VersionIndependentResourceTypesAll> b : sp.getBase()) {
               if (b.getCode().equals(rd.getType())) {
-                b.setStandardsStatus(ssCeiling);
+                b.setStandardsStatus(ssCeiling, page.getWorkerContext().getVersion());
               }
               StandardsStatus ss = b.getStandardsStatus();
               if (ss == null) {
@@ -1129,10 +1127,10 @@ public class Publisher implements URIResolver, SectionNumberer {
               }
             }
             if (high != ssStated) {
-              sp.setStandardsStatus(high);
+              sp.setStandardsStatus(high, page.getWorkerContext().getVersion());
             }
           } else { 
-            sp.setStandardsStatus(ssCeiling);
+            sp.setStandardsStatus(ssCeiling, page.getWorkerContext().getVersion());
           }          
         }        
       } catch (Exception e) {
@@ -2249,7 +2247,7 @@ public class Publisher implements URIResolver, SectionNumberer {
     }
     cpd.setWebPath("compartmentdefinition-"+c.getName()+".html");
     RenderingContext lrc = page.getRc().copy(false).setLocalPrefix("");
-    RendererFactory.factory(cpd, lrc).renderResource(ResourceWrapper.forResource(lrc.getContextUtilities(), cpd));
+    new RendererFactory().factory(cpd, lrc).renderResource(ResourceWrapper.forResource(lrc.getContextUtilities(), cpd));
     serializeResource(cpd, "compartmentdefinition-" + c.getName().toLowerCase(), "Compartment Definition for "+c.getName(), "resource-instance:CompartmentDefinition", wg("fhir"));
 
     FileUtilities.copyFile(new CSFile(page.getFolders().dstDir + "compartmentdefinition-" + c.getName().toLowerCase() + ".xml"), new CSFile(page.getFolders().dstDir + "examples" + File.separator
@@ -2398,7 +2396,7 @@ public class Publisher implements URIResolver, SectionNumberer {
     if (register) {
       RenderingContext lrc = page.getRc().copy(false).setLocalPrefix("");
       lrc.setRules(GenerationRules.VALID_RESOURCE);
-      RendererFactory.factory(cpbs, lrc).renderResource(ResourceWrapper.forResource(lrc.getContextUtilities(), cpbs));
+      new RendererFactory().factory(cpbs, lrc).renderResource(ResourceWrapper.forResource(lrc.getContextUtilities(), cpbs));
       String fName = "capabilitystatement-" + name;
       fixCanonicalResource(cpbs, fName);
       serializeResource(cpbs, fName, "Base Capability Statement", "resource-instance:CapabilityStatement", wg("fhir"));
@@ -2409,7 +2407,7 @@ public class Publisher implements URIResolver, SectionNumberer {
     if (buildFlags.get("all")) {
       RenderingContext lrc = page.getRc().copy(false).setLocalPrefix("");
       lrc.setRules(GenerationRules.VALID_RESOURCE);
-      RendererFactory.factory(cpbs, lrc).renderResource(ResourceWrapper.forResource(lrc.getContextUtilities(), cpbs));
+      new RendererFactory().factory(cpbs, lrc).renderResource(ResourceWrapper.forResource(lrc.getContextUtilities(), cpbs));
       deletefromFeed(ResourceType.CapabilityStatement, name, page.getResourceBundle());
       addToResourceFeed(cpbs, page.getResourceBundle());
     }
@@ -2511,13 +2509,13 @@ public class Publisher implements URIResolver, SectionNumberer {
       page.setIni(new IniFile(page.getFolders().rootDir + "publish.ini"));
         page.setVersion(FHIRVersion.fromCode(page.getIni().getStringProperty("FHIR", "version")));
 
-      if (!isCIBuild) {
+      if (!page.isCIBuild()) {
         if (page.getPublicationType() == null) {
           page.setPublicationType(page.getIni().getStringProperty("FHIR", "version-name"));
         }
       }
 
-      prsr = new SourceParser(page, folder, page.getDefinitions(), web, page.getVersion(), page.getWorkerContext(), page.getGenDate(), page, fpUsages, isCIBuild);
+      prsr = new SourceParser(page, folder, page.getDefinitions(), web, page.getVersion(), page.getWorkerContext(), page.getGenDate(), page, fpUsages, page.isCIBuild());
       prsr.checkConditions(errors, dates, dateSources);
       page.setRegistry(prsr.getRegistry());
       page.getDiffEngine().loadFromIni(prsr.getIni(), "r4-r6-changes", "4", "6");
@@ -2581,7 +2579,7 @@ public class Publisher implements URIResolver, SectionNumberer {
   private ResourceValidator val = null;
   private void validate1() throws Exception {
     page.log("Validating (1)", LogMessageType.Process);
-    val = new ResourceValidator(page.getDefinitions(), page.getTranslations(), page.getCodeSystems(), page.getFolders().srcDir, fpUsages, page.getSuppressedMessages(), page.getWorkerContext(), new ValidatorSettings());
+    val = new ResourceValidator(page.getDefinitions(), page.getTranslations(), page.getCodeSystems(), page.getFolders().srcDir, fpUsages, page.getSuppressedMessages(), page.getWorkerContext(), new ValidatorSettings(), page.getWorkerContext().getVersion());
     val.resolvePatterns();
     for (String n : page.getDefinitions().getTypes().keySet())
       page.getValidationErrors().addAll(val.checkStucture(n, page.getDefinitions().getTypes().get(n)));
@@ -3532,7 +3530,7 @@ public class Publisher implements URIResolver, SectionNumberer {
         }
       }
       npm.finish();
-      if (!isCIBuild) {
+      if (!page.isCIBuild()) {
         String id = pidRoot()+".expansions";
         new FilesystemPackageCacheManager.Builder().build().addPackageToCache(id, "current", new FileInputStream(Utilities.uncheckedPath(page.getFolders().dstDir, id + ".tgz")), Utilities.uncheckedPath(page.getFolders().dstDir, id + ".tgz"));
       }
@@ -3690,7 +3688,7 @@ public class Publisher implements URIResolver, SectionNumberer {
 
       SpecNPMPackageGenerator self = new SpecNPMPackageGenerator();
       self.generate(page.getFolders().dstDir, page.getWebLocation(), false, page.getGenDate().getTime(), pidRoot());
-      if (!isCIBuild) {
+      if (!page.isCIBuild()) {
         new FilesystemPackageCacheManager.Builder().build().addPackageToCache(pidRoot()+".core", "current", new FileInputStream(Utilities.uncheckedPath(page.getFolders().dstDir, pidRoot() + ".core.tgz")), Utilities.uncheckedPath(page.getFolders().dstDir, pidRoot() + ".core.tgz"));
       }
 
@@ -3812,7 +3810,7 @@ public class Publisher implements URIResolver, SectionNumberer {
 
   private void produceConceptMap(ConceptMap cm, ResourceDefn rd, SectionTracker st) throws Exception {
     RenderingContext lrc = page.getRc().copy(false).setLocalPrefix("");
-    RendererFactory.factory(cm, lrc).renderResource(ResourceWrapper.forResource(lrc.getContextUtilities(), cm));
+    new RendererFactory().factory(cm, lrc).renderResource(ResourceWrapper.forResource(lrc.getContextUtilities(), cm));
     String n = cm.getWebPath();
     String fName = FileUtilities.changeFileExt(n,"");
     fixCanonicalResource(cm, fName);
@@ -4999,7 +4997,7 @@ public class Publisher implements URIResolver, SectionNumberer {
     }
     tmp.delete();
 
-    StructureDefinitionSpreadsheetGenerator sdr = new StructureDefinitionSpreadsheetGenerator(page.getWorkerContext(), false, false);
+    StructureDefinitionSpreadsheetGenerator sdr = new StructureDefinitionSpreadsheetGenerator(page.getWorkerContext(), false, false, new RendererFactory());
     sdr.renderStructureDefinition(resource.getProfile(), false);
     sdr.finish(new FileOutputStream(Utilities.path(page.getFolders().dstDir, n + ".xlsx")));
 
@@ -5241,7 +5239,7 @@ public class Publisher implements URIResolver, SectionNumberer {
             wantSave = updateVersion(((CapabilityStatement) res).getText().getDiv());
         }
         if (!res.hasText() || !res.getText().hasDiv()) {
-          RendererFactory.factory(res, lrc.copy(false).setRules(GenerationRules.VALID_RESOURCE)).renderResource(ResourceWrapper.forResource(lrc.getContextUtilities(), res));
+          new RendererFactory().factory(res, lrc.copy(false).setRules(GenerationRules.VALID_RESOURCE)).renderResource(ResourceWrapper.forResource(lrc.getContextUtilities(), res));
         }
         if (wantSave) {
           if (VersionUtilities.isR4BVer(page.getVersion().toCode())) {
@@ -5268,7 +5266,7 @@ public class Publisher implements URIResolver, SectionNumberer {
               String ert = ers.fhirType();
               String s = null;
               if (!page.getDefinitions().getBaseResources().containsKey(ert) && !ert.equals("Binary") && !ert.equals("Parameters") && !ert.equals("Bundle")) {
-                ResourceRenderer r = RendererFactory.factory(ers.fhirType(), lrc);
+                ResourceRenderer r = new RendererFactory().factory(ers.fhirType(), lrc);
                 ResourceWrapper rw =ResourceWrapper.forResource(lrc.getContextUtilities(), ers);
                 XhtmlNode div = rw.getNarrative();
                 if (div == null || div.isEmpty()) {
@@ -5298,7 +5296,7 @@ public class Publisher implements URIResolver, SectionNumberer {
         } else {
           if (!page.getDefinitions().getBaseResources().containsKey(rt) && !rt.equals("Binary") && !rt.equals("Parameters")) {
 
-            ResourceRenderer r = RendererFactory.factory(ResourceWrapper.forResource(lrc.getContextUtilities(), e.getElement()), lrc);
+            ResourceRenderer r = new RendererFactory().factory(ResourceWrapper.forResource(lrc.getContextUtilities(), e.getElement()), lrc);
 
             CanonicalResourceUtilities.setHl7WG(e.getElement(), resn.getWg().getCode());
             ResourceWrapper rw = ResourceWrapper.forResource(lrc.getContextUtilities(), e.getElement());
@@ -5678,7 +5676,7 @@ public class Publisher implements URIResolver, SectionNumberer {
 
     ResourceUtilities.meta(resource).setLastUpdated(page.getGenDate().getTime());
     if (!resource.hasText() || !resource.getText().hasDiv()) {
-      RendererFactory.factory(resource, page.getRc().copy(false)).renderResource(ResourceWrapper.forResource(page.getRc().getContextUtilities(), resource));
+      new RendererFactory().factory(resource, page.getRc().copy(false)).renderResource(ResourceWrapper.forResource(page.getRc().getContextUtilities(), resource));
     }
     if (resource.getText() == null || resource.getText().getDiv() == null)
       throw new Exception("Example Resource " + resource.getId() + " does not have any narrative");
@@ -5701,7 +5699,7 @@ public class Publisher implements URIResolver, SectionNumberer {
       throw new Exception("Attempt to add duplicate value set " + vs.getId()+" ("+vs.getName()+")");
     }
     if (!vs.hasText() || !vs.getText().hasDiv()) {
-      RendererFactory.factory(vs, page.getRc().copy(false)).renderResource(ResourceWrapper.forResource(page.getRc().getContextUtilities(), vs));
+      new RendererFactory().factory(vs, page.getRc().copy(false)).renderResource(ResourceWrapper.forResource(page.getRc().getContextUtilities(), vs));
     }
     if (!vs.hasText() || vs.getText().getDiv() == null)
       throw new Exception("Example Value Set " + vs.getId() + " does not have any narrative");
@@ -5718,7 +5716,7 @@ public class Publisher implements URIResolver, SectionNumberer {
     if (ResourceUtilities.getById(dest, ResourceType.ValueSet, cm.getId()) != null)
       throw new Exception("Attempt to add duplicate Concept Map " + cm.getId());
     if (!cm.hasText() || !cm.getText().hasDiv()) {
-      RendererFactory.factory(cm, page.getRc().copy(false)).renderResource(ResourceWrapper.forResource(page.getRc().getContextUtilities(), cm));
+      new RendererFactory().factory(cm, page.getRc().copy(false)).renderResource(ResourceWrapper.forResource(page.getRc().getContextUtilities(), cm));
     }
     if (cm.getText() == null || cm.getText().getDiv() == null)
       throw new Exception("Example Concept Map " + cm.getId() + " does not have any narrative");
@@ -5735,7 +5733,7 @@ public class Publisher implements URIResolver, SectionNumberer {
     if (ResourceUtilities.getById(dest, ResourceType.CompartmentDefinition, cd.getId()) != null)
       throw new Exception("Attempt to add duplicate Compartment Definition " + cd.getId());
     if (!cd.hasText() || !cd.getText().hasDiv()) {
-      RendererFactory.factory(cd, page.getRc().copy(false)).renderResource(ResourceWrapper.forResource(page.getRc().getContextUtilities(), cd));
+      new RendererFactory().factory(cd, page.getRc().copy(false)).renderResource(ResourceWrapper.forResource(page.getRc().getContextUtilities(), cd));
     }
     if (cd.getText() == null || cd.getText().getDiv() == null)
       throw new Exception("Example Compartment Definition " + cd.getId() + " does not have any narrative");
@@ -5752,7 +5750,7 @@ public class Publisher implements URIResolver, SectionNumberer {
     if (ResourceUtilities.getById(dest, ResourceType.ValueSet, cs.getId()) != null)
       throw new Exception("Attempt to add duplicate Conformance " + cs.getId());
     if (!cs.hasText() || !cs.getText().hasDiv()) {
-      RendererFactory.factory(cs, page.getRc().copy(false)).renderResource(ResourceWrapper.forResource(page.getRc().getContextUtilities(),cs));
+      new RendererFactory().factory(cs, page.getRc().copy(false)).renderResource(ResourceWrapper.forResource(page.getRc().getContextUtilities(),cs));
     }
     if (!cs.hasText() || cs.getText().getDiv() == null)
       System.out.println("WARNING: Example CapabilityStatement " + cs.getId() + " does not have any narrative");
@@ -6570,7 +6568,7 @@ public class Publisher implements URIResolver, SectionNumberer {
 
   private void validationProcess() throws Exception {
     
-    if (!isPostPR && validationMode != ValidationMode.NONE) {
+    if (!page.isPostPR() && validationMode != ValidationMode.NONE) {
       page.log("Validating Examples", LogMessageType.Process);
       Map<String, ValidationInformation> filesToValidate = new HashMap<>();      
       Set<String> txList = new HashSet<String>();
@@ -6900,7 +6898,7 @@ public class Publisher implements URIResolver, SectionNumberer {
     if (!vs.hasText() || (vs.getText().getDiv().allChildrenAreText()
         && (Utilities.noString(vs.getText().getDiv().allText()) || !vs.getText().getDiv().allText().matches(".*\\w.*")))) {
       RenderingContext lrc = page.getRc().copy(false).setLocalPrefix(ig != null ? "../" : "");
-      RendererFactory.factory(vs, lrc).renderResource(ResourceWrapper.forResource(lrc.getContextUtilities(), vs));
+      new RendererFactory().factory(vs, lrc).renderResource(ResourceWrapper.forResource(lrc.getContextUtilities(), vs));
     }
     page.getVsValidator().validate(page.getValidationErrors(), n, vs, true, false);
 
@@ -6962,7 +6960,7 @@ public class Publisher implements URIResolver, SectionNumberer {
     if (cs.getText().getDiv().allChildrenAreText()
         && (Utilities.noString(cs.getText().getDiv().allText()) || !cs.getText().getDiv().allText().matches(".*\\w.*"))) {
       RenderingContext lrc = page.getRc().copy(false).setLocalPrefix(ig != null ? "../" : "");
-      RendererFactory.factory(cs, lrc).renderResource(ResourceWrapper.forResource(lrc.getContextUtilities(), cs));
+      new RendererFactory().factory(cs, lrc).renderResource(ResourceWrapper.forResource(lrc.getContextUtilities(), cs));
     }
     page.getVsValidator().validate(page.getValidationErrors(), n, cs, true, false);
 
@@ -7076,7 +7074,7 @@ private String csCounter() {
   private void generateConceptMap(ConceptMap cm) throws Exception {
     String filename = cm.getWebPath();
     RenderingContext lrc = page.getRc().copy(false).setLocalPrefix("");
-    RendererFactory.factory(cm, lrc).renderResource(ResourceWrapper.forResource(lrc.getContextUtilities(), cm));
+    new RendererFactory().factory(cm, lrc).renderResource(ResourceWrapper.forResource(lrc.getContextUtilities(), cm));
 
     String n = FileUtilities.changeFileExt(filename, "");
     fixCanonicalResource(cm, n);
@@ -7163,8 +7161,8 @@ private String csCounter() {
             ",\n pgen=" + pgen +
             ",\n noSound=" + noSound +
             ",\n doValidate=" + doValidate +
-            ",\n isCIBuild=" + isCIBuild +
-            ",\n isPostPR=" + isPostPR +
+            ",\n isCIBuild=" + page.isCIBuild() +
+            ",\n isPostPR=" + page.isPostPR() +
             ",\n validateId='" + validateId + '\'' +
             ",\n ped=" + ped +
             ",\n examplesProcessed=" + examplesProcessed +

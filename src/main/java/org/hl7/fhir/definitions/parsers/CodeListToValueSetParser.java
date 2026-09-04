@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.hl7.fhir.r5.context.CanonicalResourceManager;
+import org.hl7.fhir.r5.context.IWorkerContext;
 import org.hl7.fhir.r5.extensions.ExtensionUtilities;
 import org.hl7.fhir.r5.model.CodeSystem;
 import org.hl7.fhir.r5.model.CodeSystem.ConceptDefinitionComponent;
@@ -43,9 +44,11 @@ public class CodeListToValueSetParser {
   private CanonicalResourceManager<ConceptMap> maps;
   private PackageInformation packageInfo;
   private OIDRegistry registry;
+  private IWorkerContext context;
 
-  public CodeListToValueSetParser(Sheet sheet, String sheetName, ValueSet valueSet, String version, CanonicalResourceManager<CodeSystem> codeSystems, CanonicalResourceManager<ConceptMap> maps, PackageInformation packageInfo,
-      OIDRegistry registry) throws Exception {
+  public CodeListToValueSetParser(Sheet sheet, String sheetName, ValueSet valueSet, String version, CanonicalResourceManager<CodeSystem> codeSystems,
+                                  CanonicalResourceManager<ConceptMap> maps, PackageInformation packageInfo,
+                                  OIDRegistry registry) throws Exception {
     super();
     this.sheet = sheet;
     this.sheetName = sheetName;
@@ -121,7 +124,7 @@ public class CodeListToValueSetParser {
           String deprecated = sheet.getColumn(row, "Deprecated");
           if (!Utilities.noString(deprecated)) {
             CodeSystemUtilities.setDeprecated(cs, cc, new DateTimeType(deprecated));
-            ExtensionUtilities.setStandardsStatus(cc, StandardsStatus.DEPRECATED, null);
+            ExtensionUtilities.setStandardsStatus(cc, StandardsStatus.DEPRECATED, null, version);
             String deprecatedReason = sheet.getColumn(row, "DeprecatedReason");
             if (!Utilities.noString(deprecatedReason)) {
               cc.getExtensionByUrl(ExtensionDefinitions.EXT_STANDARDS_STATUS).getValue()

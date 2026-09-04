@@ -116,14 +116,10 @@ import org.hl7.fhir.r5.extensions.ExtensionDefinitions;
 import org.hl7.fhir.tools.publisher.BuildWorkerContext;
 import org.hl7.fhir.tools.publisher.PageProcessor;
 import org.hl7.fhir.tools.publisher.PageProcessor.PageInfo;
-import org.hl7.fhir.utilities.IniFile;
-import org.hl7.fhir.utilities.Logger;
+import org.hl7.fhir.utilities.*;
 import org.hl7.fhir.utilities.Logger.LogMessageType;
 import org.hl7.fhir.utilities.filesystem.CSFile;
 import org.hl7.fhir.utilities.filesystem.CSFileInputStream;
-import org.hl7.fhir.utilities.StandardsStatus;
-import org.hl7.fhir.utilities.FileUtilities;
-import org.hl7.fhir.utilities.Utilities;
 import org.hl7.fhir.utilities.regex.RegexConstants;
 import org.hl7.fhir.utilities.validation.ValidationMessage;
 import org.hl7.fhir.utilities.xhtml.NodeType;
@@ -1024,7 +1020,7 @@ public class SourceParser {
             ed.setBaseDefinition("http://hl7.org/fhir/StructureDefinition/Extension");
           ed.setDerivation(TypeDerivationRule.CONSTRAINT);
           if (ExtensionUtilities.getStandardsStatus(ed) == null) {
-            ExtensionUtilities.setStandardsStatus(ed, StandardsStatus.TRIAL_USE, null);
+            ExtensionUtilities.setStandardsStatus(ed, StandardsStatus.TRIAL_USE, null, page.getWorkerContext().getVersion());
           }
           ed.setVersion(version.toCode());
           ed.setFhirVersion(version);
@@ -1364,6 +1360,9 @@ public class SourceParser {
   }
 
   private void parseSvgFile(File f, Map<String, PointSpec> layout, String name) throws FileNotFoundException, FHIRException {
+    if ("requirements.svg".equals(name)) {
+      DebugUtilities.breakpoint();
+    }
     Document svg = parseXml(new FileInputStream(f), name);
     readElement(svg.getDocumentElement(), null, layout);
     fixLayout(layout);

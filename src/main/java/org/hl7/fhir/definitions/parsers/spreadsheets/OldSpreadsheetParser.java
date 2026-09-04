@@ -2180,7 +2180,7 @@ public class OldSpreadsheetParser {
     if (Utilities.noString(fmm))
       fmm = "1"; // default fmm value for extensions
     ExtensionUtilities.addIntegerExtension(ex, ExtensionDefinitions.EXT_FMM_LEVEL, Integer.parseInt(fmm));
-    ExtensionUtilities.setStandardsStatus(ex, StandardsStatus.TRIAL_USE, null);
+    ExtensionUtilities.setStandardsStatus(ex, StandardsStatus.TRIAL_USE, null, null);
     
     if (ap.hasMetadata("fmm-level"))
       ExtensionUtilities.addIntegerExtension(ex, ExtensionDefinitions.EXT_FMM_LEVEL, Integer.parseInt(ap.getFmmLevel()));
@@ -2244,7 +2244,7 @@ public class OldSpreadsheetParser {
 	  }
     String sss = sheet.getColumn(row, "standards-status");
     if (!Utilities.noString(sss)) {
-      ExtensionUtilities.setStandardsStatus(ex, StandardsStatus.fromCode(sss), null);
+      ExtensionUtilities.setStandardsStatus(ex, StandardsStatus.fromCode(sss), null, null);
       sss = sheet.getColumn(row, "standards-status-reason");
       if (!Utilities.noString(sss)) {
         Extension ess = ex.getExtensionByUrl(ExtensionDefinitions.EXT_STANDARDS_STATUS);
