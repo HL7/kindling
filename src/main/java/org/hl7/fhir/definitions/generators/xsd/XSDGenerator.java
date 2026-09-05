@@ -54,6 +54,7 @@ import org.hl7.fhir.r5.model.ValueSet.ConceptSetComponent;
 import org.hl7.fhir.r5.model.ValueSet.ValueSetExpansionContainsComponent;
 import org.hl7.fhir.r5.utils.TypesUtilities;
 import org.hl7.fhir.tools.publisher.BuildWorkerContext;
+import org.hl7.fhir.utilities.UserDataNames;
 import org.hl7.fhir.utilities.Utilities;
 
 public class XSDGenerator extends XSDRootGenerator {
@@ -138,6 +139,7 @@ public class XSDGenerator extends XSDRootGenerator {
 	  allenums.add(en);
     ValueSet vs = enums.get(en);
     ValueSet ex = workerContext.expandVS(vs, true, false).getValueset();
+		ex.setUserData(UserDataNames.EXPANSION_PURPOSE, "xsd2");
     if (ex == null) {
       write("  <xs:simpleType name=\""+en+"Enum\">\r\n");
       write("    <xs:restriction base=\"xs:string\">\r\n");

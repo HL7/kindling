@@ -247,15 +247,9 @@ import org.hl7.fhir.r5.terminologies.ValueSetUtilities;
 import org.hl7.fhir.r5.terminologies.client.TerminologyClientContext;
 import org.hl7.fhir.r5.terminologies.client.TerminologyClientManager;
 import org.hl7.fhir.r5.terminologies.expansion.ValueSetExpansionOutcome;
-import org.hl7.fhir.r5.utils.BuildExtensions;
-import org.hl7.fhir.r5.utils.CanonicalResourceUtilities;
-import org.hl7.fhir.r5.utils.EOperationOutcome;
-import org.hl7.fhir.r5.utils.GraphQLSchemaGenerator;
+import org.hl7.fhir.r5.utils.*;
 import org.hl7.fhir.r5.utils.GraphQLSchemaGenerator.FHIROperationType;
-import org.hl7.fhir.r5.utils.NPMPackageGenerator;
 import org.hl7.fhir.r5.utils.NPMPackageGenerator.Category;
-import org.hl7.fhir.r5.utils.QuestionnaireBuilder;
-import org.hl7.fhir.r5.utils.ResourceUtilities;
 import org.hl7.fhir.r5.extensions.ExtensionDefinitions;
 import org.hl7.fhir.r5.utils.structuremap.StructureMapUtilities;
 import org.hl7.fhir.rdf.RDFValidator;
@@ -263,23 +257,12 @@ import org.hl7.fhir.tools.converters.CDAGenerator;
 import org.hl7.fhir.tools.converters.DSTU3ValidationConvertor;
 import org.hl7.fhir.tools.converters.SpecNPMPackageGenerator;
 import org.hl7.fhir.tools.publisher.ExampleInspector.EValidationFailed;
-import org.hl7.fhir.utilities.CloseProtectedZipInputStream;
-import org.hl7.fhir.utilities.CommaSeparatedStringBuilder;
-import org.hl7.fhir.utilities.IniFile;
+import org.hl7.fhir.utilities.*;
 import org.hl7.fhir.utilities.Logger.LogMessageType;
 import org.hl7.fhir.utilities.filesystem.CSFile;
 import org.hl7.fhir.utilities.filesystem.CSFileInputStream;
 import org.hl7.fhir.utilities.http.HTTPResult;
 import org.hl7.fhir.utilities.http.ManagedWebAccess;
-import org.hl7.fhir.utilities.NDJsonWriter;
-import org.hl7.fhir.utilities.PathBuilder;
-import org.hl7.fhir.utilities.SIDUtilities;
-import org.hl7.fhir.utilities.StandardsStatus;
-import org.hl7.fhir.utilities.FileUtilities;
-import org.hl7.fhir.utilities.Utilities;
-import org.hl7.fhir.utilities.VersionUtilities;
-import org.hl7.fhir.utilities.XsltUtilities;
-import org.hl7.fhir.utilities.ZipGenerator;
 import org.hl7.fhir.utilities.i18n.I18nConstants;
 import org.hl7.fhir.utilities.json.JsonUtilities;
 import org.hl7.fhir.utilities.npm.FilesystemPackageCacheManager;
@@ -3362,14 +3345,9 @@ public class Publisher implements URIResolver, SectionNumberer {
       produceUml();
       page.getVsValidator().checkDuplicates(page.getValidationErrors());
 
-      if (buildFlags.get("all")) {
-//        if (page.getToc().containsKey("1.1"))
-//          throw new Exception("Duplicate DOC Entry "+"1.1");
-
-        page.getToc().put("1.1", new TocEntry("1.1", "Table Of Contents", "toc.html", StandardsStatus.INFORMATIVE));
-        page.log(" ...page toc.html", LogMessageType.Process);
-        producePage("toc.html", null);
-      }
+      page.getToc().put("1.1", new TocEntry("1.1", "Table Of Contents", "toc.html", StandardsStatus.INFORMATIVE));
+      page.log(" ...page toc.html", LogMessageType.Process);
+      producePage("toc.html", null);
 
       checkAllOk();
 
@@ -3460,17 +3438,6 @@ public class Publisher implements URIResolver, SectionNumberer {
       checkStructureDefinitions(profileBundle);
       serializeResource(profileBundle, "profiles-others", false);
       FileUtilities.copyFile(page.getFolders().dstDir + "profiles-others.xml", page.getFolders().dstDir + "examples" + File.separator + "profiles-others.xml");
-            // todo-bundle - should this be checked?
-//      int ec = 0;
-//      for (Resource e : valueSetsFeed.getItem()) {
-//        ValueSet vs = (ValueSet) e;
-//        if (!vs.getUrl().equals(e.getId())) {
-//          ec++;
-//          page.log("Valueset id mismatch: atom entry has '"+e.getId()+"', but value set is '"+vs.getUrl()+"'", LogMessageType.Error);
-//        }
-//      }
-//      if (ec > 0)
-//        throw new Exception("Cannot continue due to value set mis-identification");
 
       checkBundleURLs(dataElements);
       serializeResource(dataElements, "dataelements", false);
@@ -3506,20 +3473,21 @@ public class Publisher implements URIResolver, SectionNumberer {
           + "'code', to help with code generation (saves the code generator having to figure out how to \r\n"
           + "do the expansions or find a terminology server that supports the same version of the value sets");
       for (ValueSet vs : page.getValueSets().getList()) {
-        if (!urlset.contains(vs.getUrl())) {
-          urlset.add(vs.getUrl());
-          if (vs.getUserData(ToolResourceUtilities.NAME_VS_USE_MARKER) != null) {
+          if (!urlset.contains(vs.getUrl())) {
+            urlset.add(vs.getUrl());
             ValueSet evs = null;
-            if (vs.hasUserData("expansion"))
-              evs = (ValueSet) vs.getUserData("expansion");
+            if (vs.hasUserData(UserDataNames.EXPANSION))
+              evs = (ValueSet) vs.getUserData(UserDataNames.EXPANSION);
             else {  
               ValueSetExpansionOutcome vse = page.getWorkerContext().expandVS(vs, true, false);
               if (vse.getValueset() != null) {
                 evs = vse.getValueset();
-                vs.setUserData("expansion", evs);
+                evs.setUserData(UserDataNames.EXPANSION_PURPOSE, "feed");
+                vs.setUserData(UserDataNames.EXPANSION, evs);
               }
             }
-            if (evs != null) {
+            if (evs != null && !Utilities.existsInList(evs.getUrl(), "http://hl7.org/fhir/ValueSet/example-expansion", "http://hl7.org/fhir/ValueSet/inactive")) {
+              ValueSetUtilities.checkExpansionIsFlat(evs);
               ValueSet vsc = vs.copy();
               vsc.setText(null);
               vsc.setExpansion(evs.getExpansion());
@@ -3528,7 +3496,7 @@ public class Publisher implements URIResolver, SectionNumberer {
             }
           }
         }
-      }
+
       npm.finish();
       if (!page.isCIBuild()) {
         String id = pidRoot()+".expansions";
@@ -3778,8 +3746,9 @@ public class Publisher implements URIResolver, SectionNumberer {
       page.getHTMLChecker().produce();
       page.getHTMLChecker().close();
       checkAllOk();
-    } else
+    } else {
       page.log("Partial Build - terminating now", LogMessageType.Error);
+    }
   }
 
 
@@ -7113,7 +7082,7 @@ private String csCounter() {
         page.log("unable to resolve "+params.get("identifier"), LogMessageType.Process);
         return null;
       }
-      vs = page.expandValueSet(vs, true);
+      vs = page.expandValueSet(vs, true, "resolve");
       if (vs == null) {
         page.log("unable to expand "+params.get("identifier"), LogMessageType.Process);
         return null;

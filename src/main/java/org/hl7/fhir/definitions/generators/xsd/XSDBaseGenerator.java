@@ -59,6 +59,7 @@ import org.hl7.fhir.r5.model.ValueSet.ConceptSetComponent;
 import org.hl7.fhir.r5.model.ValueSet.ValueSetExpansionContainsComponent;
 import org.hl7.fhir.r5.utils.TypesUtilities;
 import org.hl7.fhir.tools.publisher.BuildWorkerContext;
+import org.hl7.fhir.utilities.UserDataNames;
 import org.hl7.fhir.utilities.Utilities;
 
 public class XSDBaseGenerator  extends XSDRootGenerator {
@@ -574,6 +575,7 @@ public class XSDBaseGenerator  extends XSDRootGenerator {
     write("    <xs:restriction base=\"code-primitive\">\r\n");
     vs.setUserData(ToolResourceUtilities.NAME_VS_USE_MARKER, true);
     ValueSet ex = workerContext.expandVS(vs, true, false).getValueset();
+    ex.setUserData(UserDataNames.EXPANSION_PURPOSE, "xsd");
     if (ex == null)
       throw new Error("The expansion for "+bs.getName()+" is null");
     if (ex.getExpansion().getContains().isEmpty())

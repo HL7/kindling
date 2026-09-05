@@ -42,6 +42,7 @@ import org.hl7.fhir.definitions.model.TypeRef;
 import org.hl7.fhir.r5.model.Enumerations.FHIRVersion;
 import org.hl7.fhir.r5.model.ValueSet;
 import org.hl7.fhir.tools.publisher.BuildWorkerContext;
+import org.hl7.fhir.utilities.UserDataNames;
 import org.hl7.fhir.utilities.Utilities;
 
 import com.google.gson.JsonObject;
@@ -187,6 +188,7 @@ public class JsonLDGenerator  {
 //							ValueSet vs = cd.getValueSet();
 //							if (vs!= null) {
 //								ValueSet ex = workerContext.expandVS(vs, true, false).getValueset();
+			// ex.setUserData(UserDataNames.EXPANSION_PURPOSE, "json-ld");
 //								JsonArray enums = new JsonArray();
 //								for (ValueSetExpansionContainsComponent cc : ex.getExpansion().getContains()) {
 //									enums.add(new JsonPrimitive(cc.getCode()));

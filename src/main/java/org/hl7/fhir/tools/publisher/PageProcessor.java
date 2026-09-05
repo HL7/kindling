@@ -210,7 +210,6 @@ import org.hl7.fhir.r5.utils.Translations;
 import org.hl7.fhir.r5.utils.TypesUtilities;
 import org.hl7.fhir.r5.utils.TypesUtilities.TypeClassification;
 import org.hl7.fhir.r5.utils.TypesUtilities.WildcardInformation;
-import org.hl7.fhir.r5.utils.UserDataNames;
 import org.hl7.fhir.r5.utils.structuremap.StructureMapUtilities;
 import org.hl7.fhir.r5.utils.validation.IResourceValidator;
 import org.hl7.fhir.tools.converters.MarkDownPreProcessor;
@@ -2208,13 +2207,14 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
       diffEngine.getRevision().getValuesets().add(vs);
       if (vs.getUserData(ToolResourceUtilities.NAME_VS_USE_MARKER) != null) {
         ValueSet evs = null;
-        if (vs.hasUserData("expansion"))
-          evs = (ValueSet) vs.getUserData("expansion");
+        if (vs.hasUserData(UserDataNames.EXPANSION))
+          evs = (ValueSet) vs.getUserData(UserDataNames.EXPANSION);
         else {
           ValueSetExpansionOutcome vse = getWorkerContext().expandVS(ExpansionOptions.cacheNoHeirarchy().withIncompleteOk(true), vs);
           if (vse.getValueset() != null) {
             evs = vse.getValueset();
-            vs.setUserData("expansion", evs);
+            evs.setUserData(UserDataNames.EXPANSION_PURPOSE, "upde");
+            vs.setUserData(UserDataNames.EXPANSION, evs);
           }
         }
         if (evs != null) {
@@ -5339,6 +5339,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
       ValueSet exp = result.getValueset();
       if (exp == vs)
         throw new Exception("Expansion cannot be the same instance");
+      exp.setUserData(UserDataNames.EXPANSION_PURPOSE, "vsig");
       exp.setCompose(null);
       exp.setText(null);
       exp.setDescription("Value Set Contents (Expansion) for "+vs.present()+" at "+Config.DATE_FORMAT().format(new Date()));
@@ -5362,7 +5363,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     if (vs == null)
       throw new Exception("no vs?");
     String s = "<p>&nbsp;</p>\r\n<a name=\"expansion\"> </a>\r\n<h2>Expansion</h2>\r\n<p>This expansion generated "+new SimpleDateFormat("dd MMM yyyy", new Locale("en", "US")).format(genDate.getTime())+"</p>\r\n";
-    return s + expandVS(vs, prefix, "");
+    return s + expandVS(vs, prefix, "", "page");
   }
 
   private boolean hasUnfixedContent(ValueSet vs) {
@@ -5409,11 +5410,12 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     return "<hr/>\r\n"+VS_INC_START+""+new XhtmlComposer(XhtmlComposer.HTML).compose(vs1.getText().getDiv())+VS_INC_END;
   }
 
-  public ValueSet expandValueSet(ValueSet vs, boolean hierarchy) throws Exception {
+  public ValueSet expandValueSet(ValueSet vs, boolean hierarchy, String purpose) throws Exception {
     ValueSetExpansionOutcome result = workerContext.expandVS(vs, true, hierarchy);
     if (result.getError() != null)
       return null;
     else
+      result.getValueset().setUserData(UserDataNames.EXPANSION_PURPOSE, purpose);
       return result.getValueset();
   }
 
@@ -11315,10 +11317,10 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     return ed;
   }
 
-  public String expandVS(ValueSet vs, String prefix, String base) {
+  public String expandVS(ValueSet vs, String prefix, String base, String purpose) {
     try {
 
-      ValueSetExpansionOutcome result = workerContext.expandVS(ExpansionOptions.cacheNoHeirarchy().withIncompleteOk(true), vs);
+      ValueSetExpansionOutcome result = workerContext.expandVS(new ExpansionOptions().withHierarchical(true).withIncompleteOk(true), vs);
       if (result.getError() != null)
         return "<hr/>\r\n"+VS_INC_START+"<!--3-->"+processExpansionError(result.getError())+VS_INC_END;
 
@@ -11327,6 +11329,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
       ValueSet exp = result.getValueset();
       if (exp == vs)
         throw new Exception("Expansion cannot be the same instance");
+      exp.setUserData(UserDataNames.EXPANSION_PURPOSE, purpose);
       exp.setCompose(null);
       exp.setText(null);
       exp.setDescription("Value Set Contents (Expansion) for "+vs.present());

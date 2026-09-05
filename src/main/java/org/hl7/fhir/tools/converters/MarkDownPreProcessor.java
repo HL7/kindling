@@ -11,6 +11,7 @@ import org.hl7.fhir.r5.model.ValueSet.ValueSetExpansionContainsComponent;
 import org.hl7.fhir.r5.terminologies.CodeSystemUtilities;
 import org.hl7.fhir.r5.terminologies.expansion.ValueSetExpansionOutcome;
 import org.hl7.fhir.tools.publisher.BuildWorkerContext;
+import org.hl7.fhir.utilities.UserDataNames;
 import org.hl7.fhir.utilities.Utilities;
 import org.hl7.fhir.utilities.validation.ValidationMessage;
 import org.hl7.fhir.utilities.validation.ValidationMessage.IssueSeverity;
@@ -35,9 +36,10 @@ public class MarkDownPreProcessor {
         String vsid = linkText.substring(9);
         ValueSet vs = workerContext.fetchResource(ValueSet.class, "http://hl7.org/fhir/ValueSet/"+vsid);
         ValueSetExpansionOutcome exp = workerContext.expandVS(vs, true, false);
-        if (exp.getValueset() != null)
-          text = left+presentExpansion(exp.getValueset().getExpansion().getContains(), workerContext)+right;
-        else
+        if (exp.getValueset() != null) {
+          exp.getValueset().setUserData(UserDataNames.EXPANSION_PURPOSE, "md");
+          text = left + presentExpansion(exp.getValueset().getExpansion().getContains(), workerContext) + right;
+        } else
           text = left+"["+vs.getName()+"]("+vs.getWebPath()+")"+right;
       } else {
         String url = "";

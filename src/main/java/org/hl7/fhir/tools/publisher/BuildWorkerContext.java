@@ -799,6 +799,11 @@ public class BuildWorkerContext extends BaseWorkerContext implements IWorkerCont
   }
 
   @Override
+  public boolean canLoadPackages() {
+    return false;
+  }
+
+  @Override
   public void cachePackage(PackageInformation packageInfo) {    
   }
 
