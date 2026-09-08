@@ -46,6 +46,8 @@ import org.hl7.fhir.r5.context.IWorkerContext;
 import org.hl7.fhir.r5.elementmodel.Element;
 import org.hl7.fhir.r5.elementmodel.Manager;
 import org.hl7.fhir.r5.elementmodel.Manager.FhirFormat;
+import org.hl7.fhir.r5.elementmodel.XmlParser;
+import org.hl7.fhir.r5.elementmodel.ParserBase.ValidationPolicy;
 import org.hl7.fhir.r5.model.Resource;
 import org.hl7.fhir.tools.publisher.PageProcessor;
 import org.hl7.fhir.utilities.CSVProcessor;
@@ -138,7 +140,16 @@ public class Example {
       try {
         String xs = FileUtilities.fileToString(new CSFile(path.getAbsolutePath()));
         xs = xs.replace("[%test-server%]", PageProcessor.TEST_SERVER_URL);
-        element = Manager.parseSingle(context, new ByteArrayInputStream(xs.getBytes(Charsets.UTF_8)), FhirFormat.XML);
+        // NB: parse with an error list and a recording policy. Manager.parseSingle(context, source, format)
+        // passes a null error list, and the parser default policy is NONE, so an unrecognised element or
+        // attribute is dropped from the tree without a word - and it is then absent from every published
+        // format, so nothing downstream can report it either.
+        XmlParser parser = (XmlParser) Manager.makeParser(context, FhirFormat.XML);
+        // the source examples carry xsi:schemaLocation for editor support; it is stripped on output,
+        // so it is not an error here
+        parser.setAllowXsiLocation(true);
+        parser.setupValidation(ValidationPolicy.EVERYTHING);
+        element = parser.parseSingle(new ByteArrayInputStream(xs.getBytes(Charsets.UTF_8)), errors);
         resourceName = element.fhirType();
       } catch (Exception e) {
         throw new Exception("unable to read "+path.getAbsolutePath()+": "+e.getMessage(), e);

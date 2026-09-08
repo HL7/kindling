@@ -22,8 +22,6 @@ import javax.xml.parsers.ParserConfigurationException;
 import org.apache.commons.lang3.NotImplementedException;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
-import org.everit.json.schema.ValidationException;
-import org.everit.json.schema.loader.SchemaLoader;
 import org.hl7.fhir.definitions.model.Definitions;
 import org.hl7.fhir.definitions.model.Example;
 import org.hl7.fhir.definitions.model.Invariant;
@@ -167,7 +165,6 @@ public class ExampleInspector implements IValidatorResourceFetcher, IValidationP
   private static final boolean VALIDATE_CONFORMANCE_REFERENCES = true;
   private static final boolean VALIDATE_BY_PROFILE = true;
   private static final boolean VALIDATE_BY_SCHEMATRON = false;
-  private static final boolean VALIDATE_BY_JSON_SCHEMA = false;
 
   private IWorkerContext context;
   private String rootDir;
@@ -178,7 +175,6 @@ public class ExampleInspector implements IValidatorResourceFetcher, IValidationP
   private Definitions definitions;
   private boolean byProfile = VALIDATE_BY_PROFILE;
   private boolean bySchematron = VALIDATE_BY_SCHEMATRON;
-  private boolean byJsonSchema = VALIDATE_BY_JSON_SCHEMA;
   private ExampleHostServices hostServices;
   
   public ExampleInspector(IWorkerContext context, Logger logger, String rootDir, String xsltDir, List<ValidationMessage> errors, Definitions definitions, FHIRVersion version) throws JsonSyntaxException, FileNotFoundException, IOException {
@@ -200,7 +196,6 @@ public class ExampleInspector implements IValidatorResourceFetcher, IValidationP
   private int warningCount = 0;
   private int informationCount = 0;
 
-  private org.everit.json.schema.Schema jschema;
   private FHIRPathEngine fpe;
   private JsonObject jsonLdDefns;
 
@@ -225,12 +220,6 @@ public class ExampleInspector implements IValidatorResourceFetcher, IValidationP
   public void prepare2() throws Exception {
     jsonLdDefns = (JsonObject) new com.google.gson.JsonParser().parse(FileUtilities.fileToString(Utilities.path(rootDir, "fhir.jsonld")));
     xml = new XmlValidator(errorsInt, loadSchemas(), loadTransforms());
-
-    if (VALIDATE_BY_JSON_SCHEMA) {
-      String source = FileUtilities.fileToString(Utilities.path(rootDir, "fhir.schema.json"));
-      JSONObject rawSchema = new JSONObject(new JSONTokener(source));
-      jschema = SchemaLoader.load(rawSchema);
-    }
 
     try {
       checkJsonLd();    
@@ -305,23 +294,34 @@ public class ExampleInspector implements IValidatorResourceFetcher, IValidationP
 //  static final String JAXP_SCHEMA_SOURCE = "http://java.sun.com/xml/jaxp/properties/schemaSource";
 
   public void validate(String n, String rt, StructureDefinition profile) {
+    validate(n, rt, profile, null);
+  }
+
+  public void validate(String n, String rt, StructureDefinition profile, List<ValidationMessage> loadErrors) {
     if (VALIDATE_BY_PROFILE)
-      doValidate(n, rt, profile);
+      doValidate(n, rt, profile, loadErrors);
   }
   
   public void validate(String n, String rt) {
-    doValidate(n, rt, null);    
+    doValidate(n, rt, null, null);    
+  }
+
+  public void validate(String n, String rt, List<ValidationMessage> loadErrors) {
+    doValidate(n, rt, null, loadErrors);    
   }
   
   public void doValidate(String n, String rt, StructureDefinition profile) {
+    doValidate(n, rt, profile, null);
+  }
+
+  public void doValidate(String n, String rt, StructureDefinition profile, List<ValidationMessage> loadErrors) {
     errorsInt.clear();
     System.out.print(" validate: " + Utilities.padRight(n, ' ', 50));
 
     long t = System.currentTimeMillis();
     validator.resetTimes();
     try {
-      Element e = validateLogical(Utilities.path(rootDir, n+".json"), profile, FhirFormat.JSON);
-//      org.w3c.dom.Element xe = validateXml(Utilities.path(rootDir, n+".xml"), profile == null ? null : profile.getId());
+      Element e = validateLogical(Utilities.path(rootDir, n+".xml"), profile, FhirFormat.XML);
 
 //      validateLogical(Utilities.path(rootDir, n+".json"), profile, FhirFormat.JSON);
 //      validateJson(Utilities.path(rootDir, n+".json"), profile == null ? null : profile.getId());
@@ -343,7 +343,14 @@ public class ExampleInspector implements IValidatorResourceFetcher, IValidationP
       Utilities.padLeft(Long.toString(t)+"ms ", ' ', 8)+
       Utilities.padLeft(Utilities.describeSize(size), ' ', 7)+" (" +
       validator.reportTimesShort()+")", LogMessageType.Process);
-    for (ValidationMessage m : errorsInt) {
+    // errors from parsing the example source (unrecognised elements/attributes, silently dropped from
+    // the tree at load) are recorded on the Example, not here. Fold them in so they are reported,
+    // counted, and picked up by summarise() like any other validation error.
+    List<ValidationMessage> messages = new ArrayList<ValidationMessage>(errorsInt);
+    if (loadErrors != null) {
+      messages.addAll(loadErrors);
+    }
+    for (ValidationMessage m : messages) {
       if (!m.getLevel().equals(IssueSeverity.INFORMATION) && !m.getLevel().equals(IssueSeverity.WARNING)) {
         m.setMessage(n+":: "+m.getLocation()+": "+m.getMessage());
         errorsExt.add(m);
@@ -388,21 +395,6 @@ public class ExampleInspector implements IValidatorResourceFetcher, IValidationP
       }
     }
     return e;
-  }
-
-  private void validateJson(String f, String profile) throws FileNotFoundException, IOException {
-    if (VALIDATE_BY_JSON_SCHEMA) {
-      JSONObject jo = new JSONObject(new JSONTokener(new CSFileInputStream(f)));
-      try {
-        jschema.validate(jo);
-      } catch (ValidationException e) {
-        System.out.println(e.getMessage());
-//        e.getCausingExceptions().stream()
-//            .map(ValidationException::getMessage)
-//            .forEach(System.out::println);
-        throw e;
-      }
-    }
   }
 
   public void summarise() throws EValidationFailed {
@@ -498,14 +490,6 @@ public class ExampleInspector implements IValidatorResourceFetcher, IValidationP
   }
 
 
-  public boolean isByJsonSchema() {
-    return byJsonSchema;
-  }
-
-
-  public void setByJsonSchema(boolean byJsonSchema) {
-    this.byJsonSchema = byJsonSchema;
-  }
 
   @Override
   public Element fetch(IResourceValidator validator,Object appContext, String url) throws IOException, FHIRException {
