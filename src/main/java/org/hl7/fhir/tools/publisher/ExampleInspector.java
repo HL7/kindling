@@ -22,8 +22,10 @@ import javax.xml.parsers.ParserConfigurationException;
 import org.apache.commons.lang3.NotImplementedException;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
-import org.everit.json.schema.ValidationException;
-import org.everit.json.schema.loader.SchemaLoader;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.networknt.schema.JsonSchemaFactory;
+import com.networknt.schema.SpecVersion;
 import org.hl7.fhir.definitions.model.Definitions;
 import org.hl7.fhir.definitions.model.Example;
 import org.hl7.fhir.definitions.model.Invariant;
@@ -67,8 +69,6 @@ import org.hl7.fhir.utilities.validation.ValidationMessage.Source;
 import org.hl7.fhir.validation.ValidatorSettings;
 import org.hl7.fhir.validation.instance.InstanceValidator;
 import org.hl7.fhir.validation.instance.advisor.BasePolicyAdvisorForFullValidation;
-import org.json.JSONObject;
-import org.json.JSONTokener;
 import org.xml.sax.SAXException;
 
 import com.google.gson.JsonObject;
@@ -200,7 +200,9 @@ public class ExampleInspector implements IValidatorResourceFetcher, IValidationP
   private int warningCount = 0;
   private int informationCount = 0;
 
-  private org.everit.json.schema.Schema jschema;
+  private static final ObjectMapper JSON_SCHEMA_MAPPER = new ObjectMapper();
+
+  private com.networknt.schema.JsonSchema jschema;
   private FHIRPathEngine fpe;
   private JsonObject jsonLdDefns;
 
@@ -228,8 +230,8 @@ public class ExampleInspector implements IValidatorResourceFetcher, IValidationP
 
     if (VALIDATE_BY_JSON_SCHEMA) {
       String source = FileUtilities.fileToString(Utilities.path(rootDir, "fhir.schema.json"));
-      JSONObject rawSchema = new JSONObject(new JSONTokener(source));
-      jschema = SchemaLoader.load(rawSchema);
+      JsonNode rawSchema = JSON_SCHEMA_MAPPER.readTree(source);
+      jschema = JsonSchemaFactory.getInstance(SpecVersion.VersionFlag.V6).getSchema(rawSchema);
     }
 
     try {
@@ -392,15 +394,11 @@ public class ExampleInspector implements IValidatorResourceFetcher, IValidationP
 
   private void validateJson(String f, String profile) throws FileNotFoundException, IOException {
     if (VALIDATE_BY_JSON_SCHEMA) {
-      JSONObject jo = new JSONObject(new JSONTokener(new CSFileInputStream(f)));
-      try {
-        jschema.validate(jo);
-      } catch (ValidationException e) {
-        System.out.println(e.getMessage());
-//        e.getCausingExceptions().stream()
-//            .map(ValidationException::getMessage)
-//            .forEach(System.out::println);
-        throw e;
+      JsonNode node = JSON_SCHEMA_MAPPER.readTree(new CSFileInputStream(f));
+      Set<com.networknt.schema.ValidationMessage> messages = jschema.validate(node);
+      if (!messages.isEmpty()) {
+        messages.forEach(m -> System.out.println(m.getMessage()));
+        throw new RuntimeException(messages.iterator().next().getMessage());
       }
     }
   }
