@@ -168,7 +168,6 @@ public class SourceParser {
   private List<String> errors = new ArrayList<String>();
   private boolean exceptionIfExcelNotNormalised;
   
-
   public SourceParser(Logger logger, String root, Definitions definitions, boolean forPublication, FHIRVersion version, BuildWorkerContext context, Calendar genDate, PageProcessor page, List<FHIRPathUsage> fpUsages, boolean exceptionIfExcelNotNormalised) throws IOException, ParserConfigurationException, SAXException {
     this.logger = logger;
     this.forPublication = forPublication;
