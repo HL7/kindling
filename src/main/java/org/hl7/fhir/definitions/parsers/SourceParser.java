@@ -1360,9 +1360,6 @@ public class SourceParser {
   }
 
   private void parseSvgFile(File f, Map<String, PointSpec> layout, String name) throws FileNotFoundException, FHIRException {
-    if ("requirements.svg".equals(name)) {
-      DebugUtilities.breakpoint();
-    }
     Document svg = parseXml(new FileInputStream(f), name);
     readElement(svg.getDocumentElement(), null, layout);
     fixLayout(layout);
