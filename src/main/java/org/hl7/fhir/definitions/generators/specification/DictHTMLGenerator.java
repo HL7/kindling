@@ -60,6 +60,7 @@ import org.hl7.fhir.r5.model.StructureDefinition;
 import org.hl7.fhir.r5.model.StructureDefinition.StructureDefinitionKind;
 import org.hl7.fhir.r5.model.StructureDefinition.StructureDefinitionMappingComponent;
 import org.hl7.fhir.r5.extensions.ExtensionDefinitions;
+import org.hl7.fhir.r5.extensions.ExtensionUtilities;
 import org.hl7.fhir.tools.publisher.PageProcessor;
 import org.hl7.fhir.utilities.CommaSeparatedStringBuilder;
 import org.hl7.fhir.utilities.StandardsStatus;
@@ -185,6 +186,7 @@ public class DictHTMLGenerator  extends OutputStreamWriter {
     else
       tableRow("Is Modifier", "conformance-rules.html#ismodifier", displayBoolean(d.getIsModifier()));
     tableRow("Must Support", "conformance-rules.html#mustSupport", displayBoolean(d.getMustSupport()));
+    tableRow("Translatable", "languages.html#translatable", displayBoolean(ExtensionUtilities.readBoolExtension(d, ExtensionDefinitions.EXT_TRANSLATABLE)));
     tableRowNE("Requirements",  null, page.processMarkdown(profile.getName(), d.getRequirements(), prefix));
     tableRowHint("Alternate Names", "Other names by which this resource/element may be known", null, describeAliases(d.getAlias()));
     tableRowNE("Comments",  null, page.processMarkdown(profile.getName(), d.getComment(), prefix));
@@ -521,6 +523,7 @@ public class DictHTMLGenerator  extends OutputStreamWriter {
 		tableRowHint("Alternate Names", "Other names by which this resource/element may be known", null, toSeperatedString(e.getAliases()));
     if (e.hasSummaryItem())
       tableRow("Summary", "search.html#summary", Boolean.toString(e.isSummaryItem()));
+    tableRow("Translatable", "languages.html#translatable", displayBoolean(e.isTranslatable()));
     tableRowNE("Comments", null, page.processMarkdown(path, e.getComments(), prefix));
     tableRowNE("Constraints", null, invariants(e.getInvariants(), e.getStatedInvariants()));
     tableRow("LOINC Code", null, e.getMapping(Definitions.LOINC_MAPPING));

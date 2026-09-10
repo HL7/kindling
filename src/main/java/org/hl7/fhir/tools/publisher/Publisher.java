@@ -809,11 +809,17 @@ public class Publisher implements URIResolver, SectionNumberer {
       if (isGenerate) {
         produceSpecification();
         checkAllOk();
+        // producing the spec is where most of the terminology work happens and it takes a
+        // long time; bank it before validation rather than risking the lot on what follows.
+        page.getWorkerContext().saveCache();
       } 
 
       if (doValidate)
         validationProcess();
       page.saveSnomed();
+      // NB: this has to stay ahead of commitTerminologyCache below, which zips the cache
+      // folder up off the disk - anything still held in memory would not make it into the
+      // committed cache.
       page.getWorkerContext().saveCache();
       if (isGenerate && buildFlags.get("all")) {
         if (FhirSettings.hasApiKey("tx.fhir.org")) {
@@ -6598,7 +6604,7 @@ public class Publisher implements URIResolver, SectionNumberer {
         String prefix = (ig == null || ig.isCore()) ? "" : ig.getCode()+File.separator;
         for (Example ex : ig.getExamples()) {
           String n = ex.getTitle();
-          ei.validate(prefix+n, ex.getResourceName());
+          ei.validate(prefix+n, ex.getResourceName(), ex.getErrors());
           filesToValidate.put(prefix+n, new ValidationInformation(ex.getResourceName()));
         }
         for (Profile pck : ig.getProfiles()) {
@@ -6634,12 +6640,12 @@ public class Publisher implements URIResolver, SectionNumberer {
           if (vi.getExample() == null) {
             ei.validate(n, vi.getResourceName());
           } else if (vi.getProfile() == null) {
-            ei.validate(n, vi.getResourceName());
+            ei.validate(n, vi.getResourceName(), vi.getExample().getErrors());
             for (ValidationMessage vm : ei.getErrors()) {
               vi.getExample().getErrors().add(vm);
             }
           } else {
-            ei.validate(n, vi.getResourceName(), vi.getProfile());
+            ei.validate(n, vi.getResourceName(), vi.getProfile(), vi.getExample().getErrors());
             for (ValidationMessage vm : ei.getErrors()) {
               vi.getExample().getErrors().add(vm);
             }

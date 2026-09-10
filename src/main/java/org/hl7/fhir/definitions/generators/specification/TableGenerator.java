@@ -78,7 +78,7 @@ public class TableGenerator extends BaseGenerator {
       gc.addStyledText("This element is included in summaries", "\u03A3", null, null, prefix+"elementdefinition-definitions.html#ElementDefinition.isSummary", false);
     }
     if (e.isTranslatable()) { 
-      gc.addStyledText("This element is a candidate for being translated", "T", null, null, prefix+"languages.html#translatable", false);
+      gc.addStyledText("This element is a candidate for being translated", "T", "black", "#ffd1fb", prefix+"languages.html#translatable", true);
     }
     if (!isRoot && (!e.getInvariants().isEmpty() || !e.getStatedInvariants().isEmpty())) { 
       Piece p = gc.addText(StructureDefinitionRenderer.CONSTRAINT_CHAR);
