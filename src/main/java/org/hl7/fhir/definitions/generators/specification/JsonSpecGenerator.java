@@ -14,16 +14,15 @@ import org.hl7.fhir.definitions.model.ElementDefn;
 import org.hl7.fhir.definitions.model.Invariant;
 import org.hl7.fhir.definitions.model.ProfiledType;
 import org.hl7.fhir.definitions.model.TypeRef;
-import org.hl7.fhir.r5.model.ElementDefinition;
-import org.hl7.fhir.r5.model.ElementDefinition.ElementDefinitionConstraintComponent;
-import org.hl7.fhir.r5.model.ElementDefinition.ElementDefinitionSlicingComponent;
-import org.hl7.fhir.r5.model.ElementDefinition.ElementDefinitionSlicingDiscriminatorComponent;
-import org.hl7.fhir.r5.model.ElementDefinition.TypeRefComponent;
-import org.hl7.fhir.r5.model.PrimitiveType;
-import org.hl7.fhir.r5.model.StructureDefinition;
-import org.hl7.fhir.r5.model.ValueSet;
-import org.hl7.fhir.r5.utils.TypesUtilities;
-import org.hl7.fhir.r5.utils.TypesUtilities.WildcardInformation;
+import org.hl7.fhir.model.core.ElementDefinition;
+import org.hl7.fhir.model.core.ElementDefinition.ElementDefinitionConstraintComponent;
+import org.hl7.fhir.model.core.ElementDefinition.ElementDefinitionSlicingComponent;
+import org.hl7.fhir.model.core.ElementDefinition.ElementDefinitionSlicingDiscriminatorComponent;
+import org.hl7.fhir.model.core.ElementDefinition.TypeRefComponent;
+import org.hl7.fhir.model.core.PrimitiveType;
+import org.hl7.fhir.model.core.StructureDefinition;
+import org.hl7.fhir.model.core.ValueSet;
+import org.hl7.fhir.services.utilities.TypesUtilities;
 import org.hl7.fhir.tools.publisher.PageProcessor;
 import org.hl7.fhir.utilities.CommaSeparatedStringBuilder;
 import org.hl7.fhir.utilities.Utilities;
@@ -80,11 +79,11 @@ public class JsonSpecGenerator extends OutputStreamWriter {
   }
 
   private void generateExtensionInner(StructureDefinition ed, boolean extensionDefinition) throws IOException, Exception {
-    ElementDefinition root = ed.getSnapshot().getElement().get(0);
-    String rn = ed.getSnapshot().getElement().get(0).getIsModifier() ? "modifierExtension" : "extension";
+    ElementDefinition root = ed.getSnapshot().getElementList().get(0);
+    String rn = ed.getSnapshot().getElementList().get(0).getIsModifier() ? "modifierExtension" : "extension";
     write("{ // <span style=\"color: navy; opacity: 0.8\">" + Utilities.escapeXml(ed.getName()) + "</span>\r\n");
     
-    List<ElementDefinition> children = getChildren(ed.getSnapshot().getElement(), ed.getSnapshot().getElement().get(0));
+    List<ElementDefinition> children = getChildren(ed.getSnapshot().getElementList(), ed.getSnapshot().getElementList().get(0));
     boolean complex = isComplex(children) && extensionDefinition;
     if (!complex)
       write("  // from Element: <a href=\""+prefix+"extensibility.html\">extension</a>\r\n");
@@ -94,18 +93,18 @@ public class JsonSpecGenerator extends OutputStreamWriter {
     for (ElementDefinition child : children) {
       c++;
        if (child.hasSlicing())
-        generateCoreElemSliced(ed.getSnapshot().getElement(), child, children, 2, rn, false, child.getType().get(0), c == l, complex);
+        generateCoreElemSliced(ed.getSnapshot().getElementList(), child, children, 2, rn, false, child.getTypeList().get(0), c == l, complex);
       else if (wasSliced(child, children)) {
         ; // nothing
       } if (child.prohibited()) {
         write("<span style=\"color: Gray\">  // "+child.getName()+": <span style=\"color: navy; opacity: 0.8\">" +Utilities.escapeXml(child.getShort()) + "</span>: Prohibited</span>\r\n");
-      } else if (child.getType().size() == 1)
-        generateCoreElem(ed.getSnapshot().getElement(), child, 2, rn, false, child.getType().get(0), c == l, complex);
+      } else if (child.getTypeList().size() == 1)
+        generateCoreElem(ed.getSnapshot().getElementList(), child, 2, rn, false, child.getTypeList().get(0), c == l, complex);
       else {
-        write("<span style=\"color: Gray\">  // value[x]: <span style=\"color: navy; opacity: 0.8\">" +Utilities.escapeXml(child.getShort()) + "</span>. One of these "+Integer.toString(child.getType().size())+":</span>\r\n");
+        write("<span style=\"color: Gray\">  // value[x]: <span style=\"color: navy; opacity: 0.8\">" +Utilities.escapeXml(child.getShort()) + "</span>. One of these "+Integer.toString(child.getTypeList().size())+":</span>\r\n");
         int ct = 0;
-        for (TypeRefComponent t : child.getType()) {
-          generateCoreElem(ed.getSnapshot().getElement(), child, 2, rn, false, t, c == l && ++ct == child.getType().size(), false);
+        for (TypeRefComponent t : child.getTypeList()) {
+          generateCoreElem(ed.getSnapshot().getElementList(), child, 2, rn, false, t, c == l && ++ct == child.getTypeList().size(), false);
         }
       }
     }
@@ -123,11 +122,11 @@ public class JsonSpecGenerator extends OutputStreamWriter {
   }
 
   private void generateInner(StructureDefinition ed, boolean extensionDefinition) throws IOException, Exception {
-    ElementDefinition root = ed.getSnapshot().getElement().get(0);
-    String rn = ed.getSnapshot().getElement().get(0).getPath();
+    ElementDefinition root = ed.getSnapshot().getElementList().get(0);
+    String rn = ed.getSnapshot().getElementList().get(0).getPath();
     write("{ // <span style=\"color: navy; opacity: 0.8\">" + Utilities.escapeXml(ed.getName()) + "</span>\r\n");
     
-    List<ElementDefinition> children = getChildren(ed.getSnapshot().getElement(), ed.getSnapshot().getElement().get(0));
+    List<ElementDefinition> children = getChildren(ed.getSnapshot().getElementList(), ed.getSnapshot().getElementList().get(0));
     boolean complex = isComplex(children) && extensionDefinition;
     if (!complex)
       write("  // from Element: <a href=\""+prefix+"extensibility.html\">extension</a>\r\n");
@@ -136,17 +135,17 @@ public class JsonSpecGenerator extends OutputStreamWriter {
     int l = lastChild(children);
     for (ElementDefinition child : children)
       if (child.hasSlicing())
-        generateCoreElemSliced(ed.getSnapshot().getElement(), child, children, 2, rn, false, child.getType().get(0), ++c == l, complex);
+        generateCoreElemSliced(ed.getSnapshot().getElementList(), child, children, 2, rn, false, child.getTypeList().get(0), ++c == l, complex);
       else if (wasSliced(child, children))
         ; // nothing
-      else if (child.getType().size() == 1)
-        generateCoreElem(ed.getSnapshot().getElement(), child, 2, rn, false, child.getType().get(0), ++c == l, complex);
+      else if (child.getTypeList().size() == 1)
+        generateCoreElem(ed.getSnapshot().getElementList(), child, 2, rn, false, child.getTypeList().get(0), ++c == l, complex);
       else {
-        write("<span style=\"color: Gray\">  // value[x]: <span style=\"color: navy; opacity: 0.8\">" +Utilities.escapeXml(child.getShort()) + "</span>. One of these "+Integer.toString(child.getType().size())+":</span>\r\n");
+        write("<span style=\"color: Gray\">  // value[x]: <span style=\"color: navy; opacity: 0.8\">" +Utilities.escapeXml(child.getShort()) + "</span>. One of these "+Integer.toString(child.getTypeList().size())+":</span>\r\n");
         int ct = 0;
         c++;
-        for (TypeRefComponent t : child.getType()) {
-          generateCoreElem(ed.getSnapshot().getElement(), child, 2, rn, false, t, c == l && ++ct == child.getType().size(), false);
+        for (TypeRefComponent t : child.getTypeList()) {
+          generateCoreElem(ed.getSnapshot().getElementList(), child, 2, rn, false, t, c == l && ++ct == child.getTypeList().size(), false);
         }
       }
     write("  }\r\n");
@@ -270,10 +269,10 @@ public class JsonSpecGenerator extends OutputStreamWriter {
           generateCoreElemDetails(elem, indent, rootName, pathName, backbone, last && c == elem.getTypes().size(), width, en.replace("[x]", nameForType(t.getName())), t, false);
         } 
       } else {
-        List<WildcardInformation> tr = TypesUtilities.wildcards(version);
+        List<TypesUtilities.WildcardInformation> tr = TypesUtilities.wildcards(version);
         write("<span style=\"color: Gray\">// "+en+": <span style=\"color: navy; opacity: 0.8\">" + docPrefix(width, indent, elem)+Utilities.escapeXml(elem.getShortDefn()) + "</span>. One of these "+Integer.toString(tr.size())+":</span>\r\n");
         int c = 0;
-        for (WildcardInformation t : tr) {
+        for (TypesUtilities.WildcardInformation t : tr) {
           c++;
           generateCoreElemDetails(elem, indent, rootName, pathName, backbone, last && c == elem.getTypes().size(), width, en.replace("[x]", upFirst(t.getTypeName())), toTypeRef(t), false);
         }
@@ -283,7 +282,7 @@ public class JsonSpecGenerator extends OutputStreamWriter {
     }
   }
 
-  private TypeRef toTypeRef(WildcardInformation t) {
+  private TypeRef toTypeRef(TypesUtilities.WildcardInformation t) {
     TypeRef r = new TypeRef();
     r.setName(t.getTypeName());
     return r;
@@ -463,17 +462,17 @@ public class JsonSpecGenerator extends OutputStreamWriter {
       int l = lastChild(extchildren);
       for (ElementDefinition child : extchildren) {
         if (child.hasSlicing())
-          generateCoreElemSliced(elements, child, children, indent+2, pathName+"."+en, false, child.getType().get(0), ++cc == l, extcomplex);
+          generateCoreElemSliced(elements, child, children, indent+2, pathName+"."+en, false, child.getTypeList().get(0), ++cc == l, extcomplex);
         else if (wasSliced(child, children))
           ; // nothing
-        else if (child.getType().size() == 1)
-          generateCoreElem(elements, child, indent+2, pathName+"."+en, false, child.getType().get(0), ++cc == l, extcomplex);
+        else if (child.getTypeList().size() == 1)
+          generateCoreElem(elements, child, indent+2, pathName+"."+en, false, child.getTypeList().get(0), ++cc == l, extcomplex);
         else {
-          write("<span style=\"color: Gray\">// value[x]: <span style=\"color: navy; opacity: 0.8\">" +Utilities.escapeXml(child.getShort()) + "</span>. One of these "+Integer.toString(child.getType().size())+":</span>\r\n");
+          write("<span style=\"color: Gray\">// value[x]: <span style=\"color: navy; opacity: 0.8\">" +Utilities.escapeXml(child.getShort()) + "</span>. One of these "+Integer.toString(child.getTypeList().size())+":</span>\r\n");
           c++;
           int ct = 0;
-          for (TypeRefComponent t : child.getType()) {
-            generateCoreElem(elements, child, indent+2, pathName+"."+en, false, t, cc == l && ++ct == child.getType().size(), false);
+          for (TypeRefComponent t : child.getTypeList()) {
+            generateCoreElem(elements, child, indent+2, pathName+"."+en, false, t, cc == l && ++ct == child.getTypeList().size(), false);
           }
         }
       }
@@ -512,7 +511,7 @@ public class JsonSpecGenerator extends OutputStreamWriter {
 
   private String describeSlicing(ElementDefinitionSlicingComponent slicing) {
     CommaSeparatedStringBuilder csv = new CommaSeparatedStringBuilder();
-    for (ElementDefinitionSlicingDiscriminatorComponent d : slicing.getDiscriminator()) {
+    for (ElementDefinitionSlicingDiscriminatorComponent d : slicing.getDiscriminatorList()) {
       csv.append(d.getType().toCode()+":"+d.getPath());
     }
     String s = slicing.getOrdered() ? " in any order, " : " in the specified order, " + (slicing.hasRules() ? slicing.getRules().getDisplay() : "");
@@ -572,8 +571,8 @@ public class JsonSpecGenerator extends OutputStreamWriter {
       write("{ ");
       write("<span style=\"color: darkgreen\"><a href=\"" + prefix+(dtRoot + definitions.getSrcFile(tc)+ ".html#" + tc) + "\">" + tc+ "</a></span>");
       if (type.hasProfile()) {
-        if (type.getProfile().get(0).getValue().startsWith("http://hl7.org/fhir/StructureDefinition/")) {
-          String t = type.getProfile().get(0).getValue().substring(40);
+        if (type.getProfileList().get(0).getValue().startsWith("http://hl7.org/fhir/StructureDefinition/")) {
+          String t = type.getProfileList().get(0).getValue().substring(40);
           if (definitions.hasType(t))
             write("(<span style=\"color: darkgreen\"><a href=\"" + prefix+(dtRoot + definitions.getSrcFile(t)+ ".html#" + t) + "\">" + t+ "</a></span>)");
           else if (definitions.hasResource(t))
@@ -581,11 +580,11 @@ public class JsonSpecGenerator extends OutputStreamWriter {
           else
             write("("+t+")");
         } else
-          write("("+type.getProfile()+")");
+          write("("+type.getProfileList()+")");
       }
       if (type.hasTargetProfile()) {
-        if (type.getTargetProfile().get(0).getValue().startsWith("http://hl7.org/fhir/StructureDefinition/")) {
-          String t = type.getTargetProfile().get(0).getValue().substring(40);
+        if (type.getTargetProfileList().get(0).getValue().startsWith("http://hl7.org/fhir/StructureDefinition/")) {
+          String t = type.getTargetProfileList().get(0).getValue().substring(40);
           if (definitions.hasType(t))
             write("(<span style=\"color: darkgreen\"><a href=\"" + prefix+(dtRoot + definitions.getSrcFile(t)+ ".html#" + t) + "\">" + t+ "</a></span>)");
           else if (definitions.hasResource(t))
@@ -593,7 +592,7 @@ public class JsonSpecGenerator extends OutputStreamWriter {
           else
             write("("+t+")");
         } else
-          write("("+type.getTargetProfile()+")");
+          write("("+type.getTargetProfileList()+")");
       }
       write(" }");
     } 
@@ -627,14 +626,14 @@ public class JsonSpecGenerator extends OutputStreamWriter {
     if (delayedCloseArray) {
       int c = 0;
       for (ElementDefinition child : children) {
-        if (child.getType().size() == 1)
-          generateCoreElem(elements, child, indent + 1, pathName + "." + name, false, child.getType().get(0), ++c == children.size(), false);
+        if (child.getTypeList().size() == 1)
+          generateCoreElem(elements, child, indent + 1, pathName + "." + name, false, child.getTypeList().get(0), ++c == children.size(), false);
         else {
-          write("<span style=\"color: Gray\">// value[x]: <span style=\"color: navy; opacity: 0.8\">" +Utilities.escapeXml(child.getShort()) + "</span>. One of these "+Integer.toString(child.getType().size())+":</span>\r\n");
+          write("<span style=\"color: Gray\">// value[x]: <span style=\"color: navy; opacity: 0.8\">" +Utilities.escapeXml(child.getShort()) + "</span>. One of these "+Integer.toString(child.getTypeList().size())+":</span>\r\n");
           c++;
           int ct = 0;
-          for (TypeRefComponent t : child.getType()) {
-            generateCoreElem(elements, child, indent + 1, pathName + "." + name, false, t, c == children.size() && ++ct == child.getType().size() , false);
+          for (TypeRefComponent t : child.getTypeList()) {
+            generateCoreElem(elements, child, indent + 1, pathName + "." + name, false, t, c == children.size() && ++ct == child.getTypeList().size() , false);
           }
         }
       }
@@ -833,7 +832,7 @@ public class JsonSpecGenerator extends OutputStreamWriter {
   }
 
   private void writeCardinality(ElementDefinition elem) throws IOException {
-    if (elem.getConstraint().size() > 0)
+    if (elem.getConstraintList().size() > 0)
       write(" <span style=\"color: brown\" title=\""
           + Utilities.escapeXml(getInvariants(elem)) + "\">"+ToolResourceUtilities.INV_FLAG+"</span>");
     if (elem.getMin() > 0)
@@ -856,7 +855,7 @@ public class JsonSpecGenerator extends OutputStreamWriter {
   private String getInvariants(ElementDefinition elem) {
     StringBuilder b = new StringBuilder();
     boolean first = true;
-    for (ElementDefinitionConstraintComponent i : elem.getConstraint()) {
+    for (ElementDefinitionConstraintComponent i : elem.getConstraintList()) {
       if (!first)
         b.append("; ");
       first = false;

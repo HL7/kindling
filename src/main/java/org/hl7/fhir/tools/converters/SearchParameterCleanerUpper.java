@@ -9,19 +9,20 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import org.hl7.fhir.r5.extensions.ExtensionUtilities;
-import org.hl7.fhir.r5.formats.IParser.OutputStyle;
-import org.hl7.fhir.r5.formats.XmlParser;
-import org.hl7.fhir.r5.model.Bundle;
-import org.hl7.fhir.r5.model.Bundle.BundleEntryComponent;
-import org.hl7.fhir.r5.model.DomainResource;
-import org.hl7.fhir.r5.model.ElementDefinition;
-import org.hl7.fhir.r5.model.ElementDefinition.TypeRefComponent;
-import org.hl7.fhir.r5.model.Enumerations.SearchParamType;
-import org.hl7.fhir.r5.model.SearchParameter;
-import org.hl7.fhir.r5.model.SearchParameter.SearchProcessingModeType;
-import org.hl7.fhir.r5.model.StructureDefinition;
-import org.hl7.fhir.r5.extensions.ExtensionDefinitions;
+import org.hl7.fhir.model.ModelContext;
+import org.hl7.fhir.model.extensions.ExtensionUtilities;
+import org.hl7.fhir.model.core.formats.XmlParser;
+import org.hl7.fhir.model.core.Bundle;
+import org.hl7.fhir.model.core.Bundle.BundleEntryComponent;
+import org.hl7.fhir.model.core.DomainResource;
+import org.hl7.fhir.model.core.ElementDefinition;
+import org.hl7.fhir.model.core.ElementDefinition.TypeRefComponent;
+import org.hl7.fhir.model.core.Enumerations.SearchParamType;
+import org.hl7.fhir.model.core.SearchParameter;
+import org.hl7.fhir.model.core.SearchParameter.SearchProcessingModeType;
+import org.hl7.fhir.model.core.StructureDefinition;
+import org.hl7.fhir.model.extensions.ExtensionDefinitions;
+import org.hl7.fhir.model.utilities.formats.OutputStyle;
 import org.hl7.fhir.utilities.CommaSeparatedStringBuilder;
 import org.hl7.fhir.utilities.IniFile;
 import org.hl7.fhir.utilities.StandardsStatus;
@@ -52,8 +53,8 @@ public class SearchParameterCleanerUpper {
     for (String s : resources.keySet()) {
       processResource(s, resources.get(s));
     }
-    Bundle csp = (Bundle) new XmlParser().parse(new FileInputStream(Utilities.path(folder, "searchparameter", "common-search-parameters.xml")));
-    for (BundleEntryComponent be : csp.getEntry()) {
+    Bundle csp = (Bundle) new XmlParser(ModelContext.fullCoreContext()).parse(new FileInputStream(Utilities.path(folder, "searchparameter", "common-search-parameters.xml")));
+    for (BundleEntryComponent be : csp.getEntryList()) {
       processCommonSearchParameter((SearchParameter) be.getResource());
     }
   }
@@ -68,9 +69,9 @@ public class SearchParameterCleanerUpper {
   private ResourceInfo loadResource(String folder, String name, String title) throws IOException {
     ResourceInfo info = new ResourceInfo();
     info.sdFilename = Utilities.path(folder, name, "structuredefinition-"+title+".xml");
-    info.sd = (StructureDefinition) new XmlParser().parse(new FileInputStream(info.sdFilename));
+    info.sd = (StructureDefinition) new XmlParser(ModelContext.fullCoreContext()).parse(new FileInputStream(info.sdFilename));
     info.bndFilename = Utilities.path(folder, name, "bundle-"+title+"-search-params.xml");
-    info.bnd = (Bundle) new XmlParser().parse(new FileInputStream(info.bndFilename));
+    info.bnd = (Bundle) new XmlParser(ModelContext.fullCoreContext()).parse(new FileInputStream(info.bndFilename));
     return info;
   }
 
@@ -92,21 +93,21 @@ public class SearchParameterCleanerUpper {
     
     System.out.println(rn+": "+rstatus.toCode()+". "+c+" search parameters fixed");
     if (c > 0) {
-      new XmlParser().setOutputStyle(OutputStyle.PRETTY).compose(new FileOutputStream(info.bndFilename), info.bnd);
+      new XmlParser(ModelContext.fullCoreContext()).setOutputStyle(OutputStyle.PRETTY).compose(new FileOutputStream(info.bndFilename), info.bnd);
     }
   }
 
 
   private int fixSearchResourcesTypeFilters(Bundle bnd, StandardsStatus rstatus, StructureDefinition sd) {
     int c = 0;
-    for (BundleEntryComponent be : bnd.getEntry()) {
+    for (BundleEntryComponent be : bnd.getEntryList()) {
       if (be.getResource() instanceof SearchParameter) {
         SearchParameter sp = (SearchParameter) be.getResource();
         ElementDefinition ed = getED(sd, sp.getExpression());
-        if (ed != null && ed.getType().size() > 1) {
+        if (ed != null && ed.getTypeList().size() > 1) {
           if (ed.getPath().equals(sp.getExpression()+"[x]")) {
             Set<String> types = new HashSet<>();
-            for (TypeRefComponent tr : ed.getType()) {
+            for (TypeRefComponent tr : ed.getTypeList()) {
               boolean ok = isCompatible(tr.getWorkingCode(), sp.getType());
               if (ok) {
                 types.add(tr.getWorkingCode());
@@ -161,7 +162,7 @@ public class SearchParameterCleanerUpper {
 
   private int liftSearchResources(Bundle bnd, StandardsStatus rstatus, StructureDefinition sd) {
     int c = 0;
-    for (BundleEntryComponent be : bnd.getEntry()) {
+    for (BundleEntryComponent be : bnd.getEntryList()) {
       if (be.getResource() instanceof SearchParameter) {
         SearchParameter sp = (SearchParameter) be.getResource();
         ElementDefinition ed = getED(sd, sp.getExpression());
@@ -182,7 +183,7 @@ public class SearchParameterCleanerUpper {
     if (expression == null) {
       return null;
     }
-    for (ElementDefinition ed : sd.getDifferential().getElement()) {
+    for (ElementDefinition ed : sd.getDifferential().getElementList()) {
       if (expression.equals(ed.getPath()) || (expression+"[x]").equals(ed.getPath())) {
         return ed;
       }
@@ -197,7 +198,7 @@ public class SearchParameterCleanerUpper {
 
   private int fixSearchResources(Bundle bnd, StandardsStatus value, StandardsStatus... existing) {
     int c = 0;
-    for (BundleEntryComponent be : bnd.getEntry()) {
+    for (BundleEntryComponent be : bnd.getEntryList()) {
        if (be.getResource() instanceof SearchParameter) {
          SearchParameter sp = (SearchParameter) be.getResource();
          StandardsStatus spstatus = ExtensionUtilities.getStandardsStatus(sp);

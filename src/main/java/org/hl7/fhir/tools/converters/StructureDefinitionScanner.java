@@ -5,17 +5,19 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 
+import org.apache.jena.rdf.model.Model;
 import org.hl7.fhir.exceptions.FHIRException;
-import org.hl7.fhir.r5.context.IWorkerContext;
-import org.hl7.fhir.r5.context.SimpleWorkerContext.SimpleWorkerContextBuilder;
-import org.hl7.fhir.r5.fhirpath.FHIRPathEngine;
-import org.hl7.fhir.r5.formats.IParser.OutputStyle;
-import org.hl7.fhir.r5.formats.JsonParser;
-import org.hl7.fhir.r5.formats.XmlParser;
-import org.hl7.fhir.r5.model.ElementDefinition;
-import org.hl7.fhir.r5.model.ElementDefinition.ElementDefinitionConstraintComponent;
-import org.hl7.fhir.r5.model.Resource;
-import org.hl7.fhir.r5.model.StructureDefinition;
+import org.hl7.fhir.model.ModelContext;
+import org.hl7.fhir.model.utilities.formats.OutputStyle;
+import org.hl7.fhir.services.context.IWorkerContext;
+import org.hl7.fhir.standalone.context.SimpleWorkerContext.SimpleWorkerContextBuilder;
+import org.hl7.fhir.services.fhirpath.FHIRPathEngine;
+import org.hl7.fhir.model.core.formats.JsonParser;
+import org.hl7.fhir.model.core.formats.XmlParser;
+import org.hl7.fhir.model.core.ElementDefinition;
+import org.hl7.fhir.model.core.ElementDefinition.ElementDefinitionConstraintComponent;
+import org.hl7.fhir.model.core.Resource;
+import org.hl7.fhir.model.core.StructureDefinition;
 import org.hl7.fhir.utilities.npm.FilesystemPackageCacheManager;
 import org.hl7.fhir.utilities.npm.NpmPackage;
 
@@ -31,7 +33,7 @@ public class StructureDefinitionScanner {
     System.out.println("Loading");
     FilesystemPackageCacheManager pcm = new FilesystemPackageCacheManager.Builder().build();
     NpmPackage npm = pcm.loadPackage("hl7.fhir.r5.core");
-    context = new SimpleWorkerContextBuilder().fromPackage(npm);
+    context = new SimpleWorkerContextBuilder(ModelContext.fullCoreContext()).fromPackage(npm);
     fpe = new FHIRPathEngine(context);
     System.out.println("Loaded");
     fix(file);
@@ -49,17 +51,17 @@ public class StructureDefinitionScanner {
         fix(f);
       } else if (f.getName().endsWith(".xml")) {
         try {
-          Resource res = new XmlParser().parse(new FileInputStream(f));
+          Resource res = new XmlParser(ModelContext.fullCoreContext()).parse(new FileInputStream(f));
           if (fixResource(res, f.getAbsolutePath())) {
-            new XmlParser().setOutputStyle(OutputStyle.PRETTY).compose(new FileOutputStream(f), res); 
+            new XmlParser(ModelContext.fullCoreContext()).setOutputStyle(OutputStyle.PRETTY).compose(new FileOutputStream(f), res);
           }
         } catch (Exception e) {
         }
       } else if (f.getName().endsWith(".json")) {
         try {
-          Resource res = new JsonParser().parse(new FileInputStream(f));
+          Resource res = new JsonParser(ModelContext.fullCoreContext()).parse(new FileInputStream(f));
           if (fixResource(res, f.getAbsolutePath())) {
-            new JsonParser().setOutputStyle(OutputStyle.PRETTY).compose(new FileOutputStream(f), res); 
+            new JsonParser(ModelContext.fullCoreContext()).setOutputStyle(OutputStyle.PRETTY).compose(new FileOutputStream(f), res);
           }
         } catch (Exception e) {
         }
@@ -72,12 +74,12 @@ public class StructureDefinitionScanner {
     if (res instanceof StructureDefinition) {
       StructureDefinition sd = (StructureDefinition) res;
 
-      for (ElementDefinition ed : sd.getDifferential().getElement()) {
+      for (ElementDefinition ed : sd.getDifferential().getElementList()) {
         if (ed.getShort().endsWith(".")) {
           result = true;
           ed.setShort(ed.getShort().substring(0, ed.getShort().length()-1));
         }
-        for (ElementDefinitionConstraintComponent inv : ed.getConstraint()) {
+        for (ElementDefinitionConstraintComponent inv : ed.getConstraintList()) {
           if (inv.hasExpression()) {
 //            try {
               count++;

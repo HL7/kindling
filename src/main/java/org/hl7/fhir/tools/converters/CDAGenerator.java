@@ -18,26 +18,27 @@ import javax.xml.parsers.ParserConfigurationException;
 
 import org.hl7.fhir.exceptions.DefinitionException;
 import org.hl7.fhir.exceptions.FHIRFormatError;
-import org.hl7.fhir.r5.conformance.XmlSchemaGenerator;
-import org.hl7.fhir.r5.conformance.profile.ProfileUtilities;
-import org.hl7.fhir.r5.formats.IParser.OutputStyle;
-import org.hl7.fhir.r5.formats.XmlParser;
-import org.hl7.fhir.r5.model.BooleanType;
-import org.hl7.fhir.r5.model.CodeType;
-import org.hl7.fhir.r5.model.DataType;
-import org.hl7.fhir.r5.model.ElementDefinition;
-import org.hl7.fhir.r5.model.ElementDefinition.ElementDefinitionBindingComponent;
-import org.hl7.fhir.r5.model.ElementDefinition.PropertyRepresentation;
-import org.hl7.fhir.r5.model.ElementDefinition.TypeRefComponent;
-import org.hl7.fhir.r5.model.Enumeration;
-import org.hl7.fhir.r5.model.Enumerations.BindingStrength;
-import org.hl7.fhir.r5.model.Enumerations.PublicationStatus;
-import org.hl7.fhir.r5.model.StringType;
-import org.hl7.fhir.r5.model.StructureDefinition;
-import org.hl7.fhir.r5.model.StructureDefinition.StructureDefinitionKind;
-import org.hl7.fhir.r5.model.StructureDefinition.TypeDerivationRule;
-import org.hl7.fhir.r5.model.UriType;
-import org.hl7.fhir.r5.extensions.ExtensionDefinitions;
+import org.hl7.fhir.model.Base;
+import org.hl7.fhir.model.utilities.formats.OutputStyle;
+import org.hl7.fhir.services.conformance.XmlSchemaGenerator;
+import org.hl7.fhir.services.conformance.profile.ProfileUtilities;
+import org.hl7.fhir.model.core.formats.XmlParser;
+import org.hl7.fhir.model.core.BooleanType;
+import org.hl7.fhir.model.core.CodeType;
+import org.hl7.fhir.model.core.DataType;
+import org.hl7.fhir.model.core.ElementDefinition;
+import org.hl7.fhir.model.core.ElementDefinition.ElementDefinitionBindingComponent;
+import org.hl7.fhir.model.core.ElementDefinition.PropertyRepresentation;
+import org.hl7.fhir.model.core.ElementDefinition.TypeRefComponent;
+import org.hl7.fhir.model.core.Enumeration;
+import org.hl7.fhir.model.core.Enumerations.BindingStrength;
+import org.hl7.fhir.model.core.Enumerations.PublicationStatus;
+import org.hl7.fhir.model.core.StringType;
+import org.hl7.fhir.model.core.StructureDefinition;
+import org.hl7.fhir.model.core.StructureDefinition.StructureDefinitionKind;
+import org.hl7.fhir.model.core.StructureDefinition.TypeDerivationRule;
+import org.hl7.fhir.model.core.UriType;
+import org.hl7.fhir.model.extensions.ExtensionDefinitions;
 import org.hl7.fhir.utilities.CommaSeparatedStringBuilder;
 import org.hl7.fhir.utilities.FileUtilities;
 import org.hl7.fhir.utilities.Utilities;
@@ -157,7 +158,7 @@ public class CDAGenerator {
     StringBuilder b = new StringBuilder();
     
     for (StructureDefinition sd : structures) {
-      new XmlParser().setOutputStyle(OutputStyle.PRETTY).compose(new FileOutputStream(Utilities.path(target, sd.getId()+".xml")), sd);
+      new XmlParser(sd.getModelContext()).setOutputStyle(OutputStyle.PRETTY).compose(new FileOutputStream(Utilities.path(target, sd.getId()+".xml")), sd);
       b.append("   <resource>\r\n"+
           "     <purpose value=\"logical\"/>\r\n"+
           "     <name value=\""+sd.getName()+"\"/>\r\n"+
@@ -174,13 +175,13 @@ public class CDAGenerator {
         System.out.println("Class "+sd.getId() +" : "+sd.getBaseDefinition().substring(40));
       else
         System.out.println("Class "+sd.getId());
-      for (ElementDefinition ed : sd.getDifferential().getElement()) {
+      for (ElementDefinition ed : sd.getDifferential().getElementList()) {
         CommaSeparatedStringBuilder b = new CommaSeparatedStringBuilder();
-        for (TypeRefComponent t : ed.getType()) {
+        for (TypeRefComponent t : ed.getTypeList()) {
           b.append(t.getWorkingCode());
         }
         CommaSeparatedStringBuilder b2 = new CommaSeparatedStringBuilder();
-        for (Enumeration<PropertyRepresentation> r : ed.getRepresentation())
+        for (Enumeration<PropertyRepresentation> r : ed.getRepresentationList())
           if (!r.asStringValue().equals("typeAttr"))
             b2.append(r.asStringValue());
         String s = Utilities.noString(b2.toString()) ? "" : " <<"+b2.toString()+">>";
@@ -223,12 +224,12 @@ public class CDAGenerator {
   }
 
   private void generateSnapShot(StructureDefinition sd) {
-    sd.getSnapshot().getElement().add(sd.getDifferential().getElement().get(0));
+    sd.getSnapshot().getElementList().add(sd.getDifferential().getElementList().get(0));
     generateSnapShot(sd, sd, sd.getId());
   }
 
   private void generateSnapShot(StructureDefinition dst, StructureDefinition src, String typeName) {
-    if (dst.hasSnapshot() && dst.getSnapshot().getElement().size() > 1)
+    if (dst.hasSnapshot() && dst.getSnapshot().getElementList().size() > 1)
       return;
     
     if (src.hasBaseDefinition()) {
@@ -236,21 +237,21 @@ public class CDAGenerator {
       if (dt != null)
         generateSnapShot(dst, dt, typeName);
     }
-    for (ElementDefinition ed : src.getDifferential().getElement()) {
+    for (ElementDefinition ed : src.getDifferential().getElementList()) {
       String path = ed.getPath();
       if (path.contains(".")) {
         path = typeName + path.substring(path.indexOf("."));
         seePath(path);
         boolean found = false;
-        for (ElementDefinition de : dst.getSnapshot().getElement()) {
+        for (ElementDefinition de : dst.getSnapshot().getElementList()) {
           if (de.getPath().equals(path)) 
             found = true;
         }
         if (!found) {
-          ElementDefinition ned = ed.copy();
+          ElementDefinition ned = ed.copy(Base.COPY_DATA);
           ned.setPath(path);
           ned.getBase().setPath(ed.getPath()).setMin(ned.getMin()).setMax(ned.getMax());
-          dst.getSnapshot().getElement().add(ned);
+          dst.getSnapshot().getElementList().add(ned);
         }
       } 
     }
@@ -298,7 +299,7 @@ public class CDAGenerator {
     edb.setMin(1);
     edb.setMax("*");
     edb.addType().setCode("Element");
-    sd.getDifferential().getElement().add(edb);
+    sd.getDifferential().getElementList().add(edb);
 
     ElementDefinition ed = new ElementDefinition();
     ed.setPath("SXPR_TS.comp");
@@ -310,7 +311,7 @@ public class CDAGenerator {
     ed.addType().setCode("http://hl7.org/fhir/cda/StructureDefinition/EIVL_TS");
     ed.addType().setCode("http://hl7.org/fhir/cda/StructureDefinition/PIVL_TS");
     ed.addType().setCode("http://hl7.org/fhir/cda/StructureDefinition/SXPR_TS");
-    sd.getDifferential().getElement().add(ed);
+    sd.getDifferential().getElementList().add(ed);
     
     new ProfileUtilities(null, null, null).setIds(sd, true);
     structures.add(sd);
@@ -344,7 +345,7 @@ public class CDAGenerator {
     edb.setMin(1);
     edb.setMax("*");
     edb.addType().setCode("Element");
-    sd.getDifferential().getElement().add(edb);
+    sd.getDifferential().getElementList().add(edb);
 
     ElementDefinition ed = new ElementDefinition();
     ed.setPath("InfrastructureRoot.realmCode");
@@ -353,7 +354,7 @@ public class CDAGenerator {
     ed.setMax("*");
     ed.setDefinition("When valued in an instance, this attribute signals the imposition of realm-specific constraints. The value of this attribute identifies the realm in question");
     ed.addType().setCode("http://hl7.org/fhir/cda/StructureDefinition/CS");
-    sd.getDifferential().getElement().add(ed);
+    sd.getDifferential().getElementList().add(ed);
     
     ed = new ElementDefinition();
     ed.setPath("InfrastructureRoot.typeId");
@@ -362,7 +363,7 @@ public class CDAGenerator {
     ed.setMax("1");
     ed.setDefinition("When valued in an instance, this attribute signals the imposition of constraints defined in an HL7-specified message type. This might be a common type (also known as CMET in the messaging communication environment), or content included within a wrapper. The value of this attribute provides a unique identifier for the type in question.");
     ed.addType().setCode("http://hl7.org/fhir/cda/StructureDefinition/II");
-    sd.getDifferential().getElement().add(ed);
+    sd.getDifferential().getElementList().add(ed);
     
     ed = new ElementDefinition();
     ed.setPath("InfrastructureRoot.templateId");
@@ -371,7 +372,7 @@ public class CDAGenerator {
     ed.setMax("*");
     ed.setDefinition("When valued in an instance, this attribute signals the imposition of a set of template-defined constraints. The value of this attribute provides a unique identifier for the templates in question");
     ed.addType().setCode("http://hl7.org/fhir/cda/StructureDefinition/II");
-    sd.getDifferential().getElement().add(ed);
+    sd.getDifferential().getElementList().add(ed);
     new ProfileUtilities(null, null, null).setIds(sd, true);
 
     structures.add(sd);
@@ -419,60 +420,60 @@ public class CDAGenerator {
       edb.setMin(1);
       edb.setMax("*");
       edb.addType().setCode("Element");
-      sd.getDifferential().getElement().add(edb);
+      sd.getDifferential().getElementList().add(edb);
 
       if (n.equals("ED"))
-        addEDElements(sd.getDifferential().getElement());
+        addEDElements(sd.getDifferential().getElementList());
       if (n.equals("SC"))
         copyAttributes(sd, getDefinition("CV"), "code", "codeSystem", "codeSystemVersion", "displayName");
       if (primitiveTypes.containsKey(n))
-        addValueAttribute(sd.getDifferential().getElement(), n, primitiveTypes.get(n));
+        addValueAttribute(sd.getDifferential().getElementList(), n, primitiveTypes.get(n));
       if (n.equals("TS"))
         edb.addExtension(ExtensionDefinitions.EXT_DATE_FORMAT, new CodeType("YYYYMMDDHHMMSS.UUUU[+|-ZZzz]"));
       if (n.equals("TEL"))
-        addValueAttribute(sd.getDifferential().getElement(), n, "uri");
+        addValueAttribute(sd.getDifferential().getElementList(), n, "uri");
       if (n.equals("SXCM_TS")) {
-        addOperatorAttribute(sd.getDifferential().getElement(), "SXCM_TS");
+        addOperatorAttribute(sd.getDifferential().getElementList(), "SXCM_TS");
         sd.setAbstract(true);
       }
       if (n.equals("AD")) {
-        addParts(sd.getDifferential().getElement(), n, "delimiter", "country", "state", "county", "city", "postalCode", "streetAddressLine", "houseNumber", 
+        addParts(sd.getDifferential().getElementList(), n, "delimiter", "country", "state", "county", "city", "postalCode", "streetAddressLine", "houseNumber",
             "houseNumberNumeric", "direction", "streetName", "streetNameBase", "streetNameType", "additionalLocator", "unitID", "unitType", "careOf", "censusTract", 
             "deliveryAddressLine", "deliveryInstallationType", "deliveryInstallationArea", "deliveryInstallationQualifier", "deliveryMode", "deliveryModeIdentifier", 
             "buildingNumberSuffix", "postBox", "precinct");
-        addTextItem(sd.getDifferential().getElement(), n);
+        addTextItem(sd.getDifferential().getElementList(), n);
       }
       if (n.equals("EN")) {
-        addParts(sd.getDifferential().getElement(), n, "delimiter", "family", "given", "prefix", "suffix");
-        addTextItem(sd.getDifferential().getElement(), n);
+        addParts(sd.getDifferential().getElementList(), n, "delimiter", "family", "given", "prefix", "suffix");
+        addTextItem(sd.getDifferential().getElementList(), n);
       }
       List<Element> props = new ArrayList<Element>();
       XMLUtil.getNamedChildren(dt, "mif:property", props);
       for (Element prop : props) {
-        processProperty(sd.getDifferential().getElement(), n, prop, p);
+        processProperty(sd.getDifferential().getElementList(), n, prop, p);
       }
         
       if (n.equals("TS") || n.equals("PQ") )
-        addInclusiveAttribute(sd.getDifferential().getElement(), n);
+        addInclusiveAttribute(sd.getDifferential().getElementList(), n);
       if (n.equals("CE") || n.equals("CV") || n.equals("CD") )
-        addCDExtensions(sd.getDifferential().getElement(), n);
+        addCDExtensions(sd.getDifferential().getElementList(), n);
       new ProfileUtilities(null, null, null).setIds(sd, true);
       structures.add(sd);
     }
   }
 
   private void copyAttributes(StructureDefinition target, StructureDefinition source, String... names) {
-    for (ElementDefinition ed : source.getDifferential().getElement()) {
+    for (ElementDefinition ed : source.getDifferential().getElementList()) {
       boolean copy = false;
       for (String name : names) {
         if (ed.getPath().endsWith("."+name))
           copy = true;
       }
       if (copy) {
-        ElementDefinition n = ed.copy();
+        ElementDefinition n = ed.copy(Base.COPY_DATA);
         n.setPath(ed.getPath().replace(source.getId(), target.getId()));
         seePath(n);
-        target.getDifferential().getElement().add(n);
+        target.getDifferential().getElementList().add(n);
       }
     }
   }
@@ -853,8 +854,8 @@ public class CDAGenerator {
 
 
   private void checkTypes(StructureDefinition sd) {
-    for (ElementDefinition ed : sd.getDifferential().getElement()) {
-      for (TypeRefComponent t : ed.getType()) {
+    for (ElementDefinition ed : sd.getDifferential().getElementList()) {
+      for (TypeRefComponent t : ed.getTypeList()) {
         checkType(t);
       }
     }
@@ -921,9 +922,9 @@ public class CDAGenerator {
     seePath(ed);
     ed.setMin(1);
     ed.setMax("1");
-    sd.getDifferential().getElement().add(ed);
-    sd.getSnapshot().getElement().add(popBase(ed));
-    processClassAttributes(classes, associations, sd.getDifferential().getElement(), sd.getSnapshot().getElement(), cclass, className, parentTarget);
+    sd.getDifferential().getElementList().add(ed);
+    sd.getSnapshot().getElementList().add(popBase(ed));
+    processClassAttributes(classes, associations, sd.getDifferential().getElementList(), sd.getSnapshot().getElementList(), cclass, className, parentTarget);
     new ProfileUtilities(null, null, null).setIds(sd, true);
     structures.add(sd);
   }
@@ -967,9 +968,9 @@ public class CDAGenerator {
 
 
   private void addAbstractClassAttributes(List<ElementDefinition> list, String path, StructureDefinition ir) {
-    for (ElementDefinition ed : ir.getDifferential().getElement()) {
+    for (ElementDefinition ed : ir.getDifferential().getElementList()) {
       if (ed.getPath().contains(".")) {
-        ElementDefinition ned = ed.copy();
+        ElementDefinition ned = ed.copy(Base.COPY_DATA);
         ned.setPath(path+"."+ed.getPath().substring(ed.getPath().lastIndexOf(".")+1));
         seePath(ned);
         list.add(ned);
@@ -1123,7 +1124,7 @@ public class CDAGenerator {
   }
 
   private ElementDefinition popBase(ElementDefinition ed) {
-    ElementDefinition result = ed.copy();
+    ElementDefinition result = ed.copy(Base.COPY_DATA);
     result.getBase().setPath(ed.getPath()).setMin(ed.getMin()).setMax(ed.getMax());
     return result;
   }

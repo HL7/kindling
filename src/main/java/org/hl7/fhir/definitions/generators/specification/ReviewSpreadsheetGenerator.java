@@ -16,10 +16,10 @@ import org.apache.poi.ss.usermodel.BorderStyle;
 import org.apache.poi.ss.usermodel.FillPatternType;
 import org.apache.poi.ss.usermodel.IndexedColors;
 import org.hl7.fhir.exceptions.FHIRException;
-import org.hl7.fhir.r5.conformance.profile.BindingResolution;
-import org.hl7.fhir.r5.conformance.profile.ProfileKnowledgeProvider;
-import org.hl7.fhir.r5.model.ElementDefinition;
-import org.hl7.fhir.r5.model.StructureDefinition;
+import org.hl7.fhir.services.conformance.profile.BindingResolution;
+import org.hl7.fhir.services.conformance.profile.ProfileKnowledgeProvider;
+import org.hl7.fhir.model.core.ElementDefinition;
+import org.hl7.fhir.model.core.StructureDefinition;
 
 public class ReviewSpreadsheetGenerator {
   private ProfileKnowledgeProvider pkp;
@@ -59,10 +59,10 @@ public class ReviewSpreadsheetGenerator {
     font.setFontName("Calibri");
     style = workbook.createCellStyle();
     
-    ElementDefinition ed = profile.getSnapshot().getElement().get(0);
+    ElementDefinition ed = profile.getSnapshot().getElementList().get(0);
     String path = ed.getPath();
     addRow(sheet, style, path+" : "+profile.getType(), profile.getName(), "", ed.getDefinition(), "");
-    processRows(workbook, path, profile, profile.getSnapshot().getElement(), 1, sheet, "  ");
+    processRows(workbook, path, profile, profile.getSnapshot().getElementList(), 1, sheet, "  ");
   }
 
   private String sanitize(String name) {
@@ -86,10 +86,10 @@ public class ReviewSpreadsheetGenerator {
       HSSFRow row = sheet.createRow(sheet.getPhysicalNumberOfRows());
       int c = 0;
       HSSFRichTextString richString;
-      if (ed.getType().size() == 0) {
+      if (ed.getTypeList().size() == 0) {
         richString = new HSSFRichTextString(indent+ed.getPath().substring(path.length()+1)+" ["+describeCardinality(ed)+"]");
-      } else if (ed.getType().size() == 1) {
-        richString = new HSSFRichTextString(indent+ed.getPath().substring(path.length()+1)+" : "+ed.getType().get(0).getWorkingCode()+" ["+describeCardinality(ed)+"]");
+      } else if (ed.getTypeList().size() == 1) {
+        richString = new HSSFRichTextString(indent+ed.getPath().substring(path.length()+1)+" : "+ed.getTypeList().get(0).getWorkingCode()+" ["+describeCardinality(ed)+"]");
         HSSFFont fontBlue = workbook.createFont();
         fontBlue.setFontName("Calibri");
         fontBlue.setColor(IndexedColors.DARK_BLUE.getIndex());
@@ -103,7 +103,7 @@ public class ReviewSpreadsheetGenerator {
       cell.setCellValue(richString);
       
       
-      if (ed.getType().size() == 0) {
+      if (ed.getTypeList().size() == 0) {
         cell = row.createCell(c++);
         cell.setCellStyle(style);
         cell.setCellValue(ed.getSliceName());
@@ -114,13 +114,13 @@ public class ReviewSpreadsheetGenerator {
         i++;
         if (i < list.size())
           i = processRows(workbook, ed.getPath(), profile, list, i, sheet, indent+"  ");
-      } else if (ed.getType().size() == 1) {
+      } else if (ed.getTypeList().size() == 1) {
         cell = row.createCell(c++);
         cell.setCellStyle(style);
-        if (ed.getType().get(0).hasProfile())
-          cell.setCellValue(ed.getType().get(0).getProfile().get(0).getValue());
-        if (ed.getType().get(0).hasTargetProfile())
-          cell.setCellValue(ed.getType().get(0).getTargetProfile().get(0).getValue());
+        if (ed.getTypeList().get(0).hasProfile())
+          cell.setCellValue(ed.getTypeList().get(0).getProfileList().get(0).getValue());
+        if (ed.getTypeList().get(0).hasTargetProfile())
+          cell.setCellValue(ed.getTypeList().get(0).getTargetProfileList().get(0).getValue());
         cell = row.createCell(c++);
         cell.setCellStyle(style);
         cell.setCellValue(describeBinding(profile, ed));

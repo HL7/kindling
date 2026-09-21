@@ -3,7 +3,7 @@ package org.hl7.fhir.definitions.uml;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.hl7.fhir.r5.model.Enumerations.BindingStrength;
+import org.hl7.fhir.model.core.Enumerations.BindingStrength;
 
 public class UMLAttribute extends UMLFeature {
 

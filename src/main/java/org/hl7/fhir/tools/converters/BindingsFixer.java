@@ -8,17 +8,18 @@ import java.util.Map;
 
 import org.hl7.fhir.definitions.model.BindingSpecification.BindingMethod;
 import org.hl7.fhir.definitions.parsers.spreadsheets.BindingsParser;
-import org.hl7.fhir.r5.extensions.ExtensionUtilities;
-import org.hl7.fhir.r5.formats.IParser.OutputStyle;
-import org.hl7.fhir.r5.formats.XmlParser;
-import org.hl7.fhir.r5.model.CodeSystem;
-import org.hl7.fhir.r5.model.CodeSystem.ConceptDefinitionComponent;
-import org.hl7.fhir.r5.model.Constants;
-import org.hl7.fhir.r5.model.Enumerations.PublicationStatus;
-import org.hl7.fhir.r5.model.ValueSet;
-import org.hl7.fhir.r5.terminologies.CodeSystemUtilities;
-import org.hl7.fhir.r5.terminologies.ValueSetUtilities;
-import org.hl7.fhir.r5.extensions.ExtensionDefinitions;
+import org.hl7.fhir.model.ModelContext;
+import org.hl7.fhir.model.extensions.ExtensionUtilities;
+import org.hl7.fhir.model.core.formats.XmlParser;
+import org.hl7.fhir.model.core.CodeSystem;
+import org.hl7.fhir.model.core.CodeSystem.ConceptDefinitionComponent;
+import org.hl7.fhir.model.core.Constants;
+import org.hl7.fhir.model.core.Enumerations.PublicationStatus;
+import org.hl7.fhir.model.core.ValueSet;
+import org.hl7.fhir.model.utilities.CodeSystemUtilities;
+import org.hl7.fhir.model.extensions.ExtensionDefinitions;
+import org.hl7.fhir.model.utilities.ValueSetUtilities;
+import org.hl7.fhir.model.utilities.formats.OutputStyle;
 import org.hl7.fhir.tools.publisher.KindlingUtilities;
 import org.hl7.fhir.utilities.FileUtilities;
 import org.hl7.fhir.utilities.Utilities;
@@ -62,17 +63,17 @@ public class BindingsFixer {
       if (method == BindingMethod.CodeList) {
         if (ref.startsWith("#valueset-"))
           throw new Exception("don't start code list references with #valueset-");
-        String vfn = Utilities.path(dir, "valueset-"+sfx+ref.substring(1)+".xml");
-        String cfn = Utilities.path(dir, "codesystem-"+sfx+ref.substring(1)+".xml");
+        String vfn = Utilities.path(dir, "valueset-" + sfx + ref.substring(1) + ".xml");
+        String cfn = Utilities.path(dir, "codesystem-" + sfx + ref.substring(1) + ".xml");
         File vf = new File(vfn);
         File cf = new File(cfn);
         if (!vf.exists()) {
-          System.out.println("Produce "+vfn);
+          System.out.println("Produce " + vfn);
           ValueSet vs = new ValueSet();
           ValueSetUtilities.makeShareable(vs, false);
           vs.setVersion(Constants.VERSION);
-          vs.setId(sfx+ref.substring(1));
-          vs.setUrl("http://hl7.org/fhir/ValueSet/"+sfx+ref.substring(1));
+          vs.setId(sfx + ref.substring(1));
+          vs.setUrl("http://hl7.org/fhir/ValueSet/" + sfx + ref.substring(1));
           vs.setDescription(sheet.getColumn(row, "Description"));
           vs.setName(bindingName);
           vs.setStatus(PublicationStatus.fromCode(sheet.getColumn(row, "Status")));
@@ -81,14 +82,14 @@ public class BindingsFixer {
 
           Sheet css = xls.getSheets().get(ref.substring(1));
           if (css == null) {
-            throw new Exception("Error parsing binding "+bindingName+": code list reference '"+ref+"' not resolved");
+            throw new Exception("Error parsing binding " + bindingName + ": code list reference '" + ref + "' not resolved");
           }
 
           CodeSystem cs = new CodeSystem();
           CodeSystemUtilities.makeShareable(cs, false);
           cs.setVersion(Constants.VERSION);
-          cs.setId(sfx+ref.substring(1));
-          cs.setUrl("http://hl7.org/fhir/"+sfx+ref.substring(1));          
+          cs.setId(sfx + ref.substring(1));
+          cs.setUrl("http://hl7.org/fhir/" + sfx + ref.substring(1));
           cs.setDescription(sheet.getColumn(row, "Description"));
           cs.setName(bindingName);
           cs.setStatus(PublicationStatus.fromCode(sheet.getColumn(row, "Status")));
@@ -96,15 +97,13 @@ public class BindingsFixer {
           KindlingUtilities.makeUniversal(cs);
 
           vs.getCompose().addInclude().setSystem(cs.getUrl());
-          
+
           processCodes(cs, css);
-          new XmlParser().setOutputStyle(OutputStyle.PRETTY).compose(new FileOutputStream(vf), vs);
-          new XmlParser().setOutputStyle(OutputStyle.PRETTY).compose(new FileOutputStream(cf), cs);
+          new XmlParser(ModelContext.fullCoreContext()).setOutputStyle(OutputStyle.PRETTY).compose(new FileOutputStream(vf), vs);
+          new XmlParser(ModelContext.fullCoreContext()).setOutputStyle(OutputStyle.PRETTY).compose(new FileOutputStream(cf), cs);
         }
       }
-  }
-
-
+    }
   }
 
   private static void processCodes(CodeSystem cs, Sheet sheet) throws Exception {

@@ -31,17 +31,17 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.hl7.fhir.definitions.generators.specification.ToolResourceUtilities;
-import org.hl7.fhir.r5.context.CanonicalResourceManager;
-import org.hl7.fhir.r5.extensions.ExtensionUtilities;
-import org.hl7.fhir.r5.model.CodeSystem;
-import org.hl7.fhir.r5.model.CodeSystem.ConceptDefinitionComponent;
-import org.hl7.fhir.r5.model.Enumerations.BindingStrength;
-import org.hl7.fhir.r5.model.Enumerations.PublicationStatus;
-import org.hl7.fhir.r5.model.ValueSet;
-import org.hl7.fhir.r5.model.ValueSet.ConceptReferenceComponent;
-import org.hl7.fhir.r5.model.ValueSet.ConceptSetComponent;
-import org.hl7.fhir.r5.terminologies.CodeSystemUtilities;
-import org.hl7.fhir.r5.extensions.ExtensionDefinitions;
+import org.hl7.fhir.standalone.context.CanonicalResourceManager;
+import org.hl7.fhir.model.extensions.ExtensionUtilities;
+import org.hl7.fhir.model.core.CodeSystem;
+import org.hl7.fhir.model.core.CodeSystem.ConceptDefinitionComponent;
+import org.hl7.fhir.model.core.Enumerations.BindingStrength;
+import org.hl7.fhir.model.core.Enumerations.PublicationStatus;
+import org.hl7.fhir.model.core.ValueSet;
+import org.hl7.fhir.model.core.ValueSet.ConceptReferenceComponent;
+import org.hl7.fhir.model.core.ValueSet.ConceptSetComponent;
+import org.hl7.fhir.model.utilities.CodeSystemUtilities;
+import org.hl7.fhir.model.extensions.ExtensionDefinitions;
 import org.hl7.fhir.utilities.StandardsStatus;
 
 /**
@@ -406,7 +406,7 @@ public class BindingSpecification {
 
   private void getAllCodesForValueSet(CanonicalResourceManager<CodeSystem> codeSystems, CanonicalResourceManager<ValueSet> valueSets, boolean wantComplete, ValueSet vs) throws Exception {
     if (vs.hasCompose()) {
-      for (ConceptSetComponent cc : vs.getCompose().getInclude()) {
+      for (ConceptSetComponent cc : vs.getCompose().getIncludeList()) {
         if (cc.hasFilter() && wantComplete)
           throw new Exception("Filters are not supported in this context (getting all codes for code generation");
         if (cc.hasValueSet() && wantComplete)
@@ -421,14 +421,14 @@ public class BindingSpecification {
           } else if (wantComplete)
             throw new Exception("Unable to expand value set "); 
         } else 
-          for (ConceptReferenceComponent c : cc.getConcept())
+          for (ConceptReferenceComponent c : cc.getConceptList())
             processCode(c, cc.getSystem());
       }
     }
   }
 
   private void getAllCodesForCodeSystem(CodeSystem cs) throws Exception {
-    for (ConceptDefinitionComponent c : cs.getConcept())
+    for (ConceptDefinitionComponent c : cs.getConceptList())
       processCode(cs, c, cs.getUrl(), null);
   }
   
@@ -451,7 +451,7 @@ public class BindingSpecification {
     code.setAbstract(CodeSystemUtilities.isNotSelectable(cs, c));
     code.setDeprecated(ExtensionUtilities.getStandardsStatus(c) == StandardsStatus.DEPRECATED);
     allCodes.add(code);
-    for (ConceptDefinitionComponent cc : c.getConcept())
+    for (ConceptDefinitionComponent cc : c.getConceptList())
       processCode(cs, cc, system, c.getCode());
   }
 

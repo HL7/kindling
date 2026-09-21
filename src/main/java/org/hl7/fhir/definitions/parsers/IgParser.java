@@ -22,31 +22,30 @@ import org.hl7.fhir.definitions.model.Profile;
 import org.hl7.fhir.definitions.model.Profile.ConformancePackageSourceType;
 import org.hl7.fhir.definitions.model.WorkGroup;
 import org.hl7.fhir.definitions.parsers.spreadsheets.OldSpreadsheetParser;
-import org.hl7.fhir.r5.conformance.profile.ProfileKnowledgeProvider;
-import org.hl7.fhir.r5.conformance.profile.ProfileUtilities;
-import org.hl7.fhir.r5.context.CanonicalResourceManager;
-import org.hl7.fhir.r5.extensions.ExtensionUtilities;
-import org.hl7.fhir.r5.formats.XmlParser;
-import org.hl7.fhir.r5.model.CodeSystem;
-import org.hl7.fhir.r5.model.CodeType;
-import org.hl7.fhir.r5.model.ConceptMap;
-import org.hl7.fhir.r5.model.DateTimeType;
-import org.hl7.fhir.r5.model.Enumerations.FHIRVersion;
-import org.hl7.fhir.r5.model.Extension;
-import org.hl7.fhir.r5.model.ImplementationGuide;
-import org.hl7.fhir.r5.model.ImplementationGuide.ImplementationGuideDefinitionGroupingComponent;
-import org.hl7.fhir.r5.model.ImplementationGuide.ImplementationGuideDefinitionPageComponent;
-import org.hl7.fhir.r5.model.ImplementationGuide.ImplementationGuideDefinitionResourceComponent;
-import org.hl7.fhir.r5.model.ImplementationGuide.ImplementationGuideDependsOnComponent;
-import org.hl7.fhir.r5.model.PackageInformation;
-import org.hl7.fhir.r5.model.Reference;
-import org.hl7.fhir.r5.model.Resource;
-import org.hl7.fhir.r5.model.ResourceType;
-import org.hl7.fhir.r5.model.StructureDefinition;
-import org.hl7.fhir.r5.model.StructureDefinition.StructureDefinitionKind;
-import org.hl7.fhir.r5.model.UriType;
-import org.hl7.fhir.r5.model.ValueSet;
-import org.hl7.fhir.r5.extensions.ExtensionDefinitions;
+import org.hl7.fhir.services.conformance.profile.ProfileKnowledgeProvider;
+import org.hl7.fhir.services.conformance.profile.ProfileUtilities;
+import org.hl7.fhir.standalone.context.CanonicalResourceManager;
+import org.hl7.fhir.model.extensions.ExtensionUtilities;
+import org.hl7.fhir.model.core.formats.XmlParser;
+import org.hl7.fhir.model.core.CodeSystem;
+import org.hl7.fhir.model.core.CodeType;
+import org.hl7.fhir.model.core.ConceptMap;
+import org.hl7.fhir.model.core.DateTimeType;
+import org.hl7.fhir.model.core.Enumerations.FHIRVersion;
+import org.hl7.fhir.model.core.Extension;
+import org.hl7.fhir.model.core.ImplementationGuide;
+import org.hl7.fhir.model.core.ImplementationGuide.ImplementationGuideDefinitionGroupingComponent;
+import org.hl7.fhir.model.core.ImplementationGuide.ImplementationGuideDefinitionPageComponent;
+import org.hl7.fhir.model.core.ImplementationGuide.ImplementationGuideDefinitionResourceComponent;
+import org.hl7.fhir.model.core.ImplementationGuide.ImplementationGuideDependsOnComponent;
+import org.hl7.fhir.model.core.PackageInformation;
+import org.hl7.fhir.model.core.Reference;
+import org.hl7.fhir.model.core.Resource;
+import org.hl7.fhir.model.core.StructureDefinition;
+import org.hl7.fhir.model.core.StructureDefinition.StructureDefinitionKind;
+import org.hl7.fhir.model.core.UriType;
+import org.hl7.fhir.model.core.ValueSet;
+import org.hl7.fhir.model.extensions.ExtensionDefinitions;
 import org.hl7.fhir.tools.publisher.BuildWorkerContext;
 import org.hl7.fhir.utilities.FileUtilities;
 import org.hl7.fhir.utilities.Logger;
@@ -119,7 +118,7 @@ return null;
     // first: parse the IG, then use it 
     String myRoot = Utilities.path(rootDir, "guides", igd.getCode());
     CSFile file = new CSFile(Utilities.path(rootDir, igd.getSource()));
-    ImplementationGuide ig = (ImplementationGuide) new XmlParser().parse(new FileInputStream(file));
+    ImplementationGuide ig = (ImplementationGuide) new XmlParser(context.getModelContext()).parse(new FileInputStream(file));
     if (!ig.getUrl().startsWith("http://hl7.org/fhir/")) // for things published in the hl7.org/fhir namespace...
       throw new Exception("Illegal namespace");
     if (!ig.getUrl().equals("http://hl7.org/fhir/"+ig.getId()))
@@ -132,7 +131,7 @@ return null;
     
     Map<String, Resource> resources = new HashMap<String, Resource>();
 
-    for (ImplementationGuideDependsOnComponent d : ig.getDependsOn()) {
+    for (ImplementationGuideDependsOnComponent d : ig.getDependsOnList()) {
       if (!loadedIgs.contains(d.getUri()))
         throw new Exception("Dependency on "+ig.getName()+" not satisfied: "+d.getUri());
     }
@@ -147,7 +146,7 @@ return null;
     List<Example> exr = new ArrayList<Example>();
     
     // first pass - verify the resources can be loaded
-      for (ImplementationGuideDefinitionResourceComponent r : ig.getDefinition().getResource()) {
+      for (ImplementationGuideDefinitionResourceComponent r : ig.getDefinition().getResourceList()) {
         if (!r.hasReference())
           throw new Exception("no source on resource in IG "+ig.getName());
         CSFile fn = new CSFile(Utilities.path(myRoot, r.getReference().getReference()));
@@ -158,9 +157,9 @@ return null;
         // we're going to try and load the resource directly.
         // if that fails, then we'll treat it as an example.
         boolean isExample = r.hasIsExample() && r.getIsExample();
-        ResourceType rt = null;
+        String rt = null;
         try {
-          rt = new XmlParser().parse(new FileInputStream(fn)).getResourceType();
+          rt = new XmlParser(context.getModelContext()).parse(new FileInputStream(fn)).getResourceType();
         } catch (Exception e) {
           rt = null;
           isExample = true;
@@ -172,15 +171,15 @@ return null;
           Example example = new Example(context, r.getName(), id, r.getDescription(), fn, false, ExampleType.XmlFile, false);
           example.setIg(igd.getCode());
           if (r.hasProfile()) {
-            example.setExampleFor(r.getProfile().get(0).asStringValue());
+            example.setExampleFor(r.getProfileList().get(0).asStringValue());
             example.setRegistered(true);
             exr.add(example);
           }
           igd.getExamples().add(example);
           r.setUserData(ToolResourceUtilities.NAME_RES_EXAMPLE, example);
-          r.setReference(new Reference(example.getId()+".html"));
-        } else if (rt == ResourceType.ValueSet) {
-          ValueSet vs = (ValueSet) new XmlParser().parse(new FileInputStream(fn));
+          r.setReference(new Reference(context.getModelContext(), example.getId()+".html"));
+        } else if (rt.equals("ValueSet")) {
+          ValueSet vs = (ValueSet) new XmlParser(context.getModelContext()).parse(new FileInputStream(fn));
           if (id.startsWith("valueset-"))
             id = id.substring(9);
           vs.setId(id);
@@ -200,7 +199,7 @@ return null;
               System.out.println("ValueSet "+vs.getUrl()+" WG mismatch 2: is "+ec+", want to set to "+committee);
           } 
           }
-          new CodeSystemConvertor(codeSystems, registry).convert(new XmlParser(), vs, fn.getAbsolutePath(), packageInfo);
+          new CodeSystemConvertor(codeSystems, registry).convert(new XmlParser(context.getModelContext()), vs, fn.getAbsolutePath(), packageInfo);
 //          if (id.contains(File.separator))
           igd.getValueSets().add(vs);
           if (!r.hasName())
@@ -208,10 +207,10 @@ return null;
           if (!r.hasDescription())
             r.setDescription(vs.getDescription());
           r.setUserData(ToolResourceUtilities.RES_ACTUAL_RESOURCE, vs);
-          r.setReference(new Reference(fn.getName()));
-        } else if (rt == ResourceType.StructureDefinition) {
+          r.setReference(new Reference(context.getModelContext(), fn.getName()));
+        } else if (rt.equals("StructureDefinition")) {
           StructureDefinition sd;
-          sd = (StructureDefinition) new XmlParser().parse(new CSFileInputStream(fn));
+          sd = (StructureDefinition) new XmlParser(context.getModelContext()).parse(new CSFileInputStream(fn));
           new ProfileUtilities(context, null, pkp).setIds(sd, false);
           if (sd.getKind() == StructureDefinitionKind.LOGICAL) {
             fn = new CSFile(Utilities.path(myRoot, r.getReference().getReference()));
@@ -240,7 +239,7 @@ return null;
             pr.getProfiles().add(cs);
             igd.getProfiles().add(pr);
           }
-        } else if (rt == ResourceType.Bundle) {
+        } else if (rt.equals("Bundle")) {
           Dictionary d = new Dictionary(id, r.getName(), igd.getCode(), fn.getAbsolutePath(), igd);
           igd.getDictionaries().add(d);
         } else 
@@ -255,7 +254,7 @@ return null;
 
       }
       // second pass: load the spreadsheets
-      for (ImplementationGuideDefinitionGroupingComponent p : ig.getDefinition().getGrouping()) {
+      for (ImplementationGuideDefinitionGroupingComponent p : ig.getDefinition().getGroupingList()) {
         if (!p.hasName())
           throw new Exception("no name on package in IG "+ig.getName());
       for (Extension ex : p.getExtension()) {
@@ -281,17 +280,17 @@ return null;
               ValueSet vs  = bs.getValueSet();
               String path = vs.getWebPath();
               path = path.substring(path.lastIndexOf("/")+1);              
-              ig.getDefinition().addResource().setName(vs.getName()).setDescription(vs.getDescription()).setReference(new Reference(path)).setUserData(ToolResourceUtilities.RES_ACTUAL_RESOURCE, vs);
+              ig.getDefinition().addResource().setName(vs.getName()).setDescription(vs.getDescription()).setReference(new Reference(context.getModelContext(), path)).setUserData(ToolResourceUtilities.RES_ACTUAL_RESOURCE, vs);
             }
           }
           // now, register resources for all the things in the spreadsheet
           for (ValueSet vs : sparser.getValuesets()) 
-            ig.getDefinition().addResource().setIsExample(false).setName(vs.getName()).setDescription(vs.getDescription()).setReference(new Reference("valueset-"+vs.getId()+".html")).setUserData(ToolResourceUtilities.RES_ACTUAL_RESOURCE, vs);
+            ig.getDefinition().addResource().setIsExample(false).setName(vs.getName()).setDescription(vs.getDescription()).setReference(new Reference(context.getModelContext(), "valueset-"+vs.getId()+".html")).setUserData(ToolResourceUtilities.RES_ACTUAL_RESOURCE, vs);
           for (StructureDefinition exd : pr.getExtensions()) 
-            ig.getDefinition().addResource().setIsExample(false).setName(exd.getName()).setDescription(exd.getDescription()).setReference(new Reference("extension-"+exd.getId().toLowerCase()+".html")).setUserData(ToolResourceUtilities.RES_ACTUAL_RESOURCE, exd);
+            ig.getDefinition().addResource().setIsExample(false).setName(exd.getName()).setDescription(exd.getDescription()).setReference(new Reference(context.getModelContext(), "extension-"+exd.getId().toLowerCase()+".html")).setUserData(ToolResourceUtilities.RES_ACTUAL_RESOURCE, exd);
           for (ConstraintStructure cs : pr.getProfiles()) {
             cs.setResourceInfo(ig.getDefinition().addResource());
-            cs.getResourceInfo().setIsExample(false).setName(cs.getDefn().getName()).setDescription(cs.getDefn().getDefinition()).setReference(new Reference(cs.getId().toLowerCase()+".html"));
+            cs.getResourceInfo().setIsExample(false).setName(cs.getDefn().getName()).setDescription(cs.getDefn().getDefinition()).setReference(new Reference(context.getModelContext(), cs.getId().toLowerCase()+".html"));
           }
         }
         if (ex.getUrl().equals(ToolResourceUtilities.EXT_LOGICAL_SPREADSHEET)) {
@@ -445,7 +444,7 @@ return null;
       checkExists(igd, page.getName());
       igd.getPageList().add(page.getName());
     }
-    for (ImplementationGuideDefinitionPageComponent pp : page.getPage()) {
+    for (ImplementationGuideDefinitionPageComponent pp : page.getPageList()) {
       processPage(pp, igd);
     }
   }

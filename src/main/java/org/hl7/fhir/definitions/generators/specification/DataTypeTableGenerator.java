@@ -3,7 +3,7 @@ package org.hl7.fhir.definitions.generators.specification;
 import java.util.Set;
 
 import org.hl7.fhir.definitions.model.ElementDefn;
-import org.hl7.fhir.r5.model.Enumerations.FHIRVersion;
+import org.hl7.fhir.model.core.Enumerations.FHIRVersion;
 import org.hl7.fhir.tools.publisher.PageProcessor;
 import org.hl7.fhir.utilities.StandardsStatus;
 import org.hl7.fhir.utilities.i18n.RenderingI18nContext;

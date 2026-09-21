@@ -46,7 +46,7 @@ public class Config {
   
 
 " * #%L\r\n"+
-" * org.hl7.fhir.r5\r\n"+
+" * org.hl7.fhir.services\r\n"+
 " * %%\r\n"+
 " * Copyright (C) 2014 - 2019 Health Level 7\r\n"+
 " * %%\r\n"+

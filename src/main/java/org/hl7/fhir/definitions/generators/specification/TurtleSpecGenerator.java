@@ -14,9 +14,9 @@ import org.hl7.fhir.definitions.model.ElementDefn;
 import org.hl7.fhir.definitions.model.Invariant;
 import org.hl7.fhir.definitions.model.ProfiledType;
 import org.hl7.fhir.definitions.model.TypeRef;
-import org.hl7.fhir.r5.model.StructureDefinition;
-import org.hl7.fhir.r5.utils.TypesUtilities;
+import org.hl7.fhir.model.core.StructureDefinition;
 import org.hl7.fhir.rdf.FHIRResourceFactory;
+import org.hl7.fhir.services.utilities.TypesUtilities;
 import org.hl7.fhir.tools.publisher.PageProcessor;
 import org.hl7.fhir.utilities.Utilities;
 

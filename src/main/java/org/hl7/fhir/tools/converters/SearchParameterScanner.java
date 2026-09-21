@@ -4,14 +4,12 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 
-import org.hl7.fhir.r5.formats.JsonParser;
-import org.hl7.fhir.r5.formats.XmlParser;
-import org.hl7.fhir.r5.model.Bundle;
-import org.hl7.fhir.r5.model.Bundle.BundleEntryComponent;
-import org.hl7.fhir.r5.model.Enumeration;
-import org.hl7.fhir.r5.model.Enumerations.VersionIndependentResourceTypesAll;
-import org.hl7.fhir.r5.model.Resource;
-import org.hl7.fhir.r5.model.SearchParameter;
+import org.apache.jena.rdf.model.ModelCon;
+import org.hl7.fhir.model.ModelContext;
+import org.hl7.fhir.model.core.*;
+import org.hl7.fhir.model.core.formats.JsonParser;
+import org.hl7.fhir.model.core.formats.XmlParser;
+import org.hl7.fhir.model.core.Bundle.BundleEntryComponent;
 import org.hl7.fhir.utilities.CommaSeparatedStringBuilder;
 import org.hl7.fhir.utilities.Utilities;
 
@@ -47,13 +45,13 @@ public class SearchParameterScanner {
         scan(f, resources);
       } else if (f.getName().endsWith(".xml")) {
         try {
-          Resource res = new XmlParser().parse(new FileInputStream(f));
+          Resource res = new XmlParser(ModelContext.fullCoreContext()).parse(new FileInputStream(f));
           scan(res, f.getAbsolutePath(), resources); 
         } catch (Exception e) {
         }
       } else if (f.getName().endsWith(".json")) {
         try {
-          Resource res = new JsonParser().parse(new FileInputStream(f));
+          Resource res = new JsonParser(ModelContext.fullCoreContext()).parse(new FileInputStream(f));
           scan(res, f.getAbsolutePath(), resources); 
         } catch (Exception e) {
         }
@@ -64,7 +62,7 @@ public class SearchParameterScanner {
 
   private void scan(Resource res, String absolutePath, String[] resources) {
     if (res instanceof Bundle) {
-      for (BundleEntryComponent be : ((Bundle) res).getEntry()) {
+      for (BundleEntryComponent be : ((Bundle) res).getEntryList()) {
         if (be.hasResource()) {
           scan(be.getResource(), absolutePath, resources);
         }
@@ -73,14 +71,14 @@ public class SearchParameterScanner {
       SearchParameter sp = (SearchParameter) res;
       boolean in = false;
       CommaSeparatedStringBuilder b = new CommaSeparatedStringBuilder();
-      for (Enumeration<VersionIndependentResourceTypesAll> base : sp.getBase()) {
+      for (UriType base : sp.getBaseList()) {
         b.append(base.toString());
         if (Utilities.existsInList(base.asStringValue(), resources)) {
           in = true;
         }
       }
       CommaSeparatedStringBuilder b2 = new CommaSeparatedStringBuilder();
-      for (Enumeration<VersionIndependentResourceTypesAll> base : sp.getTarget()) {
+      for (UriType base : sp.getTargetList()) {
         b2.append(base.toString());
         if (Utilities.existsInList(base.asStringValue(), resources)) {
           in = true;

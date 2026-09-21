@@ -50,14 +50,15 @@ import org.hl7.fhir.definitions.model.PrimitiveType;
 import org.hl7.fhir.definitions.model.ProfiledType;
 import org.hl7.fhir.definitions.model.ResourceDefn;
 import org.hl7.fhir.definitions.model.TypeRef;
-import org.hl7.fhir.r5.model.CodeSystem;
-import org.hl7.fhir.r5.model.CodeSystem.ConceptDefinitionComponent;
-import org.hl7.fhir.r5.model.CodeSystem.ConceptDefinitionDesignationComponent;
-import org.hl7.fhir.r5.model.Enumerations.BindingStrength;
-import org.hl7.fhir.r5.model.ValueSet;
-import org.hl7.fhir.r5.model.ValueSet.ConceptSetComponent;
-import org.hl7.fhir.r5.model.ValueSet.ValueSetExpansionContainsComponent;
-import org.hl7.fhir.r5.utils.TypesUtilities;
+import org.hl7.fhir.model.Base;
+import org.hl7.fhir.model.core.CodeSystem;
+import org.hl7.fhir.model.core.CodeSystem.ConceptDefinitionComponent;
+import org.hl7.fhir.model.core.CodeSystem.ConceptDefinitionDesignationComponent;
+import org.hl7.fhir.model.core.Enumerations.BindingStrength;
+import org.hl7.fhir.model.core.ValueSet;
+import org.hl7.fhir.model.core.ValueSet.ConceptSetComponent;
+import org.hl7.fhir.model.core.ValueSet.ValueSetExpansionContainsComponent;
+import org.hl7.fhir.services.utilities.TypesUtilities;
 import org.hl7.fhir.tools.publisher.BuildWorkerContext;
 import org.hl7.fhir.utilities.UserDataNames;
 import org.hl7.fhir.utilities.Utilities;
@@ -169,7 +170,7 @@ public class XSDBaseGenerator  extends XSDRootGenerator {
     }
     boolean ok = cd.getBinding() == (BindingSpecification.BindingMethod.CodeList) || (cd.getStrength() == BindingStrength.REQUIRED && cd.getBinding() == BindingMethod.ValueSet);
     if (ok) {
-      if (cd.getValueSet() != null && cd.getValueSet().hasCompose() && cd.getValueSet().getCompose().getInclude().size() == 1) {
+      if (cd.getValueSet() != null && cd.getValueSet().hasCompose() && cd.getValueSet().getCompose().getIncludeList().size() == 1) {
         ConceptSetComponent inc = cd.getValueSet().getCompose().getIncludeFirstRep();
         if (inc.hasSystem() && !inc.hasFilter() && !inc.hasConcept() && !inc.getSystem().startsWith("http://hl7.org/fhir"))
           ok = false;
@@ -560,8 +561,8 @@ public class XSDBaseGenerator  extends XSDRootGenerator {
       throw new Error("Missing value set "+bs.getName());
     }
     if ("http://hl7.org/fhir/ValueSet/extended-resource-types".equals(vs.getUrl())) {
-      vs = vs.copy();
-      vs.getCompose().getInclude().remove(2); // remove the reference to additional resources
+      vs = vs.copy(Base.COPY_DATA);
+      vs.getCompose().getIncludeList().remove(2); // remove the reference to additional resources
     }
     String en = namify(vs.getName());
     if (genEnums.contains(en))
@@ -578,9 +579,9 @@ public class XSDBaseGenerator  extends XSDRootGenerator {
     ex.setUserData(UserDataNames.EXPANSION_PURPOSE, "xsd");
     if (ex == null)
       throw new Error("The expansion for "+bs.getName()+" is null");
-    if (ex.getExpansion().getContains().isEmpty())
+    if (ex.getExpansion().getContainsList().isEmpty())
       throw new Error("The expansion for "+bs.getName()+" is empty");
-    for (ValueSetExpansionContainsComponent cc : ex.getExpansion().getContains()) {
+    for (ValueSetExpansionContainsComponent cc : ex.getExpansion().getContainsList()) {
       genIncludedCode(cc);
     }
       write("    </xs:restriction>\r\n");
@@ -607,9 +608,9 @@ public class XSDBaseGenerator  extends XSDRootGenerator {
     write("          <xs:documentation xml:lang=\"en\">" + Utilities.escapeXml(cc.getDisplay()) + "</xs:documentation>\r\n"); // todo: do we need to look the definition up?
     CodeSystem cs = workerContext.fetchCodeSystem(cc.getSystem());
     if (cs != null && cc.hasCode()) {
-      ConceptDefinitionComponent c = getCodeDefinition(cc.getCode(), cs.getConcept());
+      ConceptDefinitionComponent c = getCodeDefinition(cc.getCode(), cs.getConceptList());
       if (c != null && c.hasDesignation()) {
-        for (ConceptDefinitionDesignationComponent l : c.getDesignation()) {
+        for (ConceptDefinitionDesignationComponent l : c.getDesignationList()) {
           if (l.hasLanguage() && !(l.getLanguage().equals("en") && l.getValue().equals(cc.getDisplay()))) {
             write("          <xs:documentation xml:lang=\""+l.getLanguage()+"\">"+Utilities.escapeXml(l.getValue())+"</xs:documentation>\r\n");
           }
@@ -625,7 +626,7 @@ public class XSDBaseGenerator  extends XSDRootGenerator {
       if (code.equals(cc.getCode())) {
         return cc;
       }
-      ConceptDefinitionComponent t = getCodeDefinition(code, cc.getConcept());
+      ConceptDefinitionComponent t = getCodeDefinition(code, cc.getConceptList());
       if (t != null)
         return t;
     }

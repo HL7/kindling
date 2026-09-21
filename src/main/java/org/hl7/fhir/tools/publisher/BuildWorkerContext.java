@@ -19,44 +19,37 @@ import org.apache.commons.lang3.NotImplementedException;
 import org.fhir.ucum.UcumEssenceService;
 import org.fhir.ucum.UcumException;
 import org.fhir.ucum.UcumService;
+import org.hl7.fhir.convertors.txClient.TerminologyClientNR5;
 import org.hl7.fhir.definitions.model.Definitions;
 import org.hl7.fhir.exceptions.DefinitionException;
 import org.hl7.fhir.exceptions.FHIRException;
 import org.hl7.fhir.exceptions.TerminologyServiceException;
-import org.hl7.fhir.r5.conformance.profile.BindingResolution;
-import org.hl7.fhir.r5.conformance.profile.ProfileKnowledgeProvider;
-import org.hl7.fhir.r5.conformance.profile.ProfileUtilities;
-import org.hl7.fhir.r5.context.BaseWorkerContext;
-import org.hl7.fhir.r5.context.CanonicalResourceManager;
-import org.hl7.fhir.r5.context.HTMLClientLogger;
-import org.hl7.fhir.r5.context.IContextResourceLoader;
-import org.hl7.fhir.r5.context.IWorkerContext;
-import org.hl7.fhir.r5.context.SimpleWorkerContext.PackageResourceLoader;
-import org.hl7.fhir.r5.model.CodeSystem;
-import org.hl7.fhir.r5.model.CodeSystem.ConceptDefinitionComponent;
-import org.hl7.fhir.r5.model.CodeSystem.ConceptDefinitionDesignationComponent;
-import org.hl7.fhir.r5.model.ConceptMap;
-import org.hl7.fhir.r5.model.ElementDefinition.ElementDefinitionBindingComponent;
-import org.hl7.fhir.r5.model.ElementDefinition.TypeRefComponent;
-import org.hl7.fhir.r5.model.Enumerations.CodeSystemContentMode;
-import org.hl7.fhir.r5.model.ImplementationGuide;
-import org.hl7.fhir.r5.model.OperationOutcome;
-import org.hl7.fhir.r5.model.PackageInformation;
-import org.hl7.fhir.r5.model.Parameters;
-import org.hl7.fhir.r5.model.Parameters.ParametersParameterComponent;
-import org.hl7.fhir.r5.model.Resource;
-import org.hl7.fhir.r5.model.StringType;
-import org.hl7.fhir.r5.model.StructureDefinition;
-import org.hl7.fhir.r5.model.StructureDefinition.StructureDefinitionKind;
-import org.hl7.fhir.r5.model.StructureDefinition.TypeDerivationRule;
-import org.hl7.fhir.r5.model.ValueSet;
-import org.hl7.fhir.r5.model.ValueSet.ConceptSetComponent;
-import org.hl7.fhir.r5.model.ValueSet.ValueSetExpansionContainsComponent;
-import org.hl7.fhir.r5.terminologies.client.ITerminologyClient;
-import org.hl7.fhir.r5.terminologies.client.TerminologyClientR5;
-import org.hl7.fhir.r5.terminologies.utilities.ValidationResult;
-import org.hl7.fhir.r5.utils.client.EFhirClientException;
-import org.hl7.fhir.r5.utils.validation.IResourceValidator;
+import org.hl7.fhir.model.ModelContext;
+import org.hl7.fhir.model.core.*;
+import org.hl7.fhir.r5.terminologies.client.TerminologyClient5R5;
+import org.hl7.fhir.services.client.EFhirClientException;
+import org.hl7.fhir.services.client.ITerminologyClientN;
+import org.hl7.fhir.services.conformance.profile.BindingResolution;
+import org.hl7.fhir.services.conformance.profile.ProfileKnowledgeProvider;
+import org.hl7.fhir.services.conformance.profile.ProfileUtilities;
+import org.hl7.fhir.services.context.IContextResourceLoaderN;
+import org.hl7.fhir.services.terminology.ValidationResult;
+import org.hl7.fhir.services.validation.IResourceValidator;
+import org.hl7.fhir.standalone.context.BaseWorkerContext;
+import org.hl7.fhir.standalone.context.CanonicalResourceManager;
+import org.hl7.fhir.services.utilities.HTMLClientLogger;
+import org.hl7.fhir.services.context.IWorkerContext;
+import org.hl7.fhir.model.core.CodeSystem.ConceptDefinitionComponent;
+import org.hl7.fhir.model.core.CodeSystem.ConceptDefinitionDesignationComponent;
+import org.hl7.fhir.model.core.ElementDefinition.ElementDefinitionBindingComponent;
+import org.hl7.fhir.model.core.ElementDefinition.TypeRefComponent;
+import org.hl7.fhir.model.core.Enumerations.CodeSystemContentMode;
+import org.hl7.fhir.model.core.Parameters.ParametersParameterComponent;
+import org.hl7.fhir.model.core.StructureDefinition.StructureDefinitionKind;
+import org.hl7.fhir.model.core.StructureDefinition.TypeDerivationRule;
+import org.hl7.fhir.model.core.ValueSet.ConceptSetComponent;
+import org.hl7.fhir.model.core.ValueSet.ValueSetExpansionContainsComponent;
+import org.hl7.fhir.standalone.context.PackageResourceLoader;
 import org.hl7.fhir.utilities.CommaSeparatedStringBuilder;
 import org.hl7.fhir.utilities.Utilities;
 import org.hl7.fhir.utilities.filesystem.CSFileInputStream;
@@ -73,6 +66,7 @@ import org.hl7.fhir.utilities.validation.ValidationMessage.Source;
 import org.hl7.fhir.utilities.validation.ValidationOptions;
 import org.hl7.fhir.utilities.xml.XMLUtil;
 import org.hl7.fhir.utilities.xml.XMLWriter;
+import org.jspecify.annotations.NonNull;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.xml.sax.SAXException;
@@ -113,8 +107,8 @@ public class BuildWorkerContext extends BaseWorkerContext implements IWorkerCont
   private boolean serverOk = false;
   private List<String> loadedPackages = new ArrayList<>();
 
-  public BuildWorkerContext(Definitions definitions, String terminologyCachePath, ITerminologyClient client, CanonicalResourceManager<CodeSystem> codeSystems, CanonicalResourceManager<ValueSet> valueSets, CanonicalResourceManager<ConceptMap> maps, CanonicalResourceManager<StructureDefinition> profiles, CanonicalResourceManager<ImplementationGuide> guides, String folder) throws UcumException, ParserConfigurationException, SAXException, IOException, FHIRException {
-    super(codeSystems, valueSets, maps, profiles, guides);
+  public BuildWorkerContext(Definitions definitions, String terminologyCachePath, ITerminologyClientN client, CanonicalResourceManager<CodeSystem> codeSystems, CanonicalResourceManager<ValueSet> valueSets, CanonicalResourceManager<ConceptMap> maps, CanonicalResourceManager<StructureDefinition> profiles, CanonicalResourceManager<ImplementationGuide> guides, String folder) throws UcumException, ParserConfigurationException, SAXException, IOException, FHIRException {
+    super(ModelContext.fullCoreContext(), codeSystems, valueSets, maps, profiles, guides);
     initTxCache(terminologyCachePath);
     this.definitions = definitions;
     this.terminologyClientManager.setMasterClient(client, true);
@@ -138,7 +132,7 @@ public class BuildWorkerContext extends BaseWorkerContext implements IWorkerCont
     return terminologyClientManager.hasClient();
   }
 
-  public ITerminologyClient getClient() {
+  public ITerminologyClientN getClient() {
     return terminologyClientManager.getMasterClient();
   }
 
@@ -151,7 +145,7 @@ public class BuildWorkerContext extends BaseWorkerContext implements IWorkerCont
       StructureDefinition res = getStructure(url);
       if (res == null)
         return null;
-      if (res.getSnapshot() == null || res.getSnapshot().getElement().isEmpty())
+      if (res.getSnapshot() == null || res.getSnapshot().getElementList().isEmpty())
         throw new Exception("no snapshot on extension for url " + url);
       return res;
     }
@@ -179,7 +173,7 @@ public class BuildWorkerContext extends BaseWorkerContext implements IWorkerCont
 
   public StructureDefinition getTypeStructure(TypeRefComponent type) {
     if (type.hasProfile())
-      return getStructure(type.getProfile().get(0).getValue());
+      return getStructure(type.getProfileList().get(0).getValue());
     else
       return getStructure(type.getWorkingCode());
   }
@@ -244,7 +238,7 @@ public class BuildWorkerContext extends BaseWorkerContext implements IWorkerCont
       }     
     CodeSystem cs = fetchCodeSystem(system);
     if (cs != null)
-      return findCodeInConcept(cs.getConcept(), code);
+      return findCodeInConcept(cs.getConceptList(), code);
     return null;
   }
 
@@ -315,7 +309,7 @@ public class BuildWorkerContext extends BaseWorkerContext implements IWorkerCont
   }
 
   private ValidationResult verifyCode(CodeSystem cs, String code, String display) throws Exception {
-    ConceptDefinitionComponent cc = findCodeInConcept(cs.getConcept(), code);
+    ConceptDefinitionComponent cc = findCodeInConcept(cs.getConceptList(), code);
     if (cc == null)
       return new ValidationResult(IssueSeverity.ERROR, "Unknown Code "+code+" in "+cs.getUrl(), null);
     if (display == null)
@@ -326,7 +320,7 @@ public class BuildWorkerContext extends BaseWorkerContext implements IWorkerCont
       if (display.equalsIgnoreCase(cc.getDisplay()))
         return new ValidationResult(cs.getUrl(), null, cc, null);
     }
-    for (ConceptDefinitionDesignationComponent ds : cc.getDesignation()) {
+    for (ConceptDefinitionDesignationComponent ds : cc.getDesignationList()) {
       b.append(ds.getValue());
       if (display.equalsIgnoreCase(ds.getValue()))
         return new ValidationResult(cs.getUrl(), null, cc, null);
@@ -338,7 +332,7 @@ public class BuildWorkerContext extends BaseWorkerContext implements IWorkerCont
     for (ValueSetExpansionContainsComponent cc : contains) {
       if (code.equals(cc.getCode()))
         return cc;
-      ValueSetExpansionContainsComponent c = findCode(cc.getContains(), code);
+      ValueSetExpansionContainsComponent c = findCode(cc.getContainsList(), code);
       if (c != null)
         return c;
     }
@@ -349,7 +343,7 @@ public class BuildWorkerContext extends BaseWorkerContext implements IWorkerCont
     for (ConceptDefinitionComponent cc : concept) {
       if (code.equals(cc.getCode()))
         return cc;
-      ConceptDefinitionComponent c = findCodeInConcept(cc.getConcept(), code);
+      ConceptDefinitionComponent c = findCodeInConcept(cc.getConceptList(), code);
       if (c != null)
         return c;
     }
@@ -500,7 +494,7 @@ public class BuildWorkerContext extends BaseWorkerContext implements IWorkerCont
         triedServer = true;
         // for this, we use the FHIR client
         if (terminologyClientManager.getMasterClient() == null) {
-          terminologyClientManager.setMasterClient(new TerminologyClientR5("tx.fhir.org", "?", "fhir/main-build"), true);
+          terminologyClientManager.setMasterClient(new TerminologyClientNR5("tx.fhir.org", "?", "fhir/main-build", this.modelContext), true);
           this.txLog = new HTMLClientLogger(null);
         }
         Map<String, String> params = new HashMap<String, String>();
@@ -508,7 +502,7 @@ public class BuildWorkerContext extends BaseWorkerContext implements IWorkerCont
         params.put("system", "http://loinc.org");
         Parameters result = terminologyClientManager.getMasterClient().lookupCode(params);
 
-        for (ParametersParameterComponent p : result.getParameter()) {
+        for (ParametersParameterComponent p : result.getParameterList()) {
           if (p.getName().equals("display"))
             return ((StringType) p.getValue()).asStringValue();
         }
@@ -526,7 +520,7 @@ public class BuildWorkerContext extends BaseWorkerContext implements IWorkerCont
 
   private String systems(ValueSet vs) {
     CommaSeparatedStringBuilder b = new CommaSeparatedStringBuilder();
-    for (ConceptSetComponent inc : vs.getCompose().getInclude())
+    for (ConceptSetComponent inc : vs.getCompose().getIncludeList())
       b.append(inc.getSystem());
     return b.toString();
   }
@@ -695,7 +689,7 @@ public class BuildWorkerContext extends BaseWorkerContext implements IWorkerCont
   }
 
   @Override
-  public BindingResolution resolveBinding(StructureDefinition def, String url, String path, org.hl7.fhir.r5.model.Element context) throws FHIRException {
+  public BindingResolution resolveBinding(StructureDefinition def, String url, String path, org.hl7.fhir.model.core.Element context) throws FHIRException {
     throw new Error("Not done yet");
   }
 
@@ -716,7 +710,7 @@ public class BuildWorkerContext extends BaseWorkerContext implements IWorkerCont
   }
 
   @Override
-  public int loadFromPackage(NpmPackage pi, IContextResourceLoader loader) throws FileNotFoundException, IOException, FHIRException {
+  public int loadFromPackage(NpmPackage pi, IContextResourceLoaderN loader) throws FileNotFoundException, IOException, FHIRException {
     return loadFromPackageInt(pi, loader, loader == null ? defaultTypesToLoad() : loader.getTypes());
   }
 
@@ -743,11 +737,11 @@ public class BuildWorkerContext extends BaseWorkerContext implements IWorkerCont
   }
 
   @Override
-  public int loadFromPackageAndDependencies(NpmPackage pi, IContextResourceLoader loader, BasePackageCacheManager pcm) throws FileNotFoundException, IOException, FHIRException {
+  public int loadFromPackageAndDependencies(NpmPackage pi, IContextResourceLoaderN loader, BasePackageCacheManager pcm) throws FileNotFoundException, IOException, FHIRException {
     throw new Error("Not implemented yet");
   }
 
-  public int loadFromPackageInt(NpmPackage pi, IContextResourceLoader loader, Set<String> types) throws FileNotFoundException, IOException, FHIRException {
+  public int loadFromPackageInt(NpmPackage pi, IContextResourceLoaderN loader, Set<String> types) throws FileNotFoundException, IOException, FHIRException {
     int t = 0;
     System.out.println("Load Package "+pi.name()+"#"+pi.version());
     if (loadedPackages .contains(pi.id()+"#"+pi.version())) {
@@ -762,7 +756,7 @@ public class BuildWorkerContext extends BaseWorkerContext implements IWorkerCont
     PackageInformation pii = new PackageInformation(pi);
     for (PackageResourceInformation pri : pi.listIndexedResources(types)) {
       try {
-        registerResourceFromPackage(new PackageResourceLoader(pri, loader, pii), new PackageInformation(pi.id(), pi.version(), pi.dateAsDate()));
+        registerResourceFromPackage(new PackageResourceLoader(pri, loader, pii, this), new PackageInformation(pi.id(), pi.version(), pi.dateAsDate()));
         t++;
       } catch (FHIRException e) {
         throw new FHIRException(formatMessage(I18nConstants.ERROR_READING__FROM_PACKAGE__, pri.getFilename(), pi.name(), pi.version(), e.getMessage()), e);
@@ -818,6 +812,11 @@ public class BuildWorkerContext extends BaseWorkerContext implements IWorkerCont
   }
 
   @Override
+  public @NonNull String getFHIRVersion() {
+    return "6.0.0-snapshot1";
+  }
+
+  @Override
   public String getSpecUrl() {
     return "";
   }
@@ -848,7 +847,7 @@ public class BuildWorkerContext extends BaseWorkerContext implements IWorkerCont
   public int loadPackage(NpmPackage npm, boolean isMaster) throws IOException, FHIRException {
     throw new Error("Not done yet");
   }
-  public int loadFromPackage(NpmPackage npm, IContextResourceLoader loader, boolean isMaster) throws IOException, FHIRException {
+  public int loadFromPackage(NpmPackage npm, IContextResourceLoaderN loader, boolean isMaster) throws IOException, FHIRException {
     throw new Error("Not done yet");
   }
 

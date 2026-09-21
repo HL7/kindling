@@ -6,15 +6,15 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import org.hl7.fhir.r5.elementmodel.Element;
-import org.hl7.fhir.r5.model.BackboneElement;
-import org.hl7.fhir.r5.model.BackboneType;
-import org.hl7.fhir.r5.model.Base;
-import org.hl7.fhir.r5.model.CanonicalType;
-import org.hl7.fhir.r5.model.DomainResource;
-import org.hl7.fhir.r5.model.Extension;
-import org.hl7.fhir.r5.model.Property;
-import org.hl7.fhir.r5.model.Resource;
+import org.hl7.fhir.services.elementmodel.Element;
+import org.hl7.fhir.model.core.BackboneElement;
+import org.hl7.fhir.model.core.BackboneType;
+import org.hl7.fhir.model.Base;
+import org.hl7.fhir.model.core.CanonicalType;
+import org.hl7.fhir.model.core.DomainResource;
+import org.hl7.fhir.model.core.Extension;
+import org.hl7.fhir.model.Property;
+import org.hl7.fhir.model.core.Resource;
 import org.hl7.fhir.utilities.Utilities;
 import org.hl7.fhir.utilities.json.model.JsonObject;
 import org.hl7.fhir.utilities.json.parser.JsonParser;
@@ -45,18 +45,18 @@ public class SDUsageMapper {
         see(name, path, ex.getUrl());
       }      
     }
-    for (Property p : resource.children()) {
+    for (Property p : resource.getChildren()) {
       for (Base b : p.getValues()) {
         if (b instanceof Resource) {
           process(name, path, (Resource) b); 
-        } else if (b instanceof org.hl7.fhir.r5.model.Element) {
-          walkChildren(name, path, (org.hl7.fhir.r5.model.Element) b);
+        } else if (b instanceof org.hl7.fhir.model.core.Element) {
+          walkChildren(name, path, (org.hl7.fhir.model.core.Element) b);
         }
       }
     }
   }
 
-  private void walkChildren(String name, String path, org.hl7.fhir.r5.model.Element element) {
+  private void walkChildren(String name, String path, org.hl7.fhir.model.core.Element element) {
     for (Extension ex : element.getExtension()) {
       see(name, path, ex.getUrl());
     }
@@ -70,12 +70,12 @@ public class SDUsageMapper {
         see(name, path, ex.getUrl());
       }  
     }
-    for (Property p : element.children()) {
+    for (Property p : element.getChildren()) {
       for (Base b : p.getValues()) {
         if (b instanceof Resource) {
           process(name, path, (Resource) b); 
-        } else if (b instanceof org.hl7.fhir.r5.model.Element) {
-          walkChildren(name, path, (org.hl7.fhir.r5.model.Element) b);
+        } else if (b instanceof org.hl7.fhir.model.core.Element) {
+          walkChildren(name, path, (org.hl7.fhir.model.core.Element) b);
         }
       }
     }
@@ -119,7 +119,7 @@ public class SDUsageMapper {
       for (Element ex : element.getChildren("modifierExtension")) {
         see(name, path, ex.getNamedChildValue("url"));
       }
-      for (Element c : element.getChildren()) {
+      for (Element c : element.getChildList()) {
         if (c.isResource()) {
           process(name, path, c); 
         } else if (!c.isPrimitive()) {

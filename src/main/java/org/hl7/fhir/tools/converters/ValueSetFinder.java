@@ -6,10 +6,11 @@ import java.io.FileOutputStream;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.hl7.fhir.r5.formats.IParser.OutputStyle;
-import org.hl7.fhir.r5.formats.XmlParser;
-import org.hl7.fhir.r5.model.ImplementationGuide;
-import org.hl7.fhir.r5.model.SearchParameter;
+import org.hl7.fhir.model.ModelContext;
+import org.hl7.fhir.model.core.formats.XmlParser;
+import org.hl7.fhir.model.core.ImplementationGuide;
+import org.hl7.fhir.model.core.SearchParameter;
+import org.hl7.fhir.model.utilities.formats.OutputStyle;
 import org.hl7.fhir.utilities.FileUtilities;
 import org.hl7.fhir.utilities.Utilities;
 
@@ -36,19 +37,19 @@ public class ValueSetFinder {
       Set<String> s = new HashSet<>();
       for (File fsp : new File(folder).listFiles()) {
         if (fsp.getName().startsWith("searchparameter-")) {
-          SearchParameter sp = (SearchParameter) new XmlParser().parseAndClose(new FileInputStream(fsp));
+          SearchParameter sp = (SearchParameter) new XmlParser(ModelContext.fullCoreContext()).parseAndClose(new FileInputStream(fsp));
           s.add(sp.getId());
         }
       }
 
       for (File fig : new File(folder).listFiles()) {
         if (fig.getName().startsWith("implementationguide-")) {
-          ImplementationGuide ig = (ImplementationGuide) new XmlParser().parseAndClose(new FileInputStream(fig));
-          ig.getDefinition().getResource().removeIf(res -> res.getReference().getReference().startsWith("SearchParameter/") && !s.contains(res.getReference().getReference().substring(res.getReference().getReference().indexOf("/")+1)));
-          if (ig.getDefinition().getResource().isEmpty()) {
+          ImplementationGuide ig = (ImplementationGuide) new XmlParser(ModelContext.fullCoreContext()).parseAndClose(new FileInputStream(fig));
+          ig.getDefinition().getResourceList().removeIf(res -> res.getReference().getReference().startsWith("SearchParameter/") && !s.contains(res.getReference().getReference().substring(res.getReference().getReference().indexOf("/")+1)));
+          if (ig.getDefinition().getResourceList().isEmpty()) {
             fig.delete();
           } else {
-            new XmlParser().setOutputStyle(OutputStyle.PRETTY).compose(new FileOutputStream(fig), ig);            
+            new XmlParser(ModelContext.fullCoreContext()).setOutputStyle(OutputStyle.PRETTY).compose(new FileOutputStream(fig), ig);
           }
         }
       }

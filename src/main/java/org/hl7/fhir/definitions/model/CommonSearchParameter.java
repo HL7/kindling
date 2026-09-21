@@ -3,7 +3,7 @@ package org.hl7.fhir.definitions.model;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.hl7.fhir.r5.model.SearchParameter;
+import org.hl7.fhir.model.core.SearchParameter;
 
 public class CommonSearchParameter {
 

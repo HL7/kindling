@@ -43,15 +43,14 @@ import org.hl7.fhir.definitions.model.BindingSpecification.AdditionalBinding;
 import org.hl7.fhir.definitions.model.BindingSpecification.BindingMethod;
 import org.hl7.fhir.definitions.model.ConstraintStructure;
 import org.hl7.fhir.definitions.model.ElementDefn;
-import org.hl7.fhir.r5.renderers.AdditionalBindingsRenderer;
-import org.hl7.fhir.r5.model.ElementDefinition.ElementDefinitionBindingComponent;
-import org.hl7.fhir.r5.model.Enumerations.BindingStrength;
-import org.hl7.fhir.r5.renderers.AdditionalBindingsRenderer;
-import org.hl7.fhir.r5.model.StructureDefinition;
-import org.hl7.fhir.r5.model.ValueSet;
-import org.hl7.fhir.r5.terminologies.CodeSystemUtilities;
-import org.hl7.fhir.r5.terminologies.CodeSystemUtilities.SystemReference;
-import org.hl7.fhir.r5.terminologies.ValueSetUtilities;
+import org.hl7.fhir.model.utilities.ValueSetUtilities;
+import org.hl7.fhir.services.renderers.AdditionalBindingsRenderer;
+import org.hl7.fhir.model.core.ElementDefinition.ElementDefinitionBindingComponent;
+import org.hl7.fhir.model.core.Enumerations.BindingStrength;
+import org.hl7.fhir.services.renderers.AdditionalBindingsRenderer;
+import org.hl7.fhir.model.core.StructureDefinition;
+import org.hl7.fhir.model.core.ValueSet;
+import org.hl7.fhir.model.utilities.CodeSystemUtilities;
 import org.hl7.fhir.tools.publisher.PageProcessor;
 import org.hl7.fhir.utilities.Utilities;
 
@@ -213,7 +212,7 @@ public class TerminologyNotesGenerator extends OutputStreamWriter {
           write("<a href=\""+prefix+pp.replace(File.separatorChar, '/')+"\">"+vs.getName()+"</a><!-- b -->");
           String system = ValueSetUtilities.getAllCodesSystem(vs);
           if (system != null) {
-            SystemReference sr = CodeSystemUtilities.getSystemReference(system, page.getWorkerContext());
+            CodeSystemUtilities.SystemReference sr = CodeSystemUtilities.getSystemReference(system);
             if (sr == null) {
               write(" (a valid code from <code>"+system+"</code>)");
             } else if (sr.getText() != null && textSame(sr.getText(), vs.getName())) {

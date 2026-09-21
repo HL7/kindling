@@ -1,8 +1,9 @@
 package org.hl7.fhir.tools.converters;
 
-import org.hl7.fhir.r5.formats.IParser;
-import org.hl7.fhir.r5.formats.XmlParser;
-import org.hl7.fhir.r5.model.ValueSet;
+import org.hl7.fhir.model.ModelContext;
+import org.hl7.fhir.model.core.formats.XmlParser;
+import org.hl7.fhir.model.core.ValueSet;
+import org.hl7.fhir.model.utilities.formats.OutputStyle;
 
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -12,38 +13,38 @@ import java.util.*;
 
 public class LangVSFixer {
   public static void main(String[] args) throws IOException {
-    ValueSet vs = (ValueSet) new XmlParser().parse(new FileInputStream("/Users/grahamegrieve/work/r6/source/terminologies/valueset-languages.xml"));
+    ValueSet vs = (ValueSet) new XmlParser(ModelContext.fullCoreContext()).parse(new FileInputStream("/Users/grahamegrieve/work/r6/source/terminologies/valueset-languages.xml"));
     Map<String, ValueSet.ConceptReferenceComponent> correct = new HashMap<>();
     List<ValueSet.ConceptReferenceComponent> toDelete = new ArrayList<>();
 
 
-    for (ValueSet.ConceptReferenceComponent cr : vs.getCompose().getIncludeFirstRep().getConcept()) {
-      cr.getDesignation().removeIf(t -> t == null);
-      Collections.sort(cr.getDesignation(), new VSDesignationSorter());
+    for (ValueSet.ConceptReferenceComponent cr : vs.getCompose().getIncludeFirstRep().getConceptList()) {
+      cr.getDesignationList().removeIf(t -> t == null);
+      Collections.sort(cr.getDesignationList(), new VSDesignationSorter());
       if (correct.containsKey(cr.getCode())) {
         System.out.println("duplicate: "+cr.getCode());
         toDelete.add(cr);
         mergeDesignations(correct.get(cr.getCode()), cr);
-        Collections.sort(correct.get(cr.getCode()).getDesignation(), new VSDesignationSorter());
+        Collections.sort(correct.get(cr.getCode()).getDesignationList(), new VSDesignationSorter());
       } else {
         correct.put(cr.getCode(), cr);
       }
     }
-    vs.getCompose().getIncludeFirstRep().getConcept().removeAll(toDelete);
-    Collections.sort(vs.getCompose().getIncludeFirstRep().getConcept(), new VSConceptSorter());
-    new XmlParser().setOutputStyle(IParser.OutputStyle.PRETTY).compose(new FileOutputStream("/Users/grahamegrieve/work/r6/source/terminologies/valueset-languages-new.xml"), vs);
+    vs.getCompose().getIncludeFirstRep().getConceptList().removeAll(toDelete);
+    Collections.sort(vs.getCompose().getIncludeFirstRep().getConceptList(), new VSConceptSorter());
+    new XmlParser(ModelContext.fullCoreContext()).setOutputStyle(OutputStyle.PRETTY).compose(new FileOutputStream("/Users/grahamegrieve/work/r6/source/terminologies/valueset-languages-new.xml"), vs);
   }
 
   private static void mergeDesignations(ValueSet.ConceptReferenceComponent master, ValueSet.ConceptReferenceComponent deleting) {
-    for (ValueSet.ConceptReferenceDesignationComponent t1 : deleting.getDesignation()) {
+    for (ValueSet.ConceptReferenceDesignationComponent t1 : deleting.getDesignationList()) {
       ValueSet.ConceptReferenceDesignationComponent t2 = null;
-      for (ValueSet.ConceptReferenceDesignationComponent t3 : master.getDesignation()) {
+      for (ValueSet.ConceptReferenceDesignationComponent t3 : master.getDesignationList()) {
           if (t1.getLanguage().equals(t3.getLanguage())) {
             t2 = t3;
           }
       }
       if (t2 == null) {
-        master.getDesignation().add(t1);
+        master.getDesignationList().add(t1);
       } else if (!t1.getValue().equals(t2.getValue())) {
         System.out.println("language "+t1.getLanguage()+": two values are not the same: "+t2.getValue()+", "+t1.getValue());
       }

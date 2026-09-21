@@ -4,12 +4,12 @@ import java.util.List;
 
 import org.apache.jena.base.Sys;
 import org.hl7.fhir.definitions.model.Definitions;
-import org.hl7.fhir.r5.conformance.profile.ProfileUtilities;
-import org.hl7.fhir.r5.model.*;
-import org.hl7.fhir.r5.model.CodeSystem.ConceptDefinitionComponent;
-import org.hl7.fhir.r5.model.ValueSet.ValueSetExpansionContainsComponent;
-import org.hl7.fhir.r5.terminologies.CodeSystemUtilities;
-import org.hl7.fhir.r5.terminologies.expansion.ValueSetExpansionOutcome;
+import org.hl7.fhir.services.conformance.profile.ProfileUtilities;
+import org.hl7.fhir.model.core.*;
+import org.hl7.fhir.model.core.CodeSystem.ConceptDefinitionComponent;
+import org.hl7.fhir.model.core.ValueSet.ValueSetExpansionContainsComponent;
+import org.hl7.fhir.model.utilities.CodeSystemUtilities;
+import org.hl7.fhir.services.terminology.ValueSetExpansionOutcome;
 import org.hl7.fhir.tools.publisher.BuildWorkerContext;
 import org.hl7.fhir.utilities.UserDataNames;
 import org.hl7.fhir.utilities.Utilities;
@@ -38,7 +38,7 @@ public class MarkDownPreProcessor {
         ValueSetExpansionOutcome exp = workerContext.expandVS(vs, true, false);
         if (exp.getValueset() != null) {
           exp.getValueset().setUserData(UserDataNames.EXPANSION_PURPOSE, "md");
-          text = left + presentExpansion(exp.getValueset().getExpansion().getContains(), workerContext) + right;
+          text = left + presentExpansion(exp.getValueset().getExpansion().getContainsList(), workerContext) + right;
         } else
           text = left+"["+vs.getName()+"]("+vs.getWebPath()+")"+right;
       } else {
@@ -71,7 +71,7 @@ public class MarkDownPreProcessor {
               if (parts.length > 1) {
                 if (cr instanceof CodeSystem) {
                   CodeSystem cs = (CodeSystem) cr;
-                  ConceptDefinitionComponent cd = CodeSystemUtilities.findCode(cs.getConcept(), parts[1]);
+                  ConceptDefinitionComponent cd = CodeSystemUtilities.findCode(cs.getConceptList(), parts[1]);
                   if (cd != null) {
                     htmlText = cd.getCode();
                     if (!cd.getCode().equalsIgnoreCase(cd.getDisplay())) {

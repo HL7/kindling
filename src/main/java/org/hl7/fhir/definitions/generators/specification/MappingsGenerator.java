@@ -39,10 +39,10 @@ import org.hl7.fhir.definitions.model.ElementDefn;
 import org.hl7.fhir.definitions.model.MappingSpace;
 import org.hl7.fhir.definitions.model.ResourceDefn;
 import org.hl7.fhir.definitions.model.ResourceDefn.StringPair;
-import org.hl7.fhir.r5.model.ElementDefinition;
-import org.hl7.fhir.r5.model.ElementDefinition.ElementDefinitionMappingComponent;
-import org.hl7.fhir.r5.model.StructureDefinition;
-import org.hl7.fhir.r5.model.StructureDefinition.StructureDefinitionMappingComponent;
+import org.hl7.fhir.model.core.ElementDefinition;
+import org.hl7.fhir.model.core.ElementDefinition.ElementDefinitionMappingComponent;
+import org.hl7.fhir.model.core.StructureDefinition;
+import org.hl7.fhir.model.core.StructureDefinition.StructureDefinitionMappingComponent;
 import org.hl7.fhir.utilities.Utilities;
 import org.hl7.fhir.utilities.xhtml.XhtmlComposer;
 import org.hl7.fhir.utilities.xhtml.XhtmlNode;
@@ -78,11 +78,11 @@ public class MappingsGenerator {
 
 
   public void generate(StructureDefinition profile) throws IOException {
-    if (profile.getMapping().isEmpty())
+    if (profile.getMappingList().isEmpty())
       mappings = "<p>No Mappings</p>";
     else {
       StringBuilder s = new StringBuilder();
-      for (StructureDefinitionMappingComponent map : profile.getMapping()) {
+      for (StructureDefinitionMappingComponent map : profile.getMappingList()) {
 
         s.append("<a name=\""+map.getIdentity() +"\"> </a><h3>"+map.getName()+" ("+map.getUri()+")</h3>");
         if (map.hasComment())
@@ -97,7 +97,7 @@ public class MappingsGenerator {
         
         s.append(" <tr><td colspan=\"3\"><b>"+Utilities.escapeXml(profile.getName())+"</b></td></tr>\r\n");
         String path = null;
-        for (ElementDefinition e : profile.getSnapshot().getElement()) {
+        for (ElementDefinition e : profile.getSnapshot().getElementList()) {
           if (path == null || !e.getPath().startsWith(path)) {
             path = null;
             if (e.hasMax() && e.getMax().equals("0")) {
@@ -113,11 +113,11 @@ public class MappingsGenerator {
   }
   
   public void generateExtension(StructureDefinition ed) throws IOException {
-    if (ed.getMapping().isEmpty())
+    if (ed.getMappingList().isEmpty())
       mappings = "<p>No Mappings</p>";
     else {
       StringBuilder s = new StringBuilder();
-      for (StructureDefinitionMappingComponent map : ed.getMapping()) {
+      for (StructureDefinitionMappingComponent map : ed.getMappingList()) {
 
         s.append("<a name=\""+map.getIdentity() +"\"> </a><h3>"+map.getName()+" ("+map.getUri()+")</h3>");
         if (map.hasComment())
@@ -132,7 +132,7 @@ public class MappingsGenerator {
 
         s.append(" <tr><td colspan=\"3\"><b>"+Utilities.escapeXml(ed.getName())+"</b></td></tr>\r\n");
         String path = null;
-        for (ElementDefinition e : ed.getSnapshot().getElement()) {
+        for (ElementDefinition e : ed.getSnapshot().getElementList()) {
           if (path == null || !e.getPath().startsWith(path)) {
             path = null;
             if (e.hasMax() && e.getMax().equals("0")) {
@@ -173,7 +173,7 @@ public class MappingsGenerator {
 
 
   private ElementDefinitionMappingComponent getMap(ElementDefinition e, String id) {
-    for (ElementDefinitionMappingComponent m : e.getMapping()) {
+    for (ElementDefinitionMappingComponent m : e.getMappingList()) {
       if (m.getIdentity().equals(id))
         return m;
     }
@@ -314,7 +314,7 @@ public class MappingsGenerator {
 	}
 
   private void listKnownMappings(StructureDefinition profile, List<String> maps) {
-    for (StructureDefinitionMappingComponent map : profile.getMapping())
+    for (StructureDefinitionMappingComponent map : profile.getMappingList())
       if (!maps.contains(map.getIdentity()) && definitions.getMapTypes().get(map.getIdentity()).isPublish())
         maps.add(map.getIdentity());
   }

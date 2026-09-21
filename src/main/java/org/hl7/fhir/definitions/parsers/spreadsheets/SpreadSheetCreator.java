@@ -16,36 +16,22 @@ import org.apache.poi.xssf.usermodel.XSSFFont;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.hl7.fhir.exceptions.FHIRFormatError;
-import org.hl7.fhir.r5.context.BaseWorkerContext;
-import org.hl7.fhir.r5.extensions.ExtensionUtilities;
-import org.hl7.fhir.r5.formats.JsonParser;
-import org.hl7.fhir.r5.model.BooleanType;
-import org.hl7.fhir.r5.model.Bundle;
-import org.hl7.fhir.r5.model.Bundle.BundleEntryComponent;
-import org.hl7.fhir.r5.model.CanonicalType;
-import org.hl7.fhir.r5.model.DomainResource;
-import org.hl7.fhir.r5.model.Element;
-import org.hl7.fhir.r5.model.ElementDefinition;
-import org.hl7.fhir.r5.model.ElementDefinition.ElementDefinitionBindingComponent;
-import org.hl7.fhir.r5.model.ElementDefinition.ElementDefinitionConstraintComponent;
-import org.hl7.fhir.r5.model.ElementDefinition.ElementDefinitionExampleComponent;
-import org.hl7.fhir.r5.model.ElementDefinition.TypeRefComponent;
-import org.hl7.fhir.r5.model.Enumeration;
-import org.hl7.fhir.r5.model.Enumerations.VersionIndependentResourceTypesAll;
-import org.hl7.fhir.r5.model.Extension;
-import org.hl7.fhir.r5.model.IdType;
-import org.hl7.fhir.r5.model.ImplementationGuide;
-import org.hl7.fhir.r5.model.ImplementationGuide.ImplementationGuideDefinitionResourceComponent;
-import org.hl7.fhir.r5.model.ListResource;
-import org.hl7.fhir.r5.model.ListResource.ListResourceEntryComponent;
-import org.hl7.fhir.r5.model.OperationDefinition;
-import org.hl7.fhir.r5.model.OperationDefinition.OperationDefinitionParameterBindingComponent;
-import org.hl7.fhir.r5.model.OperationDefinition.OperationDefinitionParameterComponent;
-import org.hl7.fhir.r5.model.SearchParameter;
-import org.hl7.fhir.r5.model.StringType;
-import org.hl7.fhir.r5.model.StructureDefinition;
+import org.hl7.fhir.model.ModelContext;
+import org.hl7.fhir.model.core.*;
 import org.hl7.fhir.r5.utils.BuildExtensions;
-import org.hl7.fhir.r5.extensions.ExtensionDefinitions;
+import org.hl7.fhir.standalone.context.BaseWorkerContext;
+import org.hl7.fhir.model.extensions.ExtensionUtilities;
+import org.hl7.fhir.model.core.formats.JsonParser;
+import org.hl7.fhir.model.core.Bundle.BundleEntryComponent;
+import org.hl7.fhir.model.core.ElementDefinition.ElementDefinitionBindingComponent;
+import org.hl7.fhir.model.core.ElementDefinition.ElementDefinitionConstraintComponent;
+import org.hl7.fhir.model.core.ElementDefinition.ElementDefinitionExampleComponent;
+import org.hl7.fhir.model.core.ElementDefinition.TypeRefComponent;
+import org.hl7.fhir.model.core.ImplementationGuide.ImplementationGuideDefinitionResourceComponent;
+import org.hl7.fhir.model.core.ListResource.ListResourceEntryComponent;
+import org.hl7.fhir.model.core.OperationDefinition.OperationDefinitionParameterBindingComponent;
+import org.hl7.fhir.model.core.OperationDefinition.OperationDefinitionParameterComponent;
+import org.hl7.fhir.model.extensions.ExtensionDefinitions;
 import org.hl7.fhir.utilities.FileUtilities;
 import org.hl7.fhir.utilities.IniFile;
 import org.hl7.fhir.utilities.Utilities;
@@ -127,7 +113,7 @@ public class SpreadSheetCreator extends SpreadSheetBase {
     int rowCount = 0;
     invRowCount = 1;
     bindingRowCount = 1;
-    for (ElementDefinition ed : sd.getDifferential().getElement()) {
+    for (ElementDefinition ed : sd.getDifferential().getElementList()) {
       rowCount++;
       addElements(resource, bindings, invariants, ed, rowCount);
     }
@@ -219,7 +205,7 @@ public class SpreadSheetCreator extends SpreadSheetBase {
     addCell(uml(ed), row, columnCount++); // UML
     addCell(ext(ed, BuildExtensions.EXT_HINT), row, columnCount++); // Display Hint
     addCell(ext(ed, BuildExtensions.EXT_COMMITTEE_NOTES), row, columnCount++); // Commitee Notes    
-    for (ElementDefinitionConstraintComponent inv : ed.getConstraint()) {
+    for (ElementDefinitionConstraintComponent inv : ed.getConstraintList()) {
       row = invariants.createRow(invRowCount++);    
       columnCount = 0;
       addCell(inv.getKey(), row, columnCount++); 
@@ -235,7 +221,7 @@ public class SpreadSheetCreator extends SpreadSheetBase {
   }
   
   private String typeHierarchy(ElementDefinition ed, String extHierarchy) {
-    for (TypeRefComponent tr : ed.getType()) {
+    for (TypeRefComponent tr : ed.getTypeList()) {
       if (ExtensionUtilities.readBoolExtension(tr, BuildExtensions.EXT_HIERARCHY)) {
         return "true";
       }
@@ -248,7 +234,7 @@ public class SpreadSheetCreator extends SpreadSheetBase {
       return ed.getContentReference();
     }
     List<String> tl = new ArrayList<>();
-    for (TypeRefComponent tr : ed.getType()) {
+    for (TypeRefComponent tr : ed.getTypeList()) {
       String s;
       if (tr.getCode().equals("canonical") && tr.hasExtension(BuildExtensions.EXT_PATTERN)) {
         s = "canonical("+tr.getExtensionString(BuildExtensions.EXT_PATTERN).substring(40)+")";
@@ -270,15 +256,15 @@ public class SpreadSheetCreator extends SpreadSheetBase {
       return null;
     }
     if (tr.hasProfile()) {
-      if (tr.getProfile().size() == 1) {
-        res = tr.getProfile().get(0).primitiveValue().substring(40);
+      if (tr.getProfileList().size() == 1) {
+        res = tr.getProfileList().get(0).primitiveValue().substring(40);
       } else {
         throw new Error("Not supported yet");
       }
     }
     if (tr.hasTargetProfile()) {
       List<String> tl = new ArrayList<>();
-      for (CanonicalType tp : tr.getTargetProfile()) {
+      for (CanonicalType tp : tr.getTargetProfileList()) {
         tl.add(tp.primitiveValue().substring(40));
       }      
       res = res + "("+String.join("|", tl)+")";
@@ -323,18 +309,18 @@ public class SpreadSheetCreator extends SpreadSheetBase {
   private String ex(ElementDefinition ed) throws IOException {
     if (ed.hasExample()) {
       List<String> exl = new ArrayList<>();
-      if (ed.getExample().size() == 1 && (!ed.getExample().get(0).hasLabel() || ed.getExample().get(0).getLabel().equals("General"))) {
-        if (ed.getExample().get(0).getValue().isPrimitive()) {
-          return ed.getExample().get(0).getValue().primitiveValue();
+      if (ed.getExampleList().size() == 1 && (!ed.getExampleList().get(0).hasLabel() || ed.getExampleList().get(0).getLabel().equals("General"))) {
+        if (ed.getExampleList().get(0).getValue().isPrimitive()) {
+          return ed.getExampleList().get(0).getValue().primitiveValue();
         } else {
-          return new JsonParser().composeString(ed.getExample().get(0).getValue(), "??");
+          return new JsonParser(ModelContext.fullCoreContext()).composeString(ed.getExampleList().get(0).getValue(), "??");
         }        
       } else {
-        for (ElementDefinitionExampleComponent ex : ed.getExample()) {
+        for (ElementDefinitionExampleComponent ex : ed.getExampleList()) {
           if (ex.getValue().isPrimitive()) {
             exl.add("{ \""+Utilities.escapeJson(ex.getLabel())+"\" : \""+ Utilities.escapeJson(ex.getValue().primitiveValue())+"\"}");
           } else {
-            exl.add("{ \""+Utilities.escapeJson(ex.getLabel())+"\" : "+ new JsonParser().composeString(ex.getValue(), "??")+"}");
+            exl.add("{ \""+Utilities.escapeJson(ex.getLabel())+"\" : "+ new JsonParser(ModelContext.fullCoreContext()).composeString(ex.getValue(), "??")+"}");
           }
         }
         return "["+String.join(";", exl)+"]";
@@ -415,7 +401,7 @@ public class SpreadSheetCreator extends SpreadSheetBase {
 
   private String inv(ElementDefinition ed) {
     List<String> cond = new ArrayList<>();
-    for (IdType c : ed.getCondition()) {
+    for (IdType c : ed.getConditionList()) {
       cond.add(c.primitiveValue());
     }
     return String.join(",", cond);
@@ -423,7 +409,7 @@ public class SpreadSheetCreator extends SpreadSheetBase {
 
   private String aliases(ElementDefinition ed) {
     List<String> aliases = new ArrayList<>();
-    for (StringType c : ed.getAlias()) {
+    for (StringType c : ed.getAliasList()) {
       aliases.add(c.primitiveValue());
     }
     return String.join(",", aliases);
@@ -431,7 +417,7 @@ public class SpreadSheetCreator extends SpreadSheetBase {
   
   private int longestPath(StructureDefinition sd) {
     int res = 0;
-    for (ElementDefinition ed : sd.getDifferential().getElement()) {
+    for (ElementDefinition ed : sd.getDifferential().getElementList()) {
       res = Integer.max(res, ed.getPath().length());
     }
     return res;
@@ -440,7 +426,7 @@ public class SpreadSheetCreator extends SpreadSheetBase {
   private void addPacks(XSSFWorkbook excel) throws FHIRFormatError, FileNotFoundException, IOException {
     ListResource list = (ListResource) parseXml(fnPacks());
     list.setText(null);
-    for (ListResourceEntryComponent li : list.getEntry()) {
+    for (ListResourceEntryComponent li : list.getEntryList()) {
       String ref = li.getItem().getReference();
       ref = ref.substring(ref.indexOf("/")+1);
       String id = ref.contains("-") ? ref.substring(ref.indexOf("-")+1) : ref;
@@ -478,7 +464,7 @@ public class SpreadSheetCreator extends SpreadSheetBase {
     addPackRow(sheet, CN_INTRODUCTION, ExtensionUtilities.readStringExtension(ig, BuildExtensions.EXT_INTRODUCTION), rowCount++);
     addPackRow(sheet, CN_NOTES, ExtensionUtilities.readStringExtension(ig, BuildExtensions.EXT_NOTES), rowCount++);
 
-    for (ImplementationGuideDefinitionResourceComponent res : ig.getDefinition().getResource()) {
+    for (ImplementationGuideDefinitionResourceComponent res : ig.getDefinition().getResourceList()) {
       String r = res.getReference().getReference();
       String id = r.substring(r.indexOf("/")+1);
       if (r.startsWith("SearchParameter/")) {
@@ -509,7 +495,7 @@ public class SpreadSheetCreator extends SpreadSheetBase {
     XSSFSheet sheet = excel.createSheet(SN_EXAMPLES);
     addExampleColumns(sheet);
     int rowCount = 0;
-    for (ListResourceEntryComponent li : list.getEntry()) {
+    for (ListResourceEntryComponent li : list.getEntryList()) {
       rowCount++;
       addExample(sheet, li, rowCount);
     }    
@@ -549,7 +535,7 @@ public class SpreadSheetCreator extends SpreadSheetBase {
     XSSFSheet sheet = excel.createSheet(SN_OPERATIONS);
     addOperationColumns(sheet);
     int rowCount = 1;
-    for (ListResourceEntryComponent li : list.getEntry()) {
+    for (ListResourceEntryComponent li : list.getEntryList()) {
       String ref = li.getItem().getReference();
       ref = ref.substring(ref.indexOf("/")+1);
       OperationDefinition opd = (OperationDefinition) parseXml(fnOpDef(ref));
@@ -577,7 +563,7 @@ public class SpreadSheetCreator extends SpreadSheetBase {
     addCell(exlist(opd, true, "2"), row, columnCount++); 
     addCell(status(opd), row, columnCount++); 
     addCell(ext(opd, BuildExtensions.EXT_COMMITTEE_NOTES), row, columnCount++);
-    for (OperationDefinitionParameterComponent param : opd.getParameter()) {
+    for (OperationDefinitionParameterComponent param : opd.getParameterList()) {
       rowCount = addOpParam(sheet, bindings, opd.getCode(), param, rowCount);
     }
     return rowCount;
@@ -602,7 +588,7 @@ public class SpreadSheetCreator extends SpreadSheetBase {
     addCell(null, row, columnCount++); 
     addCell(status(param), row, columnCount++); 
     addCell(ext(param, BuildExtensions.EXT_COMMITTEE_NOTES), row, columnCount++);
-    for (OperationDefinitionParameterComponent pp : param.getPart()) {
+    for (OperationDefinitionParameterComponent pp : param.getPartList()) {
       rowCount = addOpParam(sheet, bindings, path, pp, rowCount);
     }
     return rowCount;
@@ -616,7 +602,7 @@ public class SpreadSheetCreator extends SpreadSheetBase {
      }
      return String.join(" | ", tl);
     } else {
-       return param.hasType() ? param.getType().toCode()+(param.hasSearchType() ? " / "+param.getSearchType().toCode() : "") : null;
+       return param.hasType() ? param.getType()+(param.hasSearchType() ? " / "+param.getSearchType().toCode() : "") : null;
     }
   }
 
@@ -715,7 +701,7 @@ public class SpreadSheetCreator extends SpreadSheetBase {
     XSSFSheet sheet = excel.createSheet(SN_SEARCH);
     addSearchColumns(sheet);
     int rowCount = 0;
-    for (BundleEntryComponent be : bnd.getEntry()) {
+    for (BundleEntryComponent be : bnd.getEntryList()) {
       rowCount++;
       addSearchParam(sheet, (SearchParameter) be.getResource(), rowCount);
     }
@@ -735,8 +721,8 @@ public class SpreadSheetCreator extends SpreadSheetBase {
 
   private String target(SearchParameter sp) {
     List<String> tl = new ArrayList<>();
-    for (Enumeration<VersionIndependentResourceTypesAll> c : sp.getTarget()) {
-      tl.add(c.getCode());
+    for (UriType c : sp.getTargetList()) {
+      tl.add(c.primitiveValue());
     }
     return String.join("|", tl);
   }

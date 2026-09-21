@@ -39,55 +39,38 @@ import org.hl7.fhir.definitions.model.W5Entry;
 import org.hl7.fhir.definitions.model.WorkGroup;
 import org.hl7.fhir.exceptions.FHIRException;
 import org.hl7.fhir.exceptions.FHIRFormatError;
-import org.hl7.fhir.r5.conformance.profile.ProfileUtilities;
-import org.hl7.fhir.r5.context.CanonicalResourceManager;
-import org.hl7.fhir.r5.extensions.ExtensionUtilities;
-import org.hl7.fhir.r5.formats.IParser.OutputStyle;
-import org.hl7.fhir.r5.formats.JsonParser;
-import org.hl7.fhir.r5.formats.XmlParser;
-import org.hl7.fhir.r5.model.Bundle;
-import org.hl7.fhir.r5.model.Bundle.BundleEntryComponent;
-import org.hl7.fhir.r5.model.CanonicalType;
-import org.hl7.fhir.r5.model.CodeSystem;
-import org.hl7.fhir.r5.model.CodeType;
-import org.hl7.fhir.r5.model.ConceptMap;
-import org.hl7.fhir.r5.model.ElementDefinition;
-import org.hl7.fhir.r5.model.ElementDefinition.AdditionalBindingPurposeVS;
-import org.hl7.fhir.r5.model.ElementDefinition.ElementDefinitionBindingAdditionalComponent;
-import org.hl7.fhir.r5.model.ElementDefinition.ElementDefinitionBindingComponent;
-import org.hl7.fhir.r5.model.ElementDefinition.ElementDefinitionConstraintComponent;
-import org.hl7.fhir.r5.model.ElementDefinition.ElementDefinitionMappingComponent;
-import org.hl7.fhir.r5.model.ElementDefinition.PropertyRepresentation;
-import org.hl7.fhir.r5.model.ElementDefinition.TypeRefComponent;
-import org.hl7.fhir.r5.model.Enumeration;
-import org.hl7.fhir.r5.model.Enumerations.BindingStrength;
-import org.hl7.fhir.r5.model.Enumerations.FHIRVersion;
-import org.hl7.fhir.r5.model.Enumerations.PublicationStatus;
-import org.hl7.fhir.r5.model.Enumerations.SearchParamType;
-import org.hl7.fhir.r5.model.Enumerations.VersionIndependentResourceTypesAll;
-import org.hl7.fhir.r5.model.Extension;
-import org.hl7.fhir.r5.model.IdType;
-import org.hl7.fhir.r5.model.ImplementationGuide;
-import org.hl7.fhir.r5.model.ImplementationGuide.ImplementationGuideDefinitionResourceComponent;
-import org.hl7.fhir.r5.model.ListResource;
-import org.hl7.fhir.r5.model.ListResource.ListResourceEntryComponent;
-import org.hl7.fhir.r5.model.OperationDefinition;
-import org.hl7.fhir.r5.model.OperationDefinition.OperationDefinitionParameterBindingComponent;
-import org.hl7.fhir.r5.model.OperationDefinition.OperationDefinitionParameterComponent;
-import org.hl7.fhir.r5.model.OperationDefinition.OperationParameterScope;
-import org.hl7.fhir.r5.model.Resource;
-import org.hl7.fhir.r5.model.SearchParameter;
-import org.hl7.fhir.r5.model.SearchParameter.SearchParameterComponentComponent;
-import org.hl7.fhir.r5.model.StringType;
-import org.hl7.fhir.r5.model.StructureDefinition;
-import org.hl7.fhir.r5.model.StructureDefinition.StructureDefinitionMappingComponent;
-import org.hl7.fhir.r5.model.ValueSet;
-import org.hl7.fhir.r5.terminologies.CodeSystemUtilities;
-import org.hl7.fhir.r5.terminologies.ConceptMapUtilities;
-import org.hl7.fhir.r5.terminologies.ValueSetUtilities;
+import org.hl7.fhir.model.core.*;
+import org.hl7.fhir.model.utilities.CanonicalResourceUtilities;
+import org.hl7.fhir.model.utilities.ConceptMapUtilities;
+import org.hl7.fhir.model.utilities.ValueSetUtilities;
+import org.hl7.fhir.model.utilities.formats.OutputStyle;
 import org.hl7.fhir.r5.utils.BuildExtensions;
-import org.hl7.fhir.r5.utils.CanonicalResourceUtilities;
-import org.hl7.fhir.r5.extensions.ExtensionDefinitions;
+import org.hl7.fhir.services.conformance.profile.ProfileUtilities;
+import org.hl7.fhir.standalone.context.CanonicalResourceManager;
+import org.hl7.fhir.model.extensions.ExtensionUtilities;
+import org.hl7.fhir.model.core.formats.JsonParser;
+import org.hl7.fhir.model.core.formats.XmlParser;
+import org.hl7.fhir.model.core.Bundle.BundleEntryComponent;
+import org.hl7.fhir.model.core.ElementDefinition.AdditionalBindingPurposeVS;
+import org.hl7.fhir.model.core.ElementDefinition.ElementDefinitionBindingAdditionalComponent;
+import org.hl7.fhir.model.core.ElementDefinition.ElementDefinitionBindingComponent;
+import org.hl7.fhir.model.core.ElementDefinition.ElementDefinitionConstraintComponent;
+import org.hl7.fhir.model.core.ElementDefinition.ElementDefinitionMappingComponent;
+import org.hl7.fhir.model.core.ElementDefinition.PropertyRepresentation;
+import org.hl7.fhir.model.core.ElementDefinition.TypeRefComponent;
+import org.hl7.fhir.model.core.Enumerations.BindingStrength;
+import org.hl7.fhir.model.core.Enumerations.FHIRVersion;
+import org.hl7.fhir.model.core.Enumerations.PublicationStatus;
+import org.hl7.fhir.model.core.Enumerations.SearchParamType;
+import org.hl7.fhir.model.core.ImplementationGuide.ImplementationGuideDefinitionResourceComponent;
+import org.hl7.fhir.model.core.ListResource.ListResourceEntryComponent;
+import org.hl7.fhir.model.core.OperationDefinition.OperationDefinitionParameterBindingComponent;
+import org.hl7.fhir.model.core.OperationDefinition.OperationDefinitionParameterComponent;
+import org.hl7.fhir.model.core.OperationDefinition.OperationParameterScope;
+import org.hl7.fhir.model.core.SearchParameter.SearchParameterComponentComponent;
+import org.hl7.fhir.model.core.StructureDefinition.StructureDefinitionMappingComponent;
+import org.hl7.fhir.model.utilities.CodeSystemUtilities;
+import org.hl7.fhir.model.extensions.ExtensionDefinitions;
 import org.hl7.fhir.tools.publisher.BuildWorkerContext;
 import org.hl7.fhir.utilities.*;
 import org.hl7.fhir.utilities.filesystem.CSFile;
@@ -145,7 +128,7 @@ public class ResourceParser {
   private void parsePacks(ResourceDefn r, String n, String t) throws Exception {
     Set<String> codes = new HashSet<>();
     ListResource list = (ListResource) parseXml("list-"+t+"-packs.xml");
-    for (ListResourceEntryComponent le : list.getEntry()) {
+    for (ListResourceEntryComponent le : list.getEntryList()) {
       String id = le.getItem().getReference().substring(le.getItem().getReference().indexOf("/")+1);
       if (codes.contains(id)) {
         throw new FHIRException("Duplicate code "+id+" for resource "+n);
@@ -210,7 +193,7 @@ public class ResourceParser {
       p.setNotes(Utilities.path(folder, ExtensionUtilities.readStringExtension(ig, BuildExtensions.EXT_NOTES)));
     }    
 
-    for (ImplementationGuideDefinitionResourceComponent res : ig.getDefinition().getResource()) {
+    for (ImplementationGuideDefinitionResourceComponent res : ig.getDefinition().getResourceList()) {
       String ref = res.getReference().getReference();
       String type = ref.substring(0, ref.indexOf("/"));
       String rid = ref.substring(ref.indexOf("/")+1); 
@@ -241,7 +224,7 @@ public class ResourceParser {
         sd.setUserData(ToolResourceUtilities.NAME_RES_IG, id);
         sd.setVersion(version);
         sd.setFhirVersion(FHIRVersion.fromCode(version));
-        for (ElementDefinition ed : sd.getDifferential().getElement()) {
+        for (ElementDefinition ed : sd.getDifferential().getElementList()) {
           if (ed.hasBinding() && ed.getBinding().hasValueSet()) { 
             loadValueSet(ed.getBinding().getValueSet(), true, ed.getBinding().getStrength());
           }
@@ -289,7 +272,7 @@ public class ResourceParser {
 
   private void parseOperations(ResourceDefn r, String n, String t) throws FHIRException, Exception {
     ListResource list = (ListResource) parseXml("list-"+t+"-operations.xml");
-    for (ListResourceEntryComponent le : list.getEntry()) {
+    for (ListResourceEntryComponent le : list.getEntryList()) {
       String id = le.getItem().getReference().substring(le.getItem().getReference().indexOf("/")+1);
       OperationDefinition opd = (OperationDefinition) parseXml("operationdefinition-"+id+".xml");
       opd.setVersion(version);
@@ -321,7 +304,7 @@ public class ResourceParser {
     op.setStandardsStatus(StandardsStatus.fromCode(ExtensionUtilities.readStringExtension(src, BuildExtensions.EXT_STANDARDS_STATUS)));
     op.setFmm(ExtensionUtilities.readStringExtension(src, BuildExtensions.EXT_FMM_LEVEL));
     op.setFooter2(ExtensionUtilities.readStringExtension(src, BuildExtensions.EXT_FOOTER2));
-    for (OperationDefinitionParameterComponent psrc : src.getParameter()) {
+    for (OperationDefinitionParameterComponent psrc : src.getParameterList()) {
       op.getParameters().add(convertOperationParameter(psrc, false));
     }
     return op;
@@ -354,7 +337,7 @@ public class ResourceParser {
           indent = Integer.parseInt(filename.substring(0, filename.indexOf(" ")));
           filename = filename.substring(filename.indexOf(" ")).trim();
         }
-        String json = new JsonParser().setOutputStyle(OutputStyle.PRETTY).composeString(new XmlParser().parse(new FileInputStream(PathBuilder.getPathBuilder().withRequiredTarget(srcDir).buildPath(folder, filename))));
+        String json = new JsonParser(context.getModelContext()).setOutputStyle(OutputStyle.PRETTY).composeString(new XmlParser(context.getModelContext()).parse(new FileInputStream(PathBuilder.getPathBuilder().withRequiredTarget(srcDir).buildPath(folder, filename))));
         process(content, indent, json);
       } else if (l.startsWith("$include ")) {
         int indent = 0;
@@ -386,7 +369,7 @@ public class ResourceParser {
   
   public OperationParameter convertOperationParameter(OperationDefinitionParameterComponent psrc, boolean part) throws IOException {
     List<String> pl = new ArrayList<>(); 
-    for (CanonicalType u : psrc.getTargetProfile()) {
+    for (CanonicalType u : psrc.getTargetProfileList()) {
       pl.add(u.asStringValue().replace("http://hl7.org/fhir/StructureDefinition/", ""));
     }
     String t;
@@ -396,7 +379,7 @@ public class ResourceParser {
       }
       t = String.join(" | ", pl);
     } else if (psrc.hasType()) {
-      t =  psrc.getType().toCode();
+      t =  psrc.getType();
       if (pl.size() > 0) {
         t = t+"("+String.join("|", pl)+")";
       }        
@@ -408,10 +391,10 @@ public class ResourceParser {
     if (psrc.hasBinding()) {
       p.setBs(parseBinding(psrc.getBinding()));
     }
-    for (Enumeration<OperationParameterScope> s : psrc.getScope()) {
+    for (Enumeration<OperationParameterScope> s : psrc.getScopeList()) {
       p.getScopes().add(s.asStringValue());
     }
-    for (OperationDefinitionParameterComponent pc : psrc.getPart()) {
+    for (OperationDefinitionParameterComponent pc : psrc.getPartList()) {
       p.getParts().add(convertOperationParameter(pc, true));
     }
     return p;
@@ -421,7 +404,7 @@ public class ResourceParser {
 
   private void parseSearchParameters(ResourceDefn r, String n, String t) throws FHIRFormatError, FileNotFoundException, IOException {
     Bundle b = (Bundle) parseXml("bundle-"+t+"-search-params.xml");
-    for (BundleEntryComponent be : b.getEntry()) {
+    for (BundleEntryComponent be : b.getEntryList()) {
       parseSearchParameter(r, (SearchParameter) be.getResource());
     }
   }
@@ -447,10 +430,10 @@ public class ResourceParser {
       }
     }
     
-    for (SearchParameterComponentComponent comp : src.getComponent()) {
+    for (SearchParameterComponentComponent comp : src.getComponentList()) {
       sp.getComposites().add(new CompositeDefinition(comp.getDefinition(), comp.getExpression()));
     }
-    for (Enumeration<VersionIndependentResourceTypesAll> target : src.getTarget()) {
+    for (UriType target : src.getTargetList()) {
       sp.getManualTargets().add(target.asStringValue());
     }
   }
@@ -518,8 +501,8 @@ public class ResourceParser {
 
 
   private TypeDefn parseTypeDefinition(ProfileUtilities pu, ElementDefinition focus, StructureDefinition sd) throws IOException {
-    for (ElementDefinition edt : sd.getDifferential().getElement()) {
-      for (ElementDefinitionConstraintComponent cst : edt.getConstraint()) {
+    for (ElementDefinition edt : sd.getDifferential().getElementList()) {
+      for (ElementDefinitionConstraintComponent cst : edt.getConstraintList()) {
         Invariant inv = new Invariant();
         inv.setContext(focus.getPath());
         inv.setEnglish(cst.getHuman());
@@ -594,7 +577,7 @@ public class ResourceParser {
       ed.setNoBindingAllowed(focus.getExtensionString(BuildExtensions.EXT_NO_BINDING).equals("true"));
     }    
     
-    for (StringType t : focus.getAlias()) {
+    for (StringType t : focus.getAliasList()) {
       ed.getAliases().add(t.getValue());
     }
     if (focus.hasMaxLength()) {
@@ -610,12 +593,12 @@ public class ResourceParser {
       ed.setNormativeVersion(ExtensionUtilities.readStringExtension(focus, BuildExtensions.EXT_NORMATIVE_VERSION));
     }
 
-    for (ElementDefinitionConstraintComponent cst : focus.getConstraint()) {
+    for (ElementDefinitionConstraintComponent cst : focus.getConstraintList()) {
       Invariant inv = invariants.get(cst.getKey());
       ed.getInvariants().put(inv.getId(), inv);
     }
 
-    for (IdType cnd : focus.getCondition()) {
+    for (IdType cnd : focus.getConditionList()) {
       Invariant inv = invariants.get(cnd.primitiveValue());
       if (inv == null) {
         System.out.println("Unable to find invariant "+cnd.primitiveValue()+" at "+focus.getName());
@@ -624,7 +607,7 @@ public class ResourceParser {
       }
     }
     
-    for (ElementDefinitionMappingComponent map : focus.getMapping()) {
+    for (ElementDefinitionMappingComponent map : focus.getMappingList()) {
       String uri = getMappingUri(sd, map.getIdentity());
       if ("http://hl7.org/fhir/fivews".equals(uri)) {
         ed.setW5(reverseW5(map.getMap()));
@@ -635,7 +618,7 @@ public class ResourceParser {
     if (focus.hasContentReference()) {
       ed.getTypes().add(new TypeRef("@"+focus.getContentReference().substring(1)));      
     } else {
-      for (TypeRefComponent tr : focus.getType()) {
+      for (TypeRefComponent tr : focus.getTypeList()) {
         if (!Utilities.existsInList(tr.getCode(), "Element", "BackboneElement")) {
           TypeRef t = new TypeRef();
           ed.getTypes().add(t);
@@ -648,10 +631,10 @@ public class ResourceParser {
             ed.setHierarchy(ExtensionUtilities.readBoolExtension(tr, BuildExtensions.EXT_HIERARCHY));
           }
 
-          for (CanonicalType u : tr.getProfile()) {
+          for (CanonicalType u : tr.getProfileList()) {
             t.setProfile(u.getValue().replace("http://hl7.org/fhir/StructureDefinition/", ""));
           }
-          for (CanonicalType u : tr.getTargetProfile()) {
+          for (CanonicalType u : tr.getTargetProfileList()) {
             String s = u.getValue().replace("http://hl7.org/fhir/StructureDefinition/", "");
             if ("Resource".equals(s)) {
               t.getParams().add("Any");
@@ -757,7 +740,7 @@ public class ResourceParser {
     if (binding.hasExtension(ExtensionDefinitions.EXT_MAX_VALUESET)) {
       bs.getAdditionalBindings().add(new AdditionalBinding("maximum", binding.getExtensionString(ExtensionDefinitions.EXT_MAX_VALUESET), loadValueSet(binding.getExtensionString(ExtensionDefinitions.EXT_MAX_VALUESET), false, BindingStrength.REQUIRED)));
     }
-    for (ElementDefinitionBindingAdditionalComponent add : binding.getAdditional()) {
+    for (ElementDefinitionBindingAdditionalComponent add : binding.getAdditionalList()) {
       bs.getAdditionalBindings().add(new AdditionalBinding(add.getPurpose().toCode(), add.getValueSet(), loadValueSet(add.getValueSet(), false, add.getPurpose() == AdditionalBindingPurposeVS.REQUIRED ? BindingStrength.REQUIRED : BindingStrength.EXTENSIBLE)).setDoco(add.getDocumentation()));      
     }
 
@@ -1005,7 +988,7 @@ public class ResourceParser {
   }
 
   private String getMappingUri(StructureDefinition sd, String identity) {
-    for (StructureDefinitionMappingComponent md : sd.getMapping()) {
+    for (StructureDefinitionMappingComponent md : sd.getMappingList()) {
       if (identity.equals(md.getIdentity())) {
         return md.getUri();
       }
@@ -1025,19 +1008,19 @@ public class ResourceParser {
       f.setLastModified(new Date().getTime());
     }
     try {
-      return new XmlParser().parse(new CSFileInputStream(f));
+      return new XmlParser(context.getModelContext()).parse(new CSFileInputStream(f));
     } catch (Exception e) {
       throw new IOException("Error parsing "+name+": "+e.getMessage(), e);
     }
   }
 
   private void saveXml(Resource res, String name) throws FHIRFormatError, FileNotFoundException, IOException {
-    new XmlParser().setOutputStyle(OutputStyle.PRETTY).compose(new FileOutputStream(Utilities.path(folder, name)), res);
+    new XmlParser(context.getModelContext()).setOutputStyle(OutputStyle.PRETTY).compose(new FileOutputStream(Utilities.path(folder, name)), res);
   }
 
   private void parseExamples(ResourceDefn r, String n, String t) throws FHIRException, Exception {
     ListResource list = (ListResource) parseXml("list-"+t+"-examples.xml");
-    for (ListResourceEntryComponent le : list.getEntry()) {
+    for (ListResourceEntryComponent le : list.getEntryList()) {
       boolean reg = le.hasExtension(BuildExtensions.EXT_NOT_REGISTERED) ? !ExtensionUtilities.readBoolExtension(le, BuildExtensions.EXT_NOT_REGISTERED) : true;
       ExampleType type = ExampleType.XmlFile;
       if (le.getFlag().hasCoding(BuildExtensions.EXT_EXAMPLE_TYPE, "container")) {

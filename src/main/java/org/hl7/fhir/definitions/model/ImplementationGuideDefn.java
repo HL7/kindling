@@ -10,12 +10,12 @@ import org.hl7.fhir.definitions.generators.specification.ToolResourceUtilities;
 import org.hl7.fhir.definitions.parsers.IgParser;
 import org.hl7.fhir.definitions.parsers.IgParser.GuidePageKind;
 import org.hl7.fhir.exceptions.FHIRException;
-import org.hl7.fhir.r5.model.CodeType;
-import org.hl7.fhir.r5.model.ImplementationGuide;
-import org.hl7.fhir.r5.model.ImplementationGuide.ImplementationGuideDefinitionPageComponent;
-import org.hl7.fhir.r5.model.ImplementationGuide.ImplementationGuideDefinitionResourceComponent;
-import org.hl7.fhir.r5.model.StructureDefinition;
-import org.hl7.fhir.r5.model.ValueSet;
+import org.hl7.fhir.model.core.CodeType;
+import org.hl7.fhir.model.core.ImplementationGuide;
+import org.hl7.fhir.model.core.ImplementationGuide.ImplementationGuideDefinitionPageComponent;
+import org.hl7.fhir.model.core.ImplementationGuide.ImplementationGuideDefinitionResourceComponent;
+import org.hl7.fhir.model.core.StructureDefinition;
+import org.hl7.fhir.model.core.ValueSet;
 import org.hl7.fhir.utilities.FileUtilities;
 import org.hl7.fhir.utilities.Utilities;
 import org.hl7.fhir.utilities.validation.ValidationMessage;
@@ -227,16 +227,16 @@ public class ImplementationGuideDefn {
     res.add(new LinkTriple(ig.getDefinition().getPage().getName(), ig.getId().toUpperCase(), ig.getName()));
 
     if (type.equals("valueSet") && hasVSRegistry()) {
-      findPage(getVSRegistry().getName(), res, ig.getDefinition().getPage().getPage());
+      findPage(getVSRegistry().getName(), res, ig.getDefinition().getPage().getPageList());
       res.add(new LinkTriple(null, crumbTitle, null));
     } else if (type.startsWith("extension:")) {
-      if (findRegistryPage("StructureDefinition", res, ig.getDefinition().getPage().getPage())) 
+      if (findRegistryPage("StructureDefinition", res, ig.getDefinition().getPage().getPageList()))
         res.add(new LinkTriple(null, "Extension", null));
       else
         res.add(new LinkTriple(null, "Extension Stuff", "Work in Progress yet"));
     } else if (type.startsWith("search-parameter:")) {
       String[] p = type.split("\\/");
-      if (p.length >= 2 && findPage(p[1]+".html", res, ig.getDefinition().getPage().getPage())) {
+      if (p.length >= 2 && findPage(p[1]+".html", res, ig.getDefinition().getPage().getPageList())) {
         res.add(new LinkTriple(null, "Search Parameter", null));
       } else
         res.add(new LinkTriple(null, "Search Parameter Stuff", "Work in Progress yet"));        
@@ -249,7 +249,7 @@ public class ImplementationGuideDefn {
         n = n.substring(0, n.length()-10)+".html";
       
       if (!n.equals(ig.getDefinition().getPage().getName())) {
-        if (!findPage(n, res, ig.getDefinition().getPage().getPage()) && !findLogicalPage(n, type, res, ig.getDefinition().getPage().getPage())) {
+        if (!findPage(n, res, ig.getDefinition().getPage().getPageList()) && !findLogicalPage(n, type, res, ig.getDefinition().getPage().getPageList())) {
           // we didn't find it as a simple page. Figure out what 
          
           issues.add(new ValidationMessage(Source.Publisher, IssueType.PROCESSING, code+"/"+n, "The page "+n+" is not assigned a bread crumb yet", IssueSeverity.WARNING));
@@ -263,10 +263,10 @@ public class ImplementationGuideDefn {
   private boolean findLogicalPage(String n, String type, List<LinkTriple> res, List<ImplementationGuideDefinitionPageComponent> page) throws Exception {
     // see if we can find it as an example of an existing profile
     String src = FileUtilities.fileTitle(n)+ ".html";
-    for (ImplementationGuideDefinitionResourceComponent r : ig.getDefinition().getResource()) {
+    for (ImplementationGuideDefinitionResourceComponent r : ig.getDefinition().getResourceList()) {
       if (src.equals(r.getReference().getReference())) {
         if (r.hasProfile()) {
-          String p = r.getProfile().get(0).getValue();
+          String p = r.getProfileList().get(0).getValue();
           String psrc = p.substring(p.lastIndexOf("/")+1)+".html";
           if (findPage(psrc, res, page)) {
             res.add(new LinkTriple(null, r.getName(), null));
@@ -320,7 +320,7 @@ public class ImplementationGuideDefn {
       }
       if (page.hasPage()) {
         res.add(new LinkTriple(page.getName(), page.getTitle(), null));
-        if (findPage(n, res, page.getPage()))
+        if (findPage(n, res, page.getPageList()))
           return true;
         else {
           res.remove(res.size()-1);
@@ -347,7 +347,7 @@ public class ImplementationGuideDefn {
       }
       if (page.hasPage()) {
         res.add(new LinkTriple(page.getName(), page.getTitle(), null));
-        if (findPage(n, res, page.getPage()))
+        if (findPage(n, res, page.getPageList()))
           return true;
         else {
           res.remove(res.size()-1);
@@ -368,14 +368,14 @@ public class ImplementationGuideDefn {
     return getRegistryPage("ValueSet");
   }
   public ImplementationGuideDefinitionPageComponent getRegistryPage(String type) {
-    return getRegistryPage(ig.getDefinition().getPage().getPage(), type);
+    return getRegistryPage(ig.getDefinition().getPage().getPageList(), type);
   }
 
   private ImplementationGuideDefinitionPageComponent getRegistryPage(List<ImplementationGuideDefinitionPageComponent> pages, String type) {
     for (ImplementationGuideDefinitionPageComponent page : pages) {
       if ((IgParser.getKind(page).equals(GuidePageKind.LIST) || IgParser.getKind(page).equals(GuidePageKind.DIRECTORY)) && hasType(page, type)) 
           return page;
-      ImplementationGuideDefinitionPageComponent p = getRegistryPage(page.getPage(), type);
+      ImplementationGuideDefinitionPageComponent p = getRegistryPage(page.getPageList(), type);
       if (p != null)
         return p;
     }
@@ -393,7 +393,7 @@ public class ImplementationGuideDefn {
   private ImplementationGuideDefinitionPageComponent getPage(String n, ImplementationGuideDefinitionPageComponent node) throws FHIRException {
     if (n.equals(node.getName()))
       return node;
-    for (ImplementationGuideDefinitionPageComponent page : node.getPage()) {
+    for (ImplementationGuideDefinitionPageComponent page : node.getPageList()) {
       ImplementationGuideDefinitionPageComponent p = getPage(n, page);
       if (p != null)
         return p;
@@ -422,7 +422,7 @@ public class ImplementationGuideDefn {
   public List<ImplementationGuideDefinitionPageComponent> getSpecialPages() {
     List<ImplementationGuideDefinitionPageComponent> res = new ArrayList<ImplementationGuide.ImplementationGuideDefinitionPageComponent>();
     if (ig != null)
-      listSpecialPages(res, ig.getDefinition().getPage().getPage());
+      listSpecialPages(res, ig.getDefinition().getPage().getPageList());
     return res;
   }
 
@@ -453,7 +453,7 @@ public class ImplementationGuideDefn {
     else
       ndx = ndx + " ";
     row.getCells().add(gen.new Cell("", page.getName(), ndx + page.getTitle(), null, null));
-    for (ImplementationGuideDefinitionPageComponent p : page.getPage()) {
+    for (ImplementationGuideDefinitionPageComponent p : page.getPageList()) {
       addPage(gen, row.getSubRows(), p);
     }
   }
@@ -474,14 +474,14 @@ public class ImplementationGuideDefn {
   
   public void numberPages() {
     ig.getDefinition().getPage().setUserData(ToolResourceUtilities.NAME_PAGE_INDEX, sectionId+".0");
-    numberPages(ig.getDefinition().getPage().getPage(), sectionId+".");
+    numberPages(ig.getDefinition().getPage().getPageList(), sectionId+".");
   }
 
   private void numberPages(List<ImplementationGuideDefinitionPageComponent> list, String prefix) {
     for (int i = 0; i < list.size(); i++) {
       ImplementationGuideDefinitionPageComponent page = list.get(i);
       page.setUserData(ToolResourceUtilities.NAME_PAGE_INDEX, prefix+Integer.toString(i+1)+(page.hasPage() ? ".0" : ""));
-      numberPages(page.getPage(), prefix+Integer.toString(i+1)+".");
+      numberPages(page.getPageList(), prefix+Integer.toString(i+1)+".");
     }
   }
 

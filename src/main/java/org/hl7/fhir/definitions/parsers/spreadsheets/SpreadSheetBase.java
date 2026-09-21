@@ -10,13 +10,13 @@ import java.util.Date;
 import java.util.List;
 
 import org.hl7.fhir.exceptions.FHIRException;
-import org.hl7.fhir.r5.context.BaseWorkerContext;
-import org.hl7.fhir.r5.formats.IParser.OutputStyle;
-import org.hl7.fhir.r5.formats.XmlParser;
-import org.hl7.fhir.r5.model.DomainResource;
-import org.hl7.fhir.r5.model.Element;
-import org.hl7.fhir.r5.model.Extension;
-import org.hl7.fhir.r5.model.Resource;
+import org.hl7.fhir.model.utilities.formats.OutputStyle;
+import org.hl7.fhir.standalone.context.BaseWorkerContext;
+import org.hl7.fhir.model.core.formats.XmlParser;
+import org.hl7.fhir.model.core.DomainResource;
+import org.hl7.fhir.model.core.Element;
+import org.hl7.fhir.model.core.Extension;
+import org.hl7.fhir.model.core.Resource;
 import org.hl7.fhir.utilities.Utilities;
 import org.hl7.fhir.utilities.filesystem.CSFile;
 import org.hl7.fhir.utilities.filesystem.CSFileInputStream;
@@ -195,7 +195,7 @@ public class SpreadSheetBase {
       }
       CSFileInputStream fs = new CSFileInputStream(f);
       try {
-        return new XmlParser().parse(fs);
+        return new XmlParser(context.getModelContext()).parse(fs);
       } finally {
         fs.close();
       }
@@ -210,7 +210,7 @@ public class SpreadSheetBase {
 
   protected void saveXml(String fn, Resource res) throws IOException {
     File f = new CSFile(fn);
-    XmlParser p = new XmlParser();
+    XmlParser p = new XmlParser(context.getModelContext());
     p.setSchemaPath("../../publish");
     p.setOutputStyle(OutputStyle.PRETTY).compose(new FileOutputStream(f), res);
     f.setLastModified(date);    

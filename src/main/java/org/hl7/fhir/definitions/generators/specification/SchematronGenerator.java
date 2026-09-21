@@ -12,7 +12,7 @@ import org.hl7.fhir.definitions.model.ElementDefn;
 import org.hl7.fhir.definitions.model.Invariant;
 import org.hl7.fhir.definitions.model.ResourceDefn;
 import org.hl7.fhir.definitions.model.TypeRef;
-import org.hl7.fhir.r5.model.StructureDefinition;
+import org.hl7.fhir.model.core.StructureDefinition;
 import org.hl7.fhir.tools.publisher.PageProcessor;
 import org.hl7.fhir.utilities.Utilities;
 import org.hl7.fhir.utilities.xml.SchematronWriter;
@@ -39,7 +39,7 @@ public class SchematronGenerator {
     }
     Set<StructureDefinition> processed = new HashSet<StructureDefinition>(); 
     for (StructureDefinition exd : page.getWorkerContext().getExtensionDefinitions()) {
-      if (exd.getSnapshot().getElement().get(0).hasConstraint() && !processed.contains(exd)) {
+      if (exd.getSnapshot().getElementList().get(0).hasConstraint() && !processed.contains(exd)) {
         processed.add(exd);
       }
     }

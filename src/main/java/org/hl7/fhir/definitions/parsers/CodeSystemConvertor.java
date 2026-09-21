@@ -25,18 +25,18 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 
-import org.hl7.fhir.r5.context.CanonicalResourceManager;
-import org.hl7.fhir.r5.extensions.ExtensionUtilities;
-import org.hl7.fhir.r5.formats.IParser;
-import org.hl7.fhir.r5.model.CodeSystem;
-import org.hl7.fhir.r5.model.ContactDetail;
-import org.hl7.fhir.r5.model.ContactPoint;
-import org.hl7.fhir.r5.model.PackageInformation;
-import org.hl7.fhir.r5.model.UsageContext;
-import org.hl7.fhir.r5.model.ValueSet;
-import org.hl7.fhir.r5.terminologies.CodeSystemUtilities;
-import org.hl7.fhir.r5.utils.CanonicalResourceUtilities;
-import org.hl7.fhir.r5.extensions.ExtensionDefinitions;
+import org.hl7.fhir.model.utilities.CanonicalResourceUtilities;
+import org.hl7.fhir.model.utilities.formats.IParser;
+import org.hl7.fhir.standalone.context.CanonicalResourceManager;
+import org.hl7.fhir.model.extensions.ExtensionUtilities;
+import org.hl7.fhir.model.core.CodeSystem;
+import org.hl7.fhir.model.core.ContactDetail;
+import org.hl7.fhir.model.core.ContactPoint;
+import org.hl7.fhir.model.core.PackageInformation;
+import org.hl7.fhir.model.core.UsageContext;
+import org.hl7.fhir.model.core.ValueSet;
+import org.hl7.fhir.model.utilities.CodeSystemUtilities;
+import org.hl7.fhir.model.extensions.ExtensionDefinitions;
 import org.hl7.fhir.utilities.FileUtilities;
 import org.hl7.fhir.utilities.Utilities;
 
@@ -116,10 +116,10 @@ public class CodeSystemConvertor {
       cs.setPublisher(vs.getPublisher());
     }
     if (!cs.hasContact()) {
-      for (ContactDetail csrc : vs.getContact()) {
+      for (ContactDetail csrc : vs.getContactList()) {
         ContactDetail ctgt = cs.addContact();
         ctgt.setName(csrc.getName());
-        for (ContactPoint cc : csrc.getTelecom())
+        for (ContactPoint cc : csrc.getTelecomList())
           ctgt.addTelecom(cc);
       }
     }
@@ -134,7 +134,7 @@ public class CodeSystemConvertor {
       cs.getDescriptionElement().getExtension().addAll(vs.getDescriptionElement().getExtension());
     }
     if (!cs.hasUseContext()) {
-      for (UsageContext cc : vs.getUseContext())
+      for (UsageContext cc : vs.getUseContextList())
         cs.addUseContext(cc);
     }
     if (!cs.hasPurpose()) {
@@ -144,11 +144,11 @@ public class CodeSystemConvertor {
       cs.setCopyright(vs.getCopyright());
     }
     if (!cs.hasValueSet()) {
-      if (vs.hasCompose() && vs.getCompose().getInclude().size() == 1 && vs.getCompose().getExclude().size() == 0
-          && vs.getCompose().getInclude().get(0).getSystem().equals(cs.getUrl()) 
-          && !vs.getCompose().getInclude().get(0).hasValueSet()
-          && !vs.getCompose().getInclude().get(0).hasConcept()
-          && !vs.getCompose().getInclude().get(0).hasFilter())
+      if (vs.hasCompose() && vs.getCompose().getIncludeList().size() == 1 && vs.getCompose().getExcludeList().size() == 0
+          && vs.getCompose().getIncludeList().get(0).getSystem().equals(cs.getUrl())
+          && !vs.getCompose().getIncludeList().get(0).hasValueSet()
+          && !vs.getCompose().getIncludeList().get(0).hasConcept()
+          && !vs.getCompose().getIncludeList().get(0).hasFilter())
         cs.setValueSet(vs.getUrl());
       vs.setImmutable(true);
     }

@@ -17,45 +17,44 @@ import org.hl7.fhir.definitions.model.TypeRef;
 import org.hl7.fhir.definitions.parsers.TypeParser;
 import org.hl7.fhir.exceptions.FHIRException;
 import org.hl7.fhir.exceptions.FHIRFormatError;
-import org.hl7.fhir.r5.conformance.profile.ProfileUtilities;
-import org.hl7.fhir.r5.context.BaseWorkerContext;
-import org.hl7.fhir.r5.extensions.ExtensionUtilities;
-import org.hl7.fhir.r5.model.BooleanType;
-import org.hl7.fhir.r5.model.Bundle;
-import org.hl7.fhir.r5.model.Bundle.BundleEntryComponent;
-import org.hl7.fhir.r5.model.CanonicalType;
-import org.hl7.fhir.r5.model.CodeType;
-import org.hl7.fhir.r5.model.DomainResource;
-import org.hl7.fhir.r5.model.Element;
-import org.hl7.fhir.r5.model.ElementDefinition;
-import org.hl7.fhir.r5.model.ElementDefinition.ConstraintSeverity;
-import org.hl7.fhir.r5.model.ElementDefinition.ElementDefinitionBindingComponent;
-import org.hl7.fhir.r5.model.ElementDefinition.ElementDefinitionConstraintComponent;
-import org.hl7.fhir.r5.model.ElementDefinition.TypeRefComponent;
-import org.hl7.fhir.r5.model.Enumerations.BindingStrength;
-import org.hl7.fhir.r5.model.Enumerations.FHIRTypes;
-import org.hl7.fhir.r5.model.Enumerations.OperationParameterUse;
-import org.hl7.fhir.r5.model.Enumerations.PublicationStatus;
-import org.hl7.fhir.r5.model.Enumerations.SearchParamType;
-import org.hl7.fhir.r5.model.Enumerations.VersionIndependentResourceTypesAll;
-import org.hl7.fhir.r5.model.Extension;
-import org.hl7.fhir.r5.model.ImplementationGuide;
-import org.hl7.fhir.r5.model.IntegerType;
-import org.hl7.fhir.r5.model.ListResource;
-import org.hl7.fhir.r5.model.ListResource.ListResourceEntryComponent;
-import org.hl7.fhir.r5.model.MarkdownType;
-import org.hl7.fhir.r5.model.OperationDefinition;
-import org.hl7.fhir.r5.model.OperationDefinition.OperationDefinitionParameterBindingComponent;
-import org.hl7.fhir.r5.model.OperationDefinition.OperationDefinitionParameterComponent;
-import org.hl7.fhir.r5.model.OperationDefinition.OperationKind;
-import org.hl7.fhir.r5.model.ResourceFactory;
-import org.hl7.fhir.r5.model.SearchParameter;
-import org.hl7.fhir.r5.model.StringType;
-import org.hl7.fhir.r5.model.StructureDefinition;
-import org.hl7.fhir.r5.model.UriType;
-import org.hl7.fhir.r5.model.UrlType;
 import org.hl7.fhir.r5.utils.BuildExtensions;
-import org.hl7.fhir.r5.extensions.ExtensionDefinitions;
+import org.hl7.fhir.services.conformance.profile.ProfileUtilities;
+import org.hl7.fhir.standalone.context.BaseWorkerContext;
+import org.hl7.fhir.model.extensions.ExtensionUtilities;
+import org.hl7.fhir.model.core.BooleanType;
+import org.hl7.fhir.model.core.Bundle;
+import org.hl7.fhir.model.core.Bundle.BundleEntryComponent;
+import org.hl7.fhir.model.core.CanonicalType;
+import org.hl7.fhir.model.core.CodeType;
+import org.hl7.fhir.model.core.DomainResource;
+import org.hl7.fhir.model.core.Element;
+import org.hl7.fhir.model.core.ElementDefinition;
+import org.hl7.fhir.model.core.ElementDefinition.ConstraintSeverity;
+import org.hl7.fhir.model.core.ElementDefinition.ElementDefinitionBindingComponent;
+import org.hl7.fhir.model.core.ElementDefinition.ElementDefinitionConstraintComponent;
+import org.hl7.fhir.model.core.ElementDefinition.TypeRefComponent;
+import org.hl7.fhir.model.core.Enumerations.BindingStrength;
+import org.hl7.fhir.model.core.Enumerations.FHIRTypes;
+import org.hl7.fhir.model.core.Enumerations.OperationParameterUse;
+import org.hl7.fhir.model.core.Enumerations.PublicationStatus;
+import org.hl7.fhir.model.core.Enumerations.SearchParamType;
+import org.hl7.fhir.model.core.Extension;
+import org.hl7.fhir.model.core.ImplementationGuide;
+import org.hl7.fhir.model.core.IntegerType;
+import org.hl7.fhir.model.core.ListResource;
+import org.hl7.fhir.model.core.ListResource.ListResourceEntryComponent;
+import org.hl7.fhir.model.core.MarkdownType;
+import org.hl7.fhir.model.core.OperationDefinition;
+import org.hl7.fhir.model.core.OperationDefinition.OperationDefinitionParameterBindingComponent;
+import org.hl7.fhir.model.core.OperationDefinition.OperationDefinitionParameterComponent;
+import org.hl7.fhir.model.core.OperationDefinition.OperationKind;
+import org.hl7.fhir.model.core.ResourceFactory;
+import org.hl7.fhir.model.core.SearchParameter;
+import org.hl7.fhir.model.core.StringType;
+import org.hl7.fhir.model.core.StructureDefinition;
+import org.hl7.fhir.model.core.UriType;
+import org.hl7.fhir.model.core.UrlType;
+import org.hl7.fhir.model.extensions.ExtensionDefinitions;
 import org.hl7.fhir.tools.publisher.KindlingUtilities;
 import org.hl7.fhir.utilities.FileUtilities;
 import org.hl7.fhir.utilities.IniFile;
@@ -106,8 +105,8 @@ public class SpreadSheetReloader extends SpreadSheetBase {
     XSSFSheet bindings = getSheet(excel, SN_BINDINGS);
     XSSFSheet invariants = getSheet(excel, SN_INVARIANTS);
 
-    List<ElementDefinition> oldElements = sd.getDifferential().getElement();
-    sd.getDifferential().setElement(new ArrayList<ElementDefinition>());
+    List<ElementDefinition> oldElements = sd.getDifferential().getElementList();
+    sd.getDifferential().setElementList(new ArrayList<ElementDefinition>());
 
     XSSFRow cols = res.getRow(0);
     for (int i = 1; i <= res.getLastRowNum(); i++) {
@@ -115,7 +114,7 @@ public class SpreadSheetReloader extends SpreadSheetBase {
       if (row != null && hasValue(row, cols, "Path")) {
         String p = getValue(row, cols, "Path");
         ElementDefinition ed = getED(oldElements, p);
-        sd.getDifferential().getElement().add(ed);
+        sd.getDifferential().getElementList().add(ed);
         readElementDefinition(row, cols, ed, bindings, invariants);
       }
     }   
@@ -125,7 +124,7 @@ public class SpreadSheetReloader extends SpreadSheetBase {
 
 
   private void readElementDefinition(XSSFRow row, XSSFRow cols, ElementDefinition ed, XSSFSheet bindings, XSSFSheet invariants) throws Exception {
-    ed.getAlias().clear();
+    ed.getAliasList().clear();
     for (String s : splitValue(row, cols, CN_ALIASES, "\\,")) {
       ed.addAlias(s);
     }
@@ -134,7 +133,7 @@ public class SpreadSheetReloader extends SpreadSheetBase {
       ed.setMin(Integer.parseInt(card[0]));
       ed.setMax(card[1]);
     }
-    ed.getCondition().clear();
+    ed.getConditionList().clear();
     for (String s : splitValue(row, cols, CN_INV, "\\,")) {
       ed.addCondition(s);
     }
@@ -172,8 +171,8 @@ public class SpreadSheetReloader extends SpreadSheetBase {
 
   private void parseInvariants(XSSFSheet invariants, ElementDefinition ed) throws Exception {
 
-    List<ElementDefinitionConstraintComponent> oldInvs = ed.getConstraint();
-    ed.setConstraint(new ArrayList<>());
+    List<ElementDefinitionConstraintComponent> oldInvs = ed.getConstraintList();
+    ed.setConstraintList(new ArrayList<>());
 
     XSSFRow cols = invariants.getRow(0);
     for (int i = 1; i <= invariants.getLastRowNum(); i++) {
@@ -181,7 +180,7 @@ public class SpreadSheetReloader extends SpreadSheetBase {
       if (row != null && hasValue(row, cols, CN_CONTEXT) && ed.getPath().equals(getValue(row, cols, CN_CONTEXT))) {
         String n = getValue(row, cols, CN_ID);
         ElementDefinitionConstraintComponent inv = getInv(oldInvs, n);
-        ed.getConstraint().add(inv);
+        ed.getConstraintList().add(inv);
         readInvariant(row, cols, inv);
       }
     }    
@@ -210,7 +209,7 @@ public class SpreadSheetReloader extends SpreadSheetBase {
   }
 
   private void parseType(ElementDefinition ed, String value, String hierarchy) throws Exception {
-    ed.getType().clear();
+    ed.getTypeList().clear();
     ed.setContentReferenceElement(null);
     if (ed.getPath().equals("Resource.id")) {
       ed.addType().setCode("http://hl7.org/fhirpath/System.String").addExtension(ExtensionDefinitions.EXT_FHIR_TYPE, new UrlType("id"));      
@@ -301,14 +300,14 @@ public class SpreadSheetReloader extends SpreadSheetBase {
   }
 
   private void parseExamples(ElementDefinition ed, String value, XSSFSheet bindings) throws IOException {
-    ed.getExample().clear();
+    ed.getExampleList().clear();
     if (!Utilities.noString(value)) {
       value = value.trim();
       if (value.startsWith("{") || value.startsWith("[")) {
         JsonObject json = JsonTrackingParser.parseJson(value);
         throw new Error("Not done yet");
       } else {
-        if (ed.getType().size() == 1) {
+        if (ed.getTypeList().size() == 1) {
           ed.addExample().setLabel("General").setValue(ResourceFactory.createPrimitive(ed.getTypeFirstRep().getCode(), value));
         }
       }
@@ -445,7 +444,7 @@ public class SpreadSheetReloader extends SpreadSheetBase {
         return ed;
       }
     }
-    return new ElementDefinition(p);
+    return new ElementDefinition(context.getModelContext(), p);
   }
 
   private String[] splitValue(XSSFRow row, XSSFRow cols, String colName, String regex) {
@@ -515,8 +514,8 @@ public class SpreadSheetReloader extends SpreadSheetBase {
     Bundle bnd = (Bundle) parseXml(fnSP());
     XSSFSheet src = getSheet(excel, SN_SEARCH);
 
-    List<BundleEntryComponent> oldSPs = bnd.getEntry();
-    bnd.setEntry(new ArrayList<>());
+    List<BundleEntryComponent> oldSPs = bnd.getEntryList();
+    bnd.setEntryList(new ArrayList<>());
 
     XSSFRow cols = src.getRow(0);
     for (int i = 1; i <= src.getLastRowNum(); i++) {
@@ -535,9 +534,9 @@ public class SpreadSheetReloader extends SpreadSheetBase {
     sp.setType(SearchParamType.fromCode(getValue(row, cols, CN_TYPE)));
     sp.setExpression(getValue(row, cols, CN_EXPRESSION));
     sp.setDescription(getValue(row, cols, CN_DESCRIPTION));
-    sp.getTarget().clear();
+    sp.getTargetList().clear();
     for (String s : splitValue(row, cols, CN_TARGET_TYPES, "\\|")) {
-      sp.addTarget(VersionIndependentResourceTypesAll.fromCode(s));
+      sp.addTarget(s);
     }
     readExt(sp, row, cols, CN_PATH, BuildExtensions.EXT_PATH, ExtensionType.String);
     readExt(sp, row, cols, CN_COMMITTEE_NOTES, BuildExtensions.EXT_COMMITTEE_NOTES, ExtensionType.String);
@@ -556,8 +555,8 @@ public class SpreadSheetReloader extends SpreadSheetBase {
     ListResource list = (ListResource) parseXml(fnOperations());
     XSSFSheet src = getSheet(excel, SN_SEARCH);
 
-    List<ListResourceEntryComponent> oldEx = list.getEntry();
-    list.setEntry(new ArrayList<>());
+    List<ListResourceEntryComponent> oldEx = list.getEntryList();
+    list.setEntryList(new ArrayList<>());
 
     XSSFRow cols = src.getRow(0);
     for (int i = 1; i < src.getLastRowNum(); i++) {
@@ -596,7 +595,7 @@ public class SpreadSheetReloader extends SpreadSheetBase {
     ListResource list = (ListResource) parseXml(fnOperations());
     XSSFSheet src = getSheet(excel, SN_OPERATIONS);
     XSSFSheet bindings = getSheet(excel, SN_BINDINGS);
-    list.getEntry().clear();
+    list.getEntryList().clear();
 
     XSSFRow cols = src.getRow(0);
     OperationDefinition opd = null;
@@ -609,7 +608,7 @@ public class SpreadSheetReloader extends SpreadSheetBase {
           if (opd != null) {
             saveXml(fnOpDef(resourceName+"-"+opd.getCode()), opd);
           }
-          opd = processOperation(row, cols, name, list.getEntry());
+          opd = processOperation(row, cols, name, list.getEntryList());
           moveParams(opd, params);
           list.addEntry().getItem().setReference("OperationDefinition/"+resourceName+"-"+opd.getCode());
         } else {
@@ -626,21 +625,21 @@ public class SpreadSheetReloader extends SpreadSheetBase {
 
   private void moveParams(OperationDefinition opd, Map<String, OperationDefinitionParameterComponent> params) {
     params.clear();
-    for (OperationDefinitionParameterComponent p : opd.getParameter()) {
+    for (OperationDefinitionParameterComponent p : opd.getParameterList()) {
       String path = p.getName()+(p.hasUse() ? ":"+p.getUse() : "");      
       params.put(path, p);
       moveParts(path, p, params);
-      p.getPart().clear();
+      p.getPartList().clear();
     }    
-    opd.getParameter().clear();
+    opd.getParameterList().clear();
   }
 
   private void moveParts(String path, OperationDefinitionParameterComponent pp, Map<String, OperationDefinitionParameterComponent> params) {
-    for (OperationDefinitionParameterComponent p : pp.getPart()) {
+    for (OperationDefinitionParameterComponent p : pp.getPartList()) {
       String npath = path+"."+(p.hasUse() ? ":"+p.getUse() : "");
       params.put(npath, p);
       moveParts(npath, p, params);
-      p.getPart().clear();
+      p.getPartList().clear();
     }    
   }
 
@@ -732,9 +731,9 @@ public class SpreadSheetReloader extends SpreadSheetBase {
     }
     OperationDefinitionParameterComponent ctxt = findParam(opd, context);
     if (ctxt == null) {
-      opd.getParameter().add(param);
+      opd.getParameterList().add(param);
     } else {
-      ctxt.getPart().add(param);      
+      ctxt.getPartList().add(param);
     }
 
     param.setMinElement(null);
@@ -747,7 +746,7 @@ public class SpreadSheetReloader extends SpreadSheetBase {
     String t = getValue(row, cols, CN_TYPE);
     if (!Utilities.noString(t)) {
       if (t.contains(" | ")) {
-        param.setType(FHIRTypes.ELEMENT);
+        param.setType("Element");
         for (String s : t.split("\\|")) {
           param.addExtension(BuildExtensions.EXT_ALLOWED_TYPE, new UriType(s.trim()));
         }
@@ -756,7 +755,7 @@ public class SpreadSheetReloader extends SpreadSheetBase {
           param.setSearchType(SearchParamType.fromCode(t.substring(t.lastIndexOf("/")+1).trim()));
           t = t.substring(0, t.indexOf("/")).trim();
         }
-        param.setType(FHIRTypes.fromCode(t));
+        param.setType(t);
       }
     }
 
@@ -770,8 +769,8 @@ public class SpreadSheetReloader extends SpreadSheetBase {
     if (opd.getCode().equals(context)) {
       return null;
     }
-    for (int i = opd.getParameter().size() - 1; i >= 0; i--) {
-      OperationDefinitionParameterComponent p = opd.getParameter().get(i);
+    for (int i = opd.getParameterList().size() - 1; i >= 0; i--) {
+      OperationDefinitionParameterComponent p = opd.getParameterList().get(i);
       String path = opd.getCode()+"."+p.getName();
       if (path.equals(context)) {
         return p;
@@ -784,8 +783,8 @@ public class SpreadSheetReloader extends SpreadSheetBase {
   }
 
   private OperationDefinitionParameterComponent findParam(String path, OperationDefinitionParameterComponent pp, String context) {
-    for (int i = pp.getPart().size() - 1; i >= 0; i--) {
-      OperationDefinitionParameterComponent p = pp.getPart().get(i);
+    for (int i = pp.getPartList().size() - 1; i >= 0; i--) {
+      OperationDefinitionParameterComponent p = pp.getPartList().get(i);
       String npath = path+"."+p.getName();
       if (npath.equals(context)) {
         return p;
@@ -799,7 +798,7 @@ public class SpreadSheetReloader extends SpreadSheetBase {
 
   private void processPacks(XSSFWorkbook excel) throws FHIRFormatError, FileNotFoundException, IOException {
     ListResource list = (ListResource) parseXml(fnPacks());
-    list.getEntry().clear();
+    list.getEntryList().clear();
 
     for (int i = 0; i < excel.getNumberOfSheets(); i++) {
       XSSFSheet sheet = excel.getSheetAt(i);
@@ -815,7 +814,7 @@ public class SpreadSheetReloader extends SpreadSheetBase {
   private void processPack(XSSFSheet src, String ref) throws FHIRFormatError, FileNotFoundException, IOException {
     ImplementationGuide ig = (ImplementationGuide) parseXml(fnIG(resourceName+"-"+ref));
 
-    ig.getDefinition().getResource().clear();
+    ig.getDefinition().getResourceList().clear();
     XSSFRow cols = src.getRow(0);
     for (int i = 1; i <= src.getLastRowNum(); i++) {
       XSSFRow row = src.getRow(i);

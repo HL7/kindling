@@ -8,22 +8,24 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import net.sf.saxon.trans.Mode;
 import org.hl7.fhir.exceptions.FHIRException;
-import org.hl7.fhir.r5.context.ContextUtilities;
-import org.hl7.fhir.r5.context.IWorkerContext;
-import org.hl7.fhir.r5.context.SimpleWorkerContext.SimpleWorkerContextBuilder;
-import org.hl7.fhir.r5.fhirpath.FHIRPathEngine;
-import org.hl7.fhir.r5.model.CodeSystem;
-import org.hl7.fhir.r5.model.CodeSystem.ConceptDefinitionComponent;
-import org.hl7.fhir.r5.model.ElementDefinition;
-import org.hl7.fhir.r5.model.ElementDefinition.TypeRefComponent;
-import org.hl7.fhir.r5.model.Enumerations.BindingStrength;
-import org.hl7.fhir.r5.model.StructureDefinition;
-import org.hl7.fhir.r5.model.StructureDefinition.StructureDefinitionKind;
-import org.hl7.fhir.r5.model.StructureDefinition.TypeDerivationRule;
-import org.hl7.fhir.r5.model.ValueSet;
-import org.hl7.fhir.r5.model.ValueSet.ConceptSetComponent;
-import org.hl7.fhir.r5.extensions.ExtensionDefinitions;
+import org.hl7.fhir.model.ModelContext;
+import org.hl7.fhir.services.context.ContextUtilities;
+import org.hl7.fhir.services.context.IWorkerContext;
+import org.hl7.fhir.standalone.context.SimpleWorkerContext.SimpleWorkerContextBuilder;
+import org.hl7.fhir.services.fhirpath.FHIRPathEngine;
+import org.hl7.fhir.model.core.CodeSystem;
+import org.hl7.fhir.model.core.CodeSystem.ConceptDefinitionComponent;
+import org.hl7.fhir.model.core.ElementDefinition;
+import org.hl7.fhir.model.core.ElementDefinition.TypeRefComponent;
+import org.hl7.fhir.model.core.Enumerations.BindingStrength;
+import org.hl7.fhir.model.core.StructureDefinition;
+import org.hl7.fhir.model.core.StructureDefinition.StructureDefinitionKind;
+import org.hl7.fhir.model.core.StructureDefinition.TypeDerivationRule;
+import org.hl7.fhir.model.core.ValueSet;
+import org.hl7.fhir.model.core.ValueSet.ConceptSetComponent;
+import org.hl7.fhir.model.extensions.ExtensionDefinitions;
 import org.hl7.fhir.utilities.FileUtilities;
 import org.hl7.fhir.utilities.Utilities;
 import org.hl7.fhir.utilities.npm.FilesystemPackageCacheManager;
@@ -45,7 +47,7 @@ public class VersionTransformGenerator {
     System.out.println("Loading");
     FilesystemPackageCacheManager pcm = new FilesystemPackageCacheManager.Builder().build();
     NpmPackage npm = pcm.loadPackage("hl7.fhir.r5.core#current");
-    context = new SimpleWorkerContextBuilder().fromPackage(npm);
+    context = new SimpleWorkerContextBuilder(ModelContext.fullCoreContext()).fromPackage(npm);
     cu = new ContextUtilities(context);
     fpe = new FHIRPathEngine(context);
     System.out.println("Loaded");
@@ -148,12 +150,12 @@ public class VersionTransformGenerator {
     List<ElementDefinition> children = fpe.getProfileUtilities().getChildList(sd, ed);
     for (ElementDefinition ted : children) {
       if (ted.getBase().getPath().startsWith(sd.getType()+".")) {
-        for (TypeRefComponent td : ted.getType()) {
+        for (TypeRefComponent td : ted.getTypeList()) {
           if (Utilities.existsInList(td.getWorkingCode(), "Element", "BackboneElement")) {
             String gn = name+Utilities.capitalize(ted.getName());
             b.append("  src."+ted.getNameBase()+" as s -> tgt."+ted.getNameBase()+" as t then "+gn+"(s,t);\r\n");
             generateGroup(list, conceptMaps, sd, ted, gn, null, null, sv, tv);
-          } else if (ted.getType().size() > 1) {
+          } else if (ted.getTypeList().size() > 1) {
             b.append("  src."+ted.getNameBase()+" : "+td.getWorkingCode()+" -> tgt."+ted.getNameBase()+";\r\n");
           } else {
             if (ted.getBinding().getStrength() == BindingStrength.REQUIRED) {            
@@ -176,9 +178,9 @@ public class VersionTransformGenerator {
   }
 
   private CodeSystem getCodeSystemForValueSet(ValueSet vs) {
-    if (vs.getCompose().getExclude().isEmpty() && vs.getCompose().getInclude().size() == 1) {
+    if (vs.getCompose().getExcludeList().isEmpty() && vs.getCompose().getIncludeList().size() == 1) {
       ConceptSetComponent inc = vs.getCompose().getIncludeFirstRep();
-      if (inc.getConcept().isEmpty() && inc.getFilter().isEmpty() && inc.getSystem().startsWith("http://hl7.org/fhir/")) {
+      if (inc.getConceptList().isEmpty() && inc.getFilterList().isEmpty() && inc.getSystem().startsWith("http://hl7.org/fhir/")) {
         return context.fetchResource(CodeSystem.class, inc.getSystem());
       }
     }
@@ -194,7 +196,7 @@ public class VersionTransformGenerator {
       b.append("  prefix s = \""+cs.getUrl().replace("http://hl7.org/fhir/", "http://hl7.org/fhir/"+sv)+"\"\r\n");
       b.append("  prefix t = \""+cs.getUrl().replace("http://hl7.org/fhir/", "http://hl7.org/fhir/"+tv)+"\"\r\n\r\n");
 
-      genConcepts(cs.getConcept(), b);
+      genConcepts(cs.getConceptList(), b);
       b.append("}\r\n\r\n");
     }
   }
@@ -202,7 +204,7 @@ public class VersionTransformGenerator {
   private void genConcepts(List<ConceptDefinitionComponent> list, StringBuilder b) {
     for (ConceptDefinitionComponent cd : list) {
       b.append("  s:\""+cd.getCode()+"\" - t:\""+cd.getCode()+"\"\r\n");
-      genConcepts(cd.getConcept(), b);
+      genConcepts(cd.getConceptList(), b);
     }
   }
 

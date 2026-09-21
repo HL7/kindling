@@ -23,39 +23,38 @@ import org.hl7.fhir.definitions.model.Profile;
 import org.hl7.fhir.definitions.model.ResourceDefn;
 import org.hl7.fhir.definitions.model.SearchParameterDefn;
 import org.hl7.fhir.definitions.model.SearchParameterDefn.CompositeDefinition;
-import org.hl7.fhir.r5.context.IWorkerContext;
-import org.hl7.fhir.r5.formats.IParser.OutputStyle;
-import org.hl7.fhir.r5.formats.XmlParser;
-import org.hl7.fhir.r5.model.BooleanType;
-import org.hl7.fhir.r5.model.Bundle;
-import org.hl7.fhir.r5.model.CanonicalResource;
-import org.hl7.fhir.r5.model.CodeSystem;
-import org.hl7.fhir.r5.model.CodeType;
-import org.hl7.fhir.r5.model.CodeableConcept;
-import org.hl7.fhir.r5.model.Coding;
-import org.hl7.fhir.r5.model.ElementDefinition;
-import org.hl7.fhir.r5.model.ElementDefinition.ElementDefinitionConstraintComponent;
-import org.hl7.fhir.r5.model.Enumerations.ListMode;
-import org.hl7.fhir.r5.model.Enumerations.PublicationStatus;
-import org.hl7.fhir.r5.model.Enumerations.SearchParamType;
-import org.hl7.fhir.r5.model.Enumerations.VersionIndependentResourceTypesAll;
-import org.hl7.fhir.r5.model.Extension;
-import org.hl7.fhir.r5.model.ImplementationGuide;
-import org.hl7.fhir.r5.model.ImplementationGuide.ImplementationGuideDefinitionResourceComponent;
-import org.hl7.fhir.r5.model.IntegerType;
-import org.hl7.fhir.r5.model.ListResource;
-import org.hl7.fhir.r5.model.ListResource.ListResourceEntryComponent;
-import org.hl7.fhir.r5.model.ListResource.ListStatus;
-import org.hl7.fhir.r5.model.MarkdownType;
-import org.hl7.fhir.r5.model.OperationDefinition;
-import org.hl7.fhir.r5.model.SearchParameter;
-import org.hl7.fhir.r5.model.StringType;
-import org.hl7.fhir.r5.model.StructureDefinition;
-import org.hl7.fhir.r5.model.StructureDefinition.StructureDefinitionDifferentialComponent;
-import org.hl7.fhir.r5.model.ValueSet;
-import org.hl7.fhir.r5.model.ValueSet.ConceptSetComponent;
+import org.hl7.fhir.model.Base;
+import org.hl7.fhir.model.utilities.formats.OutputStyle;
 import org.hl7.fhir.r5.utils.BuildExtensions;
-import org.hl7.fhir.r5.extensions.ExtensionDefinitions;
+import org.hl7.fhir.services.context.IWorkerContext;
+import org.hl7.fhir.model.core.formats.XmlParser;
+import org.hl7.fhir.model.core.BooleanType;
+import org.hl7.fhir.model.core.Bundle;
+import org.hl7.fhir.model.core.CanonicalResource;
+import org.hl7.fhir.model.core.CodeSystem;
+import org.hl7.fhir.model.core.CodeType;
+import org.hl7.fhir.model.core.CodeableConcept;
+import org.hl7.fhir.model.core.Coding;
+import org.hl7.fhir.model.core.ElementDefinition;
+import org.hl7.fhir.model.core.ElementDefinition.ElementDefinitionConstraintComponent;
+import org.hl7.fhir.model.core.Enumerations.PublicationStatus;
+import org.hl7.fhir.model.core.Enumerations.SearchParamType;
+import org.hl7.fhir.model.core.Extension;
+import org.hl7.fhir.model.core.ImplementationGuide;
+import org.hl7.fhir.model.core.ImplementationGuide.ImplementationGuideDefinitionResourceComponent;
+import org.hl7.fhir.model.core.IntegerType;
+import org.hl7.fhir.model.core.ListResource;
+import org.hl7.fhir.model.core.ListResource.ListResourceEntryComponent;
+import org.hl7.fhir.model.core.ListResource.ListStatus;
+import org.hl7.fhir.model.core.MarkdownType;
+import org.hl7.fhir.model.core.OperationDefinition;
+import org.hl7.fhir.model.core.SearchParameter;
+import org.hl7.fhir.model.core.StringType;
+import org.hl7.fhir.model.core.StructureDefinition;
+import org.hl7.fhir.model.core.StructureDefinition.StructureDefinitionDifferentialComponent;
+import org.hl7.fhir.model.core.ValueSet;
+import org.hl7.fhir.model.core.ValueSet.ConceptSetComponent;
+import org.hl7.fhir.model.extensions.ExtensionDefinitions;
 import org.hl7.fhir.tools.publisher.KindlingUtilities;
 import org.hl7.fhir.utilities.CommaSeparatedStringBuilder;
 import org.hl7.fhir.utilities.Utilities;
@@ -86,7 +85,7 @@ public class Regenerator {
 //    private List<Profile> conformancePackages = new ArrayList<Profile>();
 //    private Profile conformancePack;
     
-    StructureDefinition sd = r.getProfile().copy();
+    StructureDefinition sd = r.getProfile().copy(Base.COPY_DATA);
     sd.setSnapshot(null);
     sd.setText(null);
 
@@ -103,7 +102,7 @@ public class Regenerator {
     generateElement(root, r.getName(), sd.getDifferential(), r, r.getRoot());
     
     File fn = new File(Utilities.path(root, sd.fhirType().toLowerCase()+"-"+sd.getId()+".gen.xml"));
-    new XmlParser().setOutputStyle(OutputStyle.PRETTY).compose(new FileOutputStream(fn), sd);
+    new XmlParser(context.getModelContext()).setOutputStyle(OutputStyle.PRETTY).compose(new FileOutputStream(fn), sd);
     fn.setLastModified(r.getTimestamp());    
   }
 
@@ -111,7 +110,7 @@ public class Regenerator {
     ListResource list = new ListResource();
     list.setId(r.getName()+"-packs");
     list.setStatus(ListStatus.CURRENT);
-    list.setMode(ListMode.WORKING);
+    list.setMode(ListResource.ListMode.WORKING);
 //    if (r.getConformancePack() != null) {
 //      ListResourceEntryComponent li = list.addEntry();
 //      li.getItem().setReference("ImplementationGuide/"+r.getName()+"-"+r.getConformancePack().getCategory());
@@ -122,7 +121,7 @@ public class Regenerator {
     }
     
     File fn = new File(Utilities.path(root, list.fhirType().toLowerCase()+"-"+list.getId()+".gen.xml"));
-    new XmlParser().setOutputStyle(OutputStyle.PRETTY).compose(new FileOutputStream(fn), list);
+    new XmlParser(context.getModelContext()).setOutputStyle(OutputStyle.PRETTY).compose(new FileOutputStream(fn), list);
     fn.setLastModified(r.getTimestamp());
     
 //    if (r.getConformancePack() != null) {
@@ -137,14 +136,14 @@ public class Regenerator {
     ListResource list = new ListResource();
     list.setId(r.getName()+"-operations");
     list.setStatus(ListStatus.CURRENT);
-    list.setMode(ListMode.WORKING);
+    list.setMode(ListResource.ListMode.WORKING);
     for (Operation op : r.getOperations()) {
       ListResourceEntryComponent li = list.addEntry();
       li.getItem().setReference("OperationDefinition/"+r.getName()+"-"+op.getName());
     }
     
     File fn = new File(Utilities.path(root, list.fhirType().toLowerCase()+"-"+list.getId()+".gen.xml"));
-    new XmlParser().setOutputStyle(OutputStyle.PRETTY).compose(new FileOutputStream(fn), list);
+    new XmlParser(context.getModelContext()).setOutputStyle(OutputStyle.PRETTY).compose(new FileOutputStream(fn), list);
     fn.setLastModified(r.getTimestamp());
     
     for (Operation op : r.getOperations()) {
@@ -207,7 +206,7 @@ public class Regenerator {
     }
  
     for (StructureDefinition cs : p.getExtensions()) {
-      CanonicalResource cr = generateExtension(root, r, p, cs.copy());
+      CanonicalResource cr = generateExtension(root, r, p, cs.copy(Base.COPY_DATA));
       ImplementationGuideDefinitionResourceComponent res = ig.getDefinition().addResource();
       res.getReference().setReference(cr.fhirType()+"/"+cr.getId());
     }
@@ -224,7 +223,7 @@ public class Regenerator {
     }
 
     File fn = new File(Utilities.path(root, ig.fhirType().toLowerCase()+"-"+ig.getId()+".gen.xml"));
-    new XmlParser().setOutputStyle(OutputStyle.PRETTY).compose(new FileOutputStream(fn), ig);
+    new XmlParser(context.getModelContext()).setOutputStyle(OutputStyle.PRETTY).compose(new FileOutputStream(fn), ig);
     fn.setLastModified(r.getTimestamp());        
   }
 
@@ -249,7 +248,7 @@ public class Regenerator {
   
   private CanonicalResource generateSearchParameter(String root, ResourceDefn r, Profile p, SearchParameter sp) throws IOException {
     File fn = new File(Utilities.path(root, sp.fhirType().toLowerCase()+"-profile-"+sp.getId()+".gen.xml"));
-    new XmlParser().setOutputStyle(OutputStyle.PRETTY).compose(new FileOutputStream(fn), sp);
+    new XmlParser(context.getModelContext()).setOutputStyle(OutputStyle.PRETTY).compose(new FileOutputStream(fn), sp);
     fn.setLastModified(r.getTimestamp());
     return sp;
   }
@@ -257,19 +256,19 @@ public class Regenerator {
   private CanonicalResource generateExtension(String root, ResourceDefn r, Profile p, StructureDefinition sd) throws IOException {
     File fn = new File(Utilities.path(root,  sd.fhirType().toLowerCase()+"-extension-"+sd.getId()+".gen.xml"));
     sd.setSnapshot(null);
-    new XmlParser().setOutputStyle(OutputStyle.PRETTY).compose(new FileOutputStream(fn), sd);
+    new XmlParser(context.getModelContext()).setOutputStyle(OutputStyle.PRETTY).compose(new FileOutputStream(fn), sd);
     fn.setLastModified(r.getTimestamp());    
     return sd;
   }
 
   private CanonicalResource generateProfile(String root, ResourceDefn r, Profile p, ConstraintStructure cs) throws IOException {
-    StructureDefinition sd = cs.getResource().copy();
+    StructureDefinition sd = cs.getResource().copy(Base.COPY_DATA);
     sd.setSnapshot(null);
     if (!Utilities.noString(cs.getSummary())) {
       sd.addExtension(ExtensionDefinitions.EXT_SUMMARY, new MarkdownType(cs.getSummary()));
     }
     File fn = new File(Utilities.path(root,  sd.fhirType().toLowerCase()+"-profile-"+sd.getId()+".gen.xml"));
-    new XmlParser().setOutputStyle(OutputStyle.PRETTY).compose(new FileOutputStream(fn), sd);
+    new XmlParser(context.getModelContext()).setOutputStyle(OutputStyle.PRETTY).compose(new FileOutputStream(fn), sd);
     fn.setLastModified(r.getTimestamp());
     return sd;
   }
@@ -353,13 +352,13 @@ public class Regenerator {
     if (ed.getBinding().getBinding() == BindingMethod.CodeList) {
       ValueSet vs = ed.getBinding().getValueSet();
       File fn = new File(Utilities.path(root, vs.fhirType().toLowerCase()+"-"+vs.getId()+".gen.xml"));
-      new XmlParser().setOutputStyle(OutputStyle.PRETTY).compose(new FileOutputStream(fn), vs);
+      new XmlParser(context.getModelContext()).setOutputStyle(OutputStyle.PRETTY).compose(new FileOutputStream(fn), vs);
       fn.setLastModified(r.getTimestamp());    
       
       List<CodeSystem> csl = fetchCodeSystemsForValueSet(vs);
       for (CodeSystem cs : csl) {
         fn = new File(Utilities.path(root, cs.fhirType().toLowerCase()+"-"+cs.getId()+".gen.xml"));
-        new XmlParser().setOutputStyle(OutputStyle.PRETTY).compose(new FileOutputStream(fn), cs);
+        new XmlParser(context.getModelContext()).setOutputStyle(OutputStyle.PRETTY).compose(new FileOutputStream(fn), cs);
         fn.setLastModified(r.getTimestamp());            
       }
 
@@ -367,12 +366,12 @@ public class Regenerator {
         if (vsc.getValueSet() != null) {
           vs = vsc.getValueSet();
           fn = new File(Utilities.path(root, vs.fhirType().toLowerCase()+"-"+vs.getId()+".gen.xml"));
-          new XmlParser().setOutputStyle(OutputStyle.PRETTY).compose(new FileOutputStream(fn), vs);
+          new XmlParser(context.getModelContext()).setOutputStyle(OutputStyle.PRETTY).compose(new FileOutputStream(fn), vs);
           fn.setLastModified(r.getTimestamp());        
           csl = fetchCodeSystemsForValueSet(vs);
           for (CodeSystem cs : csl) {
             fn = new File(Utilities.path(root, cs.fhirType().toLowerCase()+"-"+cs.getId()+".gen.xml"));
-            new XmlParser().setOutputStyle(OutputStyle.PRETTY).compose(new FileOutputStream(fn), cs);
+            new XmlParser(context.getModelContext()).setOutputStyle(OutputStyle.PRETTY).compose(new FileOutputStream(fn), cs);
             fn.setLastModified(r.getTimestamp());            
           }
         }
@@ -383,7 +382,7 @@ public class Regenerator {
 
   private List<CodeSystem> fetchCodeSystemsForValueSet(ValueSet vs) {
     List<CodeSystem> result = new ArrayList<>();
-    for (ConceptSetComponent inc : vs.getCompose().getInclude()) {
+    for (ConceptSetComponent inc : vs.getCompose().getIncludeList()) {
       CodeSystem cs = context.fetchCodeSystem(inc.getSystem());
       if (cs != null && !result.contains(cs)) {
         result.add(cs);
@@ -393,7 +392,7 @@ public class Regenerator {
   }
 
   private ElementDefinition getByPath(StructureDefinitionDifferentialComponent differential, String path) {
-    for (ElementDefinition d : differential.getElement()) {
+    for (ElementDefinition d : differential.getElementList()) {
       if (d.getPath().equals(path)) {
         return d;
       }
@@ -422,7 +421,7 @@ public class Regenerator {
   
   
   private ElementDefinitionConstraintComponent getConstraint(ElementDefinition ed, Invariant inv) {
-    for (ElementDefinitionConstraintComponent c : ed.getConstraint()) {
+    for (ElementDefinitionConstraintComponent c : ed.getConstraintList()) {
       if (inv.getId().equals(inv.getId())) {
         return c;
       }
@@ -431,7 +430,7 @@ public class Regenerator {
   }
 
   private void generateOperation(String root, ResourceDefn r, Operation op) throws IOException {
-    OperationDefinition opd = op.getResource().copy();
+    OperationDefinition opd = op.getResource().copy(Base.COPY_DATA);
     opd.setId(r.getName()+"-"+op.getName());
     opd.setUrl("http://hl7.org/fhir/build/OperationDefinition/"+opd.getId());
     if (!Utilities.noString(op.getFooter())) {
@@ -467,7 +466,7 @@ public class Regenerator {
     }
 
     File fn = new File(Utilities.path(root, opd.fhirType().toLowerCase()+"-"+opd.getId()+".gen.xml"));
-    new XmlParser().setOutputStyle(OutputStyle.PRETTY).compose(new FileOutputStream(fn), opd);
+    new XmlParser(context.getModelContext()).setOutputStyle(OutputStyle.PRETTY).compose(new FileOutputStream(fn), opd);
     fn.setLastModified(r.getTimestamp());    
   }
 
@@ -508,7 +507,7 @@ public class Regenerator {
       sp.setExpression(spd.getExpression());
       if (spd.hasManualTypes()) {
         for (String t : sorted(spd.getManualTypes())) {
-          sp.addTarget(VersionIndependentResourceTypesAll.fromCode(t));
+          sp.addTarget(t);
         }
       }
       if (spd.getStandardsStatus() != null) {
@@ -520,7 +519,7 @@ public class Regenerator {
     }
     
     File fn = new File(Utilities.path(root, bnd.fhirType().toLowerCase()+"-"+bnd.getId()+".gen.xml"));
-    new XmlParser().setOutputStyle(OutputStyle.PRETTY).compose(new FileOutputStream(fn), bnd);
+    new XmlParser(context.getModelContext()).setOutputStyle(OutputStyle.PRETTY).compose(new FileOutputStream(fn), bnd);
     fn.setLastModified(r.getTimestamp());    
   }
     
@@ -535,7 +534,7 @@ public class Regenerator {
     ListResource list = new ListResource();
     list.setId(r.getName()+"-examples");
     list.setStatus(ListStatus.CURRENT);
-    list.setMode(ListMode.WORKING);
+    list.setMode(ListResource.ListMode.WORKING);
     for (Example ex : r.getExamples()) {
       ListResourceEntryComponent li = list.addEntry();
       li.getItem().setReference(ex.getResourceName()+"/"+ex.getId());
@@ -571,7 +570,7 @@ public class Regenerator {
     }
     
     File fn = new File(Utilities.path(root, list.fhirType().toLowerCase()+"-"+list.getId()+".gen.xml"));
-    new XmlParser().setOutputStyle(OutputStyle.PRETTY).compose(new FileOutputStream(fn), list);
+    new XmlParser(context.getModelContext()).setOutputStyle(OutputStyle.PRETTY).compose(new FileOutputStream(fn), list);
     fn.setLastModified(r.getTimestamp());
   }
 

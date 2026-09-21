@@ -80,63 +80,62 @@ import org.hl7.fhir.definitions.parsers.ValueSetGenerator;
 import org.hl7.fhir.definitions.validation.ExtensionDefinitionValidator;
 import org.hl7.fhir.definitions.validation.FHIRPathUsage;
 import org.hl7.fhir.exceptions.FHIRException;
-import org.hl7.fhir.r5.conformance.profile.ProfileKnowledgeProvider;
-import org.hl7.fhir.r5.conformance.profile.ProfileUtilities;
-import org.hl7.fhir.r5.context.CanonicalResourceManager;
-import org.hl7.fhir.r5.extensions.ExtensionUtilities;
-import org.hl7.fhir.r5.formats.FormatUtilities;
-import org.hl7.fhir.r5.formats.IParser;
-import org.hl7.fhir.r5.formats.IParser.OutputStyle;
-import org.hl7.fhir.r5.formats.JsonParser;
-import org.hl7.fhir.r5.formats.XmlParser;
-import org.hl7.fhir.r5.model.Base64BinaryType;
-import org.hl7.fhir.r5.model.BooleanType;
-import org.hl7.fhir.r5.model.CanonicalType;
-import org.hl7.fhir.r5.model.CodeSystem;
-import org.hl7.fhir.r5.model.CodeType;
-import org.hl7.fhir.r5.model.CodeableConcept;
-import org.hl7.fhir.r5.model.ConceptMap;
-import org.hl7.fhir.r5.model.ContactPoint.ContactPointSystem;
-import org.hl7.fhir.r5.model.DataType;
-import org.hl7.fhir.r5.model.DateTimeType;
-import org.hl7.fhir.r5.model.DateType;
-import org.hl7.fhir.r5.model.DecimalType;
-import org.hl7.fhir.r5.model.Enumerations.BindingStrength;
-import org.hl7.fhir.r5.model.Enumerations.FHIRVersion;
-import org.hl7.fhir.r5.model.Enumerations.PublicationStatus;
-import org.hl7.fhir.r5.model.Enumerations.QuantityComparator;
-import org.hl7.fhir.r5.model.Enumerations.SearchParamType;
-import org.hl7.fhir.r5.model.Enumerations.VersionIndependentResourceTypesAll;
-import org.hl7.fhir.r5.model.Extension;
-import org.hl7.fhir.r5.model.Factory;
-import org.hl7.fhir.r5.model.IdType;
-import org.hl7.fhir.r5.model.Identifier;
-import org.hl7.fhir.r5.model.InstantType;
-import org.hl7.fhir.r5.model.Integer64Type;
-import org.hl7.fhir.r5.model.IntegerType;
-import org.hl7.fhir.r5.model.MarkdownType;
-import org.hl7.fhir.r5.model.OidType;
-import org.hl7.fhir.r5.model.PackageInformation;
-import org.hl7.fhir.r5.model.Period;
-import org.hl7.fhir.r5.model.PositiveIntType;
-import org.hl7.fhir.r5.model.Quantity;
-import org.hl7.fhir.r5.model.Reference;
-import org.hl7.fhir.r5.model.SearchParameter;
-import org.hl7.fhir.r5.model.StringType;
-import org.hl7.fhir.r5.model.StructureDefinition;
-import org.hl7.fhir.r5.model.StructureDefinition.ExtensionContextType;
-import org.hl7.fhir.r5.model.StructureDefinition.StructureDefinitionContextComponent;
-import org.hl7.fhir.r5.model.StructureDefinition.StructureDefinitionKind;
-import org.hl7.fhir.r5.model.StructureDefinition.TypeDerivationRule;
-import org.hl7.fhir.r5.model.TimeType;
-import org.hl7.fhir.r5.model.UnsignedIntType;
-import org.hl7.fhir.r5.model.UriType;
-import org.hl7.fhir.r5.model.UrlType;
-import org.hl7.fhir.r5.model.UuidType;
-import org.hl7.fhir.r5.model.ValueSet;
-import org.hl7.fhir.r5.renderers.utils.RenderingContext;
-import org.hl7.fhir.r5.terminologies.ValueSetUtilities;
-import org.hl7.fhir.r5.extensions.ExtensionDefinitions;
+import org.hl7.fhir.model.Factory;
+import org.hl7.fhir.model.ModelContext;
+import org.hl7.fhir.model.utilities.ValueSetUtilities;
+import org.hl7.fhir.model.utilities.formats.IParser;
+import org.hl7.fhir.model.utilities.formats.OutputStyle;
+import org.hl7.fhir.services.conformance.profile.ProfileKnowledgeProvider;
+import org.hl7.fhir.services.conformance.profile.ProfileUtilities;
+import org.hl7.fhir.standalone.context.CanonicalResourceManager;
+import org.hl7.fhir.model.extensions.ExtensionUtilities;
+import org.hl7.fhir.model.core.formats.JsonParser;
+import org.hl7.fhir.model.core.formats.XmlParser;
+import org.hl7.fhir.model.core.Base64BinaryType;
+import org.hl7.fhir.model.core.BooleanType;
+import org.hl7.fhir.model.core.CanonicalType;
+import org.hl7.fhir.model.core.CodeSystem;
+import org.hl7.fhir.model.core.CodeType;
+import org.hl7.fhir.model.core.CodeableConcept;
+import org.hl7.fhir.model.core.ConceptMap;
+import org.hl7.fhir.model.core.ContactPoint.ContactPointSystem;
+import org.hl7.fhir.model.core.DataType;
+import org.hl7.fhir.model.core.DateTimeType;
+import org.hl7.fhir.model.core.DateType;
+import org.hl7.fhir.model.core.DecimalType;
+import org.hl7.fhir.model.core.Enumerations.BindingStrength;
+import org.hl7.fhir.model.core.Enumerations.FHIRVersion;
+import org.hl7.fhir.model.core.Enumerations.PublicationStatus;
+import org.hl7.fhir.model.core.Enumerations.QuantityComparator;
+import org.hl7.fhir.model.core.Enumerations.SearchParamType;
+import org.hl7.fhir.model.core.Extension;
+import org.hl7.fhir.model.core.IdType;
+import org.hl7.fhir.model.core.Identifier;
+import org.hl7.fhir.model.core.InstantType;
+import org.hl7.fhir.model.core.Integer64Type;
+import org.hl7.fhir.model.core.IntegerType;
+import org.hl7.fhir.model.core.MarkdownType;
+import org.hl7.fhir.model.core.OidType;
+import org.hl7.fhir.model.core.PackageInformation;
+import org.hl7.fhir.model.core.Period;
+import org.hl7.fhir.model.core.PositiveIntType;
+import org.hl7.fhir.model.core.Quantity;
+import org.hl7.fhir.model.core.Reference;
+import org.hl7.fhir.model.core.SearchParameter;
+import org.hl7.fhir.model.core.StringType;
+import org.hl7.fhir.model.core.StructureDefinition;
+import org.hl7.fhir.model.core.StructureDefinition.ExtensionContextType;
+import org.hl7.fhir.model.core.StructureDefinition.StructureDefinitionContextComponent;
+import org.hl7.fhir.model.core.StructureDefinition.StructureDefinitionKind;
+import org.hl7.fhir.model.core.StructureDefinition.TypeDerivationRule;
+import org.hl7.fhir.model.core.TimeType;
+import org.hl7.fhir.model.core.UnsignedIntType;
+import org.hl7.fhir.model.core.UriType;
+import org.hl7.fhir.model.core.UrlType;
+import org.hl7.fhir.model.core.UuidType;
+import org.hl7.fhir.model.core.ValueSet;
+import org.hl7.fhir.services.renderers.utils.RenderingContext;
+import org.hl7.fhir.model.extensions.ExtensionDefinitions;
 import org.hl7.fhir.tools.converters.MarkDownPreProcessor;
 import org.hl7.fhir.tools.publisher.BuildWorkerContext;
 import org.hl7.fhir.tools.publisher.KindlingUtilities;
@@ -668,7 +667,7 @@ public class OldSpreadsheetParser {
           indent = Integer.parseInt(filename.substring(0, filename.indexOf(" ")));
           filename = filename.substring(filename.indexOf(" ")).trim();
         }
-        String json = new JsonParser().setOutputStyle(OutputStyle.PRETTY).composeString(new XmlParser().parse(new FileInputStream(Utilities.path(folder, filename))));
+        String json = new JsonParser(ModelContext.fullCoreContext()).setOutputStyle(OutputStyle.PRETTY).composeString(new XmlParser(ModelContext.fullCoreContext()).parse(new FileInputStream(Utilities.path(folder, filename))));
         process(content, indent, json);
       } else if (l.startsWith("$include ")) {
         int indent = 0;
@@ -842,7 +841,7 @@ public class OldSpreadsheetParser {
           path = path.substring(0, path.indexOf('.'));
           if (!pkp.isResource(path))
             throw new Exception("Ilegal Search Parameter path "+sheet.getColumn(row, "Path"));
-          sp.addBase(VersionIndependentResourceTypesAll.fromCode(path));
+          sp.addBase(path);
           sp.setId(pack.getId()+"-"+path+"-"+sp.getName());
           if (definitions != null) { // igtodo (and below)
             root2 = definitions.getResourceByName(path);
@@ -850,8 +849,8 @@ public class OldSpreadsheetParser {
               throw new Exception("Search Param "+pack.getTitle()+"/"+n+" has an invalid path (resource not found)");
             if (!pkp.isResource(root2.getName()))
               throw new Exception("Ilegal Search Parameter path "+sheet.getColumn(row, "Path"));
-            sp.getBase().clear();
-            sp.addBase(VersionIndependentResourceTypesAll.fromCode(root2.getName()));
+            sp.getBaseList().clear();
+            sp.addBase(root2.getName());
             sp.setId(pack.getId()+"-"+(root2 == null ? "all" : root2.getName())+"-"+sp.getName());
           }
         }
@@ -877,9 +876,9 @@ public class OldSpreadsheetParser {
               if (ex == null)
                 throw new Exception("Search Param "+pack.getTitle()+"/"+n+" refers to unknown extension '"+p+"' "+ getLocation(row));
               e = definitions.getElementDefn("Extension");
-              if (ex.getContext().size() != 1 || ex.getContext().get(0).getType() != ExtensionContextType.ELEMENT)
+              if (ex.getContextList().size() != 1 || ex.getContextList().get(0).getType() != ExtensionContextType.ELEMENT)
                 throw new Exception("Search Param "+pack.getTitle()+"/"+n+" refers to an extension with multiple contexts, not not an element context - not supported '"+p+"' "+ getLocation(row));
-              path = ex.getContext().get(0).getExpression();
+              path = ex.getContextList().get(0).getExpression();
               if (Utilities.noString(path))
                 throw new Exception("Search Param "+pack.getTitle()+"/"+n+" has no path");
               if (path.contains("."))
@@ -892,7 +891,7 @@ public class OldSpreadsheetParser {
                 throw new Exception("Search Param "+root2.getName()+"/"+n+": duplicate name "+ getLocation(row));
               sp.setId(pack.getId()+"-"+path+"-"+sp.getName());
 
-                pn.add(ex.getContext().get(0).getExpression()+".extension{"+ex.getUrl()+"}");
+                pn.add(ex.getContextList().get(0).getExpression()+".extension{"+ex.getUrl()+"}");
             } else if (p.contains(".extension{")) {
               String url = extractExtensionUrl(p);
               StructureDefinition ex = context.fetchResource(StructureDefinition.class, url); // not created yet?
@@ -1318,16 +1317,16 @@ public class OldSpreadsheetParser {
 	  IParser p;
 	  String filename;
 	  if (new File(Utilities.path(folder, ref+".xml")).exists()) {
-	    p = new XmlParser();
+	    p = new XmlParser(ModelContext.fullCoreContext());
 	    filename = Utilities.path(folder, ref+".xml");
 	  } else if (new File(Utilities.path(folder, ref+".json")).exists()) {
-	    p = new JsonParser();
+	    p = new JsonParser(ModelContext.fullCoreContext());
 	    filename = Utilities.path(folder, ref+".json");
 	  } else if (new File(Utilities.path(dataTypesFolder, ref+".xml")).exists()) {
-      p = new XmlParser();
+      p = new XmlParser(ModelContext.fullCoreContext());
       filename = Utilities.path(dataTypesFolder, ref+".xml");
     } else if (new File(Utilities.path(dataTypesFolder, ref+".json")).exists()) {
-      p = new JsonParser();
+      p = new JsonParser(ModelContext.fullCoreContext());
       filename = Utilities.path(dataTypesFolder, ref+".json");
     } else
 	    throw new Exception("Unable to find source for "+ref+" in "+folder+" ("+Utilities.path(folder, ref+".xml/json)"));
@@ -2036,10 +2035,10 @@ public class OldSpreadsheetParser {
     }
 
     if (source.startsWith("{")) {
-      JsonParser json = new JsonParser();
+      JsonParser json = new JsonParser(ModelContext.fullCoreContext());
       return json.parseType(source, type);
     } else if (source.startsWith("<")) {
-      XmlParser xml = new XmlParser();
+      XmlParser xml = new XmlParser(ModelContext.fullCoreContext());
       return xml.parseType(source, type);
     } else {
       if (source.startsWith("\"") && source.endsWith("\""))
@@ -2268,7 +2267,7 @@ public class OldSpreadsheetParser {
 
     ex.setPublisher(ap.metadata("author.name"));
     if (ap.hasMetadata("author.reference"))
-      ex.addContact().getTelecom().add(Factory.newContactPoint(ContactPointSystem.URL, ap.metadata("author.reference")));
+      ex.addContact().getTelecomList().add(Factory.newContactPoint(ContactPointSystem.URL, ap.metadata("author.reference")));
     //  <code> opt Zero+ Coding assist with indexing and finding</code>
     if (ap.hasMetadata("date"))
       ex.setDateElement(Factory.newDateTime(ap.metadata("date").substring(0, 10)));
@@ -2305,7 +2304,7 @@ public class OldSpreadsheetParser {
     ProfileGenerator gen = new ProfileGenerator(definitions, null, pkp, null, version, null, fpUsages, null, null, rc);
     ProfileUtilities utils = new ProfileUtilities(this.context, issues, pkp);
     gen.convertElements(exe, ex, null);
-    ex.getDifferential().getElementFirstRep().getType().clear();
+    ex.getDifferential().getElementFirstRep().getTypeList().clear();
     utils.setIds(ex, false);
 
     StructureDefinition base = definitions != null ? definitions.getSnapShotForType("Extension") : this.context.fetchResource(StructureDefinition.class, "http://hl7.org/fhir/StructureDefinition/Extension");

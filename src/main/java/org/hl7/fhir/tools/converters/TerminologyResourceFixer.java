@@ -4,11 +4,12 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 
-import org.hl7.fhir.r5.formats.IParser.OutputStyle;
-import org.hl7.fhir.r5.formats.JsonParser;
-import org.hl7.fhir.r5.formats.XmlParser;
-import org.hl7.fhir.r5.model.CanonicalResource;
-import org.hl7.fhir.r5.model.Resource;
+import org.hl7.fhir.model.ModelContext;
+import org.hl7.fhir.model.core.formats.JsonParser;
+import org.hl7.fhir.model.core.formats.XmlParser;
+import org.hl7.fhir.model.core.CanonicalResource;
+import org.hl7.fhir.model.core.Resource;
+import org.hl7.fhir.model.utilities.formats.OutputStyle;
 import org.hl7.fhir.utilities.Utilities;
 
 public class TerminologyResourceFixer {
@@ -23,18 +24,18 @@ public class TerminologyResourceFixer {
         fix(f);
       } else if (f.getName().endsWith(".xml")) {
         try {
-          Resource res = new XmlParser().parse(new FileInputStream(f));
+          Resource res = new XmlParser(ModelContext.fullCoreContext()).parse(new FileInputStream(f));
           if (fixResource(res, f.getAbsolutePath())) {
-            new XmlParser().setOutputStyle(OutputStyle.PRETTY).compose(new FileOutputStream(f), res); 
+            new XmlParser(ModelContext.fullCoreContext()).setOutputStyle(OutputStyle.PRETTY).compose(new FileOutputStream(f), res);
           }
         } catch (Exception e) {
           // nothing
         }
       } else if (f.getName().endsWith(".json")) {
         try {
-          Resource res = new JsonParser().parse(new FileInputStream(f));
+          Resource res = new JsonParser(ModelContext.fullCoreContext()).parse(new FileInputStream(f));
           if (fixResource(res, f.getAbsolutePath())) {
-            new JsonParser().setOutputStyle(OutputStyle.PRETTY).compose(new FileOutputStream(f), res); 
+            new JsonParser(ModelContext.fullCoreContext()).setOutputStyle(OutputStyle.PRETTY).compose(new FileOutputStream(f), res);
           }
         } catch (Exception e) {
           // nothing

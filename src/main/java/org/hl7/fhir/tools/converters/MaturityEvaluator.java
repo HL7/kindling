@@ -2,14 +2,16 @@ package org.hl7.fhir.tools.converters;
 
 import javassist.Loader;
 import org.hl7.fhir.exceptions.FHIRFormatError;
-import org.hl7.fhir.r5.context.SimpleWorkerContext;
-import org.hl7.fhir.r5.elementmodel.Element;
-import org.hl7.fhir.r5.elementmodel.ElementVisitor;
-import org.hl7.fhir.r5.elementmodel.Manager;
-import org.hl7.fhir.r5.extensions.ExtensionDefinitions;
-import org.hl7.fhir.r5.extensions.ExtensionUtilities;
-import org.hl7.fhir.r5.formats.JsonParser;
-import org.hl7.fhir.r5.model.*;
+import org.hl7.fhir.model.ModelContext;
+import org.hl7.fhir.model.utilities.formats.FhirFormat;
+import org.hl7.fhir.standalone.context.SimpleWorkerContext;
+import org.hl7.fhir.services.elementmodel.Element;
+import org.hl7.fhir.services.elementmodel.ElementVisitor;
+import org.hl7.fhir.services.elementmodel.Manager;
+import org.hl7.fhir.model.extensions.ExtensionDefinitions;
+import org.hl7.fhir.model.extensions.ExtensionUtilities;
+import org.hl7.fhir.model.core.formats.JsonParser;
+import org.hl7.fhir.model.core.*;
 import org.hl7.fhir.utilities.CommaSeparatedStringBuilder;
 import org.hl7.fhir.utilities.FileUtilities;
 import org.hl7.fhir.utilities.IniFile;
@@ -50,7 +52,7 @@ public class MaturityEvaluator {
     }
 
     @Override
-    public ElementVisitor.ElementVisitorInstruction visit(Object o, org.hl7.fhir.r5.elementmodel.Element element) {
+    public ElementVisitor.ElementVisitorInstruction visit(Object o, org.hl7.fhir.services.elementmodel.Element element) {
       if (element.fhirType().equals("Reference")) {
         String ref = element.getNamedChildValue("reference");
         if (ref != null && Utilities.charCount(ref, '/') == 1) {
@@ -189,7 +191,7 @@ public class MaturityEvaluator {
     FilesystemPackageCacheManager pcm = new FilesystemPackageCacheManager.Builder().build();
     NpmPackage r6 = pcm.loadPackage("hl7.fhir.r6.core", "dev");
     NpmPackage r6e = pcm.loadPackage("hl7.fhir.r6.examples", "dev");
-    SimpleWorkerContext ctxt = new SimpleWorkerContext.SimpleWorkerContextBuilder().withAllowLoadingDuplicates(true).fromPackage(r6);
+    SimpleWorkerContext ctxt = new SimpleWorkerContext.SimpleWorkerContextBuilder(ModelContext.fullCoreContext()).withAllowLoadingDuplicates(true).fromPackage(r6);
     Map<String, StructureDefinitionAnalysis> resMap = new HashMap<>();
     List<StructureDefinition> reslist = new ArrayList<>();
     Connection xig = DriverManager.getConnection("jdbc:sqlite:/Users/grahamegrieve/work/nodeserver/xig/data/xig.db");
@@ -205,11 +207,11 @@ public class MaturityEvaluator {
     System.out.println("Processing...");
 
     for (StructureDefinition sd : reslist) {
-      for (ElementDefinition ed : sd.getSnapshot().getElement()) {
-        for (ElementDefinition.TypeRefComponent t : ed.getType()) {
-          for (CanonicalType cr : t.getTargetProfile()) {
+      for (ElementDefinition ed : sd.getSnapshot().getElementList()) {
+        for (ElementDefinition.TypeRefComponent t : ed.getTypeList()) {
+          for (CanonicalType cr : t.getTargetProfileList()) {
             StructureDefinitionAnalysis analysis = resMap.get(cr.primitiveValue());
-            if (t.getTargetProfile().size() == 1) {
+            if (t.getTargetProfileList().size() == 1) {
               analysis.usersSingle.add(sd);
             } else {
               analysis.usersGroup.add(sd);
@@ -220,7 +222,7 @@ public class MaturityEvaluator {
     }
 
     for (String n : r6e.listResources(ctxt.getResourceNamesAsSet())) {
-      org.hl7.fhir.r5.elementmodel.Element r = Manager.parseSingle(ctxt, r6e.loadResource(n), Manager.FhirFormat.JSON);
+      org.hl7.fhir.services.elementmodel.Element r = Manager.parseSingle(ctxt, r6e.loadResource(n), FhirFormat.JSON);
       ExampleLinkVisitor visitor = new ExampleLinkVisitor(resMap);
       new ElementVisitor(visitor).visit(null, r);
     }
@@ -228,26 +230,26 @@ public class MaturityEvaluator {
     NpmPackage extp = pcm.loadPackage("hl7.fhir.uv.extensions", "current");
 
     for (String n : extp.listResources("StructureDefinition")) {
-      StructureDefinition ext = (StructureDefinition) new JsonParser().parse(extp.loadResource(n));
-      for (StructureDefinition.StructureDefinitionContextComponent context : ext.getContext()) {
+      StructureDefinition ext = (StructureDefinition) new JsonParser(ModelContext.fullCoreContext()).parse(extp.loadResource(n));
+      for (StructureDefinition.StructureDefinitionContextComponent context : ext.getContextList()) {
         String base = context.getExpression() != null && context.getExpression().contains(".") ? context.getExpression().substring(0, context.getExpression().indexOf(".")) : context.getExpression();
         base = translateForPastResources(ctxt, base);
         if (resMap.containsKey(base)) {
-          if (ext.getContext().size() == 1) {
+          if (ext.getContextList().size() == 1) {
             resMap.get(base).extRefs1a++;
           } else {
             resMap.get(base).extRefs1b++;
           }
         }
       }
-      for (ElementDefinition ed : ext.getSnapshot().getElement()) {
-        for (ElementDefinition.TypeRefComponent t : ed.getType()) {
-          for (CanonicalType cr : t.getTargetProfile()) {
+      for (ElementDefinition ed : ext.getSnapshot().getElementList()) {
+        for (ElementDefinition.TypeRefComponent t : ed.getTypeList()) {
+          for (CanonicalType cr : t.getTargetProfileList()) {
             String[] p = cr.primitiveValue().split("/");
             if (p.length > 1) {
               String base = translateForPastResources(ctxt, p[p.length-1]);
               if (resMap.containsKey(base)) {
-                if (t.getTargetProfile().size() == 1) {
+                if (t.getTargetProfileList().size() == 1) {
                   resMap.get(base).extRefs2a++;
                 } else {
                   resMap.get(base).extRefs2b++;
@@ -260,9 +262,9 @@ public class MaturityEvaluator {
     }
 
     for (String n : r6.listResources("CompartmentDefinition")) {
-      CompartmentDefinition cd = (CompartmentDefinition) new JsonParser().parse(r6.loadResource(n));
-      for (CompartmentDefinition.CompartmentDefinitionResourceComponent r : cd.getResource()) {
-        if (r.getParam().size() > 0) {
+      CompartmentDefinition cd = (CompartmentDefinition) new JsonParser(ModelContext.fullCoreContext()).parse(r6.loadResource(n));
+      for (CompartmentDefinition.CompartmentDefinitionResourceComponent r : cd.getResourceList()) {
+        if (r.getParamList().size() > 0) {
           StructureDefinitionAnalysis analysis = resMap.get(r.getCode());
           analysis.compartments.add(cd.getCode().toCode());
         }
@@ -295,10 +297,10 @@ public class MaturityEvaluator {
 //      node.add("isAbstract", sd.getAbstract());
 
 
-      for (ElementDefinition ed : sd.getSnapshot().getElement()) {
-        for (ElementDefinition.TypeRefComponent t : ed.getType()) {
-          for (CanonicalType cr : t.getTargetProfile()) {
-            addLink(edges, sd.getType(), resMap.get(cr.primitiveValue()).sd.getType(), ed.getName(), ""+ed.getMin()+".."+ed.getMax(), t.getTargetProfile().size() == 1 ? "single" : "choice", ed.getDefinition());
+      for (ElementDefinition ed : sd.getSnapshot().getElementList()) {
+        for (ElementDefinition.TypeRefComponent t : ed.getTypeList()) {
+          for (CanonicalType cr : t.getTargetProfileList()) {
+            addLink(edges, sd.getType(), resMap.get(cr.primitiveValue()).sd.getType(), ed.getName(), ""+ed.getMin()+".."+ed.getMax(), t.getTargetProfileList().size() == 1 ? "single" : "choice", ed.getDefinition());
           }
         }
       }

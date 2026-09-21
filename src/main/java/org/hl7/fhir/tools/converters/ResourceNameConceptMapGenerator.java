@@ -8,13 +8,13 @@ import java.io.IOException;
 import java.util.Date;
 
 import org.hl7.fhir.exceptions.FHIRException;
-import org.hl7.fhir.r5.formats.IParser.OutputStyle;
-import org.hl7.fhir.r5.formats.JsonParser;
-import org.hl7.fhir.r5.model.ConceptMap;
-import org.hl7.fhir.r5.model.ConceptMap.ConceptMapGroupComponent;
-import org.hl7.fhir.r5.model.ConceptMap.SourceElementComponent;
-import org.hl7.fhir.r5.model.Enumerations.ConceptMapRelationship;
-import org.hl7.fhir.r5.model.Enumerations.PublicationStatus;
+import org.hl7.fhir.model.core.formats.JsonParser;
+import org.hl7.fhir.model.core.ConceptMap;
+import org.hl7.fhir.model.core.ConceptMap.ConceptMapGroupComponent;
+import org.hl7.fhir.model.core.ConceptMap.SourceElementComponent;
+import org.hl7.fhir.model.core.Enumerations.ConceptMapRelationship;
+import org.hl7.fhir.model.core.Enumerations.PublicationStatus;
+import org.hl7.fhir.model.utilities.formats.OutputStyle;
 import org.hl7.fhir.tools.publisher.KindlingUtilities;
 import org.hl7.fhir.utilities.Utilities;
 import org.hl7.fhir.utilities.xls.XLSXmlParser;
@@ -72,12 +72,12 @@ public class ResourceNameConceptMapGenerator {
       }
     }
     //
-    new JsonParser().setOutputStyle(OutputStyle.PRETTY).compose(new FileOutputStream(Utilities.path(dstFolder, "ConceptMap-"+name+".json")), cm);
+    new JsonParser(cm.getModelContext()).setOutputStyle(OutputStyle.PRETTY).compose(new FileOutputStream(Utilities.path(dstFolder, "ConceptMap-"+name+".json")), cm);
     
   }
 
   private static SourceElementComponent elementForCode(ConceptMapGroupComponent grp, String s) {
-    for (SourceElementComponent t : grp.getElement())
+    for (SourceElementComponent t : grp.getElementList())
       if (t.getCode().equals(s))
         return t;
     SourceElementComponent t = grp.addElement();

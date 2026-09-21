@@ -11,11 +11,12 @@ import java.util.Map;
 
 import org.hl7.fhir.exceptions.FHIRException;
 import org.hl7.fhir.exceptions.FHIRFormatError;
-import org.hl7.fhir.r5.formats.JsonParser;
-import org.hl7.fhir.r5.formats.XmlParser;
-import org.hl7.fhir.r5.model.Base;
-import org.hl7.fhir.r5.model.CodeSystem;
-import org.hl7.fhir.r5.model.Resource;
+import org.hl7.fhir.model.ModelContext;
+import org.hl7.fhir.model.core.formats.JsonParser;
+import org.hl7.fhir.model.core.formats.XmlParser;
+import org.hl7.fhir.model.Base;
+import org.hl7.fhir.model.core.CodeSystem;
+import org.hl7.fhir.model.core.Resource;
 import org.hl7.fhir.utilities.npm.FilesystemPackageCacheManager;
 import org.hl7.fhir.utilities.npm.NpmPackage;
 
@@ -45,7 +46,7 @@ public class TerminologyFixer {
     
     NpmPackage npm = new FilesystemPackageCacheManager.Builder().build().loadPackage("hl7.terminology");
     for (String s : npm.listResources("CodeSystem")) {
-      CodeSystem cs = (CodeSystem) new JsonParser().parse(npm.load("package", s));
+      CodeSystem cs = (CodeSystem) new JsonParser(ModelContext.fullCoreContext()).parse(npm.load("package", s));
       tho.put(cs.getUrl(), cs);
     }
 
@@ -78,8 +79,8 @@ public class TerminologyFixer {
           System.out.println("  Experimental: "+t.getExperimentalElement().toString()+" vs "+lcs.cs.getExperimentalElement().toString());
         }
         
-        if (!Base.compareDeep(t.getJurisdiction(), lcs.cs.getJurisdiction(), true)) {
-          System.out.println("  Jurisdiction: "+t.getJurisdiction().toString()+" vs "+lcs.cs.getJurisdiction().toString());
+        if (!Base.compareDeep(t.getJurisdictionList(), lcs.cs.getJurisdictionList(), true)) {
+          System.out.println("  Jurisdiction: "+t.getJurisdictionList().toString()+" vs "+lcs.cs.getJurisdictionList().toString());
         }
         
         if (!Base.compareDeep(t.getPurposeElement(), lcs.cs.getPurposeElement(), true)) {
@@ -123,18 +124,18 @@ public class TerminologyFixer {
           System.out.println("  count: "+t.getCountElement().toString()+" vs "+lcs.cs.getCountElement().toString());
         }
 
-        if (!Base.compareDeep(t.getFilter(), lcs.cs.getFilter(), true)) {
-          System.out.println("  filter: "+t.getFilter().toString()+" vs "+lcs.cs.getFilter().toString());
+        if (!Base.compareDeep(t.getFilterList(), lcs.cs.getFilterList(), true)) {
+          System.out.println("  filter: "+t.getFilterList().toString()+" vs "+lcs.cs.getFilterList().toString());
         }
         
-        if (!Base.compareDeep(t.getProperty(), lcs.cs.getProperty(), true)) {
-          System.out.println("  property: "+t.getProperty().toString()+" vs "+lcs.cs.getProperty().toString());
+        if (!Base.compareDeep(t.getPropertyList(), lcs.cs.getPropertyList(), true)) {
+          System.out.println("  property: "+t.getPropertyList().toString()+" vs "+lcs.cs.getPropertyList().toString());
           ok = false;
         }
         
-        if (!Base.compareDeep(t.getConcept(), lcs.cs.getConcept(), true)) {
-          System.out.println("  concept: "+t.getConcept().toString());
-          System.out.println("       vs: "+lcs.cs.getConcept().toString());
+        if (!Base.compareDeep(t.getConceptList(), lcs.cs.getConceptList(), true)) {
+          System.out.println("  concept: "+t.getConceptList().toString());
+          System.out.println("       vs: "+lcs.cs.getConceptList().toString());
           ok = false;
         }
         if (ok) {
@@ -156,7 +157,7 @@ public class TerminologyFixer {
         }
       } else if (f.getName().endsWith(".xml")) {
         try {
-          Resource res = new XmlParser().parse(new FileInputStream(f));
+          Resource res = new XmlParser(ModelContext.fullCoreContext()).parse(new FileInputStream(f));
           if (res instanceof CodeSystem) {
             CodeSystem cs = (CodeSystem) res;
             if (cs.getUrl().startsWith("http://terminology.hl7.org/")) {
@@ -167,7 +168,7 @@ public class TerminologyFixer {
         }
       } else if (f.getName().endsWith(".json")) {
         try {
-          Resource res = new JsonParser().parse(new FileInputStream(f));
+          Resource res = new JsonParser(ModelContext.fullCoreContext()).parse(new FileInputStream(f));
           if (res instanceof CodeSystem) {
             CodeSystem cs = (CodeSystem) res;
             if (cs.getUrl().startsWith("http://terminology.hl7.org/")) {

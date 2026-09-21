@@ -43,9 +43,9 @@ import org.hl7.fhir.definitions.model.ElementDefn;
 import org.hl7.fhir.definitions.model.ProfiledType;
 import org.hl7.fhir.definitions.model.TypeDefn;
 import org.hl7.fhir.definitions.model.TypeRef;
-import org.hl7.fhir.r5.model.ValueSet;
-import org.hl7.fhir.r5.model.ValueSet.ValueSetExpansionContainsComponent;
-import org.hl7.fhir.r5.utils.TypesUtilities;
+import org.hl7.fhir.model.core.ValueSet;
+import org.hl7.fhir.model.core.ValueSet.ValueSetExpansionContainsComponent;
+import org.hl7.fhir.services.utilities.TypesUtilities;
 import org.hl7.fhir.tools.publisher.BuildWorkerContext;
 import org.hl7.fhir.utilities.UserDataNames;
 import org.hl7.fhir.utilities.Utilities;
@@ -276,7 +276,7 @@ public class JsonGenerator  {
 					        ValueSet ex = workerContext.expandVS(vs, true, false).getValueset();
 							ex.setUserData(UserDataNames.EXPANSION_PURPOSE, "json");
 					        JsonArray enums = new JsonArray();
-					        for (ValueSetExpansionContainsComponent cc : ex.getExpansion().getContains()) {
+					        for (ValueSetExpansionContainsComponent cc : ex.getExpansion().getContainsList()) {
 					          enums.add(new JsonPrimitive(cc.getCode()));
 					        }
 					        property.add("enum", enums);

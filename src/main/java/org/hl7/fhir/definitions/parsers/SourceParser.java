@@ -90,29 +90,20 @@ import org.hl7.fhir.definitions.parsers.spreadsheets.SpreadSheetReloader;
 import org.hl7.fhir.definitions.validation.FHIRPathUsage;
 import org.hl7.fhir.exceptions.FHIRException;
 import org.hl7.fhir.exceptions.FHIRFormatError;
-import org.hl7.fhir.r5.conformance.profile.ProfileUtilities;
-import org.hl7.fhir.r5.extensions.ExtensionUtilities;
-import org.hl7.fhir.r5.formats.FormatUtilities;
-import org.hl7.fhir.r5.formats.XmlParser;
-import org.hl7.fhir.r5.model.Bundle;
-import org.hl7.fhir.r5.model.Bundle.BundleEntryComponent;
-import org.hl7.fhir.r5.model.Bundle.BundleType;
-import org.hl7.fhir.r5.model.Bundle.LinkRelationTypes;
-import org.hl7.fhir.r5.model.CanonicalResource;
-import org.hl7.fhir.r5.model.CodeSystem;
-import org.hl7.fhir.r5.model.Composition;
-import org.hl7.fhir.r5.model.Enumeration;
-import org.hl7.fhir.r5.model.Enumerations.FHIRVersion;
-import org.hl7.fhir.r5.model.Enumerations.VersionIndependentResourceTypesAll;
-import org.hl7.fhir.r5.model.Resource;
-import org.hl7.fhir.r5.model.SearchParameter;
-import org.hl7.fhir.r5.model.StructureDefinition;
-import org.hl7.fhir.r5.model.StructureDefinition.StructureDefinitionContextComponent;
-import org.hl7.fhir.r5.model.StructureDefinition.TypeDerivationRule;
-import org.hl7.fhir.r5.model.ValueSet;
-import org.hl7.fhir.r5.terminologies.CodeSystemUtilities;
-import org.hl7.fhir.r5.terminologies.ValueSetUtilities;
-import org.hl7.fhir.r5.extensions.ExtensionDefinitions;
+import org.hl7.fhir.model.core.*;
+import org.hl7.fhir.model.utilities.ValueSetUtilities;
+import org.hl7.fhir.model.utilities.formats.FormatUtilities;
+import org.hl7.fhir.services.conformance.profile.ProfileUtilities;
+import org.hl7.fhir.model.extensions.ExtensionUtilities;
+import org.hl7.fhir.model.core.formats.XmlParser;
+import org.hl7.fhir.model.core.Bundle.BundleEntryComponent;
+import org.hl7.fhir.model.core.Bundle.BundleType;
+import org.hl7.fhir.model.core.Bundle.LinkRelationTypes;
+import org.hl7.fhir.model.core.Enumerations.FHIRVersion;
+import org.hl7.fhir.model.core.StructureDefinition.StructureDefinitionContextComponent;
+import org.hl7.fhir.model.core.StructureDefinition.TypeDerivationRule;
+import org.hl7.fhir.model.utilities.CodeSystemUtilities;
+import org.hl7.fhir.model.extensions.ExtensionDefinitions;
 import org.hl7.fhir.tools.publisher.BuildWorkerContext;
 import org.hl7.fhir.tools.publisher.PageProcessor;
 import org.hl7.fhir.tools.publisher.PageProcessor.PageInfo;
@@ -167,7 +158,7 @@ public class SourceParser {
   private Bundle externals;
   private List<String> errors = new ArrayList<String>();
   private boolean exceptionIfExcelNotNormalised;
-  
+
   public SourceParser(Logger logger, String root, Definitions definitions, boolean forPublication, FHIRVersion version, BuildWorkerContext context, Calendar genDate, PageProcessor page, List<FHIRPathUsage> fpUsages, boolean exceptionIfExcelNotNormalised) throws IOException, ParserConfigurationException, SAXException {
     this.logger = logger;
     this.forPublication = forPublication;
@@ -444,7 +435,7 @@ public class SourceParser {
     String stated = ini.getStringProperty("externals", n);
     if (Utilities.noString(stated))
       stated = n;
-    Resource res = new XmlParser().parse(new FileInputStream(file));
+    Resource res = new XmlParser(context.getModelContext()).parse(new FileInputStream(file));
     if (res instanceof CanonicalResource) {
       res.setUserData("external.url", stated);
       res.setWebPath(stated);
@@ -484,13 +475,13 @@ public class SourceParser {
   }
 
   private void loadCommonSearchParameters() throws FHIRFormatError, FileNotFoundException, IOException {
-    Bundle bnd = (Bundle) new XmlParser().parse(new CSFileInputStream(Utilities.path(srcDir, "searchparameter", "common-search-parameters.xml")));
-    for (BundleEntryComponent be : bnd.getEntry()) {
+    Bundle bnd = (Bundle) new XmlParser(context.getModelContext()).parse(new CSFileInputStream(Utilities.path(srcDir, "searchparameter", "common-search-parameters.xml")));
+    for (BundleEntryComponent be : bnd.getEntryList()) {
       SearchParameter sp = (SearchParameter) be.getResource();
       CommonSearchParameter csp = new CommonSearchParameter();
       csp.setId(sp.getId());
       csp.setCode(sp.getCode());
-      for (Enumeration<VersionIndependentResourceTypesAll> ct : sp.getBase()) {
+      for (UriType ct : sp.getBaseList()) {
         csp.getResources().add(ct.asStringValue());
         definitions.getCommonSearchParameters().put(ct.asStringValue()+"::"+sp.getCode(), csp);
       }
@@ -908,7 +899,7 @@ public class SourceParser {
   }
 
   private void loadCodeSystem(String n) throws FileNotFoundException, Exception {
-    XmlParser xml = new XmlParser();
+    XmlParser xml = new XmlParser(context.getModelContext());
     String fn = srcDir+ini.getStringProperty("codesystems", n).replace('\\', File.separatorChar);
     CodeSystem cs = (CodeSystem) xml.parse(new CSFileInputStream(fn));
     if (!cs.hasId())  
@@ -931,7 +922,7 @@ public class SourceParser {
 
 
   private void loadValueSet(String n) throws FileNotFoundException, Exception {
-    XmlParser xml = new XmlParser();
+    XmlParser xml = new XmlParser(context.getModelContext());
     ValueSet vs = (ValueSet) xml.parse(new CSFileInputStream(srcDir+ini.getStringProperty("valuesets", n).replace('\\', File.separatorChar)));
     vs.setId(FormatUtilities.makeId(n));
     vs.setUrl("http://hl7.org/fhir/ValueSet/"+vs.getId());
@@ -996,20 +987,20 @@ public class SourceParser {
 
   private void parseConformanceDocument(Profile pack, String n, File file, String usage, WorkGroup wg) throws Exception {
     try {
-      Resource rf = new XmlParser().parse(new CSFileInputStream(file));
+      Resource rf = new XmlParser(context.getModelContext()).parse(new CSFileInputStream(file));
       if (!(rf instanceof Bundle))
         throw new Exception("Error parsing Profile: neither a spreadsheet nor a bundle");
       Bundle b = (Bundle) rf;
       if (b.getType() != BundleType.DOCUMENT)
         throw new Exception("Error parsing profile: neither a spreadsheet nor a bundle that is a document");
-      for (BundleEntryComponent ae : ((Bundle) rf).getEntry()) {
+      for (BundleEntryComponent ae : ((Bundle) rf).getEntryList()) {
         if (ae.getResource() instanceof Composition)
           pack.loadFromComposition((Composition) ae.getResource(), file.getAbsolutePath());
         else if (ae.getResource() instanceof StructureDefinition && !((StructureDefinition) ae.getResource()).getType().equals("Extension")) {
           StructureDefinition ed = (StructureDefinition) ae.getResource();          
           ed.setVersion(version.toCode());
           ed.setFhirVersion(version);
-          for (StructureDefinitionContextComponent s : ed.getContext())
+          for (StructureDefinitionContextComponent s : ed.getContextList())
             definitions.checkContextValid(s, file.getName(), this.context);
           ToolResourceUtilities.updateUsage(ed, pack.getCategory());
           pack.getProfiles().add(new ConstraintStructure(ed, definitions.getUsageIG(usage, "Parsing "+file.getAbsolutePath()), wg == null ? wg(ed) : wg, fmm(ed), ed.getExperimental()));
@@ -1061,7 +1052,7 @@ public class SourceParser {
     } else if (ap.getSourceType() == ConformancePackageSourceType.StructureDefinition) {
       Resource rf;
       try {
-        rf = new XmlParser().parse(new CSFileInputStream(ap.getSource()));
+        rf = new XmlParser(context.getModelContext()).parse(new CSFileInputStream(ap.getSource()));
       } catch (Exception e) {
         throw new Exception("Error parsing "+ap.getSource()+": "+e.getMessage(), e);
       }

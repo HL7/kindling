@@ -53,14 +53,14 @@ import java.util.Arrays;
 import java.util.List;
 
 import org.hl7.fhir.definitions.model.TypeRef;
-import org.hl7.fhir.r5.context.BaseWorkerContext;
-import org.hl7.fhir.r5.context.IWorkerContext;
-import org.hl7.fhir.r5.extensions.ExtensionUtilities;
-import org.hl7.fhir.r5.model.ElementDefinition;
-import org.hl7.fhir.r5.model.ElementDefinition.TypeRefComponent;
-import org.hl7.fhir.r5.model.StructureDefinition;
-import org.hl7.fhir.r5.extensions.ExtensionDefinitions;
-import org.hl7.fhir.r5.utils.TypesUtilities;
+import org.hl7.fhir.services.utilities.TypesUtilities;
+import org.hl7.fhir.standalone.context.BaseWorkerContext;
+import org.hl7.fhir.services.context.IWorkerContext;
+import org.hl7.fhir.model.extensions.ExtensionUtilities;
+import org.hl7.fhir.model.core.ElementDefinition;
+import org.hl7.fhir.model.core.ElementDefinition.TypeRefComponent;
+import org.hl7.fhir.model.core.StructureDefinition;
+import org.hl7.fhir.model.extensions.ExtensionDefinitions;
 import org.hl7.fhir.utilities.Utilities;
 
 public class TypeParser {
@@ -119,7 +119,7 @@ public class TypeParser {
       if (typeString.contains("~")) {
         String v = typeString.substring(typeString.indexOf("~"));
         typeString = typeString.substring(0, typeString.indexOf("~")-1);
-        t.setVersioning(org.hl7.fhir.r5.model.ElementDefinition.ReferenceVersionRules.fromCode(v));
+        t.setVersioning(org.hl7.fhir.model.core.ElementDefinition.ReferenceVersionRules.fromCode(v));
       }
 
       if (typeString.contains("{") && !typeString.contains("(")) {

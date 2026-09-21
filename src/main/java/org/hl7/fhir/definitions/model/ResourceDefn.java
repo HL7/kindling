@@ -34,8 +34,8 @@ import java.util.*;
 
 import lombok.Getter;
 import org.hl7.fhir.exceptions.FHIRException;
-import org.hl7.fhir.r5.elementmodel.Element;
-import org.hl7.fhir.r5.model.StructureDefinition;
+import org.hl7.fhir.services.elementmodel.Element;
+import org.hl7.fhir.model.core.StructureDefinition;
 import org.hl7.fhir.utilities.StandardsStatus;
 import org.hl7.fhir.utilities.Utilities;
 import org.hl7.fhir.utilities.xml.XMLUtil;

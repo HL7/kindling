@@ -4,10 +4,11 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 
-import org.hl7.fhir.r5.formats.IParser.OutputStyle;
-import org.hl7.fhir.r5.formats.XmlParser;
-import org.hl7.fhir.r5.model.Resource;
-import org.hl7.fhir.r5.model.StructureDefinition;
+import org.hl7.fhir.model.ModelContext;
+import org.hl7.fhir.model.core.formats.XmlParser;
+import org.hl7.fhir.model.core.Resource;
+import org.hl7.fhir.model.core.StructureDefinition;
+import org.hl7.fhir.model.utilities.formats.OutputStyle;
 
 public class ExtensionStatusProvider {
 
@@ -21,7 +22,7 @@ public class ExtensionStatusProvider {
         process(f);
       } else if (f.getName().endsWith(".xml")) {
         try {
-          Resource res = new XmlParser().parse(new FileInputStream(f));
+          Resource res = new XmlParser(ModelContext.fullCoreContext()).parse(new FileInputStream(f));
           if (res instanceof StructureDefinition) {
             StructureDefinition sd = (StructureDefinition) res;
             if (!sd.hasTitle()) {
@@ -29,7 +30,7 @@ public class ExtensionStatusProvider {
                 sd.setName(sd.getId());
               }
               sd.setTitle(sd.getName());
-              new XmlParser().setOutputStyle(OutputStyle.PRETTY).compose(new FileOutputStream(f), sd);
+              new XmlParser(ModelContext.fullCoreContext()).setOutputStyle(OutputStyle.PRETTY).compose(new FileOutputStream(f), sd);
             }
           }
         } catch (Exception e) {

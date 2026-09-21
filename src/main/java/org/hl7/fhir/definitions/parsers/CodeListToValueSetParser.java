@@ -4,31 +4,32 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.hl7.fhir.r5.context.CanonicalResourceManager;
-import org.hl7.fhir.r5.context.IWorkerContext;
-import org.hl7.fhir.r5.extensions.ExtensionUtilities;
-import org.hl7.fhir.r5.model.CodeSystem;
-import org.hl7.fhir.r5.model.CodeSystem.ConceptDefinitionComponent;
-import org.hl7.fhir.r5.model.ConceptMap;
-import org.hl7.fhir.r5.model.ConceptMap.ConceptMapGroupComponent;
-import org.hl7.fhir.r5.model.ConceptMap.SourceElementComponent;
-import org.hl7.fhir.r5.model.ConceptMap.TargetElementComponent;
-import org.hl7.fhir.r5.model.ContactDetail;
-import org.hl7.fhir.r5.model.ContactPoint;
-import org.hl7.fhir.r5.model.DateTimeType;
-import org.hl7.fhir.r5.model.Enumerations.CodeSystemContentMode;
-import org.hl7.fhir.r5.model.Enumerations.ConceptMapRelationship;
-import org.hl7.fhir.r5.model.Enumerations.PublicationStatus;
-import org.hl7.fhir.r5.model.Factory;
-import org.hl7.fhir.r5.model.MarkdownType;
-import org.hl7.fhir.r5.model.PackageInformation;
-import org.hl7.fhir.r5.model.ValueSet;
-import org.hl7.fhir.r5.model.ValueSet.ConceptReferenceComponent;
-import org.hl7.fhir.r5.model.ValueSet.ConceptSetComponent;
-import org.hl7.fhir.r5.model.ValueSet.ValueSetComposeComponent;
-import org.hl7.fhir.r5.terminologies.CodeSystemUtilities;
-import org.hl7.fhir.r5.utils.CanonicalResourceUtilities;
-import org.hl7.fhir.r5.extensions.ExtensionDefinitions;
+import org.hl7.fhir.model.Base;
+import org.hl7.fhir.model.Factory;
+import org.hl7.fhir.model.utilities.CanonicalResourceUtilities;
+import org.hl7.fhir.standalone.context.CanonicalResourceManager;
+import org.hl7.fhir.services.context.IWorkerContext;
+import org.hl7.fhir.model.extensions.ExtensionUtilities;
+import org.hl7.fhir.model.core.CodeSystem;
+import org.hl7.fhir.model.core.CodeSystem.ConceptDefinitionComponent;
+import org.hl7.fhir.model.core.ConceptMap;
+import org.hl7.fhir.model.core.ConceptMap.ConceptMapGroupComponent;
+import org.hl7.fhir.model.core.ConceptMap.SourceElementComponent;
+import org.hl7.fhir.model.core.ConceptMap.TargetElementComponent;
+import org.hl7.fhir.model.core.ContactDetail;
+import org.hl7.fhir.model.core.ContactPoint;
+import org.hl7.fhir.model.core.DateTimeType;
+import org.hl7.fhir.model.core.Enumerations.CodeSystemContentMode;
+import org.hl7.fhir.model.core.Enumerations.ConceptMapRelationship;
+import org.hl7.fhir.model.core.Enumerations.PublicationStatus;
+import org.hl7.fhir.model.core.MarkdownType;
+import org.hl7.fhir.model.core.PackageInformation;
+import org.hl7.fhir.model.core.ValueSet;
+import org.hl7.fhir.model.core.ValueSet.ConceptReferenceComponent;
+import org.hl7.fhir.model.core.ValueSet.ConceptSetComponent;
+import org.hl7.fhir.model.core.ValueSet.ValueSetComposeComponent;
+import org.hl7.fhir.model.utilities.CodeSystemUtilities;
+import org.hl7.fhir.model.extensions.ExtensionDefinitions;
 import org.hl7.fhir.tools.publisher.KindlingUtilities;
 import org.hl7.fhir.utilities.StandardsStatus;
 import org.hl7.fhir.utilities.Utilities;
@@ -195,11 +196,11 @@ public class CodeListToValueSetParser {
     cm.setPublisher("HL7 (FHIR Project)");
     KindlingUtilities.makeUniversal(cm);
 
-    for (ContactDetail cc : vs.getContact()) {
+    for (ContactDetail cc : vs.getContactList()) {
       ContactDetail cd = cm.addContact();
       cd.setName(cc.getName());
-      for (ContactPoint ccs : cc.getTelecom())
-        cd.addTelecom(ccs.copy());
+      for (ContactPoint ccs : cc.getTelecomList())
+        cd.addTelecom(ccs.copy(Base.COPY_DATA));
     }
     cm.setCopyright(vs.getCopyright());
     cm.setStatus(vs.getStatus()); // until we publish DSTU, then .review
@@ -207,9 +208,9 @@ public class CodeListToValueSetParser {
     cm.setSourceScope(Factory.newCanonical(vs.getUrl()));
     cm.setTargetScope(Factory.newCanonical(v2map));
     if (cs != null) 
-      processV2ConceptDefs(cm, cs.getUrl(), cs.getConcept());
-    for (ConceptSetComponent cc : vs.getCompose().getInclude())
-      for (ConceptReferenceComponent c : cc.getConcept()) {
+      processV2ConceptDefs(cm, cs.getUrl(), cs.getConceptList());
+    for (ConceptSetComponent cc : vs.getCompose().getIncludeList())
+      for (ConceptReferenceComponent c : cc.getConceptList()) {
         processV2Map(cm, cc.getSystem(), c.getCode(), c.getUserString("v2"));
       }
     maps.see(cm, packageInfo);
@@ -218,7 +219,7 @@ public class CodeListToValueSetParser {
   private void processV2ConceptDefs(ConceptMap cm, String url, List<ConceptDefinitionComponent> list) throws Exception {
     for (ConceptDefinitionComponent c : list) {
       processV2Map(cm, url, c.getCode(), c.getUserString("v2"));
-      processV2ConceptDefs(cm, url, c.getConcept());
+      processV2ConceptDefs(cm, url, c.getConceptList());
     }
   }
 
@@ -258,7 +259,7 @@ public class CodeListToValueSetParser {
   }
 
   private ConceptMapGroupComponent getGroup(ConceptMap map, String srcs, String tgts) {
-    for (ConceptMapGroupComponent grp : map.getGroup()) {
+    for (ConceptMapGroupComponent grp : map.getGroupList()) {
       if (grp.getSource().equals(srcs) && grp.getTarget().equals(tgts))
         return grp;
     }
@@ -269,7 +270,7 @@ public class CodeListToValueSetParser {
   }
 
   private SourceElementComponent getSource(ConceptMapGroupComponent grp, String code) {
-    for (SourceElementComponent s : grp.getElement()) {
+    for (SourceElementComponent s : grp.getElementList()) {
       if (code.equals(s.getCode()))
         return s;
     }
@@ -291,11 +292,11 @@ public class CodeListToValueSetParser {
     cm.setPublisher("HL7 (FHIR Project)");
     KindlingUtilities.makeUniversal(cm);
 
-    for (ContactDetail cc : vs.getContact()) {
+    for (ContactDetail cc : vs.getContactList()) {
       ContactDetail cd = cm.addContact();
       cd.setName(cc.getName());
-      for (ContactPoint ccs : cc.getTelecom())
-        cd.addTelecom(ccs.copy());
+      for (ContactPoint ccs : cc.getTelecomList())
+        cd.addTelecom(ccs.copy(Base.COPY_DATA));
     }
     cm.setCopyright(vs.getCopyright());
     cm.setStatus(vs.getStatus()); // until we publish DSTU, then .review
@@ -303,9 +304,9 @@ public class CodeListToValueSetParser {
     cm.setSourceScope(Factory.newCanonical(vs.getUrl()));
     cm.setTargetScope(Factory.newCanonical(v3map));
     if (cs != null) 
-      processV3ConceptDefs(cm, cs.getUrl(), cs.getConcept());
-    for (ConceptSetComponent cc : vs.getCompose().getInclude())
-      for (ConceptReferenceComponent c : cc.getConcept()) {
+      processV3ConceptDefs(cm, cs.getUrl(), cs.getConceptList());
+    for (ConceptSetComponent cc : vs.getCompose().getIncludeList())
+      for (ConceptReferenceComponent c : cc.getConceptList()) {
         processV3Map(cm, cc.getSystem(), c.getCode(), c.getUserString("v2"));
       }
     maps.see(cm, packageInfo);
@@ -314,7 +315,7 @@ public class CodeListToValueSetParser {
   private void processV3ConceptDefs(ConceptMap cm, String url, List<ConceptDefinitionComponent> list) throws Exception {
     for (ConceptDefinitionComponent c : list) {
       processV3Map(cm, url, c.getCode(), c.getUserString("v3"));
-      processV3ConceptDefs(cm, url, c.getConcept());
+      processV3ConceptDefs(cm, url, c.getConceptList());
     }
   }
 

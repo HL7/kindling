@@ -31,28 +31,25 @@ import org.hl7.fhir.definitions.model.TypeDefn;
 import org.hl7.fhir.definitions.validation.XmlValidator;
 import org.hl7.fhir.exceptions.FHIRException;
 import org.hl7.fhir.exceptions.PathEngineException;
-import org.hl7.fhir.r5.context.IWorkerContext;
-import org.hl7.fhir.r5.elementmodel.Element;
-import org.hl7.fhir.r5.elementmodel.Manager;
-import org.hl7.fhir.r5.elementmodel.Manager.FhirFormat;
-import org.hl7.fhir.r5.fhirpath.FHIRPathEngine;
-import org.hl7.fhir.r5.fhirpath.TypeDetails;
-import org.hl7.fhir.r5.fhirpath.IHostApplicationServices;
-import org.hl7.fhir.r5.fhirpath.FHIRPathUtilityClasses.FunctionDetails;
-import org.hl7.fhir.r5.elementmodel.ObjectConverter;
-import org.hl7.fhir.r5.formats.XmlParser;
-import org.hl7.fhir.r5.model.*;
-import org.hl7.fhir.r5.model.Enumerations.FHIRVersion;
-import org.hl7.fhir.r5.utils.validation.IMessagingServices;
-import org.hl7.fhir.r5.utils.validation.IResourceValidator;
-import org.hl7.fhir.r5.utils.validation.IValidationPolicyAdvisor;
-import org.hl7.fhir.r5.utils.validation.IValidatorResourceFetcher;
-import org.hl7.fhir.r5.utils.validation.constants.BestPracticeWarningLevel;
-import org.hl7.fhir.r5.utils.validation.constants.BindingKind;
-import org.hl7.fhir.r5.utils.validation.constants.ContainedReferenceValidationPolicy;
-import org.hl7.fhir.r5.utils.validation.constants.IdStatus;
-import org.hl7.fhir.r5.utils.validation.constants.ReferenceValidationPolicy;
+import org.hl7.fhir.model.Base;
+import org.hl7.fhir.model.utilities.formats.FhirFormat;
+import org.hl7.fhir.services.context.IWorkerContext;
+import org.hl7.fhir.services.elementmodel.Element;
+import org.hl7.fhir.services.elementmodel.Manager;
+import org.hl7.fhir.services.fhirpath.FHIRPathEngine;
+import org.hl7.fhir.services.fhirpath.TypeDetails;
+import org.hl7.fhir.services.fhirpath.IHostApplicationServices;
+import org.hl7.fhir.services.fhirpath.FHIRPathUtilityClasses.FunctionDetails;
+import org.hl7.fhir.services.elementmodel.ObjectConverter;
+import org.hl7.fhir.model.core.formats.XmlParser;
+import org.hl7.fhir.model.core.*;
+import org.hl7.fhir.model.core.Enumerations.FHIRVersion;
 import org.hl7.fhir.rdf.ModelComparer;
+import org.hl7.fhir.services.validation.IMessagingServices;
+import org.hl7.fhir.services.validation.IResourceValidator;
+import org.hl7.fhir.services.validation.IValidationPolicyAdvisor;
+import org.hl7.fhir.services.validation.IValidatorResourceFetcher;
+import org.hl7.fhir.services.validation.constants.*;
 import org.hl7.fhir.utilities.*;
 import org.hl7.fhir.utilities.Logger.LogMessageType;
 import org.hl7.fhir.utilities.fhirpath.FHIRPathConstantEvaluationMode;
@@ -124,7 +121,7 @@ public class ExampleInspector implements IValidatorResourceFetcher, IValidationP
         File f = new File(fn);
         if (!f.exists())
           return null;
-        XmlParser xml = new XmlParser();
+        XmlParser xml = new XmlParser(context.getModelContext());
         return xml.parse(new FileInputStream(f));
       } catch (Exception e) {
         return null;
@@ -140,8 +137,8 @@ public class ExampleInspector implements IValidatorResourceFetcher, IValidationP
     public boolean conformsToProfile(FHIRPathEngine engine, Object appContext, Base item, String url) throws FHIRException {
       IResourceValidator val = context.newValidator();
       List<ValidationMessage> valerrors = new ArrayList<ValidationMessage>();
-      if (item instanceof org.hl7.fhir.r5.model.Resource) {
-        val.validate(appContext, valerrors, (org.hl7.fhir.r5.model.Resource) item, url);
+      if (item instanceof org.hl7.fhir.model.core.Resource) {
+        val.validate(appContext, valerrors, (org.hl7.fhir.model.core.Resource) item, url);
         boolean ok = true;
         for (ValidationMessage v : valerrors)
           ok = ok && v.getLevel().isError();
@@ -503,7 +500,7 @@ public class ExampleInspector implements IValidatorResourceFetcher, IValidationP
         for (Example e : r.getExamples()) {
           if (e.getElement() != null) {
             if (e.getElement().fhirType().equals("Bundle")) {
-              for (Base b : e.getElement().listChildrenByName("entry")) {
+              for (Base b : e.getElement().getChildValues("entry", true)) {
                 if (b.getChildByName("resource").hasValues()) {
                   Element res = (Element) b.getChildByName("resource").getValues().get(0);
                   if (res.fhirType().equals(parts[0]) && parts[1].equals(res.getChildValue("id"))) {
@@ -541,10 +538,10 @@ public class ExampleInspector implements IValidatorResourceFetcher, IValidationP
 
  
   @Override
-  public boolean resolveURL(IResourceValidator validator,Object appContext, String path, String url, IWorkerContext.VersionResolutionRules rules, String type, boolean canonical, List<CanonicalType> targets) throws IOException, FHIRException {
+  public boolean resolveURL(IResourceValidator validator,Object appContext, String path, String url, VersionResolutionRules rules, String type, boolean canonical, List<CanonicalType> targets) throws IOException, FHIRException {
     if (path.endsWith(".fullUrl"))
       return true;
-    if (context.hasResource(org.hl7.fhir.r5.model.Resource.class, url)) {
+    if (context.hasResource(org.hl7.fhir.model.core.Resource.class, url)) {
       return true;
     }
     if (url.startsWith("http://hl7.org/fhir")) {
@@ -618,14 +615,14 @@ public class ExampleInspector implements IValidatorResourceFetcher, IValidationP
 
   @Override
   public ContainedReferenceValidationPolicy policyForContained(IResourceValidator validator,
-      Object appContext,
-      StructureDefinition structure,
-      ElementDefinition element,
-      String containerType,
-      String containerId,
-      Element.SpecialElement containingResourceType,
-      String path,
-      String url) {
+                                                               Object appContext,
+                                                               StructureDefinition structure,
+                                                               ElementDefinition element,
+                                                               String containerType,
+                                                               String containerId,
+                                                               Element.SpecialElement containingResourceType,
+                                                               String path,
+                                                               String url) {
     return ContainedReferenceValidationPolicy.CHECK_VALID;
   }
 
@@ -818,14 +815,14 @@ public class ExampleInspector implements IValidatorResourceFetcher, IValidationP
   }
 
   @Override
-  public Set<org.hl7.fhir.r5.utils.validation.IValidatorResourceFetcher.ResourceVersionInformation> fetchCanonicalResourceVersions(IResourceValidator validator, Object appContext, String url) {
+  public Set<ResourceVersionInformation> fetchCanonicalResourceVersions(IResourceValidator validator, Object appContext, String url) {
     return new HashSet<>();
   }
 
   @Override
   public List<StructureDefinition> getImpliedProfilesForResource(IResourceValidator validator, Object appContext,
-      String stackPath, ElementDefinition definition, StructureDefinition structure, Element resource, boolean valid,
-      IMessagingServices msgServices, List<ValidationMessage> messages) {
+                                                                 String stackPath, ElementDefinition definition, StructureDefinition structure, Element resource, boolean valid,
+                                                                 IMessagingServices msgServices, List<ValidationMessage> messages) {
     return new BasePolicyAdvisorForFullValidation(ReferenceValidationPolicy.CHECK_TYPE_IF_EXISTS, new HashSet<>()).getImpliedProfilesForResource(validator, appContext, stackPath, 
         definition, structure, resource, valid, msgServices, messages);
   }

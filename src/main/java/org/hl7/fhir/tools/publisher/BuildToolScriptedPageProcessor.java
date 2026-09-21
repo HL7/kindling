@@ -7,9 +7,9 @@ import java.util.List;
 import org.hl7.fhir.definitions.Config;
 import org.hl7.fhir.definitions.model.ImplementationGuideDefn;
 import org.hl7.fhir.definitions.model.ResourceDefn;
-import org.hl7.fhir.r5.model.ElementDefinition;
-import org.hl7.fhir.r5.model.ElementDefinition.ElementDefinitionConstraintComponent;
-import org.hl7.fhir.r5.model.StructureDefinition;
+import org.hl7.fhir.model.core.ElementDefinition;
+import org.hl7.fhir.model.core.ElementDefinition.ElementDefinitionConstraintComponent;
+import org.hl7.fhir.model.core.StructureDefinition;
 import org.hl7.fhir.utilities.ScriptedPageProcessor;
 import org.hl7.fhir.utilities.FileUtilities;
 import org.hl7.fhir.utilities.Utilities;
@@ -108,8 +108,8 @@ public abstract class BuildToolScriptedPageProcessor extends ScriptedPageProcess
   
   protected String genConstraints(StructureDefinition res) throws Exception {
     StringBuilder b = new StringBuilder();
-    for (ElementDefinition e : res.getSnapshot().getElement()) {      
-      for (ElementDefinitionConstraintComponent inv : e.getConstraint()) {
+    for (ElementDefinition e : res.getSnapshot().getElementList()) {
+      for (ElementDefinitionConstraintComponent inv : e.getConstraintList()) {
         if (!e.getPath().contains("."))
           b.append("<li><b title=\"Formal Invariant Identifier\">"+inv.getKey()+"</b>: "+Utilities.escapeXml(inv.getHuman())+" (xpath: <span style=\"font-family: Courier New, monospace\">"+Utilities.escapeXml(inv.getExpression())+"</span>)</li>");
         else

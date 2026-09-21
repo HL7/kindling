@@ -4,7 +4,7 @@ import org.hl7.fhir.definitions.model.Operation.OperationExample;
 import org.hl7.fhir.definitions.model.ResourceDefn.InheritedMapping;
 import org.hl7.fhir.definitions.model.ResourceDefn.PointSpec;
 import org.hl7.fhir.definitions.model.SearchParameterDefn.CompositeDefinition;
-import org.hl7.fhir.r5.model.Base;
+import org.hl7.fhir.model.Base;
 import org.hl7.fhir.utilities.Utilities;
 
 public class DefinitionComparer {

@@ -30,21 +30,22 @@ import org.hl7.fhir.definitions.model.TypeDefn;
 import org.hl7.fhir.definitions.model.TypeRef;
 import org.hl7.fhir.definitions.model.W5Entry;
 import org.hl7.fhir.exceptions.FHIRException;
-import org.hl7.fhir.r5.context.CanonicalResourceManager;
-import org.hl7.fhir.r5.context.IWorkerContext;
-import org.hl7.fhir.r5.model.CanonicalType;
-import org.hl7.fhir.r5.model.CodeSystem;
-import org.hl7.fhir.r5.model.CodeSystem.ConceptDefinitionComponent;
-import org.hl7.fhir.r5.model.Enumerations.BindingStrength;
-import org.hl7.fhir.r5.model.SearchParameter.SearchProcessingModeType;
-import org.hl7.fhir.r5.model.ValueSet;
-import org.hl7.fhir.r5.model.ValueSet.ConceptSetComponent;
-import org.hl7.fhir.r5.renderers.RendererFactory;
-import org.hl7.fhir.r5.terminologies.ValueSetUtilities;
-import org.hl7.fhir.r5.utils.Translations;
+import org.hl7.fhir.model.utilities.ValueSetUtilities;
+import org.hl7.fhir.services.context.IWorkerContext;
+import org.hl7.fhir.model.core.CanonicalType;
+import org.hl7.fhir.model.core.CodeSystem;
+import org.hl7.fhir.model.core.CodeSystem.ConceptDefinitionComponent;
+import org.hl7.fhir.model.core.Enumerations.BindingStrength;
+import org.hl7.fhir.model.core.SearchParameter.SearchProcessingModeType;
+import org.hl7.fhir.model.core.ValueSet;
+import org.hl7.fhir.model.core.ValueSet.ConceptSetComponent;
+import org.hl7.fhir.services.renderers.RendererFactory;
+import org.hl7.fhir.standalone.context.CanonicalResourceManager;
+import org.hl7.fhir.tools.publisher.KindlingUtilities;
 import org.hl7.fhir.utilities.StandardsStatus;
 import org.hl7.fhir.utilities.FileUtilities;
 import org.hl7.fhir.utilities.Utilities;
+import org.hl7.fhir.utilities.i18n.Translations;
 import org.hl7.fhir.utilities.validation.ValidationMessage;
 import org.hl7.fhir.utilities.validation.ValidationMessage.IssueSeverity;
 import org.hl7.fhir.utilities.validation.ValidationMessage.IssueType;
@@ -599,10 +600,10 @@ public class ResourceValidator extends BaseValidator {
     if (e != null) {
       if (e.hasBinding() && e.getBinding().getValueSet() != null) {
         ValueSet vs = e.getBinding().getValueSet();
-        for (ConceptSetComponent inc : vs.getCompose().getInclude()) {
+        for (ConceptSetComponent inc : vs.getCompose().getIncludeList()) {
           CodeSystem cs = codeSystems.get(inc.getSystem());
-          if (inc.getConcept().isEmpty() && cs != null)
-            for (ConceptDefinitionComponent cc : cs.getConcept()) {
+          if (inc.getConceptList().isEmpty() && cs != null)
+            for (ConceptDefinitionComponent cc : cs.getConceptList()) {
               if (cc.getCode().equals(code))
                 return true;
             }
@@ -801,16 +802,16 @@ public class ResourceValidator extends BaseValidator {
             rule(errors, ValidationMessage.NO_RULE_DATE, IssueType.STRUCTURE, path, !cd.getValueSet().getExperimental(), "Reference to experimental valueset "+cd.getValueSet().getUrl());
           }
           if (e.getBinding().getStrength() == BindingStrength.EXAMPLE)
-            ValueSetUtilities.markStatus(cd.getValueSet(), parent == null ? "fhir" : parent.getWg().getCode(), StandardsStatus.INFORMATIVE, "1", context, null, version);
+            KindlingUtilities.markStatus(cd.getValueSet(), parent == null ? "fhir" : parent.getWg().getCode(), StandardsStatus.INFORMATIVE, "1", context, null, version);
           else if (parent == null)
-            ValueSetUtilities.markStatus(cd.getValueSet(), "fhir", StandardsStatus.DRAFT, "0", context, null, version);
+            KindlingUtilities.markStatus(cd.getValueSet(), "fhir", StandardsStatus.DRAFT, "0", context, null, version);
           else if (e.getBinding().getStrength() == BindingStrength.PREFERRED)
-            ValueSetUtilities.markStatus(cd.getValueSet(), parent.getWg().getCode(), null, null, context, null, version);
+            KindlingUtilities.markStatus(cd.getValueSet(), parent.getWg().getCode(), null, null, context, null, version);
           else
-            ValueSetUtilities.markStatus(cd.getValueSet(), parent.getWg().getCode(), status, parent.getFmmLevel(), context, parent.getNormativeVersion(), version);
+            KindlingUtilities.markStatus(cd.getValueSet(), parent.getWg().getCode(), status, parent.getFmmLevel(), context, parent.getNormativeVersion(), version);
           for (AdditionalBinding vsc : cd.getAdditionalBindings()) {
             if (vsc.getValueSet() != null) {
-              ValueSetUtilities.markStatus(vsc.getValueSet(), parent.getWg().getCode(), status, parent.getFmmLevel(), context, parent.getNormativeVersion(), version);
+              KindlingUtilities.markStatus(vsc.getValueSet(), parent.getWg().getCode(), status, parent.getFmmLevel(), context, parent.getNormativeVersion(), version);
             }
           }
           Integer w = (Integer) cd.getValueSet().getUserData("warnings");
@@ -1229,7 +1230,7 @@ public class ResourceValidator extends BaseValidator {
     else
       rule(errors, ValidationMessage.NO_RULE_DATE, IssueType.STRUCTURE, path, cd.getElementType() == ElementType.Simple, "Cannot use a binding from both code and Coding/CodeableConcept elements");
     if (isComplex && cd.getValueSet() != null) {
-      for (ConceptSetComponent inc : cd.getValueSet().getCompose().getInclude())
+      for (ConceptSetComponent inc : cd.getValueSet().getCompose().getIncludeList())
         if (inc.hasSystem())
           txurls.add(inc.getSystem());
     }
@@ -1290,9 +1291,9 @@ public class ResourceValidator extends BaseValidator {
     if (Utilities.existsInList(vs.getUrl(), "http://hl7.org/fhir/ValueSet/mimetypes", "http://hl7.org/fhir/ValueSet/languages", "http://hl7.org/fhir/ValueSet/all-languages"))
       return true;
 
-    for (ConceptSetComponent inc : vs.getCompose().getInclude()) {
+    for (ConceptSetComponent inc : vs.getCompose().getIncludeList()) {
       if (inc.hasValueSet()) {
-        for (CanonicalType s : inc.getValueSet()) {
+        for (CanonicalType s : inc.getValueSetList()) {
           ValueSet ivs = context.fetchResource(ValueSet.class, s.primitiveValue());
           noExternals(ivs);
         }
@@ -1316,7 +1317,7 @@ public class ResourceValidator extends BaseValidator {
   }
 
   private boolean hasInternalReference(ValueSet vs) {
-    for (ConceptSetComponent inc : vs.getCompose().getInclude()) {
+    for (ConceptSetComponent inc : vs.getCompose().getIncludeList()) {
       String url = inc.getSystem();
       if (!Utilities.noString(url) && url.startsWith("http://hl7.org/fhir") && !url.contains("/v2/") && !url.contains("/v3/"))
         return false;

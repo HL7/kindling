@@ -1,10 +1,11 @@
 package org.hl7.fhir.tools.converters;
 
-import org.hl7.fhir.r5.extensions.ExtensionUtilities;
-import org.hl7.fhir.r5.formats.IParser;
-import org.hl7.fhir.r5.formats.JsonParser;
-import org.hl7.fhir.r5.formats.XmlParser;
-import org.hl7.fhir.r5.model.*;
+import org.hl7.fhir.model.ModelContext;
+import org.hl7.fhir.model.extensions.ExtensionUtilities;
+import org.hl7.fhir.model.core.formats.JsonParser;
+import org.hl7.fhir.model.core.formats.XmlParser;
+import org.hl7.fhir.model.core.*;
+import org.hl7.fhir.model.utilities.formats.OutputStyle;
 import org.hl7.fhir.utilities.StandardsStatus;
 import org.hl7.fhir.utilities.Utilities;
 
@@ -73,9 +74,9 @@ public class TerminologyStatusRefresher {
 //        resource.resource.setExperimental(true);
         resource.resource.setStatus(Enumerations.PublicationStatus.ACTIVE);
         if (resource.json) {
-          new JsonParser().setOutputStyle(IParser.OutputStyle.PRETTY).compose(new FileOutputStream(resource.source), resource.resource);
+            new JsonParser(ModelContext.fullCoreContext()).setOutputStyle(OutputStyle.PRETTY).compose(new FileOutputStream(resource.source), resource.resource);
         } else {
-          new XmlParser().setOutputStyle(IParser.OutputStyle.PRETTY).compose(new FileOutputStream(resource.source), resource.resource);
+          new XmlParser(ModelContext.fullCoreContext()).setOutputStyle(OutputStyle.PRETTY).compose(new FileOutputStream(resource.source), resource.resource);
         }
       }
       if (resource.real) {
@@ -83,9 +84,9 @@ public class TerminologyStatusRefresher {
 //        resource.resource.setExperimental(false);
         resource.resource.setStatus(Enumerations.PublicationStatus.ACTIVE);
         if (resource.json) {
-          new JsonParser().setOutputStyle(IParser.OutputStyle.PRETTY).compose(new FileOutputStream(resource.source), resource.resource);
+          new JsonParser(ModelContext.fullCoreContext()).setOutputStyle(OutputStyle.PRETTY).compose(new FileOutputStream(resource.source), resource.resource);
         } else {
-          new XmlParser().setOutputStyle(IParser.OutputStyle.PRETTY).compose(new FileOutputStream(resource.source), resource.resource);
+          new XmlParser(ModelContext.fullCoreContext()).setOutputStyle(OutputStyle.PRETTY).compose(new FileOutputStream(resource.source), resource.resource);
         }
       }
     }
@@ -103,7 +104,7 @@ public class TerminologyStatusRefresher {
   private void checkType(Map<String, LoadedResource> resources, File f) {
     Resource r = null;
     try {
-      r = new JsonParser().parse(new FileInputStream(f));
+      r = new JsonParser(ModelContext.fullCoreContext()).parse(new FileInputStream(f));
     } catch (Exception e) {
 //      System.out.println("Error parsing " + f.getAbsolutePath());
     }
@@ -115,7 +116,7 @@ public class TerminologyStatusRefresher {
   }
 
   private void checkType(Map<String, LoadedResource> resources, StructureDefinition sd) {
-    for (ElementDefinition ed : sd.getSnapshot().getElement()) {
+    for (ElementDefinition ed : sd.getSnapshot().getElementList()) {
       if (ed.hasBinding()) {
         boolean example = ed.getBinding().getStrength() == Enumerations.BindingStrength.EXAMPLE;
         String vs = ed.getBinding().getValueSet();
@@ -137,12 +138,12 @@ public class TerminologyStatusRefresher {
   private void checkVS(Map<String, LoadedResource> resources, LoadedResource res, boolean example) {
     res.see(example);
     ValueSet vs = (ValueSet) res.resource;
-    for (ValueSet.ConceptSetComponent inc : vs.getCompose().getInclude()) {
+    for (ValueSet.ConceptSetComponent inc : vs.getCompose().getIncludeList()) {
       LoadedResource cres = resources.get(inc.getSystem());
       if (cres != null) {
         cres.see(example);
       }
-      for (CanonicalType ct : inc.getValueSet()) {
+      for (CanonicalType ct : inc.getValueSetList()) {
         LoadedResource vres = resources.get(ct.primitiveValue());
         if (vres != null) {
           checkVS(resources, vres, example);
@@ -165,7 +166,7 @@ public class TerminologyStatusRefresher {
 
   private void loadResourceXML(Map<String, LoadedResource> resources, File f) {
     try {
-      Resource r = new XmlParser().parse(new FileInputStream(f));
+      Resource r = new XmlParser(ModelContext.fullCoreContext()).parse(new FileInputStream(f));
       if (r instanceof ValueSet || r instanceof CodeSystem) {
         resources.put(((CanonicalResource) r).getUrl(), new LoadedResource(f, (CanonicalResource) r, false));
       }
@@ -178,7 +179,7 @@ public class TerminologyStatusRefresher {
 
   private void loadResourceJSON(Map<String, LoadedResource> resources, File f) {
     try {
-      Resource r = new JsonParser().parse(new FileInputStream(f));
+      Resource r = new JsonParser(ModelContext.fullCoreContext()).parse(new FileInputStream(f));
       if (r instanceof ValueSet || r instanceof CodeSystem) {
         resources.put(((CanonicalResource) r).getUrl(), new LoadedResource(f, (CanonicalResource) r, true));
       }

@@ -11,16 +11,19 @@ import java.util.Set;
 
 import org.hl7.fhir.convertors.loaders.loaderR5.ILoaderKnowledgeProviderR5;
 import org.hl7.fhir.convertors.loaders.loaderR5.R4ToR5Loader;
+import org.hl7.fhir.convertors.loaders.loaderRN.ILoaderKnowledgeProviderRN;
+import org.hl7.fhir.convertors.loaders.loaderRN.R4ToRNLoader;
 import org.hl7.fhir.exceptions.FHIRException;
 import org.hl7.fhir.exceptions.FHIRFormatError;
-import org.hl7.fhir.r5.context.SimpleWorkerContext;
-import org.hl7.fhir.r5.context.SimpleWorkerContext.SimpleWorkerContextBuilder;
-import org.hl7.fhir.r5.formats.XmlParser;
-import org.hl7.fhir.r5.model.CanonicalResource;
-import org.hl7.fhir.r5.model.CodeSystem;
-import org.hl7.fhir.r5.model.Narrative.NarrativeStatus;
-import org.hl7.fhir.r5.model.Resource;
-import org.hl7.fhir.r5.model.ValueSet;
+import org.hl7.fhir.model.ModelContext;
+import org.hl7.fhir.standalone.context.SimpleWorkerContext;
+import org.hl7.fhir.standalone.context.SimpleWorkerContext.SimpleWorkerContextBuilder;
+import org.hl7.fhir.model.core.formats.XmlParser;
+import org.hl7.fhir.model.core.CanonicalResource;
+import org.hl7.fhir.model.core.CodeSystem;
+import org.hl7.fhir.model.core.Narrative.NarrativeStatus;
+import org.hl7.fhir.model.core.Resource;
+import org.hl7.fhir.model.core.ValueSet;
 import org.hl7.fhir.tools.publisher.BuildWorkerContext;
 import org.hl7.fhir.utilities.IniFile;
 import org.hl7.fhir.utilities.Utilities;
@@ -36,7 +39,7 @@ import com.google.gson.JsonSyntaxException;
 
 public class NarrativeRemover {
 
-  public class TempLoader implements ILoaderKnowledgeProviderR5 {
+  public class TempLoader implements ILoaderKnowledgeProviderRN {
 
     @Override
     public String getResourcePath(Resource resource) {
@@ -44,7 +47,7 @@ public class NarrativeRemover {
     }
 
     @Override
-    public ILoaderKnowledgeProviderR5 forNewPackage(NpmPackage npm) throws JsonSyntaxException, IOException {
+    public ILoaderKnowledgeProviderRN forNewPackage(NpmPackage npm) throws JsonSyntaxException, IOException {
       return null;
     }
 
@@ -68,7 +71,7 @@ public class NarrativeRemover {
     ini = new IniFile("/Users/grahamegrieve/work/r5/source/oids.ini");
     checkIni();
     r4 = new FilesystemPackageCacheManager.Builder().build().loadPackage("hl7.fhir.r4.core");
-    ctxt = new SimpleWorkerContextBuilder().fromPackage(r4, new R4ToR5Loader(BuildWorkerContext.defaultTypesToLoad(), new TempLoader(), "4.0.0"), false);
+    ctxt = new SimpleWorkerContextBuilder(ModelContext.fullCoreContext()).fromPackage(r4, new R4ToRNLoader(ModelContext.fullCoreContext(), BuildWorkerContext.defaultTypesToLoad(), new TempLoader(), "4.0.0"), false);
     remove(file);
   }
   
@@ -85,7 +88,7 @@ public class NarrativeRemover {
       } else if (f.getName().startsWith("codesystem-")) {
 //        System.out.println("Check "+f.getAbsolutePath());
         try {
-          Resource res = new XmlParser().parse(new FileInputStream(f));
+          Resource res = new XmlParser(ModelContext.fullCoreContext()).parse(new FileInputStream(f));
           if (res instanceof CodeSystem) {
             CodeSystem cs = (CodeSystem) res;
             if (cs.hasText() && cs.getText().getStatus() == NarrativeStatus.GENERATED) {
@@ -101,7 +104,7 @@ public class NarrativeRemover {
       } else if (f.getName().startsWith("valueset-")) {
 //        System.out.println("Check "+f.getAbsolutePath());
         try {
-          Resource res = new XmlParser().parse(new FileInputStream(f));
+          Resource res = new XmlParser(ModelContext.fullCoreContext()).parse(new FileInputStream(f));
           if (res instanceof ValueSet) {
             ValueSet vs = (ValueSet) res;
             if (vs.hasText() && vs.getText().getStatus() == NarrativeStatus.GENERATED) {
@@ -183,7 +186,7 @@ public class NarrativeRemover {
   }
 
   private String lookupUrl(String url) {
-    for (org.hl7.fhir.r5.model.CanonicalResource cr : ctxt.fetchResourcesByType(CanonicalResource.class)) {
+    for (org.hl7.fhir.model.core.CanonicalResource cr : ctxt.fetchResourcesByType(CanonicalResource.class)) {
       if (url.equals(cr.getUrl())) {
         return cr.getOid();
       }

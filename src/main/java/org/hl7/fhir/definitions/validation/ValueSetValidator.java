@@ -9,17 +9,17 @@ import java.util.Set;
 
 import org.hl7.fhir.exceptions.FHIRException;
 import org.hl7.fhir.exceptions.TerminologyServiceException;
-import org.hl7.fhir.r5.extensions.ExtensionUtilities;
-import org.hl7.fhir.r5.model.CanonicalResource;
-import org.hl7.fhir.r5.model.CodeSystem;
-import org.hl7.fhir.r5.model.CodeSystem.ConceptDefinitionComponent;
-import org.hl7.fhir.r5.model.Enumerations.CodeSystemContentMode;
-import org.hl7.fhir.r5.model.Resource;
-import org.hl7.fhir.r5.model.ValueSet;
-import org.hl7.fhir.r5.model.ValueSet.ConceptReferenceComponent;
-import org.hl7.fhir.r5.model.ValueSet.ConceptSetComponent;
-import org.hl7.fhir.r5.terminologies.CodeSystemUtilities;
-import org.hl7.fhir.r5.extensions.ExtensionDefinitions;
+import org.hl7.fhir.model.extensions.ExtensionUtilities;
+import org.hl7.fhir.model.core.CanonicalResource;
+import org.hl7.fhir.model.core.CodeSystem;
+import org.hl7.fhir.model.core.CodeSystem.ConceptDefinitionComponent;
+import org.hl7.fhir.model.core.Enumerations.CodeSystemContentMode;
+import org.hl7.fhir.model.core.Resource;
+import org.hl7.fhir.model.core.ValueSet;
+import org.hl7.fhir.model.core.ValueSet.ConceptReferenceComponent;
+import org.hl7.fhir.model.core.ValueSet.ConceptSetComponent;
+import org.hl7.fhir.model.utilities.CodeSystemUtilities;
+import org.hl7.fhir.model.extensions.ExtensionDefinitions;
 import org.hl7.fhir.tools.publisher.BuildWorkerContext;
 import org.hl7.fhir.utilities.FhirPublication;
 import org.hl7.fhir.utilities.SIDUtilities;
@@ -181,16 +181,16 @@ public class ValueSetValidator extends BaseValidator {
           "Value set "+nameForErrors+" ("+cs.getName()+"): All Code Systems that define codes must mark them as case sensitive ("+cs.getUrl()+")",
           "<a href=\""+cs.getWebPath()+"\">Value set "+nameForErrors+" ("+cs.getName()+")</a>: All value sets that define codes must mark them as case sensitive");
       }
-      checkCodeCaseDuplicates(errors, nameForErrors, cs, codes, cs.getConcept());
+      checkCodeCaseDuplicates(errors, nameForErrors, cs, codes, cs.getConceptList());
       if (!cs.getUrl().startsWith("http://terminology.hl7.org/CodeSystem/v2-") && 
           !cs.getUrl().startsWith("urn:uuid:") && 
           !cs.getUrl().startsWith("http://terminology.hl7.org/CodeSystem/v3-") && 
           !exemptFromCodeRules(cs.getUrl())) {
-        checkCodesForDisplayAndDefinition(errors, getWg(cs)+":CodeSystem["+cs.getId()+"].define", cs.getConcept(), cs, nameForErrors);
-        checkCodesForSpaces(errors, getWg(cs)+":CodeSystem["+cs.getId()+"].define", cs, cs.getConcept());
+        checkCodesForDisplayAndDefinition(errors, getWg(cs)+":CodeSystem["+cs.getId()+"].define", cs.getConceptList(), cs, nameForErrors);
+        checkCodesForSpaces(errors, getWg(cs)+":CodeSystem["+cs.getId()+"].define", cs, cs.getConceptList());
         if (!exemptFromStyleChecking(cs.getUrl())) {
-          checkDisplayIsTitleCase(errors, getWg(cs)+":CodeSystem["+cs.getId()+"].define", cs, cs.getConcept());
-          checkCodeIslowerCaseDash(errors, getWg(cs)+":CodeSystem["+cs.getId()+"].define", cs, cs.getConcept());
+          checkDisplayIsTitleCase(errors, getWg(cs)+":CodeSystem["+cs.getId()+"].define", cs, cs.getConceptList());
+          checkCodeIslowerCaseDash(errors, getWg(cs)+":CodeSystem["+cs.getId()+"].define", cs, cs.getConceptList());
         }
       }
     }
@@ -234,7 +234,7 @@ public class ValueSetValidator extends BaseValidator {
         throw new Error("d-a-r not found");
       
       int i = 0;
-      for (ConceptSetComponent inc : vs.getCompose().getInclude()) {
+      for (ConceptSetComponent inc : vs.getCompose().getIncludeList()) {
         i++;
         checkValueSetCode(errors, nameForErrors, vs, i, inc);
       }
@@ -253,7 +253,7 @@ public class ValueSetValidator extends BaseValidator {
     }
     
     if (inc.hasSystem() && canValidate(inc.getSystem())) {
-      for (ConceptReferenceComponent cc : inc.getConcept()) {
+      for (ConceptReferenceComponent cc : inc.getConceptList()) {
         if (inc.getSystem().equals("http://dicom.nema.org/resources/ontology/DCM"))
           warning(errors, ValidationMessage.NO_RULE_DATE, IssueType.BUSINESSRULE, getWg(vs)+":ValueSet["+vs.getId()+"].compose.include["+Integer.toString(i)+"]", isValidCode(cc.getCode(), inc.getSystem(), inc.getVersion()), 
               "The code '"+cc.getCode()+"' is not valid in the system "+inc.getSystem()+" (1)",
@@ -283,7 +283,7 @@ public class ValueSetValidator extends BaseValidator {
   }
 
   private String getOid(ValueSet vs) {
-    for (org.hl7.fhir.r5.model.Identifier id : vs.getIdentifier()) {
+    for (org.hl7.fhir.model.core.Identifier id : vs.getIdentifierList()) {
       if (id.hasSystem() && id.hasValue()) {
         if (id.getSystem().equals("urn:ietf:rfc:3986")) {
           if (id.getValue().startsWith("urn:oid:")) {
@@ -320,7 +320,7 @@ public class ValueSetValidator extends BaseValidator {
       if (!suppressedwarning(errors, ValidationMessage.NO_RULE_DATE, IssueType.BUSINESSRULE, getWg(cs)+":CodeSystem["+cs.getId()+"].define", !cc.hasCode() || isLowerCaseDash(cc.getCode()), 
          "Code System "+nameForErrors+" ("+cs.getName()+"/"+cs.getUrl()+"): Defined codes must be lowercase-dash: "+cc.getCode()))
         return;
-      checkDisplayIsTitleCase(errors, nameForErrors, cs, cc.getConcept());  
+      checkDisplayIsTitleCase(errors, nameForErrors, cs, cc.getConceptList());
     }
   }
 
@@ -339,7 +339,7 @@ public class ValueSetValidator extends BaseValidator {
       if (!suppressedwarning(errors, ValidationMessage.NO_RULE_DATE, IssueType.BUSINESSRULE, getWg(cs)+":CodeSystem["+cs.getId()+"].define", !cc.hasDisplay() || isTitleCase(cc.getDisplay()), 
          "Value set "+nameForErrors+" ("+cs.getName()+"/"+cs.getUrl()+"): Display Names must be TitleCase: "+cc.getDisplay()))
         return;
-      checkDisplayIsTitleCase(errors, nameForErrors, cs, cc.getConcept());  
+      checkDisplayIsTitleCase(errors, nameForErrors, cs, cc.getConceptList());
     }
   }
 
@@ -400,7 +400,7 @@ public class ValueSetValidator extends BaseValidator {
     if (cs == null || cs.getContent() != CodeSystemContentMode.COMPLETE) 
       return context.validateCode(new ValidationOptions(FhirPublication.R5, "en-US"), system, version, code, null).isOk();
     else {
-      if (hasCode(code, cs.getConcept()))
+      if (hasCode(code, cs.getConceptList()))
         return true;
       return false;
     }
@@ -410,7 +410,7 @@ public class ValueSetValidator extends BaseValidator {
     for (ConceptDefinitionComponent cc : list) {
       if (cc.getCode().equals(code))
         return true;
-      if (hasCode(code, cc.getConcept()))
+      if (hasCode(code, cc.getConceptList()))
         return true;
     }
     return false;
@@ -426,7 +426,7 @@ public class ValueSetValidator extends BaseValidator {
   }
 
   private void fixup(CodeSystem cs) {
-    for (ConceptDefinitionComponent cc: cs.getConcept())
+    for (ConceptDefinitionComponent cc: cs.getConceptList())
       fixup(cc);
   }
 
@@ -435,7 +435,7 @@ public class ValueSetValidator extends BaseValidator {
       cc.setDefinition(cc.getDisplay());
     if (!cc.hasDisplay() && cc.hasDefinition())
       cc.setDisplay(cc.getDefinition());
-    for (ConceptDefinitionComponent gc: cc.getConcept())
+    for (ConceptDefinitionComponent gc: cc.getConceptList())
       fixup(gc);
   }
 
@@ -444,7 +444,7 @@ public class ValueSetValidator extends BaseValidator {
       if (!rule(errors, ValidationMessage.NO_RULE_DATE, IssueType.BUSINESSRULE, getWg(cs)+":CodeSystem["+cs.getId()+"].define", !cc.hasCode() || !cc.getCode().contains(" ") || cc.getCode().equals("Masterfile Action Code"), // special case referred to UTG 
          "Value set "+nameForErrors+" ("+cs.getName()+"/"+cs.getUrl()+"): Defined codes cannot include spaces ("+cc.getCode()+")"))
         return;
-      checkCodesForSpaces(errors, nameForErrors, cs, cc.getConcept());  
+      checkCodesForSpaces(errors, nameForErrors, cs, cc.getConceptList());
     }
   }
 
@@ -458,7 +458,7 @@ public class ValueSetValidator extends BaseValidator {
       if (!suppressedwarning(errors, ValidationMessage.NO_RULE_DATE, IssueType.BUSINESSRULE, p, cc.hasDefinition() && (!cc.getDefinition().toLowerCase().equals("todo") || cc.getDefinition().toLowerCase().equals("to do")), "Code System '"+cs.getUrl()+"' has a code without a definition ('"+cc.getCode()+"')",
         "<a href=\""+cs.getWebPath()+"\">Value set "+nameForErrors+" ("+cs.getName()+")</a>: Code System '"+cs.getUrl()+"' has a code without a definition ('"+cc.getCode()+"')"))
         return;
-      checkCodesForDisplayAndDefinition(errors, p+".concept", cc.getConcept(), cs, nameForErrors);
+      checkCodesForDisplayAndDefinition(errors, p+".concept", cc.getConceptList(), cs, nameForErrors);
       i++;
     }
   }
@@ -470,7 +470,7 @@ public class ValueSetValidator extends BaseValidator {
         rule(errors, ValidationMessage.NO_RULE_DATE, IssueType.BUSINESSRULE, getWg(cs)+":CodeSystem["+cs.getId()+"].define", !codes.contains(cc), 
             "Value set "+nameForErrors+" ("+cs.getName()+"): Code '"+cc+"' is defined twice, different by case - this is not allowed in a FHIR definition");
         if (c.hasConcept())
-          checkCodeCaseDuplicates(errors, nameForErrors, cs, codes, c.getConcept());
+          checkCodeCaseDuplicates(errors, nameForErrors, cs, codes, c.getConceptList());
       }
     }
   }
@@ -478,10 +478,10 @@ public class ValueSetValidator extends BaseValidator {
   private Set<String> getListOfSources(ValueSet vs) {
     Set<String> sources = new HashSet<String>();
     if (vs.hasCompose()) {
-      for (ConceptSetComponent imp : vs.getCompose().getInclude()) 
+      for (ConceptSetComponent imp : vs.getCompose().getIncludeList())
         if (imp.hasSystem())
           sources.add(imp.getSystem());
-      for (ConceptSetComponent imp : vs.getCompose().getExclude()) 
+      for (ConceptSetComponent imp : vs.getCompose().getExcludeList())
         if (imp.hasSystem())
           sources.add(imp.getSystem());
     }

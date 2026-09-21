@@ -1,11 +1,11 @@
 package org.hl7.fhir.definitions.validation;
 
 import org.hl7.fhir.exceptions.FHIRException;
-import org.hl7.fhir.r5.model.ElementDefinition;
-import org.hl7.fhir.r5.model.ElementDefinition.TypeRefComponent;
-import org.hl7.fhir.r5.model.Enumerations.BindingStrength;
-import org.hl7.fhir.r5.model.StructureDefinition;
-import org.hl7.fhir.r5.extensions.ExtensionDefinitions;
+import org.hl7.fhir.model.core.ElementDefinition;
+import org.hl7.fhir.model.core.ElementDefinition.TypeRefComponent;
+import org.hl7.fhir.model.core.Enumerations.BindingStrength;
+import org.hl7.fhir.model.core.StructureDefinition;
+import org.hl7.fhir.model.extensions.ExtensionDefinitions;
 import org.hl7.fhir.utilities.Utilities;
 
 public class ExtensionDefinitionValidator {
@@ -25,9 +25,9 @@ public class ExtensionDefinitionValidator {
     if (Utilities.existsInList(sd.getId(), "codesystem-subsumes"))
       return;
     
-    for (ElementDefinition ed : sd.getSnapshot().getElement()) {
+    for (ElementDefinition ed : sd.getSnapshot().getElementList()) {
       if (ed.getPath().startsWith("Extension.value") && !"0".equals(ed.getMax())) {
-        for (TypeRefComponent tr : ed.getType()) {
+        for (TypeRefComponent tr : ed.getTypeList()) {
           if ("code".equals(tr.getWorkingCode())) {
             if (!ed.hasSlicing() && (!ed.hasBinding() || (ed.getBinding().getStrength() != BindingStrength.REQUIRED && !ed.getBinding().hasExtension(ExtensionDefinitions.EXT_MAX_VALUESET))))
               throw new FHIRException("Extension "+sd.getUrl()+" has an element of type 'code' which must have required binding");
@@ -39,7 +39,7 @@ public class ExtensionDefinitionValidator {
 
   private void checkNoValueAndExtensions(StructureDefinition sd) throws FHIRException {
     boolean hasValue = false;
-    for (ElementDefinition ed : sd.getSnapshot().getElement()) {
+    for (ElementDefinition ed : sd.getSnapshot().getElementList()) {
       if (ed.getPath().startsWith("Extension.value")) {
         if (!ed.getMax().equals("0")) {
           hasValue = true;
@@ -47,7 +47,7 @@ public class ExtensionDefinitionValidator {
       }
     }
     if (hasValue) {
-      for (ElementDefinition ed : sd.getSnapshot().getElement()) {
+      for (ElementDefinition ed : sd.getSnapshot().getElementList()) {
         if (ed.getPath().equals("Extension.extension")) {
           ed.setMax("0");
         }
@@ -57,7 +57,7 @@ public class ExtensionDefinitionValidator {
       }
       boolean found = false;
       int ip = 0;
-      for (ElementDefinition ed : sd.getDifferential().getElement()) {
+      for (ElementDefinition ed : sd.getDifferential().getElementList()) {
         if (ed.getPath().equals("Extension.extension")) {
           ed.setMax("0");
           found = true;
@@ -69,7 +69,7 @@ public class ExtensionDefinitionValidator {
         ElementDefinition ed = new ElementDefinition();
         ed.setPath("Extension.extension");
         ed.setMax("0");
-        sd.getDifferential().getElement().add(ip, ed);
+        sd.getDifferential().getElementList().add(ip, ed);
       }
       
     }
