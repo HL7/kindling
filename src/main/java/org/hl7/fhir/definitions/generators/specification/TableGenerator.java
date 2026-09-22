@@ -467,8 +467,6 @@ public class TableGenerator extends BaseGenerator {
   private String findPage(String rt) {
     if (rt.equalsIgnoreCase("any"))
       return "resourcelist";
-    if (rt.equalsIgnoreCase("binary"))
-      return "http";
     return rt.toLowerCase();
   } 
 }
