@@ -1016,6 +1016,33 @@ public class ResourceValidator extends BaseValidator {
     return Utilities.existsInList(path, "Timing.repeat.when", "CapabilityStatement.patchFormat", "TestScript.setup.action.operation.accept", "TestScript.setup.action.operation.contentType", "TestScript.setup.action.assert.contentType");
   }
 
+  /**
+   * Returns the codes listed in a short description of the form "code | code | code" that are not
+   * in the list of codes. The last entry may carry a trailing "+" or explanatory text
+   * (e.g. "home | work - purpose of this address"), and "etc" / "..." are allowed.
+   */
+  private List<String> invalidCodesInShort(String sd, List<DefinedCode> codes) {
+    Set<String> valid = new HashSet<>();
+    for (DefinedCode c : codes) {
+      if (c.getCode() != null)
+        valid.add(c.getCode());
+    }
+    List<String> invalid = new ArrayList<>();
+    String[] parts = sd.split("\\|");
+    for (int i = 0; i < parts.length; i++) {
+      String t = parts[i].trim();
+      if (i == parts.length - 1) {
+        if (t.endsWith("+"))
+          t = t.substring(0, t.length() - 1).trim();
+        if (t.contains(" "))
+          t = t.substring(0, t.indexOf(" "));
+      }
+      if (!Utilities.noString(t) && !Utilities.existsInList(t, "etc", "etc.", "...", "\u2026") && !valid.contains(t))
+        invalid.add(t);
+    }
+    return invalid;
+  }
+
   private boolean hasGoodCode(List<DefinedCode> codes) {
     for (DefinedCode d : codes)
       if (!Utilities.isInteger(d.getCode()) && d.getCode().length() > 1)
@@ -1206,12 +1233,16 @@ public class ResourceValidator extends BaseValidator {
       if (sd.contains("|")) {
         if (b.length() < 3)
           throw new Error("surprise");
-        String esd = b.substring(3);
-        rule(errors, ValidationMessage.NO_RULE_DATE, IssueType.STRUCTURE, path, sd.startsWith(esd) || (sd.endsWith("+") && b.substring(3).startsWith(sd.substring(0, sd.length() - 1))) || isExemptFromProperBindingRules(path), "The short description \"" + sd + "\" does not match the expected (\"" + b.substring(3) + "\")");
+        // the short description doesn't have to list all the codes, but every code it does list must be valid
+        List<String> invalid = invalidCodesInShort(sd, ac);
+        rule(errors, ValidationMessage.NO_RULE_DATE, IssueType.STRUCTURE, path, invalid.isEmpty() || isExemptFromProperBindingRules(path), "The short description \"" + sd + "\" lists codes that are not in the bound value set: " + invalid + " (expected codes from \"" + b.substring(3) + "\")");
       } else {
         rule(errors, ValidationMessage.NO_RULE_DATE, IssueType.STRUCTURE, path, cd.getStrength() != BindingStrength.REQUIRED || ac.size() > 12 || ac.size() <= 1 || !hasGoodCode(ac) || isExemptFromCodeList(path),
             "The short description of an element with a code list should have the format code | code | etc (is " + sd.toString() + ") (" + ac.size() + " codes = \"" + b.toString() + "\")");
       }
+    } else if (ac.size() > 0 && sd != null && sd.contains(" | ") && !isExemptFromProperBindingRules(path)) {
+      List<String> invalid = invalidCodesInShort(sd, ac);
+      warning(errors, ValidationMessage.NO_RULE_DATE, IssueType.STRUCTURE, path, invalid.isEmpty(), "The short description \"" + sd + "\" lists codes that are not in the bound value set: " + invalid);
     }
     boolean isComplex = !e.typeCode().equals("code");
 
