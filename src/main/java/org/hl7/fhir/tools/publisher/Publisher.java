@@ -3582,26 +3582,6 @@ public class Publisher implements URIResolver, SectionNumberer {
       zip.addFileName("fhir.shex", page.getFolders().dstDir + "fhir.shex", false);
       zip.close();
 
-      zip = new ZipGenerator(page.getFolders().dstDir + "definitions-r3.xml.zip");
-      zip.addFileName("profiles-types.xml", page.getFolders().tmpDir + "profiles-types-r3.xml", false);
-      zip.addFileName("profiles-resources.xml", page.getFolders().tmpDir + "profiles-resources-r3.xml", false);
-      zip.addFileName("profiles-others.xml", page.getFolders().tmpDir + "profiles-others-r3.xml", false);
-      zip.addFileName("search-parameters.xml", page.getFolders().tmpDir + "search-parameters-r3.xml", false);
-      zip.addFileName("valuesets.xml", page.getFolders().tmpDir + "valuesets-r3.xml", false);
-      zip.addFileName("conceptmaps.xml", page.getFolders().tmpDir + "conceptmaps-r3.xml", false);
-      zip.addFileName("dataelements.xml", page.getFolders().tmpDir + "dataelements-r3.xml", false);
-      zip.close();
-
-      zip = new ZipGenerator(page.getFolders().dstDir + "definitions-r3.json.zip");
-      zip.addFileName("profiles-types.json", page.getFolders().tmpDir + "profiles-types-r3.json", false);
-      zip.addFileName("profiles-resources.json", page.getFolders().tmpDir + "profiles-resources-r3.json", false);
-      zip.addFileName("profiles-others.json", page.getFolders().tmpDir + "profiles-others-r3.json", false);
-//      zip.addFileName("extension-definitions.json", page.getFolders().tmpDir + "extension-definitions-r3.json", false);
-      zip.addFileName("search-parameters.json", page.getFolders().tmpDir + "search-parameters-r3.json", false);
-      zip.addFileName("valuesets.json", page.getFolders().tmpDir + "valuesets-r3.json", false);
-      zip.addFileName("conceptmaps.json", page.getFolders().tmpDir + "conceptmaps-r3.json", false);
-      zip.addFileName("dataelements.json", page.getFolders().tmpDir + "dataelements-r3.json", false);
-      zip.close();
       System.gc();
 
       page.log("....r4 in r5 format", LogMessageType.Process);
