@@ -20,7 +20,7 @@ public class RDFTypeMap {
     static {
         ptMap.put("base64Binary", XSD.base64Binary);
         ptMap.put("boolean", XSD.xboolean);
-        ptMap.put("code", XSD.xstring);
+        ptMap.put("code", XSD.token);
         ptMap.put("date", XSD.date);
         ptMap.put("dateTime", XSD.dateTime);
         ptMap.put("gYear", XSD.gYear);
@@ -28,8 +28,8 @@ public class RDFTypeMap {
         ptMap.put("decimal", XSD.decimal);
         ptMap.put("instant", XSD.dateTime);
         ptMap.put("id", XSD.xstring);
-        ptMap.put("int", XSD.integer);
-        ptMap.put("integer", XSD.integer);
+        ptMap.put("int", XSD.xint);
+        ptMap.put("integer", XSD.xint);
         ptMap.put("markdown", XSD.xstring);
         ptMap.put("oid", XSD.anyURI);
         ptMap.put("positiveInt", XSD.positiveInteger);
