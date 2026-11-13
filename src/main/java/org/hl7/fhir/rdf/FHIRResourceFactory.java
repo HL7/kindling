@@ -152,7 +152,7 @@ public class FHIRResourceFactory {
     }
 
     public FHIRResource fhir_class_with_provenance(String name, String superClass, String definitionCanonical) {
-        return fhir_class_with_provenance(name, RDFNamespace.FHIR.resourceRef(superClass), definitionCanonical);
+        return fhir_class_with_provenance(name, RDFNamespace.FHIR.resourceRef(getClassName(superClass)), definitionCanonical);
     }
 
     public FHIRResource fhir_class_with_provenance(String name, Resource superClass, String definitionCanonical) {

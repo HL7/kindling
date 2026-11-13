@@ -177,7 +177,9 @@ public class FhirTurtleGenerator {
         FHIRResource Reference = fact.fhir_class("Reference");
         addProvenanceForTypeName(Reference, "Reference");
 
-
+        // "resourceDefinition" for Additional Resources. Only informally defined in FHIR spec.
+        fact.fhir_objectProperty("resourceDefinition", "http://hl7.org/fhir/resource.html#additional")
+            .addComment("This property indicates that the FHIR resource is defined by an Additional Resource.");
 
         // A resource can have an optional nodeRole
         FHIRResource nodeRole = fact.fhir_objectProperty("nodeRole", fhirRdfPageUrl)
@@ -208,6 +210,11 @@ public class FhirTurtleGenerator {
                                         .addDataProperty(OWL2.maxCardinality, "0", XSDDatatype.XSDinteger)
                                         .resource;
         xhtmlClass.restriction(extensionCardinality);
+        // xhtml.id max 0
+        var idCardinality = fact.create_empty_owl_restriction(RDFNamespace.FHIR.resourceRef("id"))
+                                        .addDataProperty(OWL2.maxCardinality, "0", XSDDatatype.XSDinteger)
+                                        .resource;
+        xhtmlClass.restriction(idCardinality);
     }
 
     private String getResourceNameFromCanonical(String canonicalUrl) {
@@ -227,14 +234,20 @@ public class FhirTurtleGenerator {
     private void genPrimitiveType(DefinedCode pt) {
         String ptName = pt.getCode();
         // `org.hl7.fhir.definitions.model.DefinedCode.definition` actually comes from StructureDefinition.description (roughly same as root ElementDefinition.definition)
-        FHIRResource ptRes = fact.fhir_class_with_provenance(ptName, "PrimitiveType", pt.getProfile().getUrl())
+        StructureDefinition ptSd = pt.getProfile();
+        String parentURL = ptSd.getBaseDefinitionElement().getValue();
+        String parentName = Utilities.noString(parentURL) ? "PrimitiveType" : getResourceNameFromCanonical(parentURL);
+        FHIRResource ptRes = fact.fhir_class_with_provenance(ptName, parentName, ptSd.getUrl())
                 .addLiteral(this.sdDescription, pt.getDefinition());
+
         Resource simpleRdfType = RDFTypeMap.xsd_type_for(ptName, owlTarget);
-            if(RDFTypeMap.unionTypesMap.containsKey(ptName)) {  // complex types like dateTime that are a union of types
-                ptRes.restriction(fact.fhir_cardinality_restriction(v, RDFTypeMap.unionTypesMap.get(ptName), 1, 1));
-            } else if (simpleRdfType != null) {
-                ptRes.restriction(fact.fhir_class_cardinality_restriction(v, simpleRdfType, 1, 1));
-            }
+
+        // Primitive types default to 0..1 cardinality, except xhtml
+        if(RDFTypeMap.unionTypesMap.containsKey(ptName)) {  // complex types like dateTime that are a union of types
+            ptRes.restriction(fact.fhir_cardinality_restriction(v, RDFTypeMap.unionTypesMap.get(ptName), 0, 1));
+        } else if (simpleRdfType != null) {
+            ptRes.restriction(fact.fhir_class_cardinality_restriction(v, simpleRdfType, 0, 1));
+        }
     }
 
 

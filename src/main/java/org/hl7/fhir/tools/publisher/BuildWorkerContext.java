@@ -49,7 +49,7 @@ import org.hl7.fhir.model.core.StructureDefinition.StructureDefinitionKind;
 import org.hl7.fhir.model.core.StructureDefinition.TypeDerivationRule;
 import org.hl7.fhir.model.core.ValueSet.ConceptSetComponent;
 import org.hl7.fhir.model.core.ValueSet.ValueSetExpansionContainsComponent;
-import org.hl7.fhir.standalone.context.PackageResourceLoader;
+import org.hl7.fhir.services.context.PackageResourceLoader;
 import org.hl7.fhir.utilities.CommaSeparatedStringBuilder;
 import org.hl7.fhir.utilities.Utilities;
 import org.hl7.fhir.utilities.filesystem.CSFileInputStream;
