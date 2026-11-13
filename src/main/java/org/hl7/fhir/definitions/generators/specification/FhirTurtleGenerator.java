@@ -177,7 +177,9 @@ public class FhirTurtleGenerator {
         FHIRResource Reference = fact.fhir_class("Reference");
         addProvenanceForTypeName(Reference, "Reference");
 
-
+        // "resourceDefinition" for Additional Resources. Only informally defined in FHIR spec.
+        fact.fhir_objectProperty("resourceDefinition", "http://hl7.org/fhir/resource.html#additional")
+            .addComment("This property indicates that the FHIR resource is defined by an Additional Resource.");
 
         // A resource can have an optional nodeRole
         FHIRResource nodeRole = fact.fhir_objectProperty("nodeRole", fhirRdfPageUrl)
