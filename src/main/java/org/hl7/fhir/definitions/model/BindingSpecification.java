@@ -56,6 +56,7 @@ import org.hl7.fhir.utilities.StandardsStatus;
 public class BindingSpecification {
     
   public static class AdditionalBinding {
+    private String key;
     private String purpose;
     private String doco;
     private String ref;
@@ -101,6 +102,15 @@ public class BindingSpecification {
       this.doco = doco;
       return this;
     }    
+
+    public String getKey() {
+      return key;
+    }
+
+    public AdditionalBinding setKey(String key) {
+      this.key = key;
+      return this;
+    }
     
     
   }

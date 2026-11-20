@@ -958,17 +958,9 @@ public class ProfileGenerator {
     e.setMax("*");
     e.setIsModifier(false);
 
-    String s = definitions.getTLAs().get(pt.getName().toLowerCase());
-    if (s == null)
-      throw new Exception("There is no TLA for '"+pt.getName()+"' in fhir.ini");
-    ElementDefinitionConstraintComponent inv = new ElementDefinitionConstraintComponent();
-    inv.setKey(s+"-1");
-    inv.setRequirements(pt.getInvariant().getRequirements());
-    inv.setSeverity(ConstraintSeverity.ERROR);
-    inv.setHuman(pt.getInvariant().getEnglish());
-    if (!"n/a".equals(pt.getInvariant().getExpression())) {
+    ElementDefinitionConstraintComponent inv = makeProfiledTypeInvariant(pt);
+    if (inv.hasExpression()) {
       fpUsages.add(new FHIRPathUsage(pt.getName(), pt.getBaseType(), pt.getBaseType(), null, pt.getInvariant().getExpression()));
-      inv.setExpression(pt.getInvariant().getExpression());
     }
     e.getConstraintList().add(inv);
     p.setDifferential(new StructureDefinitionDifferentialComponent());
@@ -1640,6 +1632,9 @@ public class ProfileGenerator {
       dst.setValueSet(buildValueSetReference(src));
       for (AdditionalBinding n : src.getAdditionalBindings()) {
         ElementDefinitionBindingAdditionalComponent add = dst.addAdditional();
+        if (n.getKey() != null) {
+          add.setKey(n.getKey());
+        }
         add.setPurpose(AdditionalBindingPurposeVS.fromCode(n.getPurpose()));
         add.setDocumentation(n.getDoco());
         add.setValueSet(n.getValueSet() != null ? n.getValueSet().getUrl() : n.getRef());
@@ -1705,6 +1700,65 @@ public class ProfileGenerator {
       return ref;
     } else {
       return ref + v;
+    }
+  }
+
+  /**
+   * The invariant that the root of a constrained type (e.g. SimpleQuantity) adds to its base type. This is
+   * the only thing the root of a constrained type adds, so it's also what's merged into the elements that
+   * use the constrained type (see mergeProfiledTypeRoot)
+   */
+  private ElementDefinitionConstraintComponent makeProfiledTypeInvariant(ProfiledType pt) throws Exception {
+    String s = definitions.getTLAs().get(pt.getName().toLowerCase());
+    if (s == null)
+      throw new Exception("There is no TLA for '"+pt.getName()+"' in fhir.ini");
+    ElementDefinitionConstraintComponent inv = new ElementDefinitionConstraintComponent();
+    inv.setKey(s+"-1");
+    inv.setRequirements(pt.getInvariant().getRequirements());
+    inv.setSeverity(ConstraintSeverity.ERROR);
+    inv.setHuman(pt.getInvariant().getEnglish());
+    if (!"n/a".equals(pt.getInvariant().getExpression())) {
+      inv.setExpression(pt.getInvariant().getExpression());
+    }
+    return inv;
+  }
+
+  /**
+   * kindling builds the snapshots of the core resources and datatypes directly, not with the snapshot
+   * generator, so the constraints on the root of a type profile are not merged into the element that uses it
+   * the way ProfileUtilities does (see TypeProfileRootMerger and ExtensionDefinitions.EXT_TYPE_PROFILE_CONSTRAINTS).
+   * In the core specification, the only type profiles are the constrained types (e.g. SimpleQuantity), and the
+   * only thing their root adds over the base type is their invariant, so we merge that here, and mark the
+   * type profile the same way the snapshot generator would: full for a single type with a single profile,
+   * none otherwise (choice elements).
+   *
+   * Note that the constrained type profiles are generated after the resources, so the invariant is built from
+   * the definition of the constrained type, not copied from its StructureDefinition
+   */
+  private void mergeProfiledTypeRoot(ElementDefinition ce, TypeRefComponent type, ProfiledType pt, boolean singleType) throws Exception {
+    String url = "http://hl7.org/fhir/StructureDefinition/"+pt.getName();
+    CanonicalType ct = null;
+    for (CanonicalType c : type.getProfileList()) {
+      if (url.equals(c.getValue())) {
+        ct = c;
+      }
+    }
+    if (ct == null || ct.hasExtension(ExtensionDefinitions.EXT_TYPE_PROFILE_CONSTRAINTS)) {
+      return;
+    }
+    if (singleType && type.getProfileList().size() == 1) {
+      ElementDefinitionConstraintComponent inv = makeProfiledTypeInvariant(pt);
+      boolean found = false;
+      for (ElementDefinitionConstraintComponent c : ce.getConstraintList()) {
+        found = found || inv.getKey().equals(c.getKey());
+      }
+      if (!found) {
+        inv.setSource(url);
+        ce.getConstraintList().add(inv);
+      }
+      ct.addExtension(ExtensionDefinitions.EXT_TYPE_PROFILE_CONSTRAINTS, new CodeType("full"));
+    } else {
+      ct.addExtension(ExtensionDefinitions.EXT_TYPE_PROFILE_CONSTRAINTS, new CodeType("none"));
     }
   }
 
@@ -1861,10 +1915,12 @@ public class ProfileGenerator {
         } else for (TypeRef t : expandedTypes) {
           String profile = null;
           String tc = null;
+          ProfiledType constrainedType = null;
           if (definitions.getConstraints().containsKey(t.getName())) {
             ProfiledType pt = definitions.getConstraints().get(t.getName());
             tc= pt.getBaseType();
             profile = "http://hl7.org/fhir/StructureDefinition/"+pt.getName();
+            constrainedType = pt;
           } else {
             tc = t.getName();
             profile = t.getProfile();
@@ -1915,6 +1971,9 @@ public class ProfileGenerator {
               for (String pn : pr) {
                 type.addProfile(pn);
               }
+          }
+          if (constrainedType != null && snapshot != SnapShotMode.None) {
+            mergeProfiledTypeRoot(ce, type, constrainedType, expandedTypes.size() == 1);
           }
 
           for (String aggregation : t.getAggregations()) {

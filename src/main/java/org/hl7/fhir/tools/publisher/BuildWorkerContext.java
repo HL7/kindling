@@ -33,6 +33,7 @@ import org.hl7.fhir.services.conformance.profile.BindingResolution;
 import org.hl7.fhir.services.conformance.profile.ProfileKnowledgeProvider;
 import org.hl7.fhir.services.conformance.profile.ProfileUtilities;
 import org.hl7.fhir.services.context.IContextResourceLoaderN;
+import org.hl7.fhir.services.context.PackageResourceLoader;
 import org.hl7.fhir.services.terminology.ValidationResult;
 import org.hl7.fhir.services.validation.IResourceValidator;
 import org.hl7.fhir.standalone.context.BaseWorkerContext;
@@ -49,7 +50,6 @@ import org.hl7.fhir.model.core.StructureDefinition.StructureDefinitionKind;
 import org.hl7.fhir.model.core.StructureDefinition.TypeDerivationRule;
 import org.hl7.fhir.model.core.ValueSet.ConceptSetComponent;
 import org.hl7.fhir.model.core.ValueSet.ValueSetExpansionContainsComponent;
-import org.hl7.fhir.standalone.context.PackageResourceLoader;
 import org.hl7.fhir.utilities.CommaSeparatedStringBuilder;
 import org.hl7.fhir.utilities.Utilities;
 import org.hl7.fhir.utilities.filesystem.CSFileInputStream;
@@ -70,6 +70,7 @@ import org.jspecify.annotations.NonNull;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.xml.sax.SAXException;
+import org.hl7.fhir.utilities.settings.FhirSettings;
 
 
 /*
@@ -111,7 +112,7 @@ public class BuildWorkerContext extends BaseWorkerContext implements IWorkerCont
     super(ModelContext.fullCoreContext(), codeSystems, valueSets, maps, profiles, guides);
     initTxCache(terminologyCachePath);
     this.definitions = definitions;
-    this.terminologyClientManager.setMasterClient(client, true);
+    this.terminologyClientManager.setMasterClient(client, FhirSettings.getTxEcosystem());
     this.terminologyClientManager.setUsage("publication");
     this.txLog = new HTMLClientLogger(null);
     setExpansionParameters(buildExpansionProfile());
@@ -494,7 +495,7 @@ public class BuildWorkerContext extends BaseWorkerContext implements IWorkerCont
         triedServer = true;
         // for this, we use the FHIR client
         if (terminologyClientManager.getMasterClient() == null) {
-          terminologyClientManager.setMasterClient(new TerminologyClientNR5("tx.fhir.org", "?", "fhir/main-build", this.modelContext), true);
+          terminologyClientManager.setMasterClient(new TerminologyClientNR5("tx.fhir.org", "?", "fhir/main-build", this.modelContext), FhirSettings.getTxEcosystem());
           this.txLog = new HTMLClientLogger(null);
         }
         Map<String, String> params = new HashMap<String, String>();

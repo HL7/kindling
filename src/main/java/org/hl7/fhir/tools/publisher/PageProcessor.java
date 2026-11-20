@@ -92,6 +92,7 @@ import org.hl7.fhir.definitions.model.*;
 import org.hl7.fhir.definitions.model.BindingSpecification.AdditionalBinding;
 import org.hl7.fhir.definitions.model.BindingSpecification.BindingMethod;
 import org.hl7.fhir.definitions.model.Definitions.NamespacePair;
+import org.hl7.fhir.definitions.model.MappingSpace;
 import org.hl7.fhir.definitions.model.Operation.OperationExample;
 import org.hl7.fhir.definitions.model.ResourceDefn.FMGApproval;
 import org.hl7.fhir.definitions.model.SearchParameterDefn.CompositeDefinition;
@@ -3711,7 +3712,8 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
 
   private String genIgToc(ImplementationGuideDefn ig) throws Exception {
     HierarchicalTableGenerator gen = new HierarchicalTableGenerator(new RenderingI18nContext(), folders.dstDir, false, true);
-    return new XhtmlComposer(XhtmlComposer.HTML).compose(gen.generate(ig.genToc(gen, "toc"), "../", 0, null));
+    gen.setNoUseCssClasses(true); // kindling's fhir.css doesn't define the HierarchicalTableGenerator classes
+    return new XhtmlComposer(XhtmlComposer.HTML).compose(gen.generate(ig.genToc(gen, "toc"), "../", false, null));
   }
 
   private String generateToc() throws Exception {
@@ -3721,6 +3723,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
     Collections.sort(entries, new SectionSorter());
     Set<String> pages = new HashSet<String>();
     HierarchicalTableGenerator gen = new HierarchicalTableGenerator(new RenderingI18nContext(), folders.dstDir, false, true);
+    gen.setNoUseCssClasses(true); // kindling's fhir.css doesn't define the HierarchicalTableGenerator classes
     TableModel model = gen.new TableModel("toc", true);
     model.getTitles().add(gen.new Title(null, model.getDocoRef(), "Table of Contents", "Table of Contents", null, 0));
     Deque<TocItem> stack = new ArrayDeque<TocItem>();
@@ -3764,7 +3767,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
           //          } else {            
           cell.addPiece(gen.new Piece(null, " ", null));
           if (t.getStatus() != null) {
-            cell.addPiece(gen.new Piece("versions.html#std-process", "("+t.getStatus().toCode()+")", null).addStyle("padding: 3px; border: 1px lightgrey solid; color: #000000; background-color: "+t.getStatus().getColor()));
+            cell.addPiece(gen.new Piece("versions.html#std-process", "("+t.getStatus().toCode()+")", null).addStyleXHTOK("padding: 3px; border: 1px lightgrey solid; color: #000000; background-color: "+t.getStatus().getColor()));
           }
           //          }
           if (stack.isEmpty())
@@ -3775,7 +3778,7 @@ public class PageProcessor implements Logger, ProfileKnowledgeProvider, IReferen
         }
       }
     }
-    return new XhtmlComposer(XhtmlComposer.HTML).compose(gen.generate(model, "", 0, null));
+    return new XhtmlComposer(XhtmlComposer.HTML).compose(gen.generate(model, "", false, null));
   }
 
   private int rootInd(String s) {

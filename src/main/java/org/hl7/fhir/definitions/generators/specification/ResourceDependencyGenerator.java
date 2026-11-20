@@ -52,13 +52,14 @@ public class ResourceDependencyGenerator  extends BaseGenerator {
 
   public XhtmlNode generate(ElementDefn e, String prefix) throws Exception {
     HierarchicalTableGenerator gen = new HierarchicalTableGenerator(new RenderingI18nContext(), dest, inlineGraphics, true);
+    gen.setNoUseCssClasses(true); // kindling's fhir.css doesn't define the HierarchicalTableGenerator classes
     RenderMode mode = RenderMode.RESOURCE;
     TableModel model = initTable(gen, prefix, mode == RenderMode.LOGICAL, e.getName());
 
     
     model.getRows().add(genElement(e, gen, true, e.getName(), false, prefix, mode, true));
     
-    return gen.generate(model, prefix, 0, null);
+    return gen.generate(model, prefix, false, null);
   }
 
   protected boolean dictLinks() {

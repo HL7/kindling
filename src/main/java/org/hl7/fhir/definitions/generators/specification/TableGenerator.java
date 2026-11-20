@@ -83,7 +83,7 @@ public class TableGenerator extends BaseGenerator {
     if (!isRoot && (!e.getInvariants().isEmpty() || !e.getStatedInvariants().isEmpty())) { 
       Piece p = gc.addText(StructureDefinitionRenderer.CONSTRAINT_CHAR);
       p.setHint("This element has or is affected by some invariants");
-      p.addStyle(StructureDefinitionRenderer.CONSTRAINT_STYLE);
+      p.addNamedStyle("xhtConstraintStyle", StructureDefinitionRenderer.CONSTRAINT_STYLE);
       p.setReference(prefix+"conformance-rules.html#constraints");      
     }
     if (isInterface) {
@@ -219,7 +219,7 @@ public class TableGenerator extends BaseGenerator {
     if (e.getStatus() != null) {
       if (cc.getPieces().size() > 0)
         cc.addPiece(gen.new Piece("br"));
-      cc.getPieces().add(gen.new Piece(null, e.getStatus().toDisplay(), null).addStyle("font-weight:bold"));
+      cc.getPieces().add(gen.new Piece(null, e.getStatus().toDisplay(), null).styleAsBold());
       cc.getPieces().add(gen.new Piece(null, ": ", null));
       cc.getPieces().add(gen.new Piece(null, e.getStatusReason(), null));
 
@@ -229,7 +229,7 @@ public class TableGenerator extends BaseGenerator {
     for (String name : invs) {
       Invariant inv = e.getInvariants().get(name);
       cc.addPiece(gen.new Piece("br"));
-      cc.getPieces().add(gen.new Piece(null, "+ "+presentLevel(inv)+": "+inv.getEnglish(), inv.getId()).setStyle("font-style: italic"));
+      cc.getPieces().add(gen.new Piece(null, "+ "+presentLevel(inv)+": "+inv.getEnglish(), inv.getId()).styleAsItalic());
     }
     if (e.unbounded() && !isRoot) {
       if (cc.getPieces().size() > 0)
@@ -266,7 +266,7 @@ public class TableGenerator extends BaseGenerator {
           }
           if (msg != null) {
             cc.getPieces().add(gen.new Piece("br"));
-            cc.addPiece(gen.new Piece(sdtc.getWebPath(), page.getRc().formatPhrase(msg), null).addStyle("font-weight:bold"));
+            cc.addPiece(gen.new Piece(sdtc.getWebPath(), page.getRc().formatPhrase(msg), null).styleAsBold());
           }
         }
       }

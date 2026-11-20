@@ -37,14 +37,14 @@ public class ValueSetFinder {
       Set<String> s = new HashSet<>();
       for (File fsp : new File(folder).listFiles()) {
         if (fsp.getName().startsWith("searchparameter-")) {
-          SearchParameter sp = (SearchParameter) new XmlParser(ModelContext.fullCoreContext()).parseAndClose(new FileInputStream(fsp));
+          SearchParameter sp = (SearchParameter) new XmlParser(ModelContext.fullCoreContext()).parseFile(fsp);
           s.add(sp.getId());
         }
       }
 
       for (File fig : new File(folder).listFiles()) {
         if (fig.getName().startsWith("implementationguide-")) {
-          ImplementationGuide ig = (ImplementationGuide) new XmlParser(ModelContext.fullCoreContext()).parseAndClose(new FileInputStream(fig));
+          ImplementationGuide ig = (ImplementationGuide) new XmlParser(ModelContext.fullCoreContext()).parseFile(fig);
           ig.getDefinition().getResourceList().removeIf(res -> res.getReference().getReference().startsWith("SearchParameter/") && !s.contains(res.getReference().getReference().substring(res.getReference().getReference().indexOf("/")+1)));
           if (ig.getDefinition().getResourceList().isEmpty()) {
             fig.delete();

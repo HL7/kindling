@@ -19,11 +19,12 @@ public class DataTypeTableGenerator extends TableGenerator {
 
   public XhtmlNode generate(ElementDefn e, Set<String> outputTracker, boolean isActive) throws Exception {
     HierarchicalTableGenerator gen = new HierarchicalTableGenerator(new RenderingI18nContext(), dest, inlineGraphics, false);
+    gen.setNoUseCssClasses(true); // kindling's fhir.css doesn't define the HierarchicalTableGenerator classes
     TableModel model = gen.initNormalTable("", false, true, e.getName(), isActive, isActive ? TableGenerationMode.XHTML : TableGenerationMode.XML);
     
     model.getRows().add(genElement(e, gen, false, e.getName(), false, "", RenderMode.DATATYPE, true, StandardsStatus.NORMATIVE, null, e.isAbstractType(), false));
     
-    return gen.generate(model, "", 0, outputTracker);
+    return gen.generate(model, "", false, outputTracker);
   }
 
  

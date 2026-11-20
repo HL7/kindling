@@ -741,7 +741,7 @@ public class ResourceParser {
       bs.getAdditionalBindings().add(new AdditionalBinding("maximum", binding.getExtensionString(ExtensionDefinitions.EXT_MAX_VALUESET), loadValueSet(binding.getExtensionString(ExtensionDefinitions.EXT_MAX_VALUESET), false, BindingStrength.REQUIRED)));
     }
     for (ElementDefinitionBindingAdditionalComponent add : binding.getAdditionalList()) {
-      bs.getAdditionalBindings().add(new AdditionalBinding(add.getPurpose().toCode(), add.getValueSet(), loadValueSet(add.getValueSet(), false, add.getPurpose() == AdditionalBindingPurposeVS.REQUIRED ? BindingStrength.REQUIRED : BindingStrength.EXTENSIBLE)).setDoco(add.getDocumentation()));      
+      bs.getAdditionalBindings().add(new AdditionalBinding(add.getPurpose().toCode(), add.getValueSet(), loadValueSet(add.getValueSet(), false, add.getPurpose() == AdditionalBindingPurposeVS.REQUIRED ? BindingStrength.REQUIRED : BindingStrength.EXTENSIBLE)).setDoco(add.getDocumentation()).setKey(add.getKey()));      
     }
 
     if (binding.hasExtension(BuildExtensions.EXT_V2_MAP)) {

@@ -8,7 +8,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import net.sf.saxon.trans.Mode;
 import org.hl7.fhir.exceptions.FHIRException;
 import org.hl7.fhir.model.ModelContext;
 import org.hl7.fhir.services.context.ContextUtilities;
