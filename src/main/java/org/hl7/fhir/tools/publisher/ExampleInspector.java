@@ -161,7 +161,6 @@ public class ExampleInspector implements IValidatorResourceFetcher, IValidationP
   
   private static final boolean VALIDATE_CONFORMANCE_REFERENCES = true;
   private static final boolean VALIDATE_BY_PROFILE = true;
-  private static final boolean VALIDATE_BY_SCHEMATRON = false;
 
   private IWorkerContext context;
   private String rootDir;
@@ -171,7 +170,6 @@ public class ExampleInspector implements IValidatorResourceFetcher, IValidationP
   private Logger logger;
   private Definitions definitions;
   private boolean byProfile = VALIDATE_BY_PROFILE;
-  private boolean bySchematron = VALIDATE_BY_SCHEMATRON;
   private ExampleHostServices hostServices;
   
   public ExampleInspector(IWorkerContext context, Logger logger, String rootDir, String xsltDir, List<ValidationMessage> errors, Definitions definitions, FHIRVersion version) throws JsonSyntaxException, FileNotFoundException, IOException {
@@ -382,18 +380,6 @@ public class ExampleInspector implements IValidatorResourceFetcher, IValidationP
     return e;
   }
 
-
-  private org.w3c.dom.Element validateXml(String f, String profile) throws FileNotFoundException, IOException, ParserConfigurationException, SAXException, FHIRException  {
-    org.w3c.dom.Element e = xml.checkBySchema(f, false);
-    if (VALIDATE_BY_SCHEMATRON) {
-      xml.checkBySchematron(f, "fhir-invariants.sch", false);
-      if (profile != null && new File(Utilities.path(rootDir, profile+".sch")).exists()) {
-        xml.checkBySchematron(f, profile+".sch", false);
-      }
-    }
-    return e;
-  }
-
   public void summarise() throws EValidationFailed {
     logger.log("Summary: Errors="+Integer.toString(errorCount)+", Warnings="+Integer.toString(warningCount)+", Information messages="+Integer.toString(informationCount), LogMessageType.Error);
     if (errorCount > 0) {
@@ -476,17 +462,7 @@ public class ExampleInspector implements IValidatorResourceFetcher, IValidationP
     this.byProfile = byProfile;
   }
 
-
-  public boolean isBySchematron() {
-    return bySchematron;
-  }
-
-
-  public void setBySchematron(boolean bySchematron) {
-    this.bySchematron = bySchematron;
-  }
-
-
+  
 
   @Override
   public Element fetch(IResourceValidator validator,Object appContext, String url) throws IOException, FHIRException {
